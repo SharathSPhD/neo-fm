@@ -1,0 +1,26 @@
+{
+  "attempt_id": "phase-3-golden-attempt-1",
+  "job_id": "00000000-0000-0000-0000-000000000003",
+  "output_format": "wav",
+  "sample_rate": 48000,
+  "sections": [
+    {
+      "id": "mukhda-1",
+      "language": "hi",
+      "lyrics": "पोथी पढ़ि पढ़ि जग मुआ, पंडित भया न कोय।\nढाई आखर प्रेम का, पढ़े सो पंडित होय॥",
+      "script": "devanagari",
+      "target_seconds": 30,
+      "type": "mukhda"
+    },
+    {
+      "id": "antara-2",
+      "language": "hi",
+      "lyrics": "बड़ा हुआ तो क्या हुआ, जैसे पेड़ खजूर।\nपंथी को छाया नहीं, फल लागे अति दूर॥",
+      "script": "devanagari",
+      "target_seconds": 30,
+      "type": "antara"
+    }
+  ],
+  "style_family": "hindustani",
+  "target_duration_seconds": 60
+}
