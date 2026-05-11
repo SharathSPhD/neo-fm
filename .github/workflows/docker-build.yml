@@ -37,3 +37,29 @@ jobs:
           push: false
           load: true
           tags: neo-fm/${{ matrix.service }}:ci
+
+      - name: trivy vulnerability scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: neo-fm/${{ matrix.service }}:ci
+          format: table
+          exit-code: "0"
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          vuln-type: os,library
+
+      - name: install syft (SBOM)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: generate SBOM
+        run: |
+          mkdir -p sbom
+          syft "neo-fm/${{ matrix.service }}:ci" -o spdx-json > "sbom/${{ matrix.service }}.spdx.json"
+
+      - name: upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.service }}
+          path: sbom/${{ matrix.service }}.spdx.json
+          retention-days: 30

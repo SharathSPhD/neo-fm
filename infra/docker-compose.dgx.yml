@@ -7,7 +7,13 @@
 #          and gains `deploy.resources.reservations.devices` for GPU access.
 #
 # Usage (from repo root):
-#   docker compose -f infra/docker-compose.dgx.yml up --build
+#   cp infra/.env.dgx.example infra/.env.dgx     # fill MUSIC_INFERENCE_HMAC_SECRET
+#   docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx up --build
+#
+# Per ADR 0003 (internal-API HMAC):
+# - music-inference exposes port 8000 only on the internal compose network,
+#   NOT on the host. The dgx-worker reaches it as `http://music-inference:8000`.
+# - The shared HMAC secret is injected via env_file, never via -p, never logged.
 
 name: neo-fm
 
@@ -19,10 +25,13 @@ services:
     image: neo-fm/music-inference:phase-0
     container_name: neo-fm-music-inference
     restart: unless-stopped
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       PHASE: "0"
+      MUSIC_INFERENCE_HMAC_SECRET: "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
+      MUSIC_INFERENCE_HMAC_SECRET_NEXT: "${MUSIC_INFERENCE_HMAC_SECRET_NEXT:-}"
+      LOG_LEVEL: "INFO"
     # Phase 1 adds:
     # deploy:
     #   resources:
@@ -31,6 +40,8 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
+    # volumes:
+    #   - /mnt/models:/mnt/models:ro
     healthcheck:
       test:
         - "CMD"
@@ -57,8 +68,10 @@ services:
         condition: service_healthy
     environment:
       MUSIC_INFERENCE_URL: "http://music-inference:8000"
+      MUSIC_INFERENCE_HMAC_SECRET: "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
       POLL_INTERVAL_SECONDS: "5"
       PHASE: "0"
+      LOG_LEVEL: "INFO"
 
   vocal-synth:
     build:

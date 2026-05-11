@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { SongDocumentSchema } from "./index.js";
+import { SongDocumentSchema, allocateSectionDurations } from "./index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(here, "..", "fixtures");
@@ -43,5 +43,74 @@ describe("SongDocumentSchema", () => {
       sections: [{ id: "s1", type: "intro", target_seconds: 999 }],
     };
     expect(() => SongDocumentSchema.parse(bad)).toThrow();
+  });
+
+  it("rejects when sum(section.target_seconds) != target_duration_seconds", () => {
+    const bad = {
+      language: "en",
+      style_family: "western",
+      target_duration_seconds: 90,
+      sections: [
+        { id: "a", type: "intro", target_seconds: 20 },
+        { id: "b", type: "verse", target_seconds: 20 },
+      ],
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow(/sum/);
+  });
+});
+
+describe("allocateSectionDurations", () => {
+  it("fills unset section seconds evenly", () => {
+    const input = {
+      language: "en" as const,
+      style_family: "western" as const,
+      target_duration_seconds: 90 as const,
+      sections: [
+        { id: "a", type: "intro" as const },
+        { id: "b", type: "verse" as const },
+        { id: "c", type: "outro" as const },
+      ],
+    };
+    const allocated = allocateSectionDurations(input);
+    const sum = allocated.sections.reduce(
+      (acc, s) => acc + s.target_seconds,
+      0,
+    );
+    expect(sum).toBe(90);
+    expect(SongDocumentSchema.parse(allocated)).toBeTruthy();
+  });
+
+  it("respects fixed seconds and only fills the rest", () => {
+    const input = {
+      language: "en" as const,
+      style_family: "western" as const,
+      target_duration_seconds: 90 as const,
+      sections: [
+        { id: "a", type: "intro" as const, target_seconds: 10 },
+        { id: "b", type: "verse" as const },
+        { id: "c", type: "verse" as const },
+        { id: "d", type: "outro" as const, target_seconds: 10 },
+      ],
+    };
+    const allocated = allocateSectionDurations(input);
+    expect(allocated.sections[0].target_seconds).toBe(10);
+    expect(allocated.sections[3].target_seconds).toBe(10);
+    expect(
+      allocated.sections[1].target_seconds + allocated.sections[2].target_seconds,
+    ).toBe(70);
+  });
+
+  it("throws when fixed seconds already exceed the total", () => {
+    expect(() =>
+      allocateSectionDurations({
+        language: "en" as const,
+        style_family: "western" as const,
+        target_duration_seconds: 30 as const,
+        sections: [
+          { id: "a", type: "intro" as const, target_seconds: 25 },
+          { id: "b", type: "verse" as const, target_seconds: 25 },
+        ],
+      }),
+    ).toThrow(/exceeds/);
   });
 });

@@ -4,14 +4,15 @@ Read this first. Applies to every agent (human or AI) committing to this reposit
 
 ## Phase-gating contract (Ralph-Wiggum promise)
 
-A phase advances iff **all four** hold:
+A phase advances iff **all five** hold:
 
-1. Tests green in CI.
-2. Containers build and start on the real DGX where applicable.
-3. The endpoint returns real, listenable output for at least one real input.
-4. A demo artifact (`demos/phase-N.{wav,gif,png,txt}`) is committed and visible on GitHub.
+1. **CI green** for `ts`, `py`, `contracts`, and `docker-build` workflows. Where the phase touches DGX behavior, `scripts/dgx-smoke.sh` also passes locally on the DGX (capture its output in `demos/phase-N-bringup.txt`).
+2. **Containers build and start on the real DGX** where applicable. The compose stack runs without manual intervention.
+3. **Real, listenable output** for at least one real input. Audio is `ffprobe`-verified (non-zero duration, correct sample rate). UI is visually diffed against the spec.
+4. **Reproducible demo**: `demos/phase-N.{wav,gif,png,txt}` is committed AND can be regenerated from the merged SHA by running `scripts/build-demo.sh phase-N`. Anyone with the repo can confirm it.
+5. **Adversarial review**: a domain reviewer (`ce-adversarial-reviewer` or a phase-specific reviewer such as `ce-correctness-reviewer`, `ce-security-reviewer`, `ce-testing-reviewer`) reviewed the diff. Any blocker findings are either resolved before merge or filed as a fresh ADR under `docs/DECISIONS/`.
 
-No phase merges without all four. No mocks counted as "real". No "I'll add tests later".
+No phase merges without all five. No mocks counted as "real". No "I'll add tests later". No "the reviewer is too strict, skip it."
 
 ## Worktree workflow
 

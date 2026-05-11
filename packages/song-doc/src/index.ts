@@ -50,7 +50,7 @@ export const ScriptSchema = z.enum([
 export type Script = z.infer<typeof ScriptSchema>;
 
 export const SectionSchema = z.object({
-  id: z.string().min(1),
+  id: z.string().min(1).max(64),
   type: SectionTypeSchema,
   lyrics: z.string().optional(),
   script: ScriptSchema.optional(),
@@ -60,6 +60,11 @@ export const SectionSchema = z.object({
   target_seconds: z.number().int().min(1).max(360),
 });
 export type Section = z.infer<typeof SectionSchema>;
+
+const SectionInputSchema = SectionSchema.extend({
+  target_seconds: z.number().int().min(1).max(360).optional(),
+});
+export type SectionInput = z.infer<typeof SectionInputSchema>;
 
 export const RagaSpecSchema = z.object({
   name: z.string().min(1),
@@ -80,7 +85,13 @@ export type Orchestration = z.infer<typeof OrchestrationSchema>;
 
 /**
  * Refinement: a raga spec is only meaningful for Carnatic and Hindustani styles.
- * We accept it on a Western or folk document but log it as "ignored" downstream.
+ * We reject mismatched style/raga combinations rather than silently ignoring
+ * them — a Western document with a `raga: { system: "carnatic" }` is almost
+ * certainly a producer bug, and the co-composer cannot represent it.
+ *
+ * `sections[].target_seconds` must sum to `target_duration_seconds`. Use the
+ * `allocateSectionDurations` helper below to fill in defaults *before*
+ * validating if your producer cannot supply every value.
  */
 export const SongDocumentSchema = z
   .object({
@@ -112,9 +123,76 @@ export const SongDocumentSchema = z
         });
       }
     }
+
+    const sumSections = doc.sections.reduce(
+      (acc, s) => acc + s.target_seconds,
+      0,
+    );
+    if (sumSections !== doc.target_duration_seconds) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sections"],
+        message: `sum(section.target_seconds) = ${sumSections} must equal target_duration_seconds = ${doc.target_duration_seconds}; use allocateSectionDurations() to auto-fill before validation`,
+      });
+    }
   });
 
 export type SongDocument = z.infer<typeof SongDocumentSchema>;
+
+/**
+ * Distributes `target_duration_seconds` across sections, filling in any
+ * `target_seconds` that the producer left unset. Existing values are
+ * preserved; the remainder is split equally across the unset sections.
+ *
+ * Returns a value shaped like `SongDocument` but **not yet validated** — pipe
+ * the result through `SongDocumentSchema.parse()` to enforce the full
+ * invariants (style/raga match, total-seconds match, section enums, etc.).
+ */
+export function allocateSectionDurations<
+  T extends {
+    target_duration_seconds: number;
+    sections: SectionInput[];
+  },
+>(input: T): T & { sections: Section[] } {
+  const total = input.target_duration_seconds;
+  const fixed = input.sections.filter((s) => s.target_seconds !== undefined);
+  const unset = input.sections.filter((s) => s.target_seconds === undefined);
+  const fixedSum = fixed.reduce((acc, s) => acc + (s.target_seconds ?? 0), 0);
+  const remaining = total - fixedSum;
+
+  if (remaining < 0) {
+    throw new Error(
+      `fixed sections already consume ${fixedSum}s, exceeds target_duration_seconds = ${total}`,
+    );
+  }
+  if (unset.length === 0 && remaining !== 0) {
+    throw new Error(
+      `all section.target_seconds set but sum = ${fixedSum} != target_duration_seconds = ${total}`,
+    );
+  }
+
+  const allocated: Section[] = [];
+  if (unset.length > 0) {
+    const per = Math.floor(remaining / unset.length);
+    const extra = remaining - per * unset.length;
+    let i = 0;
+    for (const s of input.sections) {
+      if (s.target_seconds !== undefined) {
+        allocated.push({ ...(s as Section) });
+      } else {
+        const share = per + (i < extra ? 1 : 0);
+        allocated.push({ ...(s as Section), target_seconds: share });
+        i += 1;
+      }
+    }
+  } else {
+    for (const s of input.sections) {
+      allocated.push({ ...(s as Section) });
+    }
+  }
+
+  return { ...input, sections: allocated };
+}
 
 /**
  * Pre-generated JSON Schema export so non-TS callers (Python pydantic, OpenAPI

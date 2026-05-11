@@ -65,15 +65,39 @@ jobs:
         working-directory: ${{ matrix.project }}
         run: uv run ruff check .
 
-      - name: mypy (soft-fail in Phase 0)
+      - name: mypy
         working-directory: ${{ matrix.project }}
-        run: uv run mypy . || echo "mypy soft-fail in Phase 0; tightens in Phase 1"
+        run: uv run mypy .
 
-      - name: pytest
+      - name: pytest (tests dir required)
         working-directory: ${{ matrix.project }}
         run: |
-          if [ -d tests ]; then
-            uv run pytest -q
-          else
-            echo "no tests directory"
+          if [ ! -d tests ]; then
+            echo "::error::missing tests/ in ${{ matrix.project }} — every Python project must ship tests"
+            exit 1
           fi
+          uv run pytest -q
+
+  contracts:
+    name: contracts (queue + openapi)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install validators
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema openapi-spec-validator
+
+      - name: validate queue-message JSON Schema
+        run: |
+          python -c "import json, jsonschema; jsonschema.Draft202012Validator.check_schema(json.load(open('docs/contracts/queue-message.schema.json'))); print('queue-message ok')"
+
+      - name: validate OpenAPI cloud + dgx
+        run: |
+          openapi-spec-validator docs/contracts/openapi-cloud.yaml
+          openapi-spec-validator docs/contracts/openapi-dgx.yaml

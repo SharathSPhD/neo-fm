@@ -115,7 +115,11 @@ paths:
       summary: Submit a new song generation request
       description: |
         Accepts either a fully-formed Song Document under `song_document` OR a
-        `prompt` (real Pratyabhijna handling lands in Phase 10).
+        `prompt`. The `prompt` branch is gated by the server-side feature flag
+        `prompt_enabled` (off by default). Until Phase 10, requests using the
+        `prompt` branch receive `501 Not Implemented` with the typed error
+        `{ "error": "prompt_branch_not_yet_enabled" }`. The `song_document`
+        branch is fully functional from Phase 4.
       operationId: createSong
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -139,6 +143,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QuotaError"
+        "501":
+          description: prompt branch not yet enabled (pre-Phase-10)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
   /api/songs/{id}:
     get:
@@ -279,14 +288,18 @@ components:
         - folk_refrain
         - folk_stanza
 
+    SectionScript:
+      type: string
+      enum: [devanagari, tamil, kannada, latin]
+
     Section:
       type: object
       required: [id, type, target_seconds]
       properties:
-        id: { type: string }
+        id: { type: string, minLength: 1, maxLength: 64 }
         type: { $ref: "#/components/schemas/SectionType" }
         lyrics: { type: string }
-        script: { type: string, description: "devanagari | tamil | kannada | latin" }
+        script: { $ref: "#/components/schemas/SectionScript" }
         transliteration: { type: string }
         swara_sequence: { type: string }
         phonemes:

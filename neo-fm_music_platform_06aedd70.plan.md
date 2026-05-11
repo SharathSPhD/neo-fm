@@ -15,7 +15,7 @@ todos:
     content: "Phase 3: worktree `phase/3-lyrics`. Real public-domain corpus under data/public-lyrics/ (Purandaradasa, DVG, Kabir, Tulsidas, Tagore, Blake, Whitman, Sanskrit), `LyricsProvider` interface in packages/lyrics, `PublicLyricsLibraryProvider` real impl, `PratyabhijnaProvider` seam (throws not-yet-integrated, real impl lands in `p10-pratyabhijna`); endpoint returns lyrics from real library + generates WAV"
     status: pending
   - id: p4-supa-api-worker
-    content: "Phase 4: parallel worktrees `phase/4a-supabase-schema` (users, song_documents, jobs, tracks tables + RLS + pg-boss), `phase/4b-cloud-api` (Next.js POST /songs, GET /songs/[id]), `phase/4c-dgx-worker` (Python pg-boss poller calling music-inference, uploading via signed PUT). Demo: end-to-end curl POST -> finished signed URL"
+    content: "Phase 4: parallel worktrees `phase/4a-supabase-schema` (users, song_documents, jobs, tracks, subscriptions tables + RLS + pgmq queue + dedicated `neo_fm_worker` role per ADR 0004), `phase/4b-cloud-api` (Next.js POST /api/songs, GET /api/songs/[id]), `phase/4c-dgx-worker` (Python pgmq poller via psycopg calling music-inference, uploading via signed PUT, lease/heartbeat per ADR 0008). Demo: end-to-end curl POST -> finished signed URL"
     status: pending
   - id: p5-web-ui
     content: "Phase 5: worktree `phase/5-web-ui`. Supabase Auth in Next.js, creation canvas (style/lang/duration/lyrics picker), Realtime job status, audio playback, library page, PWA scaffold. Demo: `demos/phase-5.gif` of full UX flow"
@@ -33,7 +33,7 @@ todos:
     content: "Phase 9: worktree `phase/9-pwa-quotas`. PWA installable, email notifications (Supabase Edge Functions + Resend), per-user quotas enforced at POST /songs. Demo: PWA install screenshot + quota enforcement test"
     status: pending
   - id: p10-pratyabhijna
-    content: "Phase 10: worktree `phase/10-pratyabhijna`. Replace `PratyabhijnaProvider` stub with real adapter that takes a user theme/prompt and returns a Song Document (lyrics + section types + initial metre/tala hints). Wire as default lyrics source on POST /songs when caller supplies `prompt` rather than raw lyrics. Demo: `curl POST /songs` with `{\"prompt\":\"monsoon evening in Mysore\",\"language\":\"kn\",\"style\":\"kannada-folk\"}` returns a Kannada Song Document + 90s WAV"
+    content: "Phase 10: worktree `phase/10-pratyabhijna`. Replace `PratyabhijnaProvider` stub with real adapter that takes a user theme/prompt and returns a Song Document (lyrics + section types + initial metre/tala hints). Wire as default lyrics source on POST /api/songs when caller supplies `prompt` rather than raw lyrics. Demo: `curl POST /api/songs` with `{\"prompt\":\"monsoon evening in Mysore\",\"language\":\"kn\",\"style_family\":\"kannada-folk\",\"target_duration_seconds\":90}` returns a Kannada Song Document + 90s WAV"
     status: pending
   - id: p11-observability
     content: "Phase 11: worktree `phase/11-observability`. Prometheus exporters in `music-inference` + `dgx-worker` + `vocal-synth`; Grafana dashboard JSON committed under `infra/grafana/`; alert rules for GPU util > threshold, job-lag > threshold, HeartMuLa error rate; `/healthz` endpoints upgraded to report model version, GPU memory, queue lag (research §6). Demo: `demos/phase-11-grafana.png` + alert-fired screenshot under synthetic load"
@@ -48,10 +48,10 @@ isProject: false
 
 - **Web**: Next.js 14 (App Router) on Vercel, Shadcn + Tailwind, PWA-installable
 - **API / Auth / DB / Storage**: Supabase (Postgres + RLS + Auth + Storage)
-- **Queue**: pg-boss inside Supabase Postgres (pg-boss vs pgmq ADR decided in Phase 0 → `docs/DECISIONS/0001-queue.md`)
+- **Queue**: pgmq inside Supabase Postgres (pg-boss vs pgmq ADR decided in Phase 0 → `docs/DECISIONS/0001-queue.md`; ADR picked pgmq)
 - **DGX side** (Docker on DGX OS, NVIDIA Container Runtime preinstalled):
   - `services/music-inference` — FastAPI + `heartmula` lib + `m-a-p/HeartMuLa-oss-3B` weights, base `nvcr.io/nvidia/pytorch:24.08-py3`
-  - `services/dgx-worker` — Python poller (pg-boss client), calls music-inference, uploads to Supabase Storage
+  - `services/dgx-worker` — Python poller (pgmq client via `psycopg`), calls music-inference, uploads to Supabase Storage
   - `services/vocal-synth` (Phase 7) — svara-TTS (`kenpath/svara-tts`) + AI4Bharat Indic-TTS G2P for Hindi/Kannada singing voice
 - **Tunnel**: Tailscale (DGX outbound only; cloud never reaches inward)
 - **Models**: `m-a-p/HeartMuLa-oss-3B` (Apache 2.0), `kenpath/svara-tts`, AI4Bharat Indic-TTS
@@ -66,7 +66,7 @@ isProject: false
 flowchart LR
     User[Browser PWA] -->|REST| WebAPI[Next.js on Vercel]
     WebAPI <-->|RLS rows| SupaDB[("Supabase Postgres")]
-    WebAPI -->|enqueue| Queue[("pg-boss queue")]
+    WebAPI -->|enqueue| Queue[("pgmq queue")]
     SupaAuth[Supabase Auth] --> WebAPI
     Queue <-->|poll| DGXWorker
     DGXWorker -->|HTTP| MusicInf["music-inference (HeartMuLa)"]
@@ -95,7 +95,7 @@ Each contradiction gets an ADR under `docs/DECISIONS/` invoking `plugin-triz-eng
 
 - `apps/web/` — Next.js + Vercel
 - `services/music-inference/` — FastAPI + HeartMuLa (Docker, DGX)
-- `services/dgx-worker/` — pg-boss poller (Docker, DGX)
+- `services/dgx-worker/` — pgmq poller (Docker, DGX)
 - `services/vocal-synth/` — svara-TTS (Docker, DGX, Phase 7)
 - `packages/song-doc/` — TS + Python pydantic Song Document DSL
 - `packages/co-composer/` — style modules (western, carnatic, hindustani, kannada-folk)
@@ -108,11 +108,12 @@ Each contradiction gets an ADR under `docs/DECISIONS/` invoking `plugin-triz-eng
 
 ## Phase gating contract (Ralph-Wiggum promise)
 
-A phase advances iff **all four** hold:
-1. Tests green in CI
-2. Container(s) build and start on real DGX
-3. Endpoint returns real, listenable output for at least one real input
-4. A demo artifact (`demos/phase-N.{wav,gif,png}`) is committed and visible on GitHub
+A phase advances iff **all five** hold:
+1. CI green AND `dgx-smoke` job green where the phase touches DGX behavior
+2. Container(s) build and start on real DGX (compose stdout captured under `demos/phase-N-bringup.txt`)
+3. Endpoint returns real, listenable output for at least one real input (`ffprobe`-verified for audio; visual diff for UI)
+4. A demo artifact (`demos/phase-N.{wav,gif,png,txt}`) is committed AND reproducible from the merged SHA via `scripts/build-demo.sh phase-N`
+5. Adversarial subagent (`ce-adversarial-reviewer` or domain reviewer) reviewed the diff; any blocker findings are resolved or filed as ADRs
 
 `verification-before-completion` skill enforces this; `architect-review` + `ce-code-review` run at each phase boundary; `tdd-orchestrator` enforces TDD inside each worktree.
 
@@ -139,13 +140,13 @@ A phase advances iff **all four** hold:
 2. **Phase 1 — Real music-inference container (vertical slice).** Build & run `services/music-inference` on DGX, generate a 30s WAV from real lyrics end-to-end on the GPU. Demo: `demos/phase-1.wav` + `nvidia-smi` screenshot.
 3. **Phase 2 — Song Document DSL + Western co-composer.** Parallel worktrees `phase/2a-song-doc` + `phase/2b-cocomposer-western`. TDD with golden files. Demo: golden test render of Western Song Document → WAV.
 4. **Phase 3 — Public-lyrics provider + Pratyabhijna seam.** Real corpus under `data/public-lyrics/`, `LyricsProvider` interface, `PublicLyricsLibraryProvider`, stubbed `PratyabhijnaProvider`. Demo: API returns real lyrics + 30s WAV from selected piece.
-5. **Phase 4 — Supabase schema + cloud API + dgx-worker.** Parallel worktrees `4a/4b/4c`. Postgres schema, pg-boss queue, Next.js API routes, Python worker on DGX. Demo: curl `POST /songs` → finished URL in Supabase Storage.
+5. **Phase 4 — Supabase schema + cloud API + dgx-worker.** Parallel worktrees `4a/4b/4c`. Postgres schema, pgmq queue, Next.js API routes, Python worker on DGX. Demo: `curl POST /api/songs` → finished URL in Supabase Storage.
 6. **Phase 5 — Web UI (creation canvas, library, playback).** Auth, creation form (style/lang/duration/lyrics picker), Realtime status, audio player, PWA scaffold. Demo: `demos/phase-5.gif` of full UX.
 7. **Phase 6 — Carnatic + Hindustani + Kannada-folk modules.** Parallel `phase/6a/6b/6c` via subagents. Each adds raga/tala/instrumentation rules + HeartMuLa tag mapping. Demo: one 90s WAV per style.
 8. **Phase 7 — Indic phonetics + svara-TTS vocal layer.** `phase/7a-g2p` wires AI4Bharat/IITM Indic-TTS G2P into the Song Document pre-processor; `phase/7b-vocal-synth` stands up `services/vocal-synth` with svara-TTS in its own Docker container on DGX; mixer overlays Indic vocals on HeartMuLa instrumental. Demo: A/B WAVs (HeartMuLa-only vs HeartMuLa+svara-TTS) for the same Kannada/Hindi line.
 9. **Phase 8 — GPU-share governor.** `nvidia-smi`-aware throttling in `dgx-worker` and priority queue so LLM fine-tuning preempts music jobs. Governor only — Prometheus/Grafana/alerts move to Phase 11. Demo: load-test with synthetic fine-tune workload showing worker yielding.
 10. **Phase 9 — PWA polish, notifications, quotas.** PWA installable, email notifications (Supabase Edge Functions + Resend), per-user quotas. Demo: PWA install screenshot + quota enforcement test.
-11. **Phase 10 — Pratyabhijna integration.** Replace the `PratyabhijnaProvider` stub from Phase 3 with the real adapter that turns a user prompt into a full Song Document (lyrics + section types + initial metre/tala hints). Wire as the default lyrics source on `POST /songs` when caller supplies `prompt` instead of raw lyrics. Demo: `curl POST /songs` with `{"prompt": "monsoon evening in Mysore", "language": "kn", "style": "kannada-folk"}` returns a Kannada Song Document plus a 90s WAV. Research basis: 3-layer stack (Pratyabhijna → co-composer → audio).
+11. **Phase 10 — Pratyabhijna integration.** Replace the `PratyabhijnaProvider` stub from Phase 3 with the real adapter that turns a user prompt into a full Song Document (lyrics + section types + initial metre/tala hints). Wire as the default lyrics source on `POST /api/songs` when caller supplies `prompt` instead of raw lyrics. Demo: `curl POST /api/songs` with `{"prompt": "monsoon evening in Mysore", "language": "kn", "style_family": "kannada-folk", "target_duration_seconds": 90}` returns a Kannada Song Document plus a 90s WAV. Research basis: 3-layer stack (Pratyabhijna → co-composer → audio).
 12. **Phase 11 — Observability.** Prometheus exporters in `music-inference`, `dgx-worker`, and `vocal-synth`; Grafana dashboard JSON checked in under `infra/grafana/`; alert rules for GPU util > threshold, job-lag > threshold, HeartMuLa error rate. `/healthz` endpoints upgraded to report model version, GPU memory, and queue lag per research §6. Demo: `demos/phase-11-grafana.png` + alert-fired screenshot under synthetic load.
 13. **Phase 12 — Managed-API pro tier (deferred, optional, post-v1).** Introduce `MusicEngine` adapter pattern with `HeartMuLaEngine` (default, all tiers) and `LyriaProEngine` (cloud, pro tier only). Routing rule: `tier=pro` users may opt into Lyria for styles where HeartMuLa lags; no-op on free tier. Do NOT block v1 launch on this phase. Demo: A/B WAV comparison on the same Song Document.
 

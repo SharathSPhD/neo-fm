@@ -42,7 +42,7 @@ SectionType = Literal[
 class Section(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str = Field(min_length=1)
+    id: str = Field(min_length=1, max_length=64)
     type: SectionType
     lyrics: str | None = None
     script: Script | None = None
@@ -95,11 +95,62 @@ class SongDocument(BaseModel):
         style = self.style_family
         match (raga_system, style):
             case ("carnatic", "carnatic") | ("hindustani", "hindustani"):
-                return self
+                pass
             case _:
                 raise ValueError(
                     f'raga.system "{raga_system}" does not match style_family "{style}"'
                 )
+        return self
+
+    @model_validator(mode="after")
+    def _section_seconds_sum_matches_total(self) -> SongDocument:
+        total = sum(s.target_seconds for s in self.sections)
+        if total != self.target_duration_seconds:
+            raise ValueError(
+                f"sum(section.target_seconds) = {total} must equal "
+                f"target_duration_seconds = {self.target_duration_seconds}; "
+                "use allocate_section_durations() to auto-fill before validation"
+            )
+        return self
+
+
+def allocate_section_durations(payload: dict[str, Any]) -> dict[str, Any]:
+    """Mirror of `allocateSectionDurations()` in the TS source.
+
+    Fills any `target_seconds` left unset across `payload['sections']` by
+    splitting `payload['target_duration_seconds']` equally over the unset
+    slots. Returns a new dict — the input is not mutated. The result is
+    *not yet validated*; pipe it through `SongDocument.model_validate()`.
+    """
+    sections_in: list[dict[str, Any]] = list(payload.get("sections", []))
+    total = int(payload["target_duration_seconds"])
+    fixed_sum = sum(int(s["target_seconds"]) for s in sections_in if "target_seconds" in s)
+    unset = [s for s in sections_in if "target_seconds" not in s]
+    remaining = total - fixed_sum
+    if remaining < 0:
+        raise ValueError(
+            f"fixed sections already consume {fixed_sum}s, exceeds "
+            f"target_duration_seconds = {total}"
+        )
+    if not unset and remaining != 0:
+        raise ValueError(
+            f"all section.target_seconds set but sum = {fixed_sum} != "
+            f"target_duration_seconds = {total}"
+        )
+    sections_out: list[dict[str, Any]] = []
+    if unset:
+        per, extra = divmod(remaining, len(unset))
+        i = 0
+        for s in sections_in:
+            if "target_seconds" in s:
+                sections_out.append(dict(s))
+            else:
+                share = per + (1 if i < extra else 0)
+                sections_out.append({**s, "target_seconds": share})
+                i += 1
+    else:
+        sections_out = [dict(s) for s in sections_in]
+    return {**payload, "sections": sections_out}
 
 
 class NotYetIntegratedError(RuntimeError):

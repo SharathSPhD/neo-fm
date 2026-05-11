@@ -1,11 +1,18 @@
 openapi: 3.1.0
 info:
   title: neo-fm DGX music-inference API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Internal API exposed by `services/music-inference` running on the DGX Spark.
     Reached only by `services/dgx-worker` over the docker-compose network.
     Never exposed to the public internet.
+
+    All non-health endpoints require shared-secret HMAC authentication
+    (see ADR 0003). The worker signs `sha256(body || "\n" || timestamp)`
+    using `MUSIC_INFERENCE_HMAC_SECRET` and sends:
+      - `X-NeoFM-Timestamp: <unix-seconds>`
+      - `X-NeoFM-Signature: <hex hmac-sha256>`
+    Timestamp skew tolerance is 60 seconds.
   license:
     name: Apache-2.0
     identifier: Apache-2.0
@@ -13,7 +20,7 @@ servers:
   - url: http://music-inference:8000
     description: docker-compose internal
   - url: http://localhost:8000
-    description: local dev
+    description: local dev (not exposed to host in prod compose)
 
 tags:
   - name: health
@@ -24,6 +31,9 @@ paths:
     get:
       tags: [health]
       summary: Liveness and readiness probe
+      description: |
+        Unauthenticated. Reports model load state, GPU memory in use,
+        and pgmq lag (set by the worker at heartbeat — value may be stale).
       operationId: healthz
       responses:
         "200":
@@ -39,8 +49,19 @@ paths:
       summary: Generate audio for one Song Document
       description: |
         Synchronous in v1 (the caller is the queue-driven worker, not a user).
-        Returns 501 in Phase 0 / Phase 1 stub builds; real audio output starts Phase 1.
+        Returns 501 in Phase 0 stub builds; real audio output starts Phase 1.
       operationId: generate
+      security:
+        - hmacAuth: []
+      parameters:
+        - in: header
+          name: X-NeoFM-Timestamp
+          required: true
+          schema: { type: string, description: unix seconds }
+        - in: header
+          name: X-NeoFM-Trace-Id
+          required: false
+          schema: { type: string, description: propagated trace id from queue message }
       requestBody:
         required: true
         content:
@@ -59,13 +80,31 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+        "401":
+          description: missing or invalid HMAC signature / stale timestamp
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
         "501":
           description: not implemented yet (Phase 0 stub)
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: circuit-breaker open (GPU above threshold; per ADR around C1)
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
 
 components:
+  securitySchemes:
+    hmacAuth:
+      type: apiKey
+      in: header
+      name: X-NeoFM-Signature
+      description: |
+        hex(hmac-sha256(MUSIC_INFERENCE_HMAC_SECRET, body || "\n" || X-NeoFM-Timestamp))
+
   schemas:
     HealthzResponse:
       type: object
@@ -75,7 +114,8 @@ components:
         model_loaded: { type: boolean }
         model_version: { type: string }
         gpu_memory_used_mb: { type: integer }
-        queue_lag_seconds: { type: integer }
+        gpu_utilization_pct: { type: integer, minimum: 0, maximum: 100 }
+        queue_lag_seconds: { type: integer, description: last value observed by worker; may be stale }
         phase: { type: integer }
 
     Error:
@@ -85,23 +125,102 @@ components:
         error: { type: string }
         details: { type: object, additionalProperties: true }
 
+    SectionType:
+      type: string
+      enum:
+        - intro
+        - verse
+        - chorus
+        - bridge
+        - outro
+        - pallavi
+        - anupallavi
+        - charanam
+        - mukhda
+        - antara
+        - saranam
+        - alaap
+        - sargam
+        - folk_refrain
+        - folk_stanza
+
+    SectionScript:
+      type: string
+      enum: [devanagari, tamil, kannada, latin]
+
+    StyleFamily:
+      type: string
+      enum: [western, carnatic, hindustani, kannada-folk]
+
+    RagaSpec:
+      type: object
+      required: [name, system]
+      properties:
+        name: { type: string }
+        system: { type: string, enum: [carnatic, hindustani] }
+        arohana:
+          type: array
+          items: { type: string }
+        avarohana:
+          type: array
+          items: { type: string }
+        nyas:
+          type: array
+          items: { type: string }
+        pakad: { type: string }
+
+    Orchestration:
+      type: object
+      properties:
+        lead_vocal: { type: string, enum: [male, female, instrumental] }
+        instruments:
+          type: array
+          items: { type: string }
+        texture: { type: string }
+
     GenerateRequestSection:
       type: object
-      required: [id, target_seconds]
+      description: |
+        Mirrors cloud `Section` schema (see openapi-cloud.yaml). The DGX side
+        adds `tags` — the co-composer's HeartMuLa prompt tags derived from the
+        Song Document — and keeps every field the cloud passes through so the
+        inference engine has full musical context.
+      required: [id, type, target_seconds]
       properties:
-        id: { type: string }
+        id: { type: string, minLength: 1, maxLength: 64 }
+        type: { $ref: "#/components/schemas/SectionType" }
         lyrics: { type: string }
-        language: { type: string }
-        tags:
+        language: { type: string, description: ISO 639-1 }
+        script: { $ref: "#/components/schemas/SectionScript" }
+        transliteration: { type: string }
+        swara_sequence: { type: string }
+        phonemes:
           type: array
           items: { type: string }
         target_seconds: { type: integer, minimum: 1, maximum: 360 }
+        tags:
+          type: array
+          description: co-composer-derived HeartMuLa prompt tags
+          items: { type: string }
 
     GenerateRequest:
       type: object
-      required: [job_id, sections]
+      required: [job_id, sections, style_family]
       properties:
         job_id: { type: string, format: uuid }
+        attempt_id:
+          type: string
+          format: uuid
+          description: |
+            Mirrors `attempt_id` in the queue message (ADR 0008). Used by
+            music-inference for idempotency / debug correlation.
+        style_family: { $ref: "#/components/schemas/StyleFamily" }
+        tempo_bpm: { type: integer, minimum: 30, maximum: 240 }
+        time_signature: { type: string }
+        tala: { type: string }
+        target_duration_seconds: { type: integer, minimum: 1, maximum: 360 }
+        raga: { $ref: "#/components/schemas/RagaSpec" }
+        orchestration: { $ref: "#/components/schemas/Orchestration" }
         sections:
           type: array
           minItems: 1
@@ -120,12 +239,14 @@ components:
       properties:
         id: { type: string }
         file_path: { type: string, description: filesystem path on DGX, e.g. /mnt/audio/jobs/<uuid>/intro.wav }
+        duration_seconds: { type: integer }
 
     GenerateResponse:
       type: object
       required: [job_id, sections, duration_seconds, metadata]
       properties:
         job_id: { type: string, format: uuid }
+        attempt_id: { type: string, format: uuid }
         sections:
           type: array
           items: { $ref: "#/components/schemas/GenerateResponseSection" }
@@ -136,4 +257,6 @@ components:
           properties:
             model: { type: string }
             version: { type: string }
+            wall_seconds: { type: number }
+            gpu_memory_peak_mb: { type: integer }
           additionalProperties: true

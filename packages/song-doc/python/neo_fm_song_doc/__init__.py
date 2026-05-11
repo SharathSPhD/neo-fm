@@ -8,6 +8,7 @@ from .models import (
     SectionType,
     SongDocument,
     StyleFamily,
+    allocate_section_durations,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "SectionType",
     "SongDocument",
     "StyleFamily",
+    "allocate_section_durations",
 ]
