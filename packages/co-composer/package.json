@@ -16,12 +16,17 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "typecheck": "tsc -b tsconfig.json"
+    "typecheck": "tsc -b tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "build-phase-2-request": "tsx scripts/build-phase-2-request.ts"
   },
   "dependencies": {
     "@neo-fm/song-doc": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
   }
 }
