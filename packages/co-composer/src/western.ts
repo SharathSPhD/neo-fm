@@ -106,26 +106,64 @@ function instrumentTags(orch: Orchestration | undefined): string[] {
   return out;
 }
 
+// Tag families that are "single-valued" — once the producer supplies one,
+// the composer must NOT add a competing value with the same prefix. Without
+// this, a producer's `key:G` plus the composer's `key:C` would both end up
+// in the bag and HeartMuLa would condition on contradictory information.
+const SINGLE_VALUED_PREFIXES = [
+  "section:",
+  "key:",
+  "style:",
+  "tempo:",
+  "time_sig:",
+  "lead_vocal:",
+  "texture:",
+  "progression:",
+];
+
+function isComposerTagSuperseded(
+  composerTag: string,
+  producerTags: ReadonlySet<string>,
+): boolean {
+  for (const prefix of SINGLE_VALUED_PREFIXES) {
+    if (composerTag.startsWith(prefix)) {
+      for (const p of producerTags) {
+        if (p.startsWith(prefix)) return true;
+      }
+      return false;
+    }
+  }
+  return false;
+}
+
 function elaborateSection(
   section: Section,
   globalTags: string[],
   key: Key,
 ): Section {
-  const sectionTags: string[] = [
+  const composerTags: string[] = [
     `section:${section.type}`,
     `key:${key}`,
     ...globalTags,
   ];
   const progTag = chordProgressionTag(section.type, key);
-  if (progTag) sectionTags.push(progTag);
+  if (progTag) composerTags.push(progTag);
 
   // Merge with any tags the producer pre-supplied (e.g. a guided session
-  // pinning "bright" or "minor-ish"). De-dupe, preserve producer-order
-  // first so their intent wins.
+  // pinning "bright" or "minor-ish"). Producer values come first and win for
+  // both exact duplicates AND single-valued prefix families (key:, style:,
+  // tempo:, etc.). Free-form tags ("mood:bright") pass through both directions.
+  const producerSet = new Set(section.tags ?? []);
   const seen = new Set<string>();
   const merged: string[] = [];
-  for (const t of [...(section.tags ?? []), ...sectionTags]) {
+  for (const t of section.tags ?? []) {
     if (seen.has(t)) continue;
+    seen.add(t);
+    merged.push(t);
+  }
+  for (const t of composerTags) {
+    if (seen.has(t)) continue;
+    if (isComposerTagSuperseded(t, producerSet)) continue;
     seen.add(t);
     merged.push(t);
   }
@@ -164,7 +202,10 @@ export class WesternCoComposer implements CoComposer {
       sections: elaboratedSections,
       metadata: {
         ...(doc.metadata ?? {}),
-        composer: {
+        // Namespaced so a producer-authored `metadata.composer` survives
+        // untouched. (Per Phase 2 review: never silently overwrite producer
+        // metadata.)
+        neo_fm_co_composer: {
           name: "WesternCoComposer",
           version: "0.1.0",
           key,

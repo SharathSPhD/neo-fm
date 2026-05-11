@@ -10,12 +10,10 @@ Cross-field validators live in `models.py`, not here, because JSON Schema
 cannot represent them.
 """
 
-# ruff: noqa: E501
-
+# ruff: noqa: E501, I001
 from __future__ import annotations
 
 from typing import Any, Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 
 class Section(BaseModel):
@@ -54,8 +52,8 @@ class Raga(BaseModel):
 class _SongDocumentBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    id: str | None = None
-    user_id: str | None = None
+    id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+    user_id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
     language: Literal['en', 'hi', 'kn']
     style_family: Literal['western', 'carnatic', 'hindustani', 'kannada-folk']
     tempo_bpm: int | None = Field(default=None, ge=30, le=240)

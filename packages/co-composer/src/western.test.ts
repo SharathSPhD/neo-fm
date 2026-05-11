@@ -101,13 +101,48 @@ describe("WesternCoComposer", () => {
     expect(intro.filter((t: string) => t === "style:western").length).toBe(1);
   });
 
-  it("writes a deterministic composer metadata block", async () => {
+  it("writes a deterministic composer metadata block under neo_fm_co_composer", async () => {
     const out1 = await cc.elaborate(makeDoc());
     const out2 = await cc.elaborate(makeDoc());
     expect(out1.metadata).toEqual(out2.metadata);
-    const md = out1.metadata as { composer: { name: string; key: string } };
-    expect(md.composer.name).toBe("WesternCoComposer");
-    expect(md.composer.key).toBe("C");
+    const md = out1.metadata as {
+      neo_fm_co_composer: { name: string; key: string };
+    };
+    expect(md.neo_fm_co_composer.name).toBe("WesternCoComposer");
+    expect(md.neo_fm_co_composer.key).toBe("C");
+  });
+
+  it("does not overwrite producer-supplied metadata.composer", async () => {
+    const doc = makeDoc({
+      metadata: { composer: { name: "ProducerComposer", version: "9.9.9" } },
+    });
+    const out = await cc.elaborate(doc);
+    const md = out.metadata as {
+      composer: { name: string };
+      neo_fm_co_composer: { name: string };
+    };
+    expect(md.composer.name).toBe("ProducerComposer");
+    expect(md.neo_fm_co_composer.name).toBe("WesternCoComposer");
+  });
+
+  it("does not contradict a producer-supplied key", async () => {
+    const doc = makeDoc({
+      sections: [
+        {
+          id: "intro",
+          type: "intro",
+          target_seconds: 16,
+          tags: ["key:G"],
+        },
+        { id: "v1", type: "verse", target_seconds: 28, lyrics: "verse one" },
+        { id: "c1", type: "chorus", target_seconds: 30, lyrics: "chorus" },
+        { id: "outro", type: "outro", target_seconds: 16 },
+      ],
+    });
+    const out = await cc.elaborate(doc);
+    const intro = out.sections[0]?.tags ?? [];
+    const keyTags = intro.filter((t: string) => t.startsWith("key:"));
+    expect(keyTags).toEqual(["key:G"]);
   });
 
   it("refuses non-western documents", async () => {

@@ -59,8 +59,8 @@ export const SectionSchema = z.object({
   phonemes: z.array(z.string()).optional(),
   target_seconds: z.number().int().min(1).max(360),
   // Free-form synthesis hints populated by a co-composer (Phase 2 onwards).
-  // Mirrors the `tags` field on GenerateRequestSection in openapi-dgx.yaml;
-  // the worker forwards them verbatim to music-inference.
+  // Mirrors the `tags` field on GenerateRequestSection in openapi-dgx.yaml; the
+  // worker forwards them verbatim to music-inference.
   tags: z.array(z.string()).optional(),
 });
 export type Section = z.infer<typeof SectionSchema>;
@@ -179,6 +179,16 @@ export function allocateSectionDurations<
   if (unset.length > 0) {
     const per = Math.floor(remaining / unset.length);
     const extra = remaining - per * unset.length;
+    // Reject before allocating: a remainder that yields any zero-second
+    // section would later fail SongDocumentSchema validation with a
+    // confusing "target_seconds >= 1" message. Fail here with a clear one.
+    if (per === 0 && extra < unset.length) {
+      throw new Error(
+        `allocateSectionDurations cannot fit ${unset.length} unset section(s) ` +
+          `into ${remaining}s remaining without producing a 0-second section. ` +
+          `Reduce the number of unset sections or raise target_duration_seconds.`,
+      );
+    }
     let i = 0;
     for (const s of input.sections) {
       if (s.target_seconds !== undefined) {

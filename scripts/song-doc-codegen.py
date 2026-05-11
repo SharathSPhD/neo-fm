@@ -54,12 +54,10 @@ Cross-field validators live in `models.py`, not here, because JSON Schema
 cannot represent them.
 """
 
-# ruff: noqa: E501
-
+# ruff: noqa: E501, I001
 from __future__ import annotations
 
 from typing import Any, Literal
-
 from pydantic import BaseModel, ConfigDict, Field
 '''
 
@@ -83,6 +81,14 @@ def _field_constraints(prop: dict[str, object]) -> str:
         parts.append(f"min_length={prop['minItems']}")
     if "maxItems" in prop:
         parts.append(f"max_length={prop['maxItems']}")
+    if prop.get("format") == "uuid":
+        # JSON Schema "format: uuid" — emit a Pydantic UUID pattern. We don't
+        # use the uuid.UUID type because that would change the runtime shape
+        # of the field (UUID vs str); a pattern keeps the str interface.
+        parts.append(
+            'pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+            '[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"'
+        )
     return ", ".join(parts)
 
 

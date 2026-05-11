@@ -94,6 +94,16 @@ def allocate_section_durations(payload: dict[str, Any]) -> dict[str, Any]:
     sections_out: list[dict[str, Any]] = []
     if unset:
         per, extra = divmod(remaining, len(unset))
+        # Reject before allocating: a remainder that yields any zero-second
+        # section would later fail SongDocument validation with a confusing
+        # "target_seconds >= 1" message. Fail here with a clear one.
+        if per == 0 and extra < len(unset):
+            raise ValueError(
+                f"allocate_section_durations cannot fit {len(unset)} unset "
+                f"section(s) into {remaining}s remaining without producing "
+                "a 0-second section. Reduce the number of unset sections or "
+                "raise target_duration_seconds."
+            )
         i = 0
         for s in sections_in:
             if "target_seconds" in s:
