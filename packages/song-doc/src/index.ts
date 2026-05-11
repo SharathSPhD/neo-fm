@@ -58,6 +58,10 @@ export const SectionSchema = z.object({
   swara_sequence: z.string().optional(),
   phonemes: z.array(z.string()).optional(),
   target_seconds: z.number().int().min(1).max(360),
+  // Free-form synthesis hints populated by a co-composer (Phase 2 onwards).
+  // Mirrors the `tags` field on GenerateRequestSection in openapi-dgx.yaml;
+  // the worker forwards them verbatim to music-inference.
+  tags: z.array(z.string()).optional(),
 });
 export type Section = z.infer<typeof SectionSchema>;
 

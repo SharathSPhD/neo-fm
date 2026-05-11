@@ -18,7 +18,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 class Section(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -30,6 +29,7 @@ class Section(BaseModel):
     swara_sequence: str | None = None
     phonemes: list[str] | None = None
     target_seconds: int = Field(ge=1, le=360)
+    tags: list[str] | None = None
 
 
 class Orchestration(BaseModel):
