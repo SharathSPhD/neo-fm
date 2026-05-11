@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ts:
+    name: typescript (pnpm)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile=false
+
+      - run: pnpm -r typecheck
+
+      - run: pnpm -r --if-present lint
+
+      - run: pnpm -r --if-present test
+
+      - run: pnpm --filter @neo-fm/web build
+
+  py:
+    name: python (uv)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - packages/song-doc/python
+          - services/music-inference
+          - services/dgx-worker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: sync project
+        working-directory: ${{ matrix.project }}
+        run: uv sync --all-groups
+
+      - name: ruff
+        working-directory: ${{ matrix.project }}
+        run: uv run ruff check .
+
+      - name: mypy (soft-fail in Phase 0)
+        working-directory: ${{ matrix.project }}
+        run: uv run mypy . || echo "mypy soft-fail in Phase 0; tightens in Phase 1"
+
+      - name: pytest
+        working-directory: ${{ matrix.project }}
+        run: |
+          if [ -d tests ]; then
+            uv run pytest -q
+          else
+            echo "no tests directory"
+          fi

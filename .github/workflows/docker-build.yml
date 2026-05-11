@@ -1,0 +1,39 @@
+name: docker-build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "services/**"
+      - ".github/workflows/docker-build.yml"
+  pull_request:
+    paths:
+      - "services/**"
+      - ".github/workflows/docker-build.yml"
+
+concurrency:
+  group: docker-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - music-inference
+          - dgx-worker
+          - vocal-synth
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: build image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.service }}
+          push: false
+          load: true
+          tags: neo-fm/${{ matrix.service }}:ci
