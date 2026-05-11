@@ -1,4 +1,5 @@
 from .models import (
+    Duration,
     Language,
     NotYetIntegratedError,
     Orchestration,
@@ -12,6 +13,7 @@ from .models import (
 )
 
 __all__ = [
+    "Duration",
     "Language",
     "NotYetIntegratedError",
     "Orchestration",

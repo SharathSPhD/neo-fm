@@ -1,0 +1,14 @@
+# Force LF line endings on text files so cross-platform contributors
+# (Linux/macOS DGX vs Windows workstation) cannot CRLF-poison a checked-in
+# fixture and silently fail the byte-for-byte golden-parity tests in
+# phase2.test.ts / parity_dump.py.
+* text=auto eol=lf
+
+# Binary artifacts that must never be normalised:
+*.wav binary
+*.mp3 binary
+*.flac binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary

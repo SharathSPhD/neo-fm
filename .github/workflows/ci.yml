@@ -101,3 +101,66 @@ jobs:
         run: |
           openapi-spec-validator docs/contracts/openapi-cloud.yaml
           openapi-spec-validator docs/contracts/openapi-dgx.yaml
+
+  song-doc-codegen:
+    name: song-doc codegen drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pnpm install --frozen-lockfile=false
+
+      - name: re-export song-doc JSON Schema from Zod
+        run: pnpm --filter @neo-fm/song-doc export-schema
+
+      - name: re-run Python codegen
+        run: python3 scripts/song-doc-codegen.py
+
+      - name: fail on drift
+        run: |
+          if ! git diff --exit-code -- \
+              packages/song-doc/song-doc.schema.json \
+              packages/song-doc/python/neo_fm_song_doc/_generated.py; then
+            echo "::error::song-doc codegen out of date. Run:"
+            echo "  pnpm --filter @neo-fm/song-doc export-schema"
+            echo "  python3 scripts/song-doc-codegen.py"
+            echo "...and commit the regenerated files."
+            exit 1
+          fi
+
+      - name: install uv (for python parity dump)
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: sync song-doc python project
+        working-directory: packages/song-doc/python
+        run: uv sync --all-groups
+
+      - name: dump TS parity stream
+        run: pnpm --filter @neo-fm/song-doc --silent normalize-fixtures > /tmp/ts-parity.txt
+
+      - name: dump Python parity stream
+        working-directory: packages/song-doc/python
+        run: uv run python tests/parity_dump.py > /tmp/py-parity.txt
+
+      - name: fixture parity (TS == Py byte-identical)
+        run: |
+          if ! diff -u /tmp/ts-parity.txt /tmp/py-parity.txt; then
+            echo "::error::Zod and pydantic disagree on fixture parsing. See diff above."
+            exit 1
+          fi
+          echo "[song-doc] $(wc -l < /tmp/ts-parity.txt) fixtures parsed identically by TS and Py"

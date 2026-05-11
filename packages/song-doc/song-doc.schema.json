@@ -1,0 +1,209 @@
+{
+  "$ref": "#/definitions/SongDocument",
+  "definitions": {
+    "SongDocument": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "language": {
+          "type": "string",
+          "enum": [
+            "en",
+            "hi",
+            "kn"
+          ]
+        },
+        "style_family": {
+          "type": "string",
+          "enum": [
+            "western",
+            "carnatic",
+            "hindustani",
+            "kannada-folk"
+          ]
+        },
+        "tempo_bpm": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 240
+        },
+        "time_signature": {
+          "type": "string"
+        },
+        "tala": {
+          "type": "string"
+        },
+        "target_duration_seconds": {
+          "type": "number",
+          "enum": [
+            30,
+            60,
+            90,
+            180
+          ]
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "intro",
+                  "verse",
+                  "chorus",
+                  "bridge",
+                  "outro",
+                  "pallavi",
+                  "anupallavi",
+                  "charanam",
+                  "mukhda",
+                  "antara",
+                  "saranam",
+                  "alaap",
+                  "sargam",
+                  "folk_refrain",
+                  "folk_stanza"
+                ]
+              },
+              "lyrics": {
+                "type": "string"
+              },
+              "script": {
+                "type": "string",
+                "enum": [
+                  "latin",
+                  "devanagari",
+                  "tamil",
+                  "kannada",
+                  "telugu",
+                  "bengali"
+                ]
+              },
+              "transliteration": {
+                "type": "string"
+              },
+              "swara_sequence": {
+                "type": "string"
+              },
+              "phonemes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "target_seconds": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 360
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "type",
+              "target_seconds"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "orchestration": {
+          "type": "object",
+          "properties": {
+            "lead_vocal": {
+              "type": "string",
+              "enum": [
+                "male",
+                "female",
+                "instrumental"
+              ]
+            },
+            "instruments": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "texture": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "raga": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "system": {
+              "type": "string",
+              "enum": [
+                "carnatic",
+                "hindustani"
+              ]
+            },
+            "arohana": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "avarohana": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "nyas": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "pakad": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "system"
+          ],
+          "additionalProperties": false
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "language",
+        "style_family",
+        "target_duration_seconds",
+        "sections"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
