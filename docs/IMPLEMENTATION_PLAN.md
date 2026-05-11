@@ -50,6 +50,11 @@ Worktree: `phase/3-lyrics`.
 
 Parallel worktrees: `phase/4a-supabase-schema`, `phase/4b-cloud-api`, `phase/4c-dgx-worker`.
 
+**Operator action required before this phase starts.** Every step below
+depends on a real Supabase project, a real Vercel link, and real
+credentials. See [`PHASE-4-HANDOFF.md`](PHASE-4-HANDOFF.md) for the
+checklist — the agent will refuse to fake any of it.
+
 - [ ] **4a**: Supabase migrations in [infra/supabase/migrations/](../infra/supabase/migrations/): `users`, `song_documents`, `jobs`, `tracks`, `subscriptions` tables + RLS + pgmq queue creation.
 - [ ] **4b**: Next.js API routes — `POST /api/songs`, `GET /api/songs`, `GET /api/songs/{id}`, `GET /api/me`. Supabase service-role server-side only.
 - [ ] **4c**: Python worker in [services/dgx-worker/](../services/dgx-worker/): pgmq poller → fetch SongDoc → call music-inference → signed PUT to Storage → update job row.

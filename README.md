@@ -20,11 +20,11 @@ Built phase-gated with real artifacts and demo evidence at every step.
 
 ## Phase status
 
-- Phase 0 — Bootstrap (in progress)
-- Phase 1 — music-inference vertical slice (pending)
-- Phase 2 — Song Document DSL + Western co-composer (pending)
-- Phase 3 — Public lyrics provider + Pratyabhijna seam (pending)
-- Phase 4 — Supabase schema + cloud API + worker (pending)
+- Phase 0 — Bootstrap (**done**)
+- Phase 1 — music-inference vertical slice (**code merged**; WAV demo blocked on DGX bring-up — see [`demos/phase-1-SMOKE-HANDOFF.md`](demos/phase-1-SMOKE-HANDOFF.md))
+- Phase 2 — Song Document DSL + Western co-composer (**done**; golden request committed; WAV blocked on DGX — see [`demos/phase-2-SMOKE-HANDOFF.md`](demos/phase-2-SMOKE-HANDOFF.md))
+- Phase 3 — Public lyrics provider + Pratyabhijna seam (**done**; 12-entry PD corpus + golden request committed; WAV blocked on DGX — see [`demos/phase-3-SMOKE-HANDOFF.md`](demos/phase-3-SMOKE-HANDOFF.md))
+- Phase 4 — Supabase schema + cloud API + worker (**blocked on operator**; see [`docs/PHASE-4-HANDOFF.md`](docs/PHASE-4-HANDOFF.md))
 - Phase 5 — Web UI (pending)
 - Phase 6 — Carnatic + Hindustani + Kannada-folk modules (pending)
 - Phase 7 — Indic phonetics + svara-TTS vocal layer (pending)
