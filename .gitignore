@@ -1,0 +1,72 @@
+# Node / pnpm / Turborepo
+node_modules/
+.pnpm-store/
+.pnpm-debug.log
+.turbo/
+*.tsbuildinfo
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.uv-cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Model weights and large blobs (download via tooling, never commit)
+models/
+weights/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+*.onnx
+
+# Audio: ignore everywhere except curated demos/
+*.wav
+*.mp3
+*.flac
+*.opus
+!demos/**/*.wav
+!demos/**/*.mp3
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs
+*.log
+logs/
+
+# Cursor / agent metadata
+.cursor/
+
+# Misc
+coverage/
+.cache/

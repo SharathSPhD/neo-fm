@@ -1,0 +1,54 @@
+{
+  "language": "en",
+  "style_family": "western",
+  "tempo_bpm": 112,
+  "time_signature": "4/4",
+  "target_duration_seconds": 180,
+  "orchestration": {
+    "lead_vocal": "female",
+    "instruments": ["acoustic_guitar", "bass", "drum_kit", "synth_pad"],
+    "texture": "full-band"
+  },
+  "sections": [
+    {
+      "id": "intro",
+      "type": "intro",
+      "script": "latin",
+      "target_seconds": 12
+    },
+    {
+      "id": "v1",
+      "type": "verse",
+      "script": "latin",
+      "lyrics": "The streetlights flicker on a Tuesday afternoon",
+      "target_seconds": 40
+    },
+    {
+      "id": "c1",
+      "type": "chorus",
+      "script": "latin",
+      "lyrics": "We are everywhere and nowhere all at once",
+      "target_seconds": 32
+    },
+    {
+      "id": "v2",
+      "type": "verse",
+      "script": "latin",
+      "lyrics": "I traced the coastline of a city I have never been",
+      "target_seconds": 40
+    },
+    {
+      "id": "c2",
+      "type": "chorus",
+      "script": "latin",
+      "lyrics": "We are everywhere and nowhere all at once",
+      "target_seconds": 40
+    },
+    {
+      "id": "outro",
+      "type": "outro",
+      "script": "latin",
+      "target_seconds": 16
+    }
+  ]
+}

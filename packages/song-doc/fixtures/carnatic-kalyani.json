@@ -1,0 +1,45 @@
+{
+  "language": "kn",
+  "style_family": "carnatic",
+  "tempo_bpm": 85,
+  "tala": "adi",
+  "target_duration_seconds": 180,
+  "orchestration": {
+    "lead_vocal": "female",
+    "instruments": ["mridangam", "tanpura", "violin"],
+    "texture": "lead+drone"
+  },
+  "raga": {
+    "name": "kalyani",
+    "system": "carnatic",
+    "arohana": ["S", "R2", "G3", "M2", "P", "D2", "N3", "S'"],
+    "avarohana": ["S'", "N3", "D2", "P", "M2", "G3", "R2", "S"]
+  },
+  "sections": [
+    {
+      "id": "pallavi",
+      "type": "pallavi",
+      "script": "kannada",
+      "lyrics": "ಜಯತಿ ಜಯ ಜನನಿ",
+      "transliteration": "jayati jaya janani",
+      "swara_sequence": "P D P M G R S",
+      "target_seconds": 40
+    },
+    {
+      "id": "anupallavi",
+      "type": "anupallavi",
+      "script": "kannada",
+      "lyrics": "ಸಂಗೀತ ಸಾಗರ ಸಮುದ್ರೆ",
+      "transliteration": "sangeeta sagara samudre",
+      "target_seconds": 50
+    },
+    {
+      "id": "charanam",
+      "type": "charanam",
+      "script": "kannada",
+      "lyrics": "ಪುರಂದರ ವಿಠಲ ಪ್ರಿಯೇ",
+      "transliteration": "purandara vithala priye",
+      "target_seconds": 90
+    }
+  ]
+}

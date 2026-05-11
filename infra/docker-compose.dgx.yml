@@ -1,0 +1,70 @@
+# neo-fm — docker-compose for DGX-side services.
+#
+# Phase 0: brings up music-inference (FastAPI stub) + dgx-worker (print-loop) +
+#          vocal-synth (placeholder). No GPU is required because no real model
+#          is loaded yet.
+# Phase 1: music-inference container switches to nvcr.io/nvidia/pytorch:24.08-py3
+#          and gains `deploy.resources.reservations.devices` for GPU access.
+#
+# Usage (from repo root):
+#   docker compose -f infra/docker-compose.dgx.yml up --build
+
+name: neo-fm
+
+services:
+  music-inference:
+    build:
+      context: ../services/music-inference
+      dockerfile: Dockerfile
+    image: neo-fm/music-inference:phase-0
+    container_name: neo-fm-music-inference
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      PHASE: "0"
+    # Phase 1 adds:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - >-
+          import urllib.request,sys;
+          r=urllib.request.urlopen('http://localhost:8000/healthz', timeout=4);
+          sys.exit(0 if r.status==200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dgx-worker:
+    build:
+      context: ../services/dgx-worker
+      dockerfile: Dockerfile
+    image: neo-fm/dgx-worker:phase-0
+    container_name: neo-fm-dgx-worker
+    restart: unless-stopped
+    depends_on:
+      music-inference:
+        condition: service_healthy
+    environment:
+      MUSIC_INFERENCE_URL: "http://music-inference:8000"
+      POLL_INTERVAL_SECONDS: "5"
+      PHASE: "0"
+
+  vocal-synth:
+    build:
+      context: ../services/vocal-synth
+      dockerfile: Dockerfile
+    image: neo-fm/vocal-synth:phase-0
+    container_name: neo-fm-vocal-synth
+    restart: "no"
+    profiles: ["phase-7"]

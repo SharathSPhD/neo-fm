@@ -1,0 +1,23 @@
+{
+  "name": "neo-fm",
+  "version": "0.0.0",
+  "private": true,
+  "description": "India-first composition-aware AI music platform.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "dev": "turbo run dev"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.6.3"
+  }
+}

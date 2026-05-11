@@ -1,0 +1,45 @@
+{
+  "language": "kn",
+  "style_family": "kannada-folk",
+  "tempo_bpm": 96,
+  "target_duration_seconds": 90,
+  "orchestration": {
+    "lead_vocal": "male",
+    "instruments": ["dhol", "flute", "tambourine"],
+    "texture": "call-and-response"
+  },
+  "sections": [
+    {
+      "id": "r1",
+      "type": "folk_refrain",
+      "script": "kannada",
+      "lyrics": "ಗುಡ್ಡದ ಮೇಲೆ ಗುಡಿ ಕಟ್ಟಿ",
+      "transliteration": "guddada mele gudi katti",
+      "target_seconds": 20
+    },
+    {
+      "id": "s1",
+      "type": "folk_stanza",
+      "script": "kannada",
+      "lyrics": "ಗುಡಿಯೊಳಗೆ ಗುರು ಬಂದನಂತೆ",
+      "transliteration": "gudiyolage guru bandanante",
+      "target_seconds": 30
+    },
+    {
+      "id": "r2",
+      "type": "folk_refrain",
+      "script": "kannada",
+      "lyrics": "ಗುಡ್ಡದ ಮೇಲೆ ಗುಡಿ ಕಟ್ಟಿ",
+      "transliteration": "guddada mele gudi katti",
+      "target_seconds": 20
+    },
+    {
+      "id": "s2",
+      "type": "folk_stanza",
+      "script": "kannada",
+      "lyrics": "ಗುರು ಹೇಳಿದನು ಜಗದ ಕಥೆಯ",
+      "transliteration": "guru helidanu jagada katheya",
+      "target_seconds": 20
+    }
+  ]
+}
