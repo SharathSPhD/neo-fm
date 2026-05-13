@@ -1,24 +1,29 @@
 """
-Phase 0 stub for the music-inference service.
+music-inference service.
 
-Implements the shape of docs/contracts/openapi-dgx.yaml so the dgx-worker can be
-wired against a real (if inert) HTTP surface from day 1. POST /v1/generate
-deliberately returns 501 so we never confuse a stub run for a real generation.
+Implements `docs/contracts/openapi-dgx.yaml`. The dgx-worker authenticates with
+HMAC (ADR 0003) and POSTs a `GenerateRequest`; we return the rendered audio.
 
-Two cross-cutting concerns ship in Phase 0:
+Phase 0 returned 501. Phase 1 (this revision) wires the request through
+`app.model.HeartMuLaModel` so the response is a real WAV. The model layer is
+behind a `MusicModel` protocol so tests substitute a `FakeMusicModel` -- no
+torch/heartlib in CI.
+
+Cross-cutting concerns:
 
 - HMAC authentication on /v1/generate (ADR 0003). The shared secret is injected
   via env (MUSIC_INFERENCE_HMAC_SECRET). /healthz remains unauthenticated for
   the docker healthcheck.
 - Structured JSON logs (ADR 0007). Every request emits one JSON line with
   request_id, route, status, latency_ms, plus model state for /v1/generate.
-
-Phase 1 swaps the body of `generate` with real HeartMuLa inference and adds
-eager model load at startup (TRIZ C2).
+- Eager model load at startup (TRIZ C2): the first user request must not pay
+  the cold-start tax. Override with HEARTMULA_DEFER_LOAD=1 in environments
+  where the GPU isn't ready at process start (e.g. shared schedulers).
 """
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import json
@@ -27,18 +32,25 @@ import os
 import sys
 import time
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response as FastAPIResponse
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-PHASE = 0
-MODEL_LOADED = False
-MODEL_VERSION: str | None = None
+from app import model as model_module
+from app.model import (
+    GenerationRequest,
+    GenerationSection,
+    MusicModel,
+)
+
+PHASE = 1
 
 HMAC_HEADER_SIG = "x-neofm-signature"
 HMAC_HEADER_TS = "x-neofm-timestamp"
@@ -201,13 +213,37 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
             raise
 
 
+@asynccontextmanager
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Eager-load the model on startup unless explicitly opted out.
+
+    Tests skip this entirely by setting `MUSIC_INFERENCE_SKIP_LIFESPAN=1`
+    and installing a FakeMusicModel via `app.model.set_active_model`.
+    """
+    if (
+        os.environ.get("MUSIC_INFERENCE_SKIP_LIFESPAN") != "1"
+        and model_module.get_active_model() is None
+    ):
+        try:
+            await asyncio.to_thread(model_module.initialise_from_env)
+        except Exception:
+            log.exception(
+                "model_load_failed",
+                extra={"extra_fields": {"phase": PHASE}},
+            )
+            # Don't crash the process: /healthz reports model_loaded=False
+            # and /v1/generate replies 503 until weights are available.
+    yield
+
+
 app = FastAPI(
     title="neo-fm music-inference",
-    version="0.0.0",
+    version="0.1.0",
     description=(
         "Internal API; never exposed to the public internet. See "
         "docs/contracts/openapi-dgx.yaml for the authoritative contract."
     ),
+    lifespan=_lifespan,
 )
 app.add_middleware(HmacAndLogMiddleware)
 
@@ -255,10 +291,11 @@ class ErrorBody(BaseModel):
 
 @app.get("/healthz", response_model=HealthzResponse, tags=["health"])
 def healthz() -> HealthzResponse:
+    m = model_module.get_active_model()
     return HealthzResponse(
-        status="ok",
-        model_loaded=MODEL_LOADED,
-        model_version=MODEL_VERSION,
+        status="ok" if (m is None or m.model_loaded) else "degraded",
+        model_loaded=bool(m and m.model_loaded),
+        model_version=m.model_version if m else None,
         gpu_memory_used_mb=None,
         gpu_utilization_pct=None,
         queue_lag_seconds=None,
@@ -266,28 +303,85 @@ def healthz() -> HealthzResponse:
     )
 
 
+def _coerce_request(req: GenerateRequest) -> GenerationRequest:
+    """Translate the wire-format Pydantic model into the model layer's
+    dataclass. Keeps `app.model` free of FastAPI imports."""
+    sections = [
+        GenerationSection(
+            id=s.id,
+            type=s.type,
+            lyrics=s.lyrics,
+            transliteration=s.transliteration,
+            swara_sequence=s.swara_sequence,
+            target_seconds=s.target_seconds,
+            tags=s.tags,
+        )
+        for s in req.sections
+    ]
+    target_total = req.target_duration_seconds or sum(s.target_seconds for s in sections)
+    return GenerationRequest(
+        job_id=req.job_id,
+        attempt_id=req.attempt_id,
+        style_family=req.style_family,
+        target_duration_seconds=target_total,
+        sections=sections,
+        tempo_bpm=req.tempo_bpm,
+        time_signature=req.time_signature,
+        tala=req.tala,
+        output_format=req.output_format,
+        sample_rate=req.sample_rate,
+    )
+
+
+_OUTPUT_MIME: dict[str, str] = {
+    "wav": "audio/wav",
+    "mp3": "audio/mpeg",
+    "flac": "audio/flac",
+}
+
+
 @app.post(
     "/v1/generate",
     tags=["generate"],
-    status_code=status.HTTP_501_NOT_IMPLEMENTED,
     responses={
+        200: {
+            "description": "Audio bytes in the requested output_format.",
+            "content": {
+                "audio/wav": {"schema": {"type": "string", "format": "binary"}},
+                "audio/mpeg": {"schema": {"type": "string", "format": "binary"}},
+                "audio/flac": {"schema": {"type": "string", "format": "binary"}},
+            },
+        },
         401: {"model": ErrorBody, "description": "invalid HMAC or stale timestamp"},
-        501: {"model": ErrorBody, "description": "not implemented yet (Phase 0 stub)"},
+        503: {"model": ErrorBody, "description": "model is still loading"},
     },
 )
-def generate(req: GenerateRequest) -> ErrorBody:
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail={
-            "error": "phase_0_stub",
-            "details": {
-                "message": (
-                    "music-inference is in Phase 0 stub mode. Real HeartMuLa "
-                    "generation lands in Phase 1."
-                ),
-                "received_sections": len(req.sections),
-                "style_family": req.style_family,
-                "phase": PHASE,
+async def generate(req: GenerateRequest) -> FastAPIResponse:
+    m: MusicModel | None = model_module.get_active_model()
+    if m is None or not m.model_loaded:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "error": "model_not_loaded",
+                "details": {
+                    "message": (
+                        "Model is not loaded yet. Healthcheck will report "
+                        "model_loaded=true once warmup completes."
+                    ),
+                    "phase": PHASE,
+                },
             },
+        )
+
+    gen_req = _coerce_request(req)
+    # heartlib is blocking; run on a threadpool so we don't stall the
+    # event loop. asyncio.to_thread schedules on the default executor.
+    audio_bytes = await asyncio.to_thread(m.generate, gen_req)
+    return FastAPIResponse(
+        content=audio_bytes,
+        media_type=_OUTPUT_MIME.get(req.output_format, "application/octet-stream"),
+        headers={
+            "X-NeoFM-Model-Version": m.model_version or "unknown",
+            "X-NeoFM-Job-Id": req.job_id,
         },
     )

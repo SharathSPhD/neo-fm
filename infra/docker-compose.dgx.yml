@@ -1,13 +1,21 @@
 # neo-fm — docker-compose for DGX-side services.
 #
-# Phase 4 (current): real dgx-worker pulling from Supabase pgmq and calling
+# Phase 4 (merged): real dgx-worker pulling from Supabase pgmq and calling
 # music-inference over the internal compose network. HeartMuLa weights are
 # mounted read-only from the host. No public ingress; cloud never reaches in.
 #
+# Phase 1 (this branch): music-inference runs the real HeartMuLa model on GPU.
+# The container target defaults to `phase1`. Set MUSIC_INFERENCE_STAGE=phase0
+# in the env file to drop back to the no-model fake (useful while waiting
+# for weight download or on machines without an NVIDIA runtime).
+#
 # Usage (from repo root):
-#   scripts/dgx-bootstrap.sh      # one-command bring-up; writes infra/.env.dgx
-#   # or, manually after editing infra/.env.dgx:
-#   docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx up -d
+#   bash scripts/dgx-bootstrap.sh                   # writes infra/.env.dgx + brings stack up
+#
+# ...or manually:
+#   cp infra/.env.dgx.example infra/.env.dgx        # fill MUSIC_INFERENCE_HMAC_SECRET etc
+#   python scripts/download-heartmula.py            # pull weights to /mnt/models/heartmula
+#   docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx up --build
 #
 # Per ADR 0003 (internal-API HMAC):
 # - music-inference exposes port 8000 only on the internal compose network,
@@ -27,7 +35,9 @@ services:
     build:
       context: ../services/music-inference
       dockerfile: Dockerfile
-    image: neo-fm/music-inference:phase-1
+      args:
+        STAGE: "${MUSIC_INFERENCE_STAGE:-phase1}"
+    image: "neo-fm/music-inference:${MUSIC_INFERENCE_STAGE:-phase1}"
     container_name: neo-fm-music-inference
     restart: unless-stopped
     expose:
@@ -36,8 +46,18 @@ services:
       - .env.dgx
     environment:
       PHASE: "1"
-      LOG_LEVEL: "INFO"
-    # Phase 1: real GPU + HeartMuLa weight volume. Comment out for phase-0 dev.
+      MUSIC_INFERENCE_HMAC_SECRET: "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
+      MUSIC_INFERENCE_HMAC_SECRET_NEXT: "${MUSIC_INFERENCE_HMAC_SECRET_NEXT:-}"
+      HEARTMULA_CKPT_DIR: "${HEARTMULA_CKPT_DIR:-/mnt/models/heartmula}"
+      HEARTMULA_VERSION: "${HEARTMULA_VERSION:-3B}"
+      HEARTMULA_MULA_DEVICE: "${HEARTMULA_MULA_DEVICE:-cuda}"
+      HEARTMULA_CODEC_DEVICE: "${HEARTMULA_CODEC_DEVICE:-cuda}"
+      HEARTMULA_MULA_DTYPE: "${HEARTMULA_MULA_DTYPE:-bfloat16}"
+      HEARTMULA_CODEC_DTYPE: "${HEARTMULA_CODEC_DTYPE:-float32}"
+      HEARTMULA_LAZY_LOAD: "${HEARTMULA_LAZY_LOAD:-0}"
+      HEARTMULA_DEFER_LOAD: "${HEARTMULA_DEFER_LOAD:-0}"
+      MUSIC_INFERENCE_FAKE_MODEL: "${MUSIC_INFERENCE_FAKE_MODEL:-0}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
     deploy:
       resources:
         reservations:
@@ -59,6 +79,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+      # Model weights take ~30s to load even on H100/Grace-Blackwell.
+      # 180s start_period prevents docker from killing the container
+      # during the cold-start window.
       start_period: 180s
 
   dgx-worker:
