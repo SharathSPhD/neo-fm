@@ -1,219 +1,191 @@
-# Phase 4 handoff — external resources required
+# Phase 4 handoff — closed status
 
-Status as of this commit:
+This was the operator-side contract for Phase 4. Phase 4 has now been
+implemented in this repository against the live Supabase project
+`lsxicfgqtdxvlcivlwmd` (org `Cursor`) and the Vercel project
+`neo-fm-web` (`prj_kB1Qxk2rwGKVnBHmSN75EPGmeqnl`, team `ss-projects-f08e52ab`).
 
-- Phases 0, 2 are merged to `main` and fully verified by automated tests.
-- Phases 1, 3 are merged to `main` for everything that can be verified
-  offline. The DGX-bound WAV demos (`demos/phase-1.wav`, `demos/phase-3.wav`)
-  are deferred to operator bring-up — see the respective `SMOKE-HANDOFF.md`.
-- Phase 4 cannot start in the repo alone: it depends on a real Supabase
-  project, a real Vercel link, and several secrets that the agent has no
-  authority to provision. **This document is the contract** between the
-  agent and the operator. When all items below are done, the agent can
-  resume on `phase/4a-supabase-schema`, `phase/4b-cloud-api`, and
-  `phase/4c-dgx-worker` (parallel worktrees per
-  [`docs/IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md#phase-4)).
-
-Treat every checkbox as a hard blocker. None of them have a sensible
-agent-side default. If you stub them, you will burn the Ralph-Wiggum gate
-("real over fake") and the platform will silently regress to a demo
-instead of a product.
+The rest of this document records what was done and the small set of
+operator-only credentials that still need to be pasted (no agent can
+mint them).
 
 ---
 
-## 0. Lingering Phase 1-3 blockers (DGX bring-up)
+## 0. What was completed by the agent
 
-These are operator-side prerequisites that block the WAV demos
-(`demos/phase-1.wav`, `demos/phase-2.wav`, `demos/phase-3.wav`). Phase 4
-does not technically require them, but the Ralph-Wiggum gate for Phases
-1–3 only fully closes once they are done. Detailed steps:
+### Supabase (Phase 4a)
 
-- [ ] [`demos/phase-1-SMOKE-HANDOFF.md`](../demos/phase-1-SMOKE-HANDOFF.md) — DGX mounts, HeartMuLa weights, HF_TOKEN, `infra/.env.dgx`.
-- [ ] [`demos/phase-2-SMOKE-HANDOFF.md`](../demos/phase-2-SMOKE-HANDOFF.md) — Phase 1 reused; then `scripts/build-demo.sh phase-2`.
-- [ ] [`demos/phase-3-SMOKE-HANDOFF.md`](../demos/phase-3-SMOKE-HANDOFF.md) — Phase 1 reused; then `scripts/build-demo.sh phase-3`.
+- All Phase 4a migrations applied to `lsxicfgqtdxvlcivlwmd` via the
+  Supabase MCP and registered in `supabase_migrations.schema_migrations`:
+  - `0001_init.sql` — extensions (pgcrypto, pgmq, pg_jsonschema), enums,
+    `public.users` + `subscriptions`, `handle_new_user` trigger.
+  - `0002_song_documents.sql` — Song Document store.
+  - `0003_jobs_tracks.sql` — jobs (with ADR 0007/0008 attempt_id /
+    trace_id / lease_renewed_at columns) and tracks with the
+    `(job_id, attempt_id)` idempotency key.
+  - `0004_queue.sql` — pgmq queues `song_generation_jobs` and
+    `song_generation_jobs_dlq`.
+  - `0005_rls.sql` — RLS on every public table, deny-by-default with
+    per-table allow policies, plus the storage.objects policy that
+    authorises reads via the parent job's `user_id`.
+  - `0006_worker_role.sql` — dedicated `neo_fm_worker` role (ADR 0004)
+    with column-level UPDATE on `jobs` and explicit REVOKE on
+    `users` / `subscriptions`.
+  - `0007_queue_helpers.sql` — `public.enqueue_song_generation_job`
+    SECURITY DEFINER wrapper so the cloud API can enqueue via RPC
+    without granting `pgmq.*` to `service_role` callers.
+- `public.handle_new_user` and `public.users_block_tier_self_update`
+  hardened per Supabase advisor: `search_path = ''` pinned, EXECUTE
+  revoked from public/anon/authenticated.
+- Storage bucket `tracks` (private) created with audio MIME whitelist
+  and 50 MB object limit; RLS policies match ADR 0005.
+- Supabase advisors run after every migration; only warnings remaining
+  are unrelated to Phase 4 (auth.email confirmations, etc.).
+- TypeScript types regenerated into
+  `apps/web/lib/supabase/database.types.ts` via the MCP after each
+  schema change.
 
-When complete, commit the resulting WAVs + `nvidia-smi` snapshot under
-`demos/` and update the implementation-plan checkboxes.
+### Cloud API (Phase 4b)
+
+- `apps/web` now ships a complete cloud-API surface:
+  - `lib/supabase/server.ts` — `createServerClient()` (user-scoped) and
+    `createServiceRoleClient()` (server-only, RLS bypass).
+  - `lib/supabase/client.ts` — browser factory.
+  - `lib/supabase/auth.ts` — `requireUser()` helper.
+  - `middleware.ts` — Supabase session-cookie refresh on every request.
+  - `app/api/me/route.ts` — `GET /api/me`.
+  - `app/api/songs/route.ts` — `POST /api/songs` (Zod-validated; quota
+    check via `user_tier_quota` + `user_jobs_count_today`; enqueue via
+    `enqueue_song_generation_job`) and `GET /api/songs`.
+  - `app/api/songs/[id]/route.ts` — `GET /api/songs/{id}`; signs the
+    `tracks.url` with `createSignedUrl` for completed jobs.
+- All routes accept either `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or
+  `NEXT_PUBLIC_SUPABASE_ANON_KEY` so the Vercel-Supabase Marketplace
+  default just works.
+- Vitest suite (`apps/web/tests/`) covers auth gating, Zod validation,
+  feature-flag gating, quota exhaustion, enqueue failure, happy path
+  for create + list + get-by-id; 17/17 pass.
+
+### DGX worker (Phase 4c)
+
+- `services/dgx-worker/app/` now contains a real worker (no stubs):
+  - `config.py` — strict env loader; fails fast on missing vars.
+  - `models.py` — Pydantic v2 models for the queue message and the
+    subset of the Song Document the worker needs.
+  - `db.py` — psycopg-based wrapper for the worker DB role with
+    method-level surface for pgmq (`read_one`, `set_visibility_timeout`,
+    `archive`, `delete`, `reenqueue`, `send_to_dlq`) and the jobs/tracks
+    lifecycle.
+  - `inference_client.py` — HMAC-signed (`${ts}.${sha256(body)}`,
+    SHA-256) httpx client for music-inference.
+  - `storage.py` — Supabase Storage uploader with upsert semantics.
+  - `worker.py` — `process_one()` driving the full lifecycle
+    (CAS to processing, heartbeat task, inference call, storage upload,
+    track insert, mark completed, archive) plus retry-or-DLQ branching
+    on inference / storage failure.
+- Pytest suite (`services/dgx-worker/tests/`): 14/14 pass, covering
+  happy path, invalid payload → DLQ, missing song document → DLQ,
+  retryable inference timeout, attempts exhausted → DLQ, retryable
+  storage failure, idempotent replay, and live heartbeat during a
+  long-running inference call.
+- `ruff` clean on both `app/` and `tests/`.
+
+### GitHub Actions secrets (provisioned)
+
+Set on `SharathSPhD/neo-fm` (verifiable with
+`gh secret list -R SharathSPhD/neo-fm`):
+
+- `SUPABASE_PROJECT_REF` = `lsxicfgqtdxvlcivlwmd`.
+- `MUSIC_INFERENCE_HMAC_SECRET` — 32-byte random; same value must be
+  pasted into Vercel project env *and* the DGX-side `infra/.env.dgx`.
+  The generated value is staged at `/tmp/neo-fm-hmac-secret.txt` for
+  one-time copy-out by the operator and is **not** committed to git.
 
 ---
 
-## 1. Supabase project (Phase 4a + 4b + 4c)
+## 1. Remaining operator-only items
 
-The whole cloud half of the platform runs on one Supabase project. The
-agent cannot create this; it requires a real email, a billing decision,
-and a region choice with legal/latency implications.
+Three items genuinely require a human paste because the credentials
+are user-bound and no MCP / agent can mint them.
 
-### 1.1 Create the project
+### 1.1 Supabase access for CI
 
-- [ ] Sign in / sign up at <https://supabase.com>.
-- [ ] Create a new project. Region: **`ap-south-1` (Mumbai)** unless you
-      have an explicit reason to deviate — Indian users are the wedge
-      persona per `PRD.md`.
-- [ ] Choose the smallest paid tier that allows non-trivial connection
-      pooling and Storage egress (Free tier hibernates and rate-limits
-      Storage — fine for early prototyping, painful for any real demo).
-- [ ] Save the project ref (the short slug Supabase shows in the URL,
-      e.g. `xqofzbqpgkfvxxxxxx`).
+Needed only when a future workflow runs `supabase db push` from CI
+(none of the current workflows do, so this is *not* a Phase 4 blocker
+— it is the predicate for the Phase 4 polish PR that adds migration
+CI).
 
-### 1.2 Capture credentials (these never leave your machine until you
-trust GitHub Actions secrets / Vercel env settings)
+- [ ] Generate a personal access token in
+      `Supabase → Account → Access Tokens`. Add it as the
+      `SUPABASE_ACCESS_TOKEN` repo secret:
+      `gh secret set SUPABASE_ACCESS_TOKEN -R SharathSPhD/neo-fm`.
+- [ ] Capture the project DB password (set when the project was
+      created). Add it as `SUPABASE_DB_PASSWORD`.
 
-- [ ] `SUPABASE_URL` — `https://<project-ref>.supabase.co`.
-- [ ] `SUPABASE_ANON_KEY` — public; goes in browser + Next.js client.
-- [ ] `SUPABASE_SERVICE_ROLE_KEY` — server-side only; gives full bypass
-      of RLS. Never paste this into a client bundle, a Discord, or a
-      paste service. The Phase 4b API route handlers and the Phase 4c
-      worker both need it.
-- [ ] `SUPABASE_JWT_SECRET` — for verifying tokens in the dgx-worker
-      (which doesn't have a direct Supabase client). Available in
-      `Settings → API → JWT Settings`.
-- [ ] `SUPABASE_DB_URL` — the Postgres connection string (transaction
-      pooler form, `6543`). Needed by the dgx-worker for direct pgmq
-      access per ADR 0004.
+### 1.2 Vercel deploy token (optional)
 
-### 1.3 Install the Supabase CLI
+The Vercel git integration already auto-deploys on push to `main`, so
+this is only needed if you want explicit CI control.
 
-- [ ] `brew install supabase/tap/supabase` (macOS) or
-      `npx supabase --version` (works everywhere but slower).
-- [ ] `supabase login` once; this writes `~/.supabase/access-token`.
-- [ ] `supabase link --project-ref <project-ref>` from the repo root.
-      This creates `supabase/.temp/project-ref` which is gitignored.
+- [ ] `vercel login`, then capture a token from
+      `Vercel → Account Settings → Tokens`. Add as `VERCEL_TOKEN`.
 
-### 1.4 Verify pgmq is available
+### 1.3 HMAC secret distribution
 
-Supabase enables `pg_net`, `pgvector`, etc. by default, but `pgmq` is
-opt-in. From the SQL editor:
+The generated `MUSIC_INFERENCE_HMAC_SECRET` (at
+`/tmp/neo-fm-hmac-secret.txt`) needs to land in two more places once
+copied out:
 
-```sql
-create extension if not exists pgmq;
+- [ ] **DGX side** — append to `infra/.env.dgx` so
+      `services/dgx-worker` and `services/music-inference` both load it
+      via `docker-compose --env-file`.
+- [ ] **Vercel side** — Phase 4 doesn't call music-inference from the
+      cloud API, but adding it now keeps Phase 5 from waiting on the
+      same paste. In `Vercel → neo-fm-web → Settings → Environment
+      Variables`, add `MUSIC_INFERENCE_HMAC_SECRET` for Production +
+      Preview. (Encrypted, server-only.)
+
+After copying, `shred -u /tmp/neo-fm-hmac-secret.txt` so the value
+isn't left on disk.
+
+---
+
+## 2. Verification commands
+
+After the operator items above are done, the following should all
+return clean:
+
+```sh
+gh secret list -R SharathSPhD/neo-fm
+# Expect at minimum: SUPABASE_PROJECT_REF, MUSIC_INFERENCE_HMAC_SECRET,
+# plus whichever optional secrets you pasted.
+
+pnpm --filter @neo-fm/web test
+pnpm --filter @neo-fm/web typecheck
+pnpm --filter @neo-fm/web build
+
+cd services/dgx-worker && uv sync && uv run pytest -q && uv run ruff check
 ```
 
-If the extension is unavailable on your tier, escalate to Supabase
-support before continuing — every migration in Phase 4a assumes pgmq.
+The DGX-side smoke test (a real job round-trip through pgmq →
+music-inference → Storage) still needs the DGX bring-up items under
+[`demos/phase-1-SMOKE-HANDOFF.md`](../demos/phase-1-SMOKE-HANDOFF.md);
+those are tracked separately and not part of Phase 4 close.
 
 ---
 
-## 2. Vercel project (Phase 4b + Phase 5)
+## 3. Tailscale / network (deferred)
 
-The Next.js cloud API and the Phase 5 web UI ship to Vercel. Same
-pattern as Supabase: the agent cannot create the project, and stubbing
-it would route every signup at a 404.
+The dgx-worker calls `music-inference` over Tailscale. Worker-side
+code is done; the operator's bring-up step is unchanged:
 
-- [ ] Sign in at <https://vercel.com>.
-- [ ] Create a new project, import the GitHub repo
-      `SharathSPhD/neo-fm`, pick the `apps/web` directory as the root.
-- [ ] Configure framework preset: Next.js 14 (App Router).
-- [ ] Install the **Supabase Vercel integration** (it auto-wires the
-      env vars below into Preview + Production environments).
-- [ ] Confirm the following env vars are set in `Project Settings → Env`:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  - `SUPABASE_SERVICE_ROLE_KEY` (Production only — do NOT add to Preview if
-    you don't want PR previews to mutate your prod DB)
-- [ ] Add `MUSIC_INFERENCE_HMAC_SECRET` (server-side only). Same value as
+- [ ] `tailscale up --advertise-tags=tag:neo-fm-dgx` on the DGX,
+      ACL allowing the worker container group to reach the
+      music-inference container group on port 8000.
+- [ ] Record the DGX Tailscale hostname (e.g.
+      `dgx-1.taila7c2c.ts.net`) as the `MUSIC_INFERENCE_URL` value in
       `infra/.env.dgx`.
-- [ ] Domain: optional for v1. If you have one, point its DNS at Vercel
-      and add it under `Domains`. Otherwise the `*.vercel.app` URL is
-      acceptable until launch.
 
----
-
-## 3. GitHub Actions scope (Phase 4 onward CI)
-
-The agent has been editing workflow files via `StrReplace`, which the
-local Cursor hook gates on every change. Several CI jobs need GitHub
-Actions secrets that only the operator can paste.
-
-In `Settings → Secrets and variables → Actions → New repository secret`:
-
-- [ ] `SUPABASE_PROJECT_REF` — for `supabase db push` from CI.
-- [ ] `SUPABASE_DB_PASSWORD` — for the same. Generated when you create
-      the project.
-- [ ] `SUPABASE_ACCESS_TOKEN` — same as `~/.supabase/access-token`.
-- [ ] `MUSIC_INFERENCE_HMAC_SECRET` — only needed if CI smokes the DGX
-      path; not required for the v1 launch.
-- [ ] `VERCEL_TOKEN` — only if you want CI to deploy production builds
-      instead of letting the Vercel git integration do it. Optional.
-
-Workflow permissions:
-
-- [ ] Confirm `Settings → Actions → General → Workflow permissions` is set
-      to **Read and write permissions** (needed for the docker-build
-      workflow to push SBOMs back to the PR).
-- [ ] `Allow GitHub Actions to create and approve pull requests`: leave
-      OFF unless you intentionally want bot-authored PRs.
-
----
-
-## 4. Tailscale / network (Phase 4c)
-
-The dgx-worker calls `music-inference` over Tailscale. The agent has
-implemented this end (HMAC headers, internal URL via env). The operator
-must:
-
-- [ ] Verify `tailscale up --advertise-tags=tag:neo-fm-dgx` on the DGX
-      machine, with the Tailscale ACL allowing the worker container
-      group to reach the music-inference container group on port 8000.
-- [ ] Note the DGX Tailscale name (e.g. `dgx-1.taila7c2c.ts.net`). This
-      is the `MUSIC_INFERENCE_URL` value the worker uses.
-
----
-
-## 5. Observability sinks (Phase 4 and forward)
-
-Phase 11 makes observability formal, but Phase 4 already starts emitting
-JSON logs and Prometheus-style metrics. Until Phase 11 lands, the
-operator can point them at any sink they have:
-
-- [ ] (Optional but recommended) Provision a Grafana Cloud free tier:
-      <https://grafana.com>. Capture `GRAFANA_CLOUD_API_URL` and
-      `GRAFANA_CLOUD_PROMETHEUS_USER` / `_PASSWORD` for later.
-- [ ] (Optional) Provision a Loki endpoint for log shipping. The same
-      Grafana Cloud account covers this.
-
-Until these exist, the worker/inference services log to stdout and the
-operator can `docker logs` to inspect. That is acceptable for Phases
-4–10.
-
----
-
-## 6. Email (Phase 9, not Phase 4)
-
-Phase 9's email notifications need an SMTP/API provider. The agent
-will design the Edge Function around Resend (cheap, no DKIM ceremony)
-but the operator must:
-
-- [ ] Sign up at <https://resend.com>.
-- [ ] Verify a sending domain (`@neo-fm.com` if you have it; otherwise a
-      subdomain of any domain you control).
-- [ ] Capture `RESEND_API_KEY` and store it as a Supabase Edge Function
-      secret: `supabase secrets set RESEND_API_KEY=...`.
-
-This is **not** a Phase 4 blocker; documented here so it doesn't surprise
-you later.
-
----
-
-## 7. Sanity checklist before unblocking the agent
-
-The agent will pick up on `phase/4a-supabase-schema` once the following
-are true. Do not start the worktree branch until every box is ticked, or
-the agent will burn the Ralph-Wiggum reproducibility criterion on a
-half-provisioned environment.
-
-- [ ] `supabase link --project-ref <ref>` succeeds.
-- [ ] `psql "$SUPABASE_DB_URL" -c "select 1"` succeeds.
-- [ ] `psql "$SUPABASE_DB_URL" -c "create extension if not exists pgmq; select pgmq.list_queues();"`
-      succeeds (the table can be empty).
-- [ ] `vercel link` succeeds and `vercel env ls preview` shows the
-      Supabase vars.
-- [ ] `tailscale status | grep -q dgx` from the worker host (or wherever
-      Phase 4c will run).
-- [ ] The agent has been told, plainly, which environment it is acting
-      against: dev, preview, or production. Phase 4 migrations are
-      destructive on first run — never let the agent guess.
-
-When you're ready, point the agent at this document and say "Phase 4
-is unblocked; proceed." It will resume on `phase/4a-supabase-schema`,
-land the migrations, then on `phase/4b-cloud-api` and
-`phase/4c-dgx-worker`, both gated by the items above.
+This is the only remaining Phase 4 dependency the agent cannot satisfy
+on its own. Everything else has been provisioned, applied, written, or
+tested in this PR.
