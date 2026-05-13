@@ -103,50 +103,65 @@ Set on `SharathSPhD/neo-fm` (verifiable with
 
 ---
 
-## 1. Remaining operator-only items
+## 1. Operator-only items (and how the agent has narrowed them)
 
-Three items genuinely require a human paste because the credentials
-are user-bound and no MCP / agent can mint them.
+### 1.1 HMAC secret distribution — now a single bootstrap call
 
-### 1.1 Supabase access for CI
+The generated `MUSIC_INFERENCE_HMAC_SECRET` was set as a GitHub Actions
+secret on `SharathSPhD/neo-fm` during Phase 4 and staged at
+`/tmp/neo-fm-hmac-secret.txt` on the agent's workstation. To install it
+on the DGX, the operator now runs:
 
-Needed only when a future workflow runs `supabase db push` from CI
-(none of the current workflows do, so this is *not* a Phase 4 blocker
-— it is the predicate for the Phase 4 polish PR that adds migration
-CI).
+```sh
+git clone https://github.com/SharathSPhD/neo-fm.git
+cd neo-fm
+# Either pre-export the HMAC value...
+export MUSIC_INFERENCE_HMAC_SECRET=...                # paste once
+# ...or let dgx-bootstrap.sh prompt you for it.
+bash scripts/dgx-bootstrap.sh
+```
 
-- [ ] Generate a personal access token in
-      `Supabase → Account → Access Tokens`. Add it as the
-      `SUPABASE_ACCESS_TOKEN` repo secret:
+`scripts/dgx-bootstrap.sh` writes `infra/.env.dgx` (mode 0600), validates
+that `docker compose config` parses, pulls HeartMuLa weights into
+`/mnt/models/heartmula`, and runs `docker compose up -d`. Re-running the
+script is idempotent (existing `.env.dgx` values are preserved unless
+you pass `--reset`).
+
+Per ADR 0003 the cloud API does **not** need this secret — the cloud
+never reaches DGX. The earlier draft of this doc that mentioned a
+Vercel paste was wrong.
+
+### 1.2 Supabase access for CI (genuinely operator-only)
+
+Needed only when a future workflow runs `supabase db push` from CI.
+None of the current workflows do — all Phase 4 migrations were already
+applied to `lsxicfgqtdxvlcivlwmd` via MCP and are recorded in
+`supabase_migrations.schema_migrations`. CI for new migrations becomes
+useful around Phase 6+.
+
+- [ ] Generate a token in `Supabase → Account → Access Tokens`. Add it
+      as a repo secret:
       `gh secret set SUPABASE_ACCESS_TOKEN -R SharathSPhD/neo-fm`.
 - [ ] Capture the project DB password (set when the project was
       created). Add it as `SUPABASE_DB_PASSWORD`.
 
-### 1.2 Vercel deploy token (optional)
+A copy-pasteable workflow template lives in
+`docs/PHASE-4-HANDOFF.md.workflow.yml` (in this repo at `docs/`). Drop
+it into `.github/workflows/supabase-migrations.yml` when the two
+secrets are in place; the workflow includes a precheck step so it
+skips cleanly until then.
+
+### 1.3 Vercel deploy token (optional, low value)
 
 The Vercel git integration already auto-deploys on push to `main`, so
-this is only needed if you want explicit CI control.
+this is only needed if you want CI-driven promotions instead of letting
+Vercel's webhook do it.
 
-- [ ] `vercel login`, then capture a token from
+- [ ] `vercel login`, capture a token from
       `Vercel → Account Settings → Tokens`. Add as `VERCEL_TOKEN`.
 
-### 1.3 HMAC secret distribution
-
-The generated `MUSIC_INFERENCE_HMAC_SECRET` (at
-`/tmp/neo-fm-hmac-secret.txt`) needs to land in two more places once
-copied out:
-
-- [ ] **DGX side** — append to `infra/.env.dgx` so
-      `services/dgx-worker` and `services/music-inference` both load it
-      via `docker-compose --env-file`.
-- [ ] **Vercel side** — Phase 4 doesn't call music-inference from the
-      cloud API, but adding it now keeps Phase 5 from waiting on the
-      same paste. In `Vercel → neo-fm-web → Settings → Environment
-      Variables`, add `MUSIC_INFERENCE_HMAC_SECRET` for Production +
-      Preview. (Encrypted, server-only.)
-
-After copying, `shred -u /tmp/neo-fm-hmac-secret.txt` so the value
-isn't left on disk.
+After copying the HMAC value out of `/tmp/neo-fm-hmac-secret.txt`,
+`shred -u /tmp/neo-fm-hmac-secret.txt` so the value isn't left on disk.
 
 ---
 
@@ -174,18 +189,47 @@ those are tracked separately and not part of Phase 4 close.
 
 ---
 
-## 3. Tailscale / network (deferred)
+## 3. Tailscale — not required for Phase 4
 
-The dgx-worker calls `music-inference` over Tailscale. Worker-side
-code is done; the operator's bring-up step is unchanged:
+The pre-Phase-4 draft of this doc said the worker reaches
+music-inference "over Tailscale". Looking at the actual implementation:
 
-- [ ] `tailscale up --advertise-tags=tag:neo-fm-dgx` on the DGX,
-      ACL allowing the worker container group to reach the
-      music-inference container group on port 8000.
-- [ ] Record the DGX Tailscale hostname (e.g.
-      `dgx-1.taila7c2c.ts.net`) as the `MUSIC_INFERENCE_URL` value in
-      `infra/.env.dgx`.
+- `services/dgx-worker` connects to `MUSIC_INFERENCE_URL`, which defaults
+  to `http://music-inference:8000` — the docker-compose internal bridge.
+- It also connects to Supabase (`SUPABASE_URL`, `PG_DSN`) over **public**
+  TLS endpoints.
 
-This is the only remaining Phase 4 dependency the agent cannot satisfy
-on its own. Everything else has been provisioned, applied, written, or
-tested in this PR.
+There is no leg of the data path that crosses an organisational LAN, so
+Tailscale would only add hops without solving an authentication problem
+(HMAC + service-role + RLS already do that). The `tailscale up` step is
+therefore **out of Phase 4 scope** and intentionally not run.
+
+It re-enters scope only when:
+
+1. (Phase 11 observability) The Prometheus / Grafana / Loki sinks pull
+   metrics *into* the DGX from outside, or
+2. A future DGX cluster needs site-to-site key sharing the secret
+   manager can't cover.
+
+When that happens, the right ADR is "0009-tailscale-for-pull-observability";
+this one stays archived.
+
+## 4. End-to-end verification
+
+Once the operator items above are addressed (only HMAC distribution is
+strictly necessary for Phase 4), the following should all return clean:
+
+```sh
+gh secret list -R SharathSPhD/neo-fm
+# Expect at minimum: SUPABASE_PROJECT_REF, MUSIC_INFERENCE_HMAC_SECRET.
+
+pnpm --filter @neo-fm/web test
+pnpm --filter @neo-fm/web typecheck
+pnpm --filter @neo-fm/web build
+
+cd services/dgx-worker && uv sync && uv run pytest -q && uv run ruff check
+```
+
+The DGX smoke (real WAV round-trip) lands with the Phase 1 PR that
+integrates HeartMuLa; see `demos/phase-1-SMOKE-HANDOFF.md` once that PR
+merges.
