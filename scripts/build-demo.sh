@@ -9,6 +9,7 @@
 #   scripts/build-demo.sh phase-0
 #   scripts/build-demo.sh phase-1
 #   scripts/build-demo.sh phase-2
+#   scripts/build-demo.sh phase-3
 #
 # Each phase has a different mode:
 #   phase-0: capture nvidia-smi, docker --version, tailscale status into
@@ -54,61 +55,29 @@ case "$DEMO" in
     echo "[build-demo] phase-1: running dgx-smoke.sh with PHASE=1"
     CURRENT_PHASE=1 bash scripts/dgx-smoke.sh 1
     ;;
-  phase-2)
-    echo "[build-demo] phase-2: regenerating golden request + POSTing to /v1/generate"
-    pnpm --filter @neo-fm/co-composer --silent build-phase-2-request
-    if ! git diff --exit-code -- demos/phase-2-request.golden.json; then
-      echo "::error::demos/phase-2-request.golden.json drifted; commit the regenerated file before reproducing the demo."
+  phase-2|phase-3)
+    # The Phase 2 + Phase 3 golden requests are produced offline by
+    # the co-composer / lyrics packages and committed to
+    # demos/phase-{2,3}-request.golden.json. We regenerate them here
+    # to fail-fast on drift, then forward to dgx-smoke.sh.
+    PHASE_N="${DEMO#phase-}"
+    case "$PHASE_N" in
+      2)
+        echo "[build-demo] phase-2: regenerating $DEMO golden request"
+        pnpm --filter @neo-fm/co-composer build-phase-2-request >/dev/null
+        ;;
+      3)
+        echo "[build-demo] phase-3: regenerating $DEMO golden request"
+        pnpm --filter @neo-fm/lyrics build-phase-3-request >/dev/null
+        ;;
+    esac
+    if ! git diff --quiet -- "demos/phase-${PHASE_N}-request.golden.json"; then
+      echo "::error::demos/phase-${PHASE_N}-request.golden.json drifted vs the checked-in golden" >&2
+      git --no-pager diff -- "demos/phase-${PHASE_N}-request.golden.json" >&2
       exit 1
     fi
-    : "${MUSIC_INFERENCE_URL:=http://localhost:8000}"
-    : "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set; see infra/.env.dgx}"
-    OUT_WAV=demos/phase-2.wav
-    REQUEST_BODY="$(cat demos/phase-2-request.golden.json)"
-    TS="$(date +%s)"
-    SIG="$(printf '%s\n%s' "$REQUEST_BODY" "$TS" | openssl dgst -sha256 -hmac "$MUSIC_INFERENCE_HMAC_SECRET" | awk '{print $2}')"
-    HTTP_STATUS="$(curl -s -o /tmp/phase-2.json -w '%{http_code}' \
-      -H 'content-type: application/json' \
-      -H "x-neofm-timestamp: $TS" \
-      -H "x-neofm-signature: $SIG" \
-      -H 'x-neofm-trace-id: phase-2-demo' \
-      --data "$REQUEST_BODY" "$MUSIC_INFERENCE_URL/v1/generate")"
-    if [[ "$HTTP_STATUS" != "200" ]]; then
-      echo "::error::POST /v1/generate returned $HTTP_STATUS; see /tmp/phase-2.json"
-      exit 1
-    fi
-    COMBINED_PATH="$(jq -r '.combined_file_path // (.sections[0].file_path)' /tmp/phase-2.json)"
-    docker cp "$(docker compose -f infra/docker-compose.dgx.yml ps -q music-inference):${COMBINED_PATH}" "$OUT_WAV"
-    ffprobe -v error -show_entries format=duration "$OUT_WAV" || true
-    echo "[build-demo] wrote $OUT_WAV"
-    ;;
-  phase-3)
-    echo "[build-demo] phase-3: regenerating Kabir-doha golden request + POSTing to /v1/generate"
-    pnpm --filter @neo-fm/lyrics --silent build-phase-3-request
-    if ! git diff --exit-code -- demos/phase-3-request.golden.json; then
-      echo "::error::demos/phase-3-request.golden.json drifted; commit the regenerated file before reproducing the demo."
-      exit 1
-    fi
-    : "${MUSIC_INFERENCE_URL:=http://localhost:8000}"
-    : "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set; see infra/.env.dgx}"
-    OUT_WAV=demos/phase-3.wav
-    REQUEST_BODY="$(cat demos/phase-3-request.golden.json)"
-    TS="$(date +%s)"
-    SIG="$(printf '%s\n%s' "$REQUEST_BODY" "$TS" | openssl dgst -sha256 -hmac "$MUSIC_INFERENCE_HMAC_SECRET" | awk '{print $2}')"
-    HTTP_STATUS="$(curl -s -o /tmp/phase-3.json -w '%{http_code}' \
-      -H 'content-type: application/json' \
-      -H "x-neofm-timestamp: $TS" \
-      -H "x-neofm-signature: $SIG" \
-      -H 'x-neofm-trace-id: phase-3-demo' \
-      --data "$REQUEST_BODY" "$MUSIC_INFERENCE_URL/v1/generate")"
-    if [[ "$HTTP_STATUS" != "200" ]]; then
-      echo "::error::POST /v1/generate returned $HTTP_STATUS; see /tmp/phase-3.json"
-      exit 1
-    fi
-    COMBINED_PATH="$(jq -r '.combined_file_path // (.sections[0].file_path)' /tmp/phase-3.json)"
-    docker cp "$(docker compose -f infra/docker-compose.dgx.yml ps -q music-inference):${COMBINED_PATH}" "$OUT_WAV"
-    ffprobe -v error -show_entries format=duration "$OUT_WAV" || true
-    echo "[build-demo] wrote $OUT_WAV"
+    echo "[build-demo] $DEMO: running dgx-smoke.sh with PHASE=$PHASE_N"
+    CURRENT_PHASE="$PHASE_N" bash scripts/dgx-smoke.sh "$PHASE_N"
     ;;
   *)
     echo "::error::unknown demo: $DEMO" >&2

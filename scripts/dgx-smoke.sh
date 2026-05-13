@@ -103,30 +103,64 @@ if [[ "$PHASE" == "0" ]]; then
   exit 0
 fi
 
+smoke_generate() {
+  # smoke_generate <phase> <body> <out-wav>
+  # POST a signed request and stream the audio response straight to disk.
+  local phase="$1" body="$2" out_wav="$3"
+  local ts sig http_code content_type
+  ts="$(date +%s)"
+  sig="$(
+    {
+      printf '%s' "$body"
+      printf '\n%s' "$ts"
+    } | openssl dgst -sha256 -hmac "$MUSIC_INFERENCE_HMAC_SECRET" -hex | awk '{print $2}'
+  )"
+  http_code="$(curl -sS \
+    -o "$out_wav" \
+    -D /tmp/gen-headers.txt \
+    -w '%{http_code}' \
+    -H 'content-type: application/json' \
+    -H "x-neofm-timestamp: $ts" \
+    -H "x-neofm-signature: $sig" \
+    -d "$body" \
+    "$BASE_URL/v1/generate")"
+  content_type="$(awk -F': ' 'tolower($1)=="content-type" {sub(/\r$/, "", $2); print $2}' /tmp/gen-headers.txt | tail -n1)"
+  if [[ "$http_code" != "200" ]]; then
+    echo "::error::expected 200 from /v1/generate, got $http_code" >&2
+    if [[ "${content_type:-}" == application/json* ]]; then
+      cat "$out_wav" >&2
+    fi
+    return 2
+  fi
+  case "${content_type:-}" in
+    audio/wav|audio/x-wav|audio/mpeg|audio/flac) ;;
+    *)
+      echo "::error::unexpected content-type: $content_type" >&2
+      return 2
+      ;;
+  esac
+  ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$out_wav" \
+    | tee -a "$BRINGUP_LOG"
+  echo "[smoke] phase $phase WAV at $out_wav"
+}
+
 if [[ "$PHASE" == "1" ]]; then
   echo "[smoke] phase 1: requesting a real 30s WAV"
   BODY='{"job_id":"00000000-0000-0000-0000-000000000001","style_family":"western","target_duration_seconds":30,"sections":[{"id":"s1","type":"intro","target_seconds":30,"lyrics":"smoke test","language":"en","tags":["pop","major","bright"]}]}'
-  TS="$(date +%s)"
-  SIG="$(printf '%s\n%s' "$BODY" "$TS" | openssl dgst -sha256 -hmac "$MUSIC_INFERENCE_HMAC_SECRET" -hex | awk '{print $2}')"
-  curl -sSf \
-    -H 'content-type: application/json' \
-    -H "x-neofm-timestamp: $TS" \
-    -H "x-neofm-signature: $SIG" \
-    -d "$BODY" \
-    "$BASE_URL/v1/generate" \
-    -o /tmp/gen.json
-  FILE_PATH="$(jq -r '.combined_file_path // .sections[0].file_path' /tmp/gen.json)"
-  if [[ -z "$FILE_PATH" || "$FILE_PATH" == "null" ]]; then
-    echo "::error::generate response did not include a file_path:" >&2
-    cat /tmp/gen.json >&2
-    exit 2
+  smoke_generate 1 "$BODY" demos/phase-1.wav
+  exit $?
+fi
+
+if [[ "$PHASE" == "2" || "$PHASE" == "3" ]]; then
+  GOLDEN="demos/phase-${PHASE}-request.golden.json"
+  if [[ ! -f "$GOLDEN" ]]; then
+    echo "::error::missing $GOLDEN -- did Phase $PHASE land on this branch?" >&2
+    exit 3
   fi
-  # copy out of the container
-  docker compose -f "$COMPOSE_FILE" cp "music-inference:$FILE_PATH" demos/phase-1.wav
-  ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 demos/phase-1.wav \
-    | tee -a "$BRINGUP_LOG"
-  echo "[smoke] phase 1 WAV at demos/phase-1.wav"
-  exit 0
+  echo "[smoke] phase $PHASE: using $GOLDEN"
+  BODY="$(jq -c . "$GOLDEN")"
+  smoke_generate "$PHASE" "$BODY" "demos/phase-${PHASE}.wav"
+  exit $?
 fi
 
 echo "[smoke] phase=$PHASE has no smoke logic yet"
