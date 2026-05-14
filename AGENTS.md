@@ -65,8 +65,8 @@ When two requirements conflict, log an ADR under `docs/DECISIONS/` and route thr
 - Web: Next.js 14 (App Router), Tailwind, PWA.
 - API/Auth/DB/Storage: Supabase (Postgres + RLS + Auth + Storage).
 - Queue: pgmq (Postgres extension) — see [docs/DECISIONS/0001-queue.md](docs/DECISIONS/0001-queue.md).
-- DGX services: Docker on DGX OS, NVIDIA Container Runtime preinstalled.
-- Tunnel: Tailscale (DGX outbound only).
+- DGX services: Docker on DGX OS, NVIDIA Container Runtime preinstalled. Internal hop is the docker-compose bridge (`http://music-inference:8000`), not Tailscale.
+- Network trust boundary: DGX initiates all production traffic; cloud → DGX is forbidden ([SPEC §2.1](docs/SPEC.md), [ADR 0003](docs/DECISIONS/0003-internal-api-hmac.md)). Tailscale is **optional** for DGX outbound egress hardening; it is not the API trust boundary and must not gate dev-time SSH / IDE on LAN.
 - Models: `m-a-p/HeartMuLa-oss-3B` (Apache 2.0), `kenpath/svara-tts`, AI4Bharat Indic-TTS.
 
 v1 scope: web only; styles `{Western, Carnatic, Hindustani, Kannada-folk}`; langs `{en, hi, kn}`; durations `{30s, 60s, 90s, 3min}`. No payments. No MCP exposure.

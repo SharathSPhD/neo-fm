@@ -2,7 +2,7 @@
 
 India-first, composition-aware AI music platform.
 
-A Next.js + Supabase web app talks to a fleet of Docker services on an NVIDIA DGX Spark over Tailscale:
+A Next.js + Supabase web app talks to a fleet of Docker services on an NVIDIA DGX Spark. The DGX is **outbound-only** — it polls Supabase for jobs and uploads results; cloud never reaches into DGX. See [`docs/SPEC.md`](docs/SPEC.md) §2.1 for the trust boundary.
 
 - **music-inference** — HeartMuLa instrumental + lyrical generation.
 - **dgx-worker** — pgmq poller that orchestrates jobs end-to-end.

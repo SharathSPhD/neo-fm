@@ -97,7 +97,7 @@ library lyrics + Western + one Indian style.
 | N1  | DGX GPU utilisation for music jobs stays below a configured threshold (default 50%).        |
 | N2  | P95 latency, 3-minute track, low load: ≤ 5 minutes from submission to playable URL.         |
 | N3  | System supports ≥ 100 active users with 5–10 songs/user/day in the prototype phase.         |
-| N4  | All external traffic is TLS-encrypted; DGX reachable only over Tailscale (outbound only).   |
+| N4  | All external traffic is TLS-encrypted. DGX initiates all production traffic (outbound to Supabase + HF); no public ingress to the DGX in v1. Day-to-day SSH/IDE access is plain LAN (no Tailscale dependency). See [SPEC §2.1](SPEC.md) and [`docs/rejected/tailscale-funnel-pivot.md`](rejected/tailscale-funnel-pivot.md). |
 | N5  | All key actions (job creation, completion, failure) are auditable in logs.                  |
 | N6  | Creation UI remains responsive regardless of backend load (generation is offline).          |
 | N7  | Web app is usable on mid-range phones via mobile web; PWA installable.                      |
