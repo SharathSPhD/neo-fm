@@ -1,14 +1,32 @@
 [project]
 name = "neo-fm-music-inference"
-version = "0.0.0"
+version = "0.1.0"
 description = "FastAPI front for HeartMuLa music generation on DGX Spark."
 readme = "README.md"
-requires-python = ">=3.12"
+# nvcr.io/nvidia/pytorch:24.08-py3 ships python 3.10. We support both
+# 3.10 and 3.12 so the CI smoke + DGX runtime use the same code.
+requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 dependencies = [
   "fastapi>=0.115",
   "uvicorn[standard]>=0.32",
   "pydantic>=2.9.0",
+]
+
+[project.optional-dependencies]
+# Only installed on the DGX, where the heartlib + heartcodec pipeline
+# emits raw PCM/MP3 that occasionally needs format normalisation.
+# Skipped in CI to keep the smoke build fast.
+audio = [
+  "soundfile>=0.12",
+  "numpy>=1.26",
+]
+# huggingface_hub powers scripts/download-heartmula.py. Optional so
+# the music-inference container itself doesn't have to ship it
+# (operator pulls weights from the DGX host before bringing the
+# stack up).
+hub = [
+  "huggingface_hub>=0.25",
 ]
 
 [build-system]
