@@ -1,19 +1,24 @@
 # neo-fm — docker-compose for DGX-side services.
 #
-# Phase 0: brings up music-inference (FastAPI stub) + dgx-worker (print-loop) +
-#          vocal-synth (placeholder). No GPU is required because no real model
-#          is loaded yet.
-# Phase 1: music-inference container switches to nvcr.io/nvidia/pytorch:24.08-py3
-#          and gains `deploy.resources.reservations.devices` for GPU access.
+# Phase 4 (current): real dgx-worker pulling from Supabase pgmq and calling
+# music-inference over the internal compose network. HeartMuLa weights are
+# mounted read-only from the host. No public ingress; cloud never reaches in.
 #
 # Usage (from repo root):
-#   cp infra/.env.dgx.example infra/.env.dgx     # fill MUSIC_INFERENCE_HMAC_SECRET
-#   docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx up --build
+#   scripts/dgx-bootstrap.sh      # one-command bring-up; writes infra/.env.dgx
+#   # or, manually after editing infra/.env.dgx:
+#   docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx up -d
 #
 # Per ADR 0003 (internal-API HMAC):
 # - music-inference exposes port 8000 only on the internal compose network,
 #   NOT on the host. The dgx-worker reaches it as `http://music-inference:8000`.
-# - The shared HMAC secret is injected via env_file, never via -p, never logged.
+# - The shared HMAC secret lives in `infra/.env.dgx` (mode 0600) and is
+#   injected via env_file. It is **never** mirrored to Vercel/cloud
+#   (cloud has no business calling music-inference).
+#
+# Per ADR 0004 the dgx-worker connects to Supabase Postgres as the dedicated
+# `neo_fm_worker` role (PG_DSN), not as `service_role`. Storage uploads use
+# the service-role key over the public Supabase REST endpoint.
 
 name: neo-fm
 
@@ -22,26 +27,26 @@ services:
     build:
       context: ../services/music-inference
       dockerfile: Dockerfile
-    image: neo-fm/music-inference:phase-0
+    image: neo-fm/music-inference:phase-1
     container_name: neo-fm-music-inference
     restart: unless-stopped
     expose:
       - "8000"
+    env_file:
+      - .env.dgx
     environment:
-      PHASE: "0"
-      MUSIC_INFERENCE_HMAC_SECRET: "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
-      MUSIC_INFERENCE_HMAC_SECRET_NEXT: "${MUSIC_INFERENCE_HMAC_SECRET_NEXT:-}"
+      PHASE: "1"
       LOG_LEVEL: "INFO"
-    # Phase 1 adds:
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
-    # volumes:
-    #   - /mnt/models:/mnt/models:ro
+    # Phase 1: real GPU + HeartMuLa weight volume. Comment out for phase-0 dev.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - "${HEARTMULA_CKPT_DIR_HOST:-/mnt/models/heartmula}:/mnt/models/heartmula:ro"
     healthcheck:
       test:
         - "CMD"
@@ -54,23 +59,23 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 180s
 
   dgx-worker:
     build:
       context: ../services/dgx-worker
       dockerfile: Dockerfile
-    image: neo-fm/dgx-worker:phase-0
+    image: neo-fm/dgx-worker:phase-4
     container_name: neo-fm-dgx-worker
     restart: unless-stopped
     depends_on:
       music-inference:
         condition: service_healthy
+    env_file:
+      - .env.dgx
     environment:
+      PHASE: "4"
       MUSIC_INFERENCE_URL: "http://music-inference:8000"
-      MUSIC_INFERENCE_HMAC_SECRET: "${MUSIC_INFERENCE_HMAC_SECRET:?MUSIC_INFERENCE_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
-      POLL_INTERVAL_SECONDS: "5"
-      PHASE: "0"
       LOG_LEVEL: "INFO"
 
   vocal-synth:

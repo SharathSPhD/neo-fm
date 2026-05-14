@@ -39,7 +39,7 @@ jobs:
           tags: neo-fm/${{ matrix.service }}:ci
 
       - name: trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: neo-fm/${{ matrix.service }}:ci
           format: table

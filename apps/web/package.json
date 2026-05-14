@@ -9,26 +9,33 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "lint": "next lint --dir app"
+    "lint": "next lint --dir app --dir lib",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@neo-fm/song-doc": "workspace:*",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.105.4",
     "next": "14.2.18",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "clsx": "^2.1.1",
     "tailwind-merge": "^2.5.4",
-    "class-variance-authority": "^0.7.1"
+    "class-variance-authority": "^0.7.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vitest/coverage-v8": "^2.1.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.18",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
   }
 }

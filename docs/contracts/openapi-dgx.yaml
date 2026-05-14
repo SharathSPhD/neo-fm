@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: neo-fm DGX music-inference API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     Internal API exposed by `services/music-inference` running on the DGX Spark.
     Reached only by `services/dgx-worker` over the docker-compose network.
@@ -13,6 +13,14 @@ info:
       - `X-NeoFM-Timestamp: <unix-seconds>`
       - `X-NeoFM-Signature: <hex hmac-sha256>`
     Timestamp skew tolerance is 60 seconds.
+
+    Version 0.3.0 (Phase 4 close-out):
+      - `POST /v1/generate` returns raw `audio/wav` bytes, not JSON. The worker
+        streams the response straight into Supabase Storage and never JSON-parses.
+      - `GenerateRequest` gains top-level `language` and `trace_id` to match
+        the worker payload (previously implied via the queue message).
+      - `SectionScript` extended with `telugu` and `bengali` to match the
+        cloud Zod schema and song-doc fixtures.
   license:
     name: Apache-2.0
     identifier: Apache-2.0
@@ -48,8 +56,9 @@ paths:
       tags: [generate]
       summary: Generate audio for one Song Document
       description: |
-        Synchronous in v1 (the caller is the queue-driven worker, not a user).
-        Returns 501 in Phase 0 stub builds; real audio output starts Phase 1.
+        Synchronous (the caller is the queue-driven worker, not a user).
+        Returns raw audio bytes — `Content-Type: audio/wav` — that the worker
+        streams directly into Supabase Storage.
       operationId: generate
       security:
         - hmacAuth: []
@@ -70,11 +79,12 @@ paths:
               $ref: "#/components/schemas/GenerateRequest"
       responses:
         "200":
-          description: generation complete
+          description: generation complete; body is raw audio
           content:
-            application/json:
+            audio/wav:
               schema:
-                $ref: "#/components/schemas/GenerateResponse"
+                type: string
+                format: binary
         "400":
           description: invalid request
           content:
@@ -85,13 +95,11 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
-        "501":
-          description: not implemented yet (Phase 0 stub)
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
         "503":
-          description: circuit-breaker open (GPU above threshold; per ADR around C1)
+          description: |
+            model not loaded yet, or circuit-breaker open (GPU above threshold;
+            ADR around C1). Worker treats this as a retryable error per
+            ADR 0008's 5xx bucket.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -125,6 +133,11 @@ components:
         error: { type: string }
         details: { type: object, additionalProperties: true }
 
+    Language:
+      type: string
+      description: ISO 639-1 (v1 allowed values)
+      enum: [en, hi, kn]
+
     SectionType:
       type: string
       enum:
@@ -146,7 +159,10 @@ components:
 
     SectionScript:
       type: string
-      enum: [devanagari, tamil, kannada, latin]
+      description: |
+        Matches the cloud Zod `SectionScript` enum. Telugu + bengali extend the
+        set in v0.3.0 to keep fixtures parseable on both sides.
+      enum: [devanagari, tamil, kannada, telugu, bengali, latin]
 
     StyleFamily:
       type: string
@@ -190,7 +206,7 @@ components:
         id: { type: string, minLength: 1, maxLength: 64 }
         type: { $ref: "#/components/schemas/SectionType" }
         lyrics: { type: string }
-        language: { type: string, description: ISO 639-1 }
+        language: { $ref: "#/components/schemas/Language" }
         script: { $ref: "#/components/schemas/SectionScript" }
         transliteration: { type: string }
         swara_sequence: { type: string }
@@ -205,7 +221,7 @@ components:
 
     GenerateRequest:
       type: object
-      required: [job_id, sections, style_family]
+      required: [job_id, sections, style_family, language]
       properties:
         job_id: { type: string, format: uuid }
         attempt_id:
@@ -214,6 +230,13 @@ components:
           description: |
             Mirrors `attempt_id` in the queue message (ADR 0008). Used by
             music-inference for idempotency / debug correlation.
+        trace_id:
+          type: string
+          description: |
+            Propagated from the queue message (ADR 0007). The server also
+            accepts trace_id via `X-NeoFM-Trace-Id`; when both are present,
+            the header wins.
+        language: { $ref: "#/components/schemas/Language" }
         style_family: { $ref: "#/components/schemas/StyleFamily" }
         tempo_bpm: { type: integer, minimum: 30, maximum: 240 }
         time_signature: { type: string }
@@ -232,31 +255,3 @@ components:
         sample_rate:
           type: integer
           default: 48000
-
-    GenerateResponseSection:
-      type: object
-      required: [id, file_path]
-      properties:
-        id: { type: string }
-        file_path: { type: string, description: filesystem path on DGX, e.g. /mnt/audio/jobs/<uuid>/intro.wav }
-        duration_seconds: { type: integer }
-
-    GenerateResponse:
-      type: object
-      required: [job_id, sections, duration_seconds, metadata]
-      properties:
-        job_id: { type: string, format: uuid }
-        attempt_id: { type: string, format: uuid }
-        sections:
-          type: array
-          items: { $ref: "#/components/schemas/GenerateResponseSection" }
-        combined_file_path: { type: string }
-        duration_seconds: { type: integer }
-        metadata:
-          type: object
-          properties:
-            model: { type: string }
-            version: { type: string }
-            wall_seconds: { type: number }
-            gpu_memory_peak_mb: { type: integer }
-          additionalProperties: true

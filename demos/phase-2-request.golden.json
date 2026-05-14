@@ -1,0 +1,142 @@
+{
+  "attempt_id": "phase-2-golden-attempt-1",
+  "job_id": "00000000-0000-0000-0000-000000000002",
+  "output_format": "wav",
+  "sample_rate": 48000,
+  "sections": [
+    {
+      "id": "intro",
+      "language": "en",
+      "script": "latin",
+      "tags": [
+        "section:intro",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:C-G-Am-F"
+      ],
+      "target_seconds": 12,
+      "type": "intro"
+    },
+    {
+      "id": "v1",
+      "language": "en",
+      "lyrics": "The streetlights flicker on a Tuesday afternoon",
+      "script": "latin",
+      "tags": [
+        "section:verse",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:Am-F-C-G"
+      ],
+      "target_seconds": 40,
+      "type": "verse"
+    },
+    {
+      "id": "c1",
+      "language": "en",
+      "lyrics": "We are everywhere and nowhere all at once",
+      "script": "latin",
+      "tags": [
+        "section:chorus",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:C-G-Am-F"
+      ],
+      "target_seconds": 32,
+      "type": "chorus"
+    },
+    {
+      "id": "v2",
+      "language": "en",
+      "lyrics": "I traced the coastline of a city I have never been",
+      "script": "latin",
+      "tags": [
+        "section:verse",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:Am-F-C-G"
+      ],
+      "target_seconds": 40,
+      "type": "verse"
+    },
+    {
+      "id": "c2",
+      "language": "en",
+      "lyrics": "We are everywhere and nowhere all at once",
+      "script": "latin",
+      "tags": [
+        "section:chorus",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:C-G-Am-F"
+      ],
+      "target_seconds": 40,
+      "type": "chorus"
+    },
+    {
+      "id": "outro",
+      "language": "en",
+      "script": "latin",
+      "tags": [
+        "section:outro",
+        "key:C",
+        "style:western",
+        "tempo:upbeat",
+        "time_sig:4/4",
+        "lead_vocal:female",
+        "texture:full-band",
+        "instrument:acoustic_guitar",
+        "instrument:bass",
+        "instrument:drum_kit",
+        "instrument:synth_pad",
+        "progression:C-Am-F-G"
+      ],
+      "target_seconds": 16,
+      "type": "outro"
+    }
+  ],
+  "style_family": "western",
+  "target_duration_seconds": 180,
+  "tempo_bpm": 112,
+  "time_signature": "4/4"
+}

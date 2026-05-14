@@ -16,39 +16,44 @@ This is the in-repo, durable expansion of the orchestration plan (which lives in
 
 ## Phase 1 — Real music-inference container (vertical slice)
 
-Worktree: `phase/1-music-inference`.
+Worktree: `phase/1-music-inference` (code merged); `phase/1-heartmula-integration` (HeartMuLa loader PR #2 — open).
 
-- [ ] Replace placeholder `Dockerfile` with real build: `nvcr.io/nvidia/pytorch:24.08-py3` + `heartmula` lib + FastAPI.
-- [ ] Add `scripts/download_weights.py` (uv-run) that pulls `m-a-p/HeartMuLa-oss-3B` into a mounted `models/` volume.
-- [ ] Implement eager model load at container boot (TRIZ C2).
-- [ ] Implement `POST /v1/generate` for one short section (30 s). Returns real WAV at `/mnt/audio/jobs/<job_id>/<section_id>.wav`.
-- [ ] Upgrade `/healthz` to report `model_loaded`, `model_version`, `gpu_memory_used`.
-- [ ] Local smoke: `docker run --gpus all` + `curl POST /v1/generate` produces a listenable 30 s WAV.
-- [ ] Commit [demos/phase-1.wav](../demos/phase-1.wav) and an `nvidia-smi` screenshot.
-- [ ] Gating contract checked: tests green, container starts on DGX, real output, demo artifact committed.
+- [x] Replace placeholder `Dockerfile` with real build: `nvcr.io/nvidia/pytorch:24.08-py3` + `heartmula` lib + FastAPI.
+- [x] Add `scripts/download-heartmula.py` (uv-run) that pulls `m-a-p/HeartMuLa-oss-3B` into a mounted `models/` volume.
+- [x] Implement eager model load at container boot (TRIZ C2).
+- [x] Implement `POST /v1/generate` for one short section (30 s). Returns real WAV bytes via `audio/wav` response.
+- [x] Upgrade `/healthz` to report `model_loaded`, `model_version`, `gpu_memory_used_mb` (ADR 0007 fields land in PR #2).
+- [ ] Local smoke: `docker run --gpus all` + `curl POST /v1/generate` produces a listenable 30 s WAV. *(Deferred to DGX bring-up; runbook in [demos/phase-1-SMOKE-HANDOFF.md](../demos/phase-1-SMOKE-HANDOFF.md).)*
+- [ ] Commit [demos/phase-1.wav](../demos/phase-1.wav) and an `nvidia-smi` screenshot. *(Deferred to DGX bring-up.)*
+- [ ] Gating contract checked: tests green, container starts on DGX, real output, demo artifact committed. *(CI gates pass with `FakeMusicModel`; DGX gates blocked on bring-up.)*
 
 ## Phase 2 — Song Document DSL + Western co-composer
 
-Parallel worktrees: `phase/2a-song-doc`, `phase/2b-cocomposer-western`.
+Parallel worktrees: `phase/2a-song-doc`, `phase/2b-cocomposer-western` (both merged to main).
 
-- [ ] **2a**: harden [packages/song-doc/](../packages/song-doc/) — add Zod refinements (target_duration_seconds ≤ 360, raga only when style in `{carnatic, hindustani}`, etc.). Add codegen script that emits Pydantic v2 models from the Zod-derived JSON Schema (replaces hand-written Python).
-- [ ] **2a**: golden-file test runner: every fixture in `packages/song-doc/fixtures/` must parse on both TS and Python sides without drift.
-- [ ] **2b**: implement `WesternCoComposer` in [packages/co-composer/](../packages/co-composer/): chord progressions (I–V–vi–IV etc.), section arrangement, instrumentation hints.
-- [ ] **2b**: golden test renders a Western Song Document → HeartMuLa prompt-set → calls Phase 1 container → produces [demos/phase-2.wav](../demos/phase-2.wav).
+- [x] **2a**: harden [packages/song-doc/](../packages/song-doc/) — add Zod refinements (target_duration_seconds ≤ 360, raga only when style in `{carnatic, hindustani}`, etc.). Add codegen script that emits Pydantic v2 models from the Zod-derived JSON Schema (replaces hand-written Python).
+- [x] **2a**: golden-file test runner: every fixture in `packages/song-doc/fixtures/` must parse on both TS and Python sides without drift.
+- [x] **2b**: implement `WesternCoComposer` in [packages/co-composer/](../packages/co-composer/): chord progressions (I–V–vi–IV etc.), section arrangement, instrumentation hints.
+- [x] **2b**: golden `GenerateRequest` for the Western demo committed at [demos/phase-2-request.golden.json](../demos/phase-2-request.golden.json) and pinned byte-for-byte by `phase2.test.ts`. WAV demo deferred to DGX bring-up — runbook in [demos/phase-2-SMOKE-HANDOFF.md](../demos/phase-2-SMOKE-HANDOFF.md).
 
 ## Phase 3 — Public-lyrics provider + Pratyabhijna seam
 
-Worktree: `phase/3-lyrics`.
+Worktree: `phase/3-lyrics` (merged to main).
 
-- [ ] Seed [data/public-lyrics/](../data/public-lyrics/) with curated public-domain works (Purandaradasa, DVG, Kabir, Tulsidas, Tagore, Blake, Whitman, Sanskrit).
-- [ ] Implement `PublicLyricsLibraryProvider` in [packages/lyrics/](../packages/lyrics/).
-- [ ] Keep `PratyabhijnaProvider` as a not-yet-integrated seam (throws `NotYetIntegratedError`). Real impl lands in Phase 10.
-- [ ] Endpoint returns a Song Document with library lyrics + generates a real WAV.
-- [ ] Demo: [demos/phase-3.wav](../demos/phase-3.wav).
+- [x] Seed [data/public-lyrics/](../data/public-lyrics/) with curated public-domain works (Purandaradasa, DVG, Kabir, Tulsidas, Tagore, Blake, Whitman, Sanskrit) — 12 entries gated by `scripts/verify-lyrics-provenance.py` per ADR 0006.
+- [x] Implement `PublicLyricsLibraryProvider` in [packages/lyrics/](../packages/lyrics/).
+- [x] Keep `PratyabhijnaProvider` as a not-yet-integrated seam (throws `NotYetIntegratedError`). Real impl lands in Phase 10.
+- [x] Pipeline returns a Song Document + golden `GenerateRequest` from a verified PD entry. WAV demo (`demos/phase-3.wav`) deferred to DGX bring-up.
+- [ ] Demo: [demos/phase-3.wav](../demos/phase-3.wav). *(Deferred to DGX bring-up; runbook in [demos/phase-3-SMOKE-HANDOFF.md](../demos/phase-3-SMOKE-HANDOFF.md).)*
 
 ## Phase 4 — Supabase schema + cloud API + dgx-worker
 
 Parallel worktrees: `phase/4a-supabase-schema`, `phase/4b-cloud-api`, `phase/4c-dgx-worker`.
+
+**Operator action required before this phase starts.** Every step below
+depends on a real Supabase project, a real Vercel link, and real
+credentials. See [`PHASE-4-HANDOFF.md`](PHASE-4-HANDOFF.md) for the
+checklist — the agent will refuse to fake any of it.
 
 - [ ] **4a**: Supabase migrations in [infra/supabase/migrations/](../infra/supabase/migrations/): `users`, `song_documents`, `jobs`, `tracks`, `subscriptions` tables + RLS + pgmq queue creation.
 - [ ] **4b**: Next.js API routes — `POST /api/songs`, `GET /api/songs`, `GET /api/songs/{id}`, `GET /api/me`. Supabase service-role server-side only.
