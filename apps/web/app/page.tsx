@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const phases = [
   { n: 0, name: "Bootstrap on DGX", status: "in-progress" },
   { n: 1, name: "music-inference vertical slice", status: "pending" },
@@ -22,6 +24,20 @@ export default function Page() {
         <p className="text-base text-foreground/70">
           India-first, composition-aware AI music. Web app coming together phase by phase.
         </p>
+        <nav className="mt-2 flex gap-3 text-sm">
+          <Link
+            href="/sign-in"
+            className="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-accent hover:bg-accent/20"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className="rounded-md border border-muted/30 px-3 py-1.5 text-foreground/70 hover:text-foreground"
+          >
+            Create account
+          </Link>
+        </nav>
       </header>
 
       <section className="flex flex-col gap-2">
