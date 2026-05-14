@@ -4,6 +4,8 @@ India-first, composition-aware AI music platform.
 
 A Next.js + Supabase web app talks to a fleet of Docker services on an NVIDIA DGX Spark. The DGX is **outbound-only** — it polls Supabase for jobs and uploads results; cloud never reaches into DGX. See [`docs/SPEC.md`](docs/SPEC.md) §2.1 for the trust boundary.
 
+> **Phase 1–3 demos:** the three WAVs (`demos/phase-{1,2,3}.wav`) are captured on the DGX itself per the runbook in [`docs/OPERATOR-HANDOFF.md`](docs/OPERATOR-HANDOFF.md). Everything else has been merged.
+
 - **music-inference** — HeartMuLa instrumental + lyrical generation.
 - **dgx-worker** — pgmq poller that orchestrates jobs end-to-end.
 - **vocal-synth** *(Phase 7)* — svara-TTS Indic vocals layered on top of HeartMuLa instrumental.
