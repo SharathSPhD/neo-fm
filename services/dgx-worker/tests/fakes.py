@@ -61,7 +61,7 @@ class FakeWorkerDB:
     next_msg_id: int = 1
 
     @contextmanager
-    def connect(self) -> Iterator[FakeWorkerDB]:  # type: ignore[override]
+    def connect(self) -> Iterator[FakeWorkerDB]:
         yield self
 
     def enqueue(self, payload: dict[str, Any]) -> int:

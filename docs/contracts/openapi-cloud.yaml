@@ -1,10 +1,21 @@
 openapi: 3.1.0
 info:
   title: neo-fm Cloud API
-  version: 0.1.0
+  version: 0.2.0
   description: |
     Public REST API served by Next.js on Vercel. Authenticated via Supabase Auth.
-    All audio rendering happens on the DGX side and is reached only through this surface.
+    All audio rendering happens on the DGX side and is reached only through
+    this surface.
+
+    Version 0.2.0 (Phase 4 close-out):
+      - Removed `/api/auth/signup` + `/api/auth/login` — never implemented on
+        the server. Auth flows happen client-side via the Supabase SSR client
+        (`@supabase/ssr`) and `middleware.ts` cookie refresh.
+      - `QuotaError` now carries a `reason` discriminator (`rows_per_month`
+        or `storage_bytes`) per ADR 0005 + ADR 0009.
+      - Section.script enum extended with `telugu` and `bengali` to match the
+        Zod source of truth in `packages/song-doc`.
+      - Section.language added so per-section overrides match the cloud schema.
   license:
     name: Apache-2.0
     identifier: Apache-2.0
@@ -16,7 +27,6 @@ servers:
 
 tags:
   - name: health
-  - name: auth
   - name: songs
   - name: account
 
@@ -33,46 +43,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthzResponse"
-
-  /api/auth/signup:
-    post:
-      tags: [auth]
-      summary: Email-password signup (Supabase Auth passthrough)
-      operationId: authSignup
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SignupRequest"
-      responses:
-        "201":
-          description: created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthSession"
-        "400": { $ref: "#/components/responses/BadRequest" }
-
-  /api/auth/login:
-    post:
-      tags: [auth]
-      summary: Email-password login (Supabase Auth passthrough)
-      operationId: authLogin
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: ok
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthSession"
-        "401": { $ref: "#/components/responses/Unauthorized" }
 
   /api/me:
     get:
@@ -116,10 +86,10 @@ paths:
       description: |
         Accepts either a fully-formed Song Document under `song_document` OR a
         `prompt`. The `prompt` branch is gated by the server-side feature flag
-        `prompt_enabled` (off by default). Until Phase 10, requests using the
-        `prompt` branch receive `501 Not Implemented` with the typed error
-        `{ "error": "prompt_branch_not_yet_enabled" }`. The `song_document`
-        branch is fully functional from Phase 4.
+        `NEO_FM_PROMPT_BRANCH_ENABLED` (off by default). Until Phase 10,
+        requests using the `prompt` branch receive `501 Not Implemented` with
+        the typed error `{ "error": "prompt_branch_not_yet_enabled" }`. The
+        `song_document` branch is fully functional from Phase 4.
       operationId: createSong
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -213,37 +183,26 @@ components:
       allOf:
         - $ref: "#/components/schemas/Error"
         - type: object
+          required: [error, reason]
           properties:
+            error: { type: string, enum: [quota_exceeded] }
+            reason:
+              type: string
+              description: |
+                Why the request was rejected.
+                  - `rows_per_month`: per-tier monthly job count (ADR 0009).
+                    `remaining_seconds_until_reset` is positive.
+                  - `storage_bytes`: per-tier storage byte cap (ADR 0005).
+                    `remaining_seconds_until_reset` is `-1` — clients render
+                    "delete an old song to free up space" copy instead of a
+                    countdown.
+              enum: [rows_per_month, storage_bytes]
             remaining_seconds_until_reset: { type: integer }
             tier: { $ref: "#/components/schemas/Tier" }
 
     Tier:
       type: string
       enum: [free, creator, pro]
-
-    SignupRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email: { type: string, format: email }
-        password: { type: string, minLength: 8 }
-        name: { type: string }
-
-    LoginRequest:
-      type: object
-      required: [email, password]
-      properties:
-        email: { type: string, format: email }
-        password: { type: string }
-
-    AuthSession:
-      type: object
-      required: [access_token, expires_in, user]
-      properties:
-        access_token: { type: string }
-        refresh_token: { type: string }
-        expires_in: { type: integer }
-        user: { $ref: "#/components/schemas/UserProfile" }
 
     UserProfile:
       type: object
@@ -290,7 +249,7 @@ components:
 
     SectionScript:
       type: string
-      enum: [devanagari, tamil, kannada, latin]
+      enum: [devanagari, tamil, kannada, telugu, bengali, latin]
 
     Section:
       type: object
@@ -299,6 +258,9 @@ components:
         id: { type: string, minLength: 1, maxLength: 64 }
         type: { $ref: "#/components/schemas/SectionType" }
         lyrics: { type: string }
+        language:
+          $ref: "#/components/schemas/Language"
+          description: per-section override of the document-level language
         script: { $ref: "#/components/schemas/SectionScript" }
         transliteration: { type: string }
         swara_sequence: { type: string }

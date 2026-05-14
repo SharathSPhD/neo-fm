@@ -136,7 +136,7 @@ describe("POST /api/songs", () => {
     expect(user_client.__state.inserted).toEqual([]);
   });
 
-  it("429 when the RPC raises quota_exceeded", async () => {
+  it("429 with reason=rows_per_month when the RPC raises quota_exceeded", async () => {
     const user_client = makeUserClient();
     user_client.__state.rpc_handlers.create_song_job = () => ({
       data: null,
@@ -151,7 +151,35 @@ describe("POST /api/songs", () => {
     expect(res.status).toBe(429);
     const body = await res.json();
     expect(body.error).toBe("quota_exceeded");
-    expect(body.remaining_seconds_until_reset).toBeGreaterThanOrEqual(0);
+    expect(body.reason).toBe("rows_per_month");
+    // ADR 0009: monthly window. Worst-case reset is start of next UTC month
+    // (~31 days ≈ 2_678_400 s). Just confirm it's positive and < 32 days.
+    expect(body.remaining_seconds_until_reset).toBeGreaterThan(0);
+    expect(body.remaining_seconds_until_reset).toBeLessThanOrEqual(32 * 24 * 3600);
+  });
+
+  it("429 with reason=storage_bytes when the RPC raises storage_quota_exceeded", async () => {
+    const user_client = makeUserClient();
+    user_client.__state.rpc_handlers.create_song_job = () => ({
+      data: null,
+      error: {
+        message:
+          "P0001: storage_quota_exceeded\nWhere: PL/pgSQL function create_song_job",
+      },
+    });
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(req(validBody()));
+    expect(res.status).toBe(429);
+    const body = await res.json();
+    expect(body.error).toBe("quota_exceeded");
+    expect(body.reason).toBe("storage_bytes");
+    // ADR 0005: storage cap reset is not time-based; the client gets -1 so it
+    // can render "delete an old song to free up space" instead of "try again".
+    expect(body.remaining_seconds_until_reset).toBe(-1);
   });
 
   it("500 on unknown RPC failure", async () => {

@@ -96,10 +96,14 @@ Set on `SharathSPhD/neo-fm` (verifiable with
 `gh secret list -R SharathSPhD/neo-fm`):
 
 - `SUPABASE_PROJECT_REF` = `lsxicfgqtdxvlcivlwmd`.
-- `MUSIC_INFERENCE_HMAC_SECRET` — 32-byte random; same value must be
-  pasted into Vercel project env *and* the DGX-side `infra/.env.dgx`.
-  The generated value is staged at `/tmp/neo-fm-hmac-secret.txt` for
-  one-time copy-out by the operator and is **not** committed to git.
+- `MUSIC_INFERENCE_HMAC_SECRET` — 32-byte random; **DGX-only** secret per
+  [ADR 0003](DECISIONS/0003-internal-api-hmac.md) ("the same secret never
+  lives in Vercel"). It is staged in the GitHub Actions secret store only
+  so that `scripts/dgx-bootstrap.sh` can pull it onto the DGX via
+  `gh secret get`; it is **not** consumed by any cloud workflow and is
+  **not** added to Vercel env. The generated value is staged at
+  `/tmp/neo-fm-hmac-secret.txt` for one-time copy-out by the operator and
+  is **not** committed to git.
 
 ---
 

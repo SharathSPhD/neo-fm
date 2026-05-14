@@ -232,7 +232,29 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_user_storage_bytes: {
+        Row: {
+          bytes: number | null
+          job_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       create_song_job: {
@@ -252,8 +274,14 @@ export type Database = {
         }[]
       }
       enqueue_song_generation_job: { Args: { payload: Json }; Returns: number }
+      user_jobs_count_month: { Args: { p_user_id: string }; Returns: number }
       user_jobs_count_today: { Args: { p_user_id: string }; Returns: number }
+      user_storage_bytes: { Args: { p_user_id: string }; Returns: number }
       user_tier_quota: { Args: { p_user_id: string }; Returns: number }
+      user_tier_storage_bytes_cap: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       job_status_enum: "queued" | "processing" | "completed" | "failed"

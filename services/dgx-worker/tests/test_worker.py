@@ -165,6 +165,11 @@ async def test_inference_timeout_retries_with_new_attempt_id() -> None:
 
 
 async def test_attempts_exhausted_routes_to_dlq() -> None:
+    """5xx (retryable bucket) past max_attempts ends up in DLQ.
+
+    Tagged as `inference_http_5xx` per ADR 0008 — we do NOT fan the bucket out
+    by status code; 500/502/503/504 all collapse to the same class.
+    """
     db = FakeWorkerDB()
     inference = FakeInferenceClient(
         exc=httpx.HTTPStatusError(
@@ -188,7 +193,71 @@ async def test_attempts_exhausted_routes_to_dlq() -> None:
 
     assert outcome == JobOutcome.FAILED_DLQ
     assert db.jobs[str(msg["job_id"])].status == "failed"
-    assert any(d["reason"] == "inference_http_503" for d in db.dlq)
+    assert db.jobs[str(msg["job_id"])].error == "inference_http_5xx"
+    assert any(d["reason"] == "inference_http_5xx" for d in db.dlq)
+
+
+async def test_inference_4xx_routes_straight_to_dlq() -> None:
+    """4xx is non-retryable per ADR 0008: the next attempt would fail
+    identically. Even on the first attempt, the job goes straight to DLQ."""
+    db = FakeWorkerDB()
+    inference = FakeInferenceClient(
+        exc=httpx.HTTPStatusError(
+            "bad request",
+            request=httpx.Request("POST", "http://x"),
+            response=httpx.Response(400),
+        ),
+    )
+    storage = FakeStorageClient()
+    msg = make_message(attempt_number=1)
+    msg_id = _seed(db, message=msg)
+    settings = _settings(max_attempts=3)
+
+    outcome = await process_one(
+        settings=settings,
+        db=db,  # type: ignore[arg-type]
+        inference=inference,  # type: ignore[arg-type]
+        storage=storage,  # type: ignore[arg-type]
+        queue_msg={"msg_id": msg_id, "message": msg},
+    )
+
+    assert outcome == JobOutcome.FAILED_DLQ
+    job = db.jobs[str(msg["job_id"])]
+    assert job.status == "failed"
+    assert job.error == "inference_http_4xx"
+    # DLQ holds the failure; the original queue message was deleted (not
+    # re-enqueued), so we don't burn DGX time on a doomed retry.
+    assert any(d["reason"] == "inference_http_4xx" for d in db.dlq)
+    assert db.queue[0].deleted is True
+    assert storage.uploads == []
+    assert db.tracks == []
+
+
+async def test_inference_network_error_is_retryable() -> None:
+    """Connect errors / read errors should be treated as retryable 5xx-like
+    failures (ADR 0008 `inference_network_error` bucket)."""
+    db = FakeWorkerDB()
+    inference = FakeInferenceClient(
+        exc=httpx.ConnectError(
+            "connection refused",
+            request=httpx.Request("POST", "http://x"),
+        ),
+    )
+    storage = FakeStorageClient()
+    msg = make_message(attempt_number=1)
+    msg_id = _seed(db, message=msg)
+    settings = _settings(max_attempts=3)
+
+    outcome = await process_one(
+        settings=settings,
+        db=db,  # type: ignore[arg-type]
+        inference=inference,  # type: ignore[arg-type]
+        storage=storage,  # type: ignore[arg-type]
+        queue_msg={"msg_id": msg_id, "message": msg},
+    )
+
+    assert outcome == JobOutcome.FAILED_RETRY
+    assert db.jobs[str(msg["job_id"])].error == "inference_network_error"
 
 
 async def test_storage_failure_is_retryable() -> None:

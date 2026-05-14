@@ -13,11 +13,20 @@ Lifecycle of one job:
   8. Mark job completed (CAS from processing).
   9. `pgmq.archive` the message.
 
-  Failure paths:
-    - song_document_invalid -> non-retryable, push to DLQ immediately.
-    - inference_oom / inference_timeout / inference_http_5xx /
-      storage_upload_failed -> mark failed; if attempts < max, re-enqueue
-      with backoff; else push to DLQ.
+  Failure paths (ADR 0008 taxonomy):
+    - song_document_invalid       -> non-retryable, push to DLQ immediately.
+    - inference_http_4xx          -> non-retryable (the request itself is
+                                     malformed; retrying without changing the
+                                     payload is wasted DGX time). Straight to
+                                     DLQ.
+    - inference_timeout           -> retryable; new attempt_id, backoff.
+    - inference_http_5xx          -> retryable bucket (covers 500, 502, 503,
+                                     504 and any other 5xx). Per ADR 0008 we
+                                     intentionally do not split per status to
+                                     avoid alert fan-out.
+    - inference_network_error     -> retryable; treated as 5xx-equivalent.
+    - storage_upload_failed       -> retryable.
+    - attempts >= max_attempts    -> bumped to DLQ regardless of class.
 """
 
 from __future__ import annotations
@@ -95,11 +104,36 @@ async def _heartbeat_loop(
 
 
 def classify_inference_error(exc: BaseException) -> str:
+    """Map an httpx exception to an ADR 0008 error class.
+
+    ADR 0008 buckets inference failures into a small fixed set so dashboards
+    and DLQ filters do not fan out per HTTP status. The classes are:
+
+      - ``inference_timeout``       — httpx raised TimeoutException.
+      - ``inference_http_4xx``      — non-retryable: the server rejected the
+                                     request shape. Caller should DLQ.
+      - ``inference_http_5xx``      — retryable: the server failed to honor a
+                                     well-formed request (500/502/503/504/etc).
+      - ``inference_network_error`` — retryable: the request never reached the
+                                     server (connect error, read error, etc).
+    """
     if isinstance(exc, httpx.TimeoutException):
         return "inference_timeout"
     if isinstance(exc, httpx.HTTPStatusError):
-        return f"inference_http_{exc.response.status_code}"
-    return "inference_http_5xx"
+        status = exc.response.status_code
+        if 400 <= status < 500:
+            return "inference_http_4xx"
+        return "inference_http_5xx"
+    return "inference_network_error"
+
+
+_RETRYABLE_INFERENCE_ERRORS = frozenset(
+    {
+        "inference_timeout",
+        "inference_http_5xx",
+        "inference_network_error",
+    },
+)
 
 
 async def process_one(
@@ -197,6 +231,22 @@ async def process_one(
                 "inference call failed",
                 extra={"job_id": job_id, "err": str(exc), "kind": classification},
             )
+            if classification not in _RETRYABLE_INFERENCE_ERRORS:
+                # ADR 0008: 4xx means the request itself is malformed; the
+                # next attempt would fail identically. Skip retries, DLQ now.
+                with db.connect() as conn:
+                    db.mark_failed(conn, job_id, classification)
+                    db.send_to_dlq(
+                        conn,
+                        settings.dlq_name,
+                        {
+                            "reason": classification,
+                            "message": raw_payload,
+                            "err": str(exc),
+                        },
+                    )
+                    db.delete(conn, settings.queue_name, msg_id)
+                return JobOutcome.FAILED_DLQ
             return await _handle_retryable_failure(
                 settings=settings,
                 db=db,

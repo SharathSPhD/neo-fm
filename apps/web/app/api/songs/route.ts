@@ -13,9 +13,10 @@
  * RPC that runs as `auth.uid()` and:
  *
  *   1. takes a per-user transaction-scoped advisory lock (no quota TOCTOU);
- *   2. re-checks the daily tier quota under that lock;
- *   3. inserts the song_document + jobs row scoped to the calling user;
- *   4. enqueues a pgmq message.
+ *   2. re-checks the monthly tier quota under that lock (ADR 0009);
+ *   3. re-checks the per-tier storage byte cap under the same lock (ADR 0005);
+ *   4. inserts the song_document + jobs row scoped to the calling user;
+ *   5. enqueues a pgmq message.
  *
  * Direct INSERT on `public.song_documents` / `public.jobs` is revoked from
  * the `authenticated` role (see migration 0008), so this RPC is the *only*
@@ -75,6 +76,18 @@ function latestTrack(
 ): SongListRow["tracks"] extends Array<infer T> | null ? T | undefined : never {
   if (!rows || rows.length === 0) return undefined as never;
   return [...rows].sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0] as never;
+}
+
+/**
+ * Seconds remaining until the next UTC month rollover. Used to populate
+ * `remaining_seconds_until_reset` on the rows-per-month quota error so the
+ * client can render a meaningful "try again in N hours" indicator.
+ */
+function secondsUntilNextUtcMonth(now: Date = new Date()): number {
+  const nextMonth = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0),
+  );
+  return Math.floor((nextMonth.getTime() - now.getTime()) / 1000);
 }
 
 export async function POST(request: NextRequest) {
@@ -149,15 +162,28 @@ export async function POST(request: NextRequest) {
 
   if (rpcErr) {
     const msg = rpcErr.message ?? "";
-    if (msg.includes("quota_exceeded")) {
-      const utcMidnight = new Date();
-      utcMidnight.setUTCHours(24, 0, 0, 0);
+    // ADR 0005: per-tier storage byte cap. Different reset semantics
+    // (reset happens when the user deletes a song or the sweep prunes
+    // expired tracks); we return -1 to make that explicit on the client.
+    // Match `storage_quota_exceeded` BEFORE `quota_exceeded` because the
+    // shorter literal is a substring of the longer one.
+    if (msg.includes("storage_quota_exceeded")) {
       return NextResponse.json(
         {
           error: "quota_exceeded",
-          remaining_seconds_until_reset: Math.floor(
-            (utcMidnight.getTime() - Date.now()) / 1000,
-          ),
+          reason: "storage_bytes",
+          remaining_seconds_until_reset: -1,
+        },
+        { status: 429 },
+      );
+    }
+    // ADR 0009: rows-per-month quota. Reset is the next UTC month rollover.
+    if (msg.includes("quota_exceeded")) {
+      return NextResponse.json(
+        {
+          error: "quota_exceeded",
+          reason: "rows_per_month",
+          remaining_seconds_until_reset: secondsUntilNextUtcMonth(),
         },
         { status: 429 },
       );

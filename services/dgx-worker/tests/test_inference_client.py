@@ -110,12 +110,15 @@ def test_signature_verifies_against_real_server_module(
 
 @pytest.mark.asyncio
 async def test_generate_signs_request_and_returns_bytes() -> None:
-    captured: dict[str, object] = {}
+    captured_url: str = ""
+    captured_body: bytes = b""
+    captured_headers: dict[str, str] = {}
 
     def handler(request: httpx.Request) -> httpx.Response:
-        captured["url"] = str(request.url)
-        captured["body"] = request.content
-        captured["headers"] = dict(request.headers)
+        nonlocal captured_url, captured_body, captured_headers
+        captured_url = str(request.url)
+        captured_body = request.content
+        captured_headers = dict(request.headers)
         return httpx.Response(200, content=b"WAV")
 
     transport = httpx.MockTransport(handler)
@@ -134,22 +137,20 @@ async def test_generate_signs_request_and_returns_bytes() -> None:
         await client.aclose()
 
     assert out == b"WAV"
-    assert captured["url"] == "https://inference.test/v1/generate"
-    headers = captured["headers"]  # type: ignore[assignment]
-    assert headers["content-type"] == "application/json"
-    assert headers["x-neofm-trace-id"] == "trace-1"
+    assert captured_url == "https://inference.test/v1/generate"
+    assert captured_headers["content-type"] == "application/json"
+    assert captured_headers["x-neofm-trace-id"] == "trace-1"
 
-    body = captured["body"]
-    ts = int(headers["x-neofm-timestamp"])
+    ts = int(captured_headers["x-neofm-timestamp"])
     # ts must be unix-seconds, not ms — sanity check the magnitude.
     assert 1_000_000_000 <= ts <= 99_999_999_999, (
         "x-neofm-timestamp must be unix-seconds per ADR 0003"
     )
-    expected = sign_request_body(body, ts, "s3cret")  # type: ignore[arg-type]
-    assert headers["x-neofm-signature"] == expected
+    expected = sign_request_body(captured_body, ts, "s3cret")
+    assert captured_headers["x-neofm-signature"] == expected
 
     # Body is compact JSON (no whitespace) so the server-side digest matches.
-    assert body == json.dumps({"job_id": "abc"}, separators=(",", ":")).encode()
+    assert captured_body == json.dumps({"job_id": "abc"}, separators=(",", ":")).encode()
 
 
 @pytest.mark.asyncio

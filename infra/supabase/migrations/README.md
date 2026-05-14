@@ -29,6 +29,11 @@ Or, in MCP-driven flows (Cursor / Claude), apply each file in order with
    INSERT on `song_documents` / `jobs` from `authenticated`. Closes the
    "bypass /api/songs via PostgREST" hole flagged in the Phase 4
    adversarial review.
+9. `0009_quota_monthly.sql` — ADR 0009 + ADR 0005: switches the quota window
+   from daily to monthly (free=3, creator=100, pro=1000 songs/month), adds
+   `v_user_storage_bytes` view + `user_tier_storage_bytes_cap` helper, and
+   updates `create_song_job` to reject when storage usage + estimated new
+   bytes would exceed the tier cap (`storage_quota_exceeded` error).
 
 ## Notes
 
