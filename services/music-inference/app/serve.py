@@ -58,6 +58,44 @@ HMAC_HEADER_TRACE = "x-neofm-trace-id"
 HMAC_MAX_SKEW_SECONDS = 60
 
 
+def _gpu_memory_used_mb() -> int | None:
+    """Best-effort GPU-memory-in-use reading (MB), or None.
+
+    ADR 0007 wants this in /healthz and on every /v1/generate log line.
+    Three sources, in order of fidelity:
+
+    1. `torch.cuda.memory_allocated()` -- accurate within the current
+       process (ignores other CUDA tenants but we don't share GPUs).
+    2. `nvidia-smi --query-gpu=memory.used` -- whole-device view; works
+       even when torch isn't imported.
+    3. None -- no CUDA, no nvidia-smi (developer workstation / CI).
+    """
+    try:
+        import torch  # type: ignore[import-not-found]
+
+        if torch.cuda.is_available():
+            mem_bytes = int(torch.cuda.memory_allocated())
+            return mem_bytes // (1024 * 1024)
+    except Exception:
+        # torch not installed in CI; fall through to nvidia-smi.
+        pass
+
+    try:
+        import subprocess
+
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        first_line = out.stdout.strip().splitlines()[0]
+        return int(first_line)
+    except Exception:
+        return None
+
+
 def _configure_logger() -> logging.Logger:
     """JSON-only stdout logger; one log record per line."""
 
@@ -178,23 +216,28 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
 
             request._receive = _body_replay
 
+        request.state.request_id = request_id
+        request.state.trace_id = trace_id
         try:
             response = await call_next(request)
             latency_ms = int((time.perf_counter() - start) * 1000)
-            log.info(
-                "request",
-                extra={
-                    "extra_fields": {
-                        "request_id": request_id,
-                        "trace_id": trace_id,
-                        "route": request.url.path,
-                        "method": request.method,
-                        "status": response.status_code,
-                        "latency_ms": latency_ms,
-                        "phase": PHASE,
-                    }
-                },
-            )
+            extra_fields: dict[str, Any] = {
+                "request_id": request_id,
+                "trace_id": trace_id,
+                "route": request.url.path,
+                "method": request.method,
+                "status": response.status_code,
+                "latency_ms": latency_ms,
+                "phase": PHASE,
+            }
+            # ADR 0007: /v1/generate carries model_version + gpu_memory_used_mb
+            # + wall_seconds. The endpoint stashes them on request.state so the
+            # middleware can append without re-reading model state.
+            for k in ("model_version", "gpu_memory_used_mb", "wall_seconds"):
+                v = getattr(request.state, k, None)
+                if v is not None:
+                    extra_fields[k] = v
+            log.info("request", extra={"extra_fields": extra_fields})
             response.headers["X-NeoFM-Request-Id"] = request_id
             return response
         except Exception:
@@ -296,7 +339,7 @@ def healthz() -> HealthzResponse:
         status="ok" if (m is None or m.model_loaded) else "degraded",
         model_loaded=bool(m and m.model_loaded),
         model_version=m.model_version if m else None,
-        gpu_memory_used_mb=None,
+        gpu_memory_used_mb=_gpu_memory_used_mb(),
         gpu_utilization_pct=None,
         queue_lag_seconds=None,
         phase=PHASE,
@@ -356,7 +399,7 @@ _OUTPUT_MIME: dict[str, str] = {
         503: {"model": ErrorBody, "description": "model is still loading"},
     },
 )
-async def generate(req: GenerateRequest) -> FastAPIResponse:
+async def generate(req: GenerateRequest, request: Request) -> FastAPIResponse:
     m: MusicModel | None = model_module.get_active_model()
     if m is None or not m.model_loaded:
         raise HTTPException(
@@ -376,7 +419,17 @@ async def generate(req: GenerateRequest) -> FastAPIResponse:
     gen_req = _coerce_request(req)
     # heartlib is blocking; run on a threadpool so we don't stall the
     # event loop. asyncio.to_thread schedules on the default executor.
+    model_start = time.perf_counter()
     audio_bytes = await asyncio.to_thread(m.generate, gen_req)
+    wall_seconds = round(time.perf_counter() - model_start, 3)
+
+    # ADR 0007: hand observability fields to the middleware via request.state
+    # rather than emitting a second log line. /healthz reads gpu memory the
+    # same way so the two endpoints stay consistent.
+    request.state.model_version = m.model_version or "unknown"
+    request.state.gpu_memory_used_mb = _gpu_memory_used_mb()
+    request.state.wall_seconds = wall_seconds
+
     return FastAPIResponse(
         content=audio_bytes,
         media_type=_OUTPUT_MIME.get(req.output_format, "application/octet-stream"),

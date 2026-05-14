@@ -109,6 +109,12 @@ def test_healthz_unauthenticated_and_reports_phase_1(client: TestClient) -> None
     assert body["model_loaded"] is True
     assert body["model_version"] == "fake-1.0"
     assert body["phase"] == 1
+    # ADR 0007 requires these keys to be present; values may be None on
+    # CI hosts (no CUDA, no nvidia-smi). We assert the keys exist so the
+    # contract is stable, and that they're either int or None.
+    assert "gpu_memory_used_mb" in body
+    assert body["gpu_memory_used_mb"] is None or isinstance(body["gpu_memory_used_mb"], int)
+    assert "gpu_utilization_pct" in body
 
 
 def test_healthz_reports_degraded_when_no_model(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -247,6 +253,47 @@ def test_generate_invokes_model_with_translated_lyrics_and_tags(
     assert "uplifting" in parts
     # dedupe order: every tag appears at most once.
     assert len(parts) == len(set(parts))
+
+
+def test_generate_emits_adr0007_log_fields(
+    client: TestClient, fake_model: FakeMusicModel
+) -> None:
+    """ADR 0007: /v1/generate log line must include model_version,
+    gpu_memory_used_mb, wall_seconds in addition to request_id.
+
+    The logger writes JSON via a StreamHandler bound at module-import
+    time to a captured stdout reference, so we attach an in-memory
+    handler for the duration of one call and assert against what it
+    receives.
+    """
+    import logging
+
+    captured_records: list[logging.LogRecord] = []
+
+    class _CaptureHandler(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            captured_records.append(record)
+
+    logger = logging.getLogger("music-inference")
+    handler = _CaptureHandler()
+    logger.addHandler(handler)
+    try:
+        r = _signed_post(client, BASE_PAYLOAD)
+    finally:
+        logger.removeHandler(handler)
+
+    assert r.status_code == 200, r.text
+
+    request_records = [rec for rec in captured_records if rec.getMessage() == "request"]
+    assert len(request_records) == 1
+    extra = getattr(request_records[0], "extra_fields", {})
+    assert extra["model_version"] == "fake-1.0"
+    assert "wall_seconds" in extra and isinstance(extra["wall_seconds"], float)
+    # gpu_memory_used_mb is omitted in environments without CUDA / nvidia-smi.
+    if "gpu_memory_used_mb" in extra:
+        assert extra["gpu_memory_used_mb"] is None or isinstance(
+            extra["gpu_memory_used_mb"], int
+        )
 
 
 def test_generate_uses_transliteration_for_indic_sections(
