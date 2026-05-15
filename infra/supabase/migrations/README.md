@@ -34,6 +34,11 @@ Or, in MCP-driven flows (Cursor / Claude), apply each file in order with
    `v_user_storage_bytes` view + `user_tier_storage_bytes_cap` helper, and
    updates `create_song_job` to reject when storage usage + estimated new
    bytes would exceed the tier cap (`storage_quota_exceeded` error).
+10. `0010_worker_bypassrls.sql` — ADR 0004 follow-up: gives `neo_fm_worker`
+    `BYPASSRLS`. Without it the worker's CAS update on `public.jobs` saw
+    zero rows because the table's RLS policies only listed `authenticated`,
+    and the worker silently archived every message as "not claimable".
+    Least-privilege is still enforced by the column-level grants from 0006.
 
 ## Notes
 

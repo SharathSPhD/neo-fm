@@ -1,8 +1,13 @@
 -- 0006_worker_role.sql -- least-privilege neo_fm_worker DB role (ADR 0004)
 --
--- The worker connects with PGUSER=neo_fm_worker. RLS does not apply to this
--- role (it is not anon/authenticated); the role gets exactly the grants the
--- worker needs and nothing else.
+-- The worker connects with PGUSER=neo_fm_worker. Least-privilege is enforced
+-- by:
+--   * column-level UPDATE grants on `public.jobs` (lifecycle columns only),
+--   * no INSERT/DELETE on `public.jobs`,
+--   * no grant on `public.users` / `public.subscriptions`.
+-- See 0010_worker_bypassrls.sql for the BYPASSRLS flag on this role -- without
+-- it the worker's CAS update on `public.jobs` would see zero rows because the
+-- table's RLS policies only list `authenticated`.
 --
 -- The role is created without LOGIN here. The operator (or a follow-up
 -- migration during the smoke-test bringup) sets a password and adds LOGIN out
@@ -42,4 +47,4 @@ revoke all on public.users         from neo_fm_worker;
 revoke all on public.subscriptions from neo_fm_worker;
 
 comment on role neo_fm_worker is
-  'ADR 0004: dedicated least-privilege role for services/dgx-worker. Has no SELECT on users or subscriptions, no DELETE on jobs, and writes only the lifecycle columns.';
+  'ADR 0004: dedicated least-privilege role for services/dgx-worker. Has no SELECT on users or subscriptions, no DELETE on jobs, and writes only the lifecycle columns. See 0010_worker_bypassrls for BYPASSRLS rationale.';

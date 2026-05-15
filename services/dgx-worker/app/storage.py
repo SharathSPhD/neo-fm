@@ -52,7 +52,15 @@ class StorageClient:
         For the worker that's service_role; user-facing access uses signed URLs.
         """
         url = f"{self._base}/storage/v1/object/{self._bucket}/{object_path}"
+        # Supabase's new "sb_secret_*" / "sb_publishable_*" keys are opaque
+        # (not JWTs) and require BOTH the `apikey` header and a matching
+        # `Authorization: Bearer` header. Sending only `Authorization` makes
+        # the gateway try to parse the bearer as a Compact JWS and return
+        # 400 "Invalid Compact JWS" (which is what blocked the first
+        # smoke-test upload). The legacy `eyJ...` JWT format also tolerates
+        # this shape, so sending both works for both key generations.
         headers = {
+            "apikey": self._key,
             "authorization": f"Bearer {self._key}",
             "content-type": content_type,
             "x-upsert": "true",

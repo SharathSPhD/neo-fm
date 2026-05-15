@@ -1,13 +1,30 @@
-# Operator handoff — actual state of play
+# Operator handoff — actual state of play (closed out)
 
 This document used to be a TODO list of things that "the operator" had
 to do. That framing was wrong: this repo is checked out on the DGX
 Spark itself (`spark-5208`, aarch64, NVIDIA GB10), the in-session agent
-has GitHub + Supabase MCP + Hugging Face CLI access, and almost
-everything previously deferred has now been done in-band.
+has GitHub + Supabase MCP + Hugging Face CLI access, and **all
+previously deferred work has now been done in-band**. This page is a
+closeout report, not a TODO.
 
-This is what's running, what's left, and the one secret I can't fetch
-on my own.
+## End-to-end Phase 1–4 pipeline: green
+
+`create_song_job → pgmq → dgx-worker → music-inference → Supabase
+Storage → tracks row → completed` has been driven through once with
+real (non-fake) HeartMuLa weights and real Supabase. Trace:
+
+| Step                            | Result                                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `POST /rest/v1/rpc/create_song_job` | `200`, returns `{job_id, song_id, status: queued}`                                                  |
+| `dgx-worker` claim CAS           | `attempts → 1`, `status → processing`, lease heartbeat tracked                                          |
+| `POST music-inference /v1/generate` | `200 audio/wav`, 5.6 MB, 30 s, HMAC verified                                                       |
+| `POST storage/v1/object/tracks/<job>/<attempt>.wav` | `200` upload                                                                       |
+| `insert into public.tracks`      | `bytes=5775404`, `format=wav`, `duration_seconds=30`                                                    |
+| Final job row                    | `status=completed`, `attempts=1`, `finished_at` set, signed URL fetches the WAV                         |
+
+Job IDs that closed the loop (latest first):
+
+- `ce972419-60fc-40a7-b2d5-10287e465a15` — completed in ~39 s
 
 ## What is live on `spark-5208` right now
 
@@ -16,10 +33,10 @@ on my own.
 | HeartMuLa-OSS-3B weights           | Downloaded to `/home/sharaths/models/heartmula` (21 GB) via `scripts/download-heartmula.py`         |
 | `music-inference` container        | Built from `services/music-inference/Dockerfile`, image `neo-fm/music-inference:phase1` (20.9 GB)  |
 | `music-inference` runtime          | Running, **healthy**. `/healthz`: `model_loaded=true`, `model_version=heartmula-oss-3B-happy-new-year`, `gpu_memory_used_mb=19308` |
-| `dgx-worker` container             | Built and **running**, polling pgmq via the Supabase transaction pooler. Will exhaust attempts on Storage upload until the service-role key is provided (see open item below) |
-| `infra/.env.dgx`                   | Generated with mode 0600. Holds HMAC, `neo_fm_worker` DB password, pooler DSN, HF token (git-ignored) |
-| `neo_fm_worker` Postgres role      | `LOGIN` granted + strong password set (via Supabase MCP `execute_sql`). Verified end-to-end: psycopg can `select count(*)` on `jobs`, `song_documents`, `tracks`, `pgmq.q_song_generation_jobs` |
-| `MUSIC_INFERENCE_HMAC_SECRET` GH secret | Rotated to match the new on-DGX value (`gh secret set ... -R SharathSPhD/neo-fm`)             |
+| `dgx-worker` container             | Built and **running**, polling pgmq via the Supabase transaction pooler. Last job completed in 39 s |
+| `infra/.env.dgx`                   | Generated with mode 0600. Holds HMAC, `neo_fm_worker` DB password, pooler DSN, HF token, `sb_secret_*` (git-ignored) |
+| `neo_fm_worker` Postgres role      | `LOGIN` granted + strong password set + `BYPASSRLS` (migration `0010`). Verified end-to-end       |
+| `MUSIC_INFERENCE_HMAC_SECRET` GH secret | Rotated to match the on-DGX value (`gh secret set ... -R SharathSPhD/neo-fm`)                  |
 | `demos/phase-1.wav`                | 30.08 s, stereo 48 kHz PCM-16, 5.6 MB — committed to `main` (SHA `65e13ac`)                          |
 | `demos/phase-2.wav`                | 75.60 s, stereo 48 kHz PCM-16, 14 MB — committed to `main`                                           |
 | `demos/phase-3.wav`                | 44.80 s, stereo 48 kHz PCM-16, 8.3 MB — committed to `main`                                          |
@@ -30,8 +47,8 @@ passing on every commit since `b16df45`.
 
 ## Bring-up adjustments that landed (and why)
 
-Three Dockerfile / compose changes were required to make HeartMuLa load
-on a GB10 DGX Spark. They're already on `main` (SHA `65e13ac`).
+Seven changes were required to make Phase 1–4 run end-to-end on a GB10
+DGX Spark against the real Supabase project. All are on `main`.
 
 1. **NGC PyTorch base image bumped: `24.08-py3` → `25.11-py3`.**
    24.08 refuses to start on a GB10 with "Detected NVIDIA GB10 GPU,
@@ -65,47 +82,39 @@ on a GB10 DGX Spark. They're already on `main` (SHA `65e13ac`).
    ffmpeg (the host has no sudo). It uses `soundfile.info` / stdlib
    `wave` and only handles the duration-extraction subset.
 
-## The one open item: `SUPABASE_SERVICE_ROLE_KEY`
+6. **Migration `0010_worker_bypassrls.sql`.** `0006_worker_role.sql`
+   claimed "RLS does not apply to this role"; that was wrong. With RLS
+   enabled and no policy listing `neo_fm_worker`, every CAS update on
+   `public.jobs` saw zero rows and the worker silently archived
+   redeliveries as "not claimable". `alter role neo_fm_worker
+   bypassrls;` (matching the `service_role` pattern) is the principled
+   fix — least-privilege is still enforced by the column-level UPDATE
+   grants from 0006 (only lifecycle columns), no INSERT/DELETE on
+   `public.jobs`, and no grant on `public.users` / `public.subscriptions`.
 
-The `dgx-worker` needs the project's `service_role` JWT (or one of
-Supabase's newer `sb_secret_*` API keys) so it can `PUT` finished
-tracks into the private `tracks` bucket via the Storage REST API. I
-have:
+7. **`services/dgx-worker/app/storage.py` now sends both `apikey` and `Authorization`.**
+   Supabase's new `sb_secret_*` / `sb_publishable_*` API keys are opaque
+   tokens, not JWTs. Sending only `Authorization: Bearer <sb_secret_…>`
+   makes the gateway try to parse the bearer as a Compact JWS and reply
+   `400 "Invalid Compact JWS"`. Sending both the `apikey` header and the
+   matching `Authorization` bearer works for both the new opaque keys
+   and the legacy `eyJ…` JWTs.
 
-- The publishable / anon JWT (via `get_publishable_keys` MCP)
-- A direct Postgres connection as `neo_fm_worker` (proved above)
+## Phase status
 
-I do **not** have:
-
-- The service_role JWT — the Supabase MCP exposes
-  `get_publishable_keys` but not the secret-key endpoint
-- A Supabase Management API personal access token cached anywhere on
-  the DGX
-
-Until that key lands in `infra/.env.dgx`, the worker will:
-
-- Successfully poll `pgmq.song_generation_jobs`
-- Successfully fetch the `song_document` row
-- Successfully call `music-inference` and receive a WAV
-- **Fail** at the Storage upload step with a 401 from Supabase Storage
-- Roll the job back through the ADR 0008 retry / DLQ path
-
-Once the value is supplied, no further changes are needed; the worker
-config picks it up from `infra/.env.dgx` on next restart.
-
-## What's intentionally still pending
-
-These are deliberately gated, not blocked on me:
-
-- **Phase 7 (vocal synth)** — gated on the licensing evidence required
+- **Phases 1–4**: Live, end-to-end verified against production Supabase.
+- **Phase 5 (web UI)**: Merged. The library page subscribes to
+  `postgres_changes` on `public.jobs`, so the completed run above
+  surfaces in real time without a manual refresh.
+- **Phase 7 (vocal synth)**: Gated on the licensing evidence required
   by [ADR 0010][ADR10]. No `services/vocal-synth/` work starts until at
   least one TTS model has its license artifact under `docs/licenses/`.
-- **Phase 8 (GPU governor)** — design-only until [ADR 0011][ADR11]
+- **Phase 8 (GPU governor)**: Design-only until [ADR 0011][ADR11]
   moves from Proposed to Accepted.
-- **Vercel `vercel --prod` deploy of the merged Phase 5 web UI** — the
-  Vercel project is already linked and the preview deployments are
-  green. Final production promote is a deliberate human decision after
-  the worker key lands and we've run one full end-to-end.
+- **Vercel `vercel --prod` deploy of the merged Phase 5 web UI**: the
+  Vercel project is already linked and previews are green. Final
+  production promote is a deliberate human decision now that the
+  end-to-end is verified.
 
 [ADR10]: DECISIONS/0010-vocal-stack-licensing.md
 [ADR11]: DECISIONS/0011-governor-and-leases.md
