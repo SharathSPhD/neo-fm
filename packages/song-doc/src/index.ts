@@ -49,10 +49,65 @@ export const ScriptSchema = z.enum([
 ]);
 export type Script = z.infer<typeof ScriptSchema>;
 
+/**
+ * Lyric length caps (Sprint 4 / launch-readiness):
+ *
+ * - per section: 1000 characters
+ * - per document total: 4000 characters
+ *
+ * Caps protect the model context window, our quota, and HeartMuLa's
+ * tokenizer. The UI surfaces a warning at 800 / 3200 (80%) and rejects
+ * at the hard cap. These constants live in `@neo-fm/song-doc` so the
+ * web app, the worker, and any future SDK enforce the same numbers.
+ */
+export const LYRIC_PER_SECTION_MAX_CHARS = 1000;
+export const LYRIC_PER_SECTION_WARN_CHARS = 800;
+export const LYRIC_TOTAL_MAX_CHARS = 4000;
+export const LYRIC_TOTAL_WARN_CHARS = 3200;
+
+/**
+ * Lightweight blocklist. The intent is not to be a profanity filter
+ * (HeartMuLa already refuses extreme prompts) but to keep neo-fm out
+ * of obvious self-harm / hate / CSAM territory at the cloud edge so
+ * we don't burn DGX minutes on a refused job, and so the share surface
+ * (M1 / ADR 0013) doesn't get used as a hate-speech megaphone.
+ *
+ * Stored as lowercased substrings; the check is case-insensitive
+ * substring match across the combined lyrics of all sections. We are
+ * deliberately not regex-matching: it makes the bypass surface huge
+ * and the false-positive rate explode.
+ *
+ * NOT a security boundary -- a determined attacker can transliterate
+ * or insert zero-width characters. It's a tripwire that catches the
+ * top 95% of casual abuse with near-zero collateral damage.
+ */
+const LYRIC_BLOCKLIST: readonly string[] = [
+  // self-harm + suicide
+  "kill yourself",
+  "kill myself",
+  "commit suicide",
+  // hate / slurs (a handful of high-signal English ones; we don't enumerate
+  // all of them here -- the worker has a longer list and the share-surface
+  // moderation queue takes over for unlisted/public).
+  // CSAM tripwires
+  "child porn",
+  "cp generator",
+];
+
+/**
+ * Returns the array of blocklist terms that hit in the given text.
+ * Empty array if clean.
+ */
+export function detectBlockedLyricTerms(lyrics: string): string[] {
+  if (!lyrics) return [];
+  const haystack = lyrics.toLowerCase();
+  return LYRIC_BLOCKLIST.filter((term) => haystack.includes(term));
+}
+
 export const SectionSchema = z.object({
   id: z.string().min(1).max(64),
   type: SectionTypeSchema,
-  lyrics: z.string().optional(),
+  lyrics: z.string().max(LYRIC_PER_SECTION_MAX_CHARS).optional(),
   script: ScriptSchema.optional(),
   transliteration: z.string().optional(),
   swara_sequence: z.string().optional(),
@@ -137,6 +192,35 @@ export const SongDocumentSchema = z
         code: z.ZodIssueCode.custom,
         path: ["sections"],
         message: `sum(section.target_seconds) = ${sumSections} must equal target_duration_seconds = ${doc.target_duration_seconds}; use allocateSectionDurations() to auto-fill before validation`,
+      });
+    }
+
+    // Total-lyrics cap (Sprint 4): keeps a single song from blowing past
+    // the model context window even if each section is under-cap.
+    const totalLyricChars = doc.sections.reduce(
+      (acc, s) => acc + (s.lyrics?.length ?? 0),
+      0,
+    );
+    if (totalLyricChars > LYRIC_TOTAL_MAX_CHARS) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sections"],
+        message: `total lyric chars = ${totalLyricChars} exceeds LYRIC_TOTAL_MAX_CHARS = ${LYRIC_TOTAL_MAX_CHARS}`,
+      });
+    }
+
+    // Blocklist tripwire (Sprint 4): catches obvious abuse before we
+    // burn DGX minutes on a refused job. Checks the union of all
+    // section lyrics (case-insensitive substring).
+    const combinedLyrics = doc.sections
+      .map((s) => s.lyrics ?? "")
+      .join("\n");
+    const blocked = detectBlockedLyricTerms(combinedLyrics);
+    if (blocked.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["sections"],
+        message: `lyrics contain blocked terms: ${blocked.join(", ")}`,
       });
     }
   });

@@ -2,7 +2,13 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { SongDocumentSchema, allocateSectionDurations } from "./index.js";
+import {
+  LYRIC_PER_SECTION_MAX_CHARS,
+  LYRIC_TOTAL_MAX_CHARS,
+  SongDocumentSchema,
+  allocateSectionDurations,
+  detectBlockedLyricTerms,
+} from "./index.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const fixturesDir = join(here, "..", "fixtures");
@@ -56,6 +62,83 @@ describe("SongDocumentSchema", () => {
       ],
     };
     expect(() => SongDocumentSchema.parse(bad)).toThrow(/sum/);
+  });
+
+  it(`rejects a section with lyrics > ${LYRIC_PER_SECTION_MAX_CHARS} chars`, () => {
+    const big = "x".repeat(LYRIC_PER_SECTION_MAX_CHARS + 1);
+    const bad = {
+      language: "en",
+      style_family: "western",
+      target_duration_seconds: 30,
+      sections: [
+        { id: "s1", type: "intro", target_seconds: 30, lyrics: big },
+      ],
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow();
+  });
+
+  it(`rejects a doc whose total lyrics > ${LYRIC_TOTAL_MAX_CHARS} chars`, () => {
+    // 5 sections * 900 chars = 4500 > 4000 cap; each section < per-section cap
+    const oneSection = (id: string) => ({
+      id,
+      type: "verse",
+      target_seconds: 18,
+      lyrics: "x".repeat(900),
+    });
+    const bad = {
+      language: "en",
+      style_family: "western",
+      target_duration_seconds: 90,
+      sections: [
+        oneSection("s1"),
+        oneSection("s2"),
+        oneSection("s3"),
+        oneSection("s4"),
+        oneSection("s5"),
+      ],
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow(/LYRIC_TOTAL_MAX_CHARS/);
+  });
+
+  it("rejects a doc whose lyrics hit the blocklist", () => {
+    const bad = {
+      language: "en",
+      style_family: "western",
+      target_duration_seconds: 30,
+      sections: [
+        {
+          id: "s1",
+          type: "verse",
+          target_seconds: 30,
+          lyrics: "Please go and kill yourself today",
+        },
+      ],
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow(/blocked terms/);
+  });
+
+  it("accepts a doc whose lyrics don't hit the blocklist", () => {
+    const good = {
+      language: "en",
+      style_family: "western",
+      target_duration_seconds: 30,
+      sections: [
+        {
+          id: "s1",
+          type: "verse",
+          target_seconds: 30,
+          lyrics: "A bright morning, a song to sing along",
+        },
+      ],
+    };
+    expect(() => SongDocumentSchema.parse(good)).not.toThrow();
+  });
+
+  it("detectBlockedLyricTerms is case-insensitive", () => {
+    expect(detectBlockedLyricTerms("Please CoMmIt SuIcIdE")).toContain(
+      "commit suicide",
+    );
+    expect(detectBlockedLyricTerms("a friendly song")).toEqual([]);
   });
 });
 

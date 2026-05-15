@@ -14,9 +14,37 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { enforceRateLimit, pickRule } from "./lib/rate-limit";
 import type { Database } from "./lib/supabase/database.types";
 
 export async function middleware(request: NextRequest) {
+  // Per-IP edge rate-limit for /api/* (Sprint 4). Upstash when wired,
+  // in-memory fallback otherwise. Static routes and Server Component
+  // navigation are not rate-limited here -- they remain Supabase-quota
+  // and DGX-worker bound at deeper layers.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    const rule = pickRule(request.nextUrl.pathname);
+    const verdict = await enforceRateLimit(request, rule);
+    if (!verdict.ok) {
+      return new NextResponse(
+        JSON.stringify({
+          error: "rate_limited",
+          retry_after_seconds: verdict.resetSeconds,
+        }),
+        {
+          status: 429,
+          headers: {
+            "content-type": "application/json",
+            "retry-after": String(verdict.resetSeconds),
+            "x-ratelimit-limit": String(verdict.limit),
+            "x-ratelimit-remaining": "0",
+            "x-ratelimit-reset": String(verdict.resetSeconds),
+          },
+        },
+      );
+    }
+  }
+
   const response = NextResponse.next({
     request: { headers: request.headers },
   });

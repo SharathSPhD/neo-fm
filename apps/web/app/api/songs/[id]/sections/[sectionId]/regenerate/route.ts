@@ -82,6 +82,12 @@ export async function POST(
         { status: 400 },
       );
     }
+    if (msg.includes("concurrent_cap_exceeded")) {
+      return NextResponse.json(
+        { error: "concurrent_cap_exceeded", reason: "in_flight_jobs" },
+        { status: 429 },
+      );
+    }
     if (msg.includes("quota_exceeded")) {
       return NextResponse.json(
         { error: "quota_exceeded", reason: "rows_per_month" },

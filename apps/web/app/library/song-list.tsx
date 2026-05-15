@@ -28,8 +28,41 @@ export function SongList({
 
   useEffect(() => {
     const supabase = createBrowserSupabase();
+
+    // Refetch a fresh signed URL whenever a track INSERT lands for a song
+    // in the user's library. ADR 0012 Tier-2 pattern, but kicked off by
+    // realtime rather than a player error.
+    async function refreshAudioForJob(jobId: string) {
+      try {
+        const res = await fetch(`/api/songs/${jobId}/audio-url`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const payload = (await res.json()) as {
+          url?: string;
+          duration_seconds?: number | null;
+        };
+        if (!payload.url) return;
+        setSongs((prev) =>
+          prev.map((s) =>
+            s.id === jobId
+              ? {
+                  ...s,
+                  audio_url: payload.url ?? null,
+                  duration_seconds:
+                    payload.duration_seconds ?? s.duration_seconds,
+                }
+              : s,
+          ),
+        );
+      } catch {
+        // Realtime is best-effort. If the refetch fails we leave the
+        // library showing "Audio URL pending..." until the next reload.
+      }
+    }
+
     const channel = supabase
-      .channel(`jobs:user=${userId}`)
+      .channel(`library:user=${userId}`)
       .on(
         "postgres_changes",
         {
@@ -41,7 +74,11 @@ export function SongList({
         (payload) => {
           setSongs((prev) => {
             if (payload.eventType === "INSERT") {
-              const j = payload.new as { id: string; status: string; created_at: string };
+              const j = payload.new as {
+                id: string;
+                status: string;
+                created_at: string;
+              };
               const stub: LibrarySong = {
                 id: j.id,
                 status: j.status,
@@ -55,14 +92,49 @@ export function SongList({
               return [stub, ...prev];
             }
             if (payload.eventType === "UPDATE") {
-              const j = payload.new as { id: string; status: string; error: string | null };
+              const j = payload.new as {
+                id: string;
+                status: string;
+                error: string | null;
+              };
+              // When the worker flips status to 'completed' but the
+              // tracks INSERT hasn't fired yet (Postgres replication is
+              // eventually-consistent across separate tables), kick off
+              // a fetch. If the row is already there, we just get the
+              // signed URL a few hundred ms early.
+              if (j.status === "completed") {
+                void refreshAudioForJob(j.id);
+              }
               return prev.map((s) =>
-                s.id === j.id ? { ...s, status: j.status, error: j.error } : s,
+                s.id === j.id
+                  ? { ...s, status: j.status, error: j.error }
+                  : s,
               );
             }
             if (payload.eventType === "DELETE") {
               const j = payload.old as { id: string };
               return prev.filter((s) => s.id !== j.id);
+            }
+            return prev;
+          });
+        },
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "tracks",
+        },
+        (payload) => {
+          // RLS on tracks already scopes this to the current user's jobs,
+          // but the realtime channel is shared across all authenticated
+          // listeners -- only act when the job_id is in our current
+          // library state. Triggers an audio-url refetch.
+          const t = payload.new as { job_id: string };
+          setSongs((prev) => {
+            if (prev.some((s) => s.id === t.job_id)) {
+              void refreshAudioForJob(t.job_id);
             }
             return prev;
           });

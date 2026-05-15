@@ -223,7 +223,18 @@ export async function POST(request: NextRequest) {
         { status: 429 },
       );
     }
-    // ADR 0009: rows-per-month quota. Reset is the next UTC month rollover.
+    // ADR 0014: concurrent processing cap (matches before quota_exceeded
+    // because the latter is a substring of the former in some messages).
+    if (msg.includes("concurrent_cap_exceeded")) {
+      return NextResponse.json(
+        {
+          error: "concurrent_cap_exceeded",
+          reason: "in_flight_jobs",
+        },
+        { status: 429 },
+      );
+    }
+    // ADR 0009 / 0014: completed-only rows-per-month quota.
     if (msg.includes("quota_exceeded")) {
       return NextResponse.json(
         {

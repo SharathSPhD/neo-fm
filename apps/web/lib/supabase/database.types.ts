@@ -319,9 +319,14 @@ export type Database = {
           visibility: Database["public"]["Enums"]["song_visibility_enum"]
         }[]
       }
+      user_concurrent_processing_count: {
+        Args: { p_user_id: string }
+        Returns: number
+      }
       user_jobs_count_month: { Args: { p_user_id: string }; Returns: number }
       user_jobs_count_today: { Args: { p_user_id: string }; Returns: number }
       user_storage_bytes: { Args: { p_user_id: string }; Returns: number }
+      user_tier_concurrent_cap: { Args: { p_user_id: string }; Returns: number }
       user_tier_quota: { Args: { p_user_id: string }; Returns: number }
       user_tier_storage_bytes_cap: {
         Args: { p_user_id: string }
