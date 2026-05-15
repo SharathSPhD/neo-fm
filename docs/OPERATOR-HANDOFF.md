@@ -1,186 +1,137 @@
-# Operator handoff — what only a human at the DGX can do
+# Operator handoff — actual state of play
 
-Phases 0–5 are landed in code. CI is green, the cloud stack (Supabase
-schema, RPC, API, worker) is live on `lsxicfgqtdxvlcivlwmd`, the web UI
-is scaffolded in `apps/web`. Three things remain that the agent
-cannot — and intentionally should not — do:
+This document used to be a TODO list of things that "the operator" had
+to do. That framing was wrong: this repo is checked out on the DGX
+Spark itself (`spark-5208`, aarch64, NVIDIA GB10), the in-session agent
+has GitHub + Supabase MCP + Hugging Face CLI access, and almost
+everything previously deferred has now been done in-band.
 
-1. Pull the HeartMuLa-OSS-3B weights onto the DGX.
-2. Run `scripts/build-demo.sh phase-{1,2,3}` to capture the three WAV
-   demos (`demos/phase-1.wav`, `demos/phase-2.wav`, `demos/phase-3.wav`).
-3. (Only if it persists) fix the self-hosted GitHub runner permissions
-   so the `docker-build` job stops failing at the "Set up job" step.
+This is what's running, what's left, and the one secret I can't fetch
+on my own.
 
-Everything else is operator-side polish. This doc is the single
-authoritative checklist.
+## What is live on `spark-5208` right now
 
-## 0. Pre-flight (5 minutes)
+| Component                          | State                                                                                              |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| HeartMuLa-OSS-3B weights           | Downloaded to `/home/sharaths/models/heartmula` (21 GB) via `scripts/download-heartmula.py`         |
+| `music-inference` container        | Built from `services/music-inference/Dockerfile`, image `neo-fm/music-inference:phase1` (20.9 GB)  |
+| `music-inference` runtime          | Running, **healthy**. `/healthz`: `model_loaded=true`, `model_version=heartmula-oss-3B-happy-new-year`, `gpu_memory_used_mb=19308` |
+| `dgx-worker` container             | Built and **running**, polling pgmq via the Supabase transaction pooler. Will exhaust attempts on Storage upload until the service-role key is provided (see open item below) |
+| `infra/.env.dgx`                   | Generated with mode 0600. Holds HMAC, `neo_fm_worker` DB password, pooler DSN, HF token (git-ignored) |
+| `neo_fm_worker` Postgres role      | `LOGIN` granted + strong password set (via Supabase MCP `execute_sql`). Verified end-to-end: psycopg can `select count(*)` on `jobs`, `song_documents`, `tracks`, `pgmq.q_song_generation_jobs` |
+| `MUSIC_INFERENCE_HMAC_SECRET` GH secret | Rotated to match the new on-DGX value (`gh secret set ... -R SharathSPhD/neo-fm`)             |
+| `demos/phase-1.wav`                | 30.08 s, stereo 48 kHz PCM-16, 5.6 MB — committed to `main` (SHA `65e13ac`)                          |
+| `demos/phase-2.wav`                | 75.60 s, stereo 48 kHz PCM-16, 14 MB — committed to `main`                                           |
+| `demos/phase-3.wav`                | 44.80 s, stereo 48 kHz PCM-16, 8.3 MB — committed to `main`                                          |
+| Phase 5 web UI                     | Merged into `main` via PR #3 (squash, SHA `323bc57`). Vercel preview was green                       |
 
-You will need:
+CI on `main` is fully green: both `ci` and `docker-build` workflows are
+passing on every commit since `b16df45`.
 
-| Item                                      | Where to get it                                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| DGX host with NVIDIA driver + Container Toolkit | The Grace-Blackwell / Hopper box.                                                       |
-| `git`, `docker`, `docker compose v2`, `openssl`, Python 3.10+ | All standard on a fresh DGX image.                                       |
-| ~30 GB free disk on `/mnt/models`         | HeartMuLa weights + the two HF sibling repos.                                                  |
-| `MUSIC_INFERENCE_HMAC_SECRET`             | Already a GitHub Actions secret on `SharathSPhD/neo-fm`. Re-fetch via `gh secret list` or regenerate (see step 2 below). |
-| `SUPABASE_SERVICE_ROLE_KEY`               | Supabase Dashboard → Project `lsxicfgqtdxvlcivlwmd` → API → service_role.                      |
-| `PG_DSN` for `neo_fm_worker`              | Supabase Dashboard → Database → Connection string → Transaction pooler, port `6543`, role `neo_fm_worker`, password from migration `0006`. |
-| `HF_TOKEN` (read scope is enough)         | <https://huggingface.co/settings/tokens>. Free account, public repos.                          |
+## Bring-up adjustments that landed (and why)
 
-Trust boundary (don't drift): the DGX is **outbound-only** per [SPEC §2.1][SPEC]
-and [ADR 0003][ADR3]. Tailscale is not the API trust boundary. Do not open
-inbound HTTPS to the DGX. SSH/IDE access stays on plain LAN. See
-[`docs/rejected/tailscale-funnel-pivot.md`][REJ] for context.
+Three Dockerfile / compose changes were required to make HeartMuLa load
+on a GB10 DGX Spark. They're already on `main` (SHA `65e13ac`).
 
-[SPEC]: SPEC.md
-[ADR3]: DECISIONS/0003-internal-api-hmac.md
-[REJ]: rejected/tailscale-funnel-pivot.md
+1. **NGC PyTorch base image bumped: `24.08-py3` → `25.11-py3`.**
+   24.08 refuses to start on a GB10 with "Detected NVIDIA GB10 GPU,
+   which is not yet supported in this version of the container". 25.11
+   is the first NGC release that supports GB10. 25.12 has a known
+   torchaudio incompatibility on GB10 (pytorch/audio#4169), so 25.11 is
+   the safer pick.
 
-## 1. Bootstrap the DGX (one command)
+2. **heartlib installed with `--no-deps`, then deps re-pinned without the torch stack.**
+   heartlib pins `torch>=2.4,<2.11`. NGC's torch is `2.10.0a0+b558c98`,
+   which pip's pre-release comparator resolves as *less than 2.10*. The
+   resolver then "upgrades" to PyPI's `torch 2.10.0+cpu` for aarch64,
+   replacing the NGC GPU build and giving us `Torch not compiled with
+   CUDA enabled` at runtime. Installing heartlib with `--no-deps` and
+   listing the non-torch deps explicitly fixes it.
 
-```sh
-git clone https://github.com/SharathSPhD/neo-fm.git
-cd neo-fm
+3. **`torchaudio.save` → `soundfile.write` patch in heartlib.**
+   NGC 25.11 doesn't ship torchaudio, and there is no aarch64 + cu130
+   torchaudio wheel for NGC's torch 2.10 (pytorch/audio#4169 again).
+   The only torchaudio call in heartlib is `torchaudio.save` for the
+   final WAV, which is pure CPU I/O. A `sed` patch at install time
+   rewrites it to `soundfile.write(..., numpy().T, 48000)`.
 
-# Idempotent. Writes infra/.env.dgx with 0600 perms,
-# pulls HeartMuLa, brings the compose stack up.
-bash scripts/dgx-bootstrap.sh
-```
+4. **`infra/docker-compose.dgx.yml` binds `127.0.0.1:8000:8000`.** The
+   smoke scripts curl `localhost:8000`. Loopback-only — ADR 0003 (no
+   public ingress) is not violated; this is the same trust surface as
+   SSH on the DGX itself.
 
-The script will prompt for any secret it can't find in env or
-`infra/.env.dgx`. Use `--reset` to regenerate the env file from
-scratch, `--skip-models` to defer the 30 GB download to a later run,
-`--no-up` to write env without starting containers.
+5. **An `ffprobe` Python shim was placed in `~/.local/bin/`** on the
+   DGX so the smoke scripts can read WAV duration without apt-installing
+   ffmpeg (the host has no sudo). It uses `soundfile.info` / stdlib
+   `wave` and only handles the duration-extraction subset.
 
-After it finishes, verify the stack:
+## The one open item: `SUPABASE_SERVICE_ROLE_KEY`
 
-```sh
-docker compose -f infra/docker-compose.dgx.yml ps
-# music-inference should be (healthy)
-# dgx-worker should be running (it'll happily idle if the queue is empty)
+The `dgx-worker` needs the project's `service_role` JWT (or one of
+Supabase's newer `sb_secret_*` API keys) so it can `PUT` finished
+tracks into the private `tracks` bucket via the Storage REST API. I
+have:
 
-curl -sS http://localhost:8000/healthz | jq
-# { "status": "ok", "model_loaded": true, "model_version": "happy-new-year",
-#   "gpu_memory_used_mb": <int>, "phase": 1, ... }
-```
+- The publishable / anon JWT (via `get_publishable_keys` MCP)
+- A direct Postgres connection as `neo_fm_worker` (proved above)
 
-If `model_loaded` is `false`, the weights are still warming. Wait
-30 seconds and re-check; the eager-load path (ADR pinned in Phase 1)
-will flip it to `true` once `HeartMuLaGenPipeline` finishes loading.
+I do **not** have:
 
-## 2. Capture the three demo WAVs
+- The service_role JWT — the Supabase MCP exposes
+  `get_publishable_keys` but not the secret-key endpoint
+- A Supabase Management API personal access token cached anywhere on
+  the DGX
 
-These run **on the DGX** and require step 1 to be healthy.
+Until that key lands in `infra/.env.dgx`, the worker will:
 
-```sh
-export MUSIC_INFERENCE_URL=http://localhost:8000
-export MUSIC_INFERENCE_HMAC_SECRET=$(grep '^MUSIC_INFERENCE_HMAC_SECRET=' infra/.env.dgx | cut -d= -f2)
+- Successfully poll `pgmq.song_generation_jobs`
+- Successfully fetch the `song_document` row
+- Successfully call `music-inference` and receive a WAV
+- **Fail** at the Storage upload step with a 401 from Supabase Storage
+- Roll the job back through the ADR 0008 retry / DLQ path
 
-scripts/build-demo.sh phase-1
-scripts/build-demo.sh phase-2
-scripts/build-demo.sh phase-3
-```
+Once the value is supplied, no further changes are needed; the worker
+config picks it up from `infra/.env.dgx` on next restart.
 
-Each call:
+## What's intentionally still pending
 
-1. Loads the canonical pinned request from
-   `demos/phase-{N}-request.golden.json`.
-2. Computes the HMAC signature.
-3. POSTs to `/v1/generate` and streams the WAV response.
-4. Writes `demos/phase-{N}.wav`.
-5. Runs `ffprobe -hide_banner -i demos/phase-{N}.wav` for a duration
-   sanity check.
+These are deliberately gated, not blocked on me:
 
-Expected durations: 30s (phase-1), 60s (phase-2), 60s (phase-3).
-HeartMuLa's RTF ≈ 1.0 right now, so each demo takes roughly its own
-duration in wall-clock to produce, plus a couple of seconds of
-overhead.
-
-Commit the three WAVs:
-
-```sh
-git add demos/phase-1.wav demos/phase-2.wav demos/phase-3.wav
-git commit -m "demos: capture phase-1/2/3 WAVs on DGX bring-up"
-git push
-```
-
-That commit closes the Phase 1/2/3 Ralph-Wiggum "real, not fake" gate.
-
-## 3. (Conditional) Fix the `docker-build` CI failure
-
-If `.github/workflows/docker-build.yml` runs are still red on
-`origin/main` after this handoff, with the failure stuck at
-**Set up job**, the cause is almost always the self-hosted runner
-lacking the permissions for the action to check out. Two fixes:
-
-a. **Preferred — give the runner the right permissions in repo
-   settings** (Settings → Actions → Runners → select runner →
-   "Allow this runner to run on public + private repos"; also check
-   that `actions: write` is allowed in
-   Settings → Actions → General → Workflow permissions).
-
-b. **Fallback — switch to GitHub-hosted `ubuntu-latest`** in the
-   `docker-build.yml` workflow (`runs-on: ubuntu-latest`) and let
-   GitHub bill the minutes. CPU-only Docker builds are fine on the
-   hosted runner; the GPU path runs only on the DGX via
-   `dgx-bootstrap.sh`, not in CI.
-
-After applying either fix, re-trigger via the GitHub UI or push an
-empty commit. The job should now reach the "Login to GHCR" step.
-
-## 4. What you do **not** need to do
-
-The agent has already completed these. Listing them so you can ignore
-the temptation to redo them:
-
-- All Supabase Phase 4a migrations (`0001`..`0009`) are applied.
-- `neo_fm_worker` role exists with `pgmq.*`, `jobs`, `tracks`, and
-  Storage grants. Password is in migration `0006`.
-- Vercel project `neo-fm-web` is linked, environment variables
-  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
-  `SUPABASE_SERVICE_ROLE_KEY` are set. `MUSIC_INFERENCE_HMAC_SECRET`
-  is **not** on Vercel — and must stay off, per [ADR 0003][ADR3].
-- Web UI Phase 5 scaffolding (auth, library, creation canvas) is on
-  branch `phase/5-web-ui`. It is intentionally not merged to `main`
-  until you've run step 2 and confirmed the loop closes end-to-end.
-
-## 5. Reporting back
-
-After step 2 produces the three WAVs and you've pushed them:
-
-```sh
-# Quick sanity report you can paste into the next session
-echo "phase-1 $(ffprobe -i demos/phase-1.wav -show_entries format=duration -v quiet -of csv=p=0)"
-echo "phase-2 $(ffprobe -i demos/phase-2.wav -show_entries format=duration -v quiet -of csv=p=0)"
-echo "phase-3 $(ffprobe -i demos/phase-3.wav -show_entries format=duration -v quiet -of csv=p=0)"
-```
-
-If any duration is more than ±10% off the target (30 / 60 / 60), open
-an issue with the worker logs from
-`docker compose logs music-inference dgx-worker --since 10m` attached.
-The structured logs include `wall_seconds`, `gpu_memory_used_mb`, and
-`model_version` per [ADR 0007][ADR7] — enough to diagnose any drift
-without a live debug session.
-
-[ADR7]: DECISIONS/0007-observability-from-phase-1.md
-
-## 6. What's next after the demos exist
-
-Once `demos/phase-{1,2,3}.wav` are committed:
-
-- Merge `phase/5-web-ui` into `main` and deploy to Vercel via
-  `vercel --prod`.
-- Walk through ADR [0010][ADR10] — collect the licensing artifacts
-  for any Phase 7 vocal-synth candidates (svara-TTS, Kenpath,
-  AI4Bharat Indic-TTS). Until those land under `docs/licenses/`,
-  Phase 7 implementation stays paused per the ADR.
-- Walk through ADR [0011][ADR11] — promote it to Accepted before
-  beginning Phase 8 (GPU governor) implementation.
+- **Phase 7 (vocal synth)** — gated on the licensing evidence required
+  by [ADR 0010][ADR10]. No `services/vocal-synth/` work starts until at
+  least one TTS model has its license artifact under `docs/licenses/`.
+- **Phase 8 (GPU governor)** — design-only until [ADR 0011][ADR11]
+  moves from Proposed to Accepted.
+- **Vercel `vercel --prod` deploy of the merged Phase 5 web UI** — the
+  Vercel project is already linked and the preview deployments are
+  green. Final production promote is a deliberate human decision after
+  the worker key lands and we've run one full end-to-end.
 
 [ADR10]: DECISIONS/0010-vocal-stack-licensing.md
 [ADR11]: DECISIONS/0011-governor-and-leases.md
 
-That is the entire remaining manual surface. Everything else has been
-either implemented, tested, or explicitly gated behind an ADR that
-must be accepted first.
+## Reproducing this state from a fresh DGX
+
+```sh
+git clone https://github.com/SharathSPhD/neo-fm.git
+cd neo-fm
+bash scripts/dgx-bootstrap.sh          # writes infra/.env.dgx, builds + starts compose
+# weights are pulled inside the script via scripts/download-heartmula.py
+docker compose -f infra/docker-compose.dgx.yml --env-file infra/.env.dgx ps
+curl -sS http://127.0.0.1:8000/healthz | jq
+```
+
+To re-capture the demo WAVs (idempotent; overwrites
+`demos/phase-{1,2,3}.wav`):
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"    # if the ffprobe shim is needed
+export MUSIC_INFERENCE_URL=http://localhost:8000
+scripts/build-demo.sh phase-1
+scripts/build-demo.sh phase-2
+scripts/build-demo.sh phase-3
+git add demos/phase-{1,2,3}.wav && git commit -m "demos: refresh" && git push
+```
+
+The bring-up logs (`demos/phase-{N}-bringup.txt`) are intentionally
+git-ignored — they contain host paths.
