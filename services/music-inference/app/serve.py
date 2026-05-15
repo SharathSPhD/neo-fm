@@ -306,7 +306,14 @@ class GenerateRequestSection(BaseModel):
     type: str
     lyrics: str | None = None
     language: str | None = None
-    script: Literal["devanagari", "tamil", "kannada", "latin"] | None = None
+    # The Zod source-of-truth (`packages/song-doc/src/index.ts`) and the
+    # cloud/DGX OpenAPI contracts (see `docs/contracts/openapi-{cloud,dgx}.yaml`
+    # `SectionScript` enum) both include `telugu` and `bengali`. Keep this
+    # Literal in lock-step so Pydantic does not silently reject a valid
+    # cloud payload at the boundary. Sprint 0 truth-up.
+    script: (
+        Literal["devanagari", "tamil", "kannada", "telugu", "bengali", "latin"] | None
+    ) = None
     transliteration: str | None = None
     swara_sequence: str | None = None
     phonemes: list[str] | None = None
@@ -314,14 +321,60 @@ class GenerateRequestSection(BaseModel):
     tags: list[str] | None = None
 
 
+class _RagaSpec(BaseModel):
+    """Accept-and-forward raga metadata.
+
+    The Song Document carries raga as structured data (name / system /
+    arohana / avarohana / nyas / pakad). We keep the wire-format Pydantic
+    model permissive (string lists, optional fields) because the
+    inference layer's interest is currently limited to (name, system)
+    for prompt construction; the rest is reserved for Phase 6 co-composer
+    work and Phase 7 vocal synth.
+    """
+
+    name: str
+    system: Literal["carnatic", "hindustani"]
+    arohana: list[str] | None = None
+    avarohana: list[str] | None = None
+    nyas: list[str] | None = None
+    pakad: str | None = None
+
+
+class _Orchestration(BaseModel):
+    lead_vocal: Literal["male", "female", "instrumental"] | None = None
+    instruments: list[str] | None = None
+    texture: str | None = None
+
+
 class GenerateRequest(BaseModel):
     job_id: str
     attempt_id: str | None = None
+    # `trace_id` is propagated end-to-end per ADR 0007. Worker sends it in
+    # the request body; the HMAC middleware also accepts it as the
+    # `X-NeoFM-Trace-Id` header (header wins when both are present). The
+    # header path is wired in `HmacAndLogMiddleware`; the body field
+    # gives the model layer a place to read trace context from in case
+    # the middleware is bypassed in a future refactor.
+    trace_id: str | None = None
+    # `language` is required by the OpenAPI contract (`openapi-dgx.yaml`
+    # GenerateRequest.required = [job_id, sections, style_family, language]).
+    # We accept None for backwards-compat with the Phase 1 fixtures that
+    # predated the contract widening; new payloads from the dgx-worker
+    # always include it (see `build_inference_request` in worker.py).
+    language: Literal["en", "hi", "kn"] | None = None
     style_family: Literal["western", "carnatic", "hindustani", "kannada-folk"]
     tempo_bpm: int | None = Field(default=None, ge=30, le=240)
     time_signature: str | None = None
     tala: str | None = None
     target_duration_seconds: int | None = Field(default=None, ge=1, le=360)
+    # `raga` / `orchestration` are accepted-and-forwarded today. Phase 6
+    # plumbs them into the co-composer's HeartMuLa tag synthesis; until
+    # then, the model layer simply has them on the GenerationRequest if
+    # it wants to peek (see `_coerce_request`). Accepting them at the
+    # boundary prevents the 400 the previous narrower model would have
+    # returned on a fully-formed cloud payload.
+    raga: _RagaSpec | None = None
+    orchestration: _Orchestration | None = None
     sections: list[GenerateRequestSection] = Field(min_length=1)
     output_format: Literal["wav", "mp3", "flac"] = "wav"
     sample_rate: int = 48000

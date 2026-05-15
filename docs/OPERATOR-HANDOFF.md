@@ -107,7 +107,9 @@ DGX Spark against the real Supabase project. All are on `main`.
   subscribes to `postgres_changes` on `public.jobs`, so the completed
   run above surfaces in real time without a manual refresh. Vercel is
   configured to auto-promote every push to `main` to production; the
-  latest production deployment is `READY` against commit `9b7e577`.
+  latest production deployment tracks the most recent commit on `main`
+  (currently `a96c61a` at the time of this writing — re-check `git
+  rev-parse main` for current state).
 - **Phase 7 (vocal synth)**: Unblocked. [ADR 0010][ADR10] is now
   **Accepted** as of 2026-05-15: two HF-resident candidates clear the
   commercial-use gate — `kenpath/svara-tts-v1` (Apache-2.0; Llama 3.2

@@ -36,7 +36,12 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
                  r=urllib.request.urlopen('http://localhost:8000/healthz', timeout=4); \
                  sys.exit(0 if r.status==200 else 1)" || exit 1
 
-ENV MUSIC_INFERENCE_FAKE_MODEL=1
+# The `phase0` stage exists to validate the FastAPI surface without weights
+# or GPU. The fake-model path is opt-in via two env vars (see
+# `app/model.py::initialise_from_env`) so an accidental env-var inheritance
+# in the `phase1` GPU image cannot silently degrade to silence.
+ENV MUSIC_INFERENCE_FAKE_MODEL=1 \
+    MUSIC_INFERENCE_ALLOW_FAKE=1
 CMD ["uv", "run", "uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "8000"]
 
 

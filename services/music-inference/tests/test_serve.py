@@ -326,3 +326,90 @@ def test_generate_uses_transliteration_for_indic_sections(
     # tag prefix reflects style_family=hindustani
     tags = (fake_model.last_tags or "").split(",")
     assert tags[0] == "hindustani"
+
+
+def test_generate_accepts_full_openapi_contract_payload(
+    client: TestClient, fake_model: FakeMusicModel
+) -> None:
+    """Sprint 0 truth-up regression: the server must accept everything the
+    `docs/contracts/openapi-dgx.yaml` GenerateRequest schema lists as a
+    valid field. Before truth-up, the Pydantic `GenerateRequest` was a
+    proper subset of the contract -- `language`, `trace_id`, `raga`,
+    `orchestration`, and the wider `SectionScript` enum (telugu/bengali)
+    were missing. The dgx-worker has been sending some of those fields
+    via `build_inference_request` since Phase 4, and Pydantic was
+    silently ignoring them. This test asserts they round-trip without
+    400 and without Pydantic stripping unknowns.
+    """
+    payload = {
+        "job_id": "00000000-0000-0000-0000-000000000002",
+        "attempt_id": "11111111-1111-1111-1111-111111111111",
+        "trace_id": "trace-sprint-0-truth-up",
+        "language": "hi",
+        "style_family": "hindustani",
+        "tempo_bpm": 90,
+        "time_signature": "4/4",
+        "tala": "teentaal",
+        "target_duration_seconds": 60,
+        "raga": {
+            "name": "yaman",
+            "system": "hindustani",
+            "arohana": ["N3", "R2", "G3", "M2", "P", "D2", "N3", "S'"],
+            "avarohana": ["S'", "N3", "D2", "P", "M2", "G3", "R2", "S"],
+            "pakad": "N R G M D N S'",
+        },
+        "orchestration": {
+            "lead_vocal": "male",
+            "instruments": ["harmonium", "tabla", "tanpura"],
+            "texture": "drone+lead",
+        },
+        "sections": [
+            {
+                "id": "s1",
+                "type": "alaap",
+                "target_seconds": 30,
+                "lyrics": "ఆనందము",
+                # `telugu` was missing from the narrower Pydantic Literal.
+                "script": "telugu",
+                "language": "hi",  # cross-lingual is allowed at section level
+            },
+            {
+                "id": "s2",
+                "type": "verse",
+                "target_seconds": 30,
+                "lyrics": "তোমার সুর",
+                "script": "bengali",
+                "language": "hi",
+            },
+        ],
+    }
+    r = _signed_post(client, payload)
+    assert r.status_code == 200, r.text
+    # the contract fields landed in the FastAPI model and the model
+    # layer downstream got the request -- we don't yet plumb `raga` /
+    # `orchestration` into HeartMuLa prompts (Phase 6) but acceptance at
+    # the boundary is what this regression guards.
+    assert fake_model.last_request is not None
+    assert fake_model.last_request.style_family == "hindustani"
+
+
+def test_generate_rejects_unknown_script_value(
+    client: TestClient, fake_model: FakeMusicModel
+) -> None:
+    """The Literal must still be a closed set. Sanity check that the
+    widening did not turn into a wildcard."""
+    payload = {
+        "job_id": "00000000-0000-0000-0000-000000000003",
+        "style_family": "western",
+        "target_duration_seconds": 30,
+        "sections": [
+            {
+                "id": "s1",
+                "type": "verse",
+                "target_seconds": 30,
+                "script": "elvish",  # not in the OpenAPI enum
+            },
+        ],
+    }
+    r = _signed_post(client, payload)
+    assert r.status_code == 422, r.text

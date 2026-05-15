@@ -1,9 +1,10 @@
 # neo-fm dgx-worker container
 #
-# Phase 0: print-loop stub so the container builds and `docker compose up` runs.
-# Phase 4: real pgmq poller (psycopg) that fetches jobs, calls music-inference,
-#          uploads via signed PUT to Supabase Storage, and updates job rows.
-# Phase 8: nvidia-smi-aware governor + priority queue.
+# Live: pgmq poller (psycopg) that CAS-claims jobs, calls music-inference over
+#       HMAC-signed HTTP, uploads the WAV via Storage REST (apikey + Bearer for
+#       sb_secret_* keys), and updates `public.jobs` + `public.tracks`.
+# Coming in Phase 8 (ADR 0011): governor-aware drain via /var/run/neo-fm/governor.state
+# + new error class `inference_preempted`.
 
 FROM python:3.12-slim
 

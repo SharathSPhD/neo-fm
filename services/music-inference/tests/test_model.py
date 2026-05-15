@@ -154,3 +154,40 @@ def test_fake_music_model_records_translated_inputs() -> None:
     fake.generate(req)
     assert "[Chorus]\nhook" in (fake.last_lyrics or "")
     assert "uplifting" in (fake.last_tags or "").split(",")
+
+
+# --- Regression tests for the fake-model production guard -----------------
+#
+# Sprint 0 truth-up. Setting only MUSIC_INFERENCE_FAKE_MODEL=1 must NOT
+# silently degrade a production container to deterministic silence. The
+# operator has to opt in twice (MUSIC_INFERENCE_ALLOW_FAKE=1 alongside)
+# so that a stray env-var inheritance from CI cannot survive to prod.
+
+
+def test_initialise_from_env_refuses_fake_without_explicit_allow(
+    monkeypatch: Any,
+) -> None:
+    """A single env var is not enough -- both knobs must be flipped."""
+    import pytest
+
+    from app import model as model_module
+
+    monkeypatch.setenv("MUSIC_INFERENCE_FAKE_MODEL", "1")
+    monkeypatch.delenv("MUSIC_INFERENCE_ALLOW_FAKE", raising=False)
+
+    with pytest.raises(RuntimeError, match="MUSIC_INFERENCE_ALLOW_FAKE=1"):
+        model_module.initialise_from_env()
+
+
+def test_initialise_from_env_accepts_fake_when_both_set(monkeypatch: Any) -> None:
+    """The opt-in path still works (used by phase0 Dockerfile + local smoke)."""
+    from app import model as model_module
+
+    monkeypatch.setenv("MUSIC_INFERENCE_FAKE_MODEL", "1")
+    monkeypatch.setenv("MUSIC_INFERENCE_ALLOW_FAKE", "1")
+
+    m = model_module.initialise_from_env()
+    assert isinstance(m, FakeMusicModel)
+    assert m.model_loaded is True
+    # Restore the module-level singleton so we don't leak between tests.
+    model_module.set_active_model(None)

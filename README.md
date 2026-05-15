@@ -4,7 +4,7 @@ India-first, composition-aware AI music platform.
 
 A Next.js + Supabase web app talks to a fleet of Docker services on an NVIDIA DGX Spark. The DGX is **outbound-only** — it polls Supabase for jobs and uploads results; cloud never reaches into DGX. See [`docs/SPEC.md`](docs/SPEC.md) §2.1 for the trust boundary.
 
-> **Phase 1–3 demos:** the three WAVs (`demos/phase-{1,2,3}.wav`) are captured on the DGX itself per the runbook in [`docs/OPERATOR-HANDOFF.md`](docs/OPERATOR-HANDOFF.md). Everything else has been merged.
+> **End-to-end is live.** A real job (`ce972419-60fc-40a7-b2d5-10287e465a15`) has closed the loop in ~39s on production Supabase + DGX. WAVs (`demos/phase-{1,2,3}.wav`) are committed. The web UI is auto-deployed to Vercel production on every push to `main`.
 
 - **music-inference** — HeartMuLa instrumental + lyrical generation.
 - **dgx-worker** — pgmq poller that orchestrates jobs end-to-end.
@@ -17,24 +17,26 @@ Built phase-gated with real artifacts and demo evidence at every step.
 - [docs/SPEC.md](docs/SPEC.md) — technical specification (architecture, contracts, data model, TRIZ).
 - [docs/PRD.md](docs/PRD.md) — product requirements (personas, journeys, scope ladder).
 - [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md) — task-level plan, phase by phase.
-- [docs/DECISIONS/](docs/DECISIONS/) — ADRs.
+- [docs/DECISIONS/](docs/DECISIONS/) — ADRs (0001-0011 accepted at this revision).
 - [AGENTS.md](AGENTS.md) — rules for any agent (human or AI) working in this repo.
 
 ## Phase status
 
 - Phase 0 — Bootstrap (**done**)
-- Phase 1 — music-inference vertical slice (**code merged**; WAV demo blocked on DGX bring-up — see [`demos/phase-1-SMOKE-HANDOFF.md`](demos/phase-1-SMOKE-HANDOFF.md))
-- Phase 2 — Song Document DSL + Western co-composer (**done**; golden request committed; WAV blocked on DGX — see [`demos/phase-2-SMOKE-HANDOFF.md`](demos/phase-2-SMOKE-HANDOFF.md))
-- Phase 3 — Public lyrics provider + Pratyabhijna seam (**done**; 12-entry PD corpus + golden request committed; WAV blocked on DGX — see [`demos/phase-3-SMOKE-HANDOFF.md`](demos/phase-3-SMOKE-HANDOFF.md))
-- Phase 4 — Supabase schema + cloud API + worker (**blocked on operator**; see [`docs/PHASE-4-HANDOFF.md`](docs/PHASE-4-HANDOFF.md))
-- Phase 5 — Web UI (pending)
-- Phase 6 — Carnatic + Hindustani + Kannada-folk modules (pending)
-- Phase 7 — Indic phonetics + svara-TTS vocal layer (pending)
-- Phase 8 — GPU-share governor (pending)
-- Phase 9 — PWA polish, notifications, quotas (pending)
-- Phase 10 — Pratyabhijna integration (pending)
-- Phase 11 — Observability (pending)
+- Phase 1 — music-inference vertical slice (**done**; real HeartMuLa weights + `demos/phase-1.wav`)
+- Phase 2 — Song Document DSL + Western co-composer (**done**; golden request + `demos/phase-2.wav`)
+- Phase 3 — Public lyrics provider + Pratyabhijna seam (**done**; 12-entry PD corpus + `demos/phase-3.wav`)
+- Phase 4 — Supabase schema + cloud API + worker (**done**; live end-to-end against production Supabase)
+- Phase 5 — Web UI (**done**; auto-deployed to Vercel prod on `main` push)
+- Phase 6 — Carnatic + Hindustani + Kannada-folk modules (active backlog)
+- Phase 7 — Indic phonetics + svara-TTS vocal layer (ADR 0010 accepted; ready to build)
+- Phase 8 — GPU-share governor (ADR 0011 accepted; ready to build)
+- Phase 9 — PWA polish, notifications, quotas (partial — DB quotas live; PWA + email pending)
+- Phase 10 — Pratyabhijna integration (**out of scope for v1**; `PublicLyricsLibraryProvider` is the v1 lyric source)
+- Phase 11 — Observability (active backlog)
 - Phase 12 — Managed-API pro tier (deferred, post-v1)
+
+The active v1-finish work plan lives at [`.cursor/plans/neo-fm_v1_finish_*.plan.md`](.cursor/plans/) — it drives Phases 6-9, 11 plus six marketable add-ons (shareable URLs, lyric editor, presets, detail page, section regen, landing page).
 
 ## Local development
 

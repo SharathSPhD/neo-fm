@@ -367,12 +367,31 @@ def initialise_from_env() -> MusicModel:
 
     * `MUSIC_INFERENCE_FAKE_MODEL=1` -> install `FakeMusicModel` and
       skip GPU entirely. Lets the operator bring the container up
-      without weights and confirm the rest of the stack works.
+      without weights and confirm the rest of the stack works. **Refused
+      unless `MUSIC_INFERENCE_ALLOW_FAKE=1` is also set**, so a stray
+      env-var inheritance can never silently ship deterministic silence
+      to real users.
     * else -> build a real `HeartMuLaModel`. `load()` is run eagerly
       unless `HEARTMULA_LAZY_LOAD=1`.
     """
     if os.environ.get("MUSIC_INFERENCE_FAKE_MODEL") == "1":
-        LOG.warning("MUSIC_INFERENCE_FAKE_MODEL=1 -- serving deterministic silence")
+        if os.environ.get("MUSIC_INFERENCE_ALLOW_FAKE") != "1":
+            # We do not raise from a config issue silently. A startup
+            # crash with a loud line is the desired outcome here -- it
+            # surfaces in `docker compose up` immediately and prevents
+            # the container from accepting traffic while pretending to
+            # have a model loaded.
+            raise RuntimeError(
+                "MUSIC_INFERENCE_FAKE_MODEL=1 was set but "
+                "MUSIC_INFERENCE_ALLOW_FAKE=1 was not. Refusing to "
+                "install FakeMusicModel: this would serve deterministic "
+                "silence in place of generated audio. Set both env vars "
+                "to opt in (intended for CI and local smoke tests only)."
+            )
+        LOG.warning(
+            "MUSIC_INFERENCE_FAKE_MODEL=1 + MUSIC_INFERENCE_ALLOW_FAKE=1 "
+            "-- serving deterministic silence (CI/test mode)"
+        )
         model: MusicModel = FakeMusicModel()
         set_active_model(model)
         return model

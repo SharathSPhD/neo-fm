@@ -24,7 +24,12 @@ exploration without weights, opt into the smoke-only mode:
 
 ```sh
 uv sync
+# Both env vars are required to opt into the fake model. Setting only
+# MUSIC_INFERENCE_FAKE_MODEL=1 raises at startup -- this is by design,
+# so a stray env-var inheritance on the production GPU host can never
+# silently serve generated silence to real users.
 MUSIC_INFERENCE_FAKE_MODEL=1 \
+MUSIC_INFERENCE_ALLOW_FAKE=1 \
 MUSIC_INFERENCE_HMAC_SECRET=$(openssl rand -hex 32) \
   uv run uvicorn app.serve:app --host 0.0.0.0 --port 8000
 
