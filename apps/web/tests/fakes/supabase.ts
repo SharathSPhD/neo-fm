@@ -60,6 +60,10 @@ export function makeFakeSupabase(): FakeSupabase {
       (builder._filters as [string, string, unknown][]).push(["lt", col, val]);
       return builder;
     };
+    builder.in = function _in(col: string, vals: unknown[]) {
+      (builder._filters as [string, string, unknown][]).push(["in", col, vals]);
+      return builder;
+    };
     builder.order = function _order(col: string, opts?: { ascending?: boolean }) {
       builder._order = { col, ascending: opts?.ascending ?? true };
       return builder;

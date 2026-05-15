@@ -20,6 +20,7 @@ import { notFound, redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { RegenerateButton } from "./regenerate-button";
+import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +94,8 @@ export default async function SongDetailPage({
       created_at,
       finished_at,
       song_document_id,
+      public_id,
+      published_visibility,
       song_documents (
         id, language, style_family, document_json, created_at
       ),
@@ -110,6 +113,8 @@ export default async function SongDetailPage({
       created_at: string;
       finished_at: string | null;
       song_document_id: string;
+      public_id: string | null;
+      published_visibility: "public" | "unlisted" | "private";
       song_documents: {
         id: string;
         language: string;
@@ -185,7 +190,13 @@ export default async function SongDetailPage({
               : data.status}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1">
+        <div className="flex flex-col items-end gap-2">
+          <ShareButton
+            songId={data.id}
+            initialVisibility={data.published_visibility}
+            initialPublicId={data.public_id}
+            canShare={data.status === "completed"}
+          />
           <code className="font-mono text-[11px] text-foreground/50">
             {data.id.slice(0, 8)}
           </code>
