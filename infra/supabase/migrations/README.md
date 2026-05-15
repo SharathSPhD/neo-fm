@@ -39,6 +39,11 @@ Or, in MCP-driven flows (Cursor / Claude), apply each file in order with
     zero rows because the table's RLS policies only listed `authenticated`,
     and the worker silently archived every message as "not claimable".
     Least-privilege is still enforced by the column-level grants from 0006.
+11. `0011_realtime_publication.sql` — Phase 5 follow-up: adds `public.jobs`
+    and `public.tracks` to the `supabase_realtime` publication so the
+    library page's `postgres_changes` subscription actually delivers
+    INSERT/UPDATE events. Verified end-to-end: INSERT->queued,
+    UPDATE->processing, UPDATE->completed all observed on the wire.
 
 ## Notes
 

@@ -51,21 +51,43 @@ export default async function LibraryPage() {
     .limit(50)
     .returns<RawJobRow[]>();
 
-  const songs = (data ?? []).map((row) => {
-    const latestTrack = (row.tracks ?? [])
-      .slice()
-      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
-    return {
-      id: row.id,
-      status: row.status,
-      error: row.error,
-      created_at: row.created_at,
-      language: row.song_documents?.language ?? null,
-      style_family: row.song_documents?.style_family ?? null,
-      audio_url: latestTrack?.url ?? null,
-      duration_seconds: latestTrack?.duration_seconds ?? null,
-    };
-  });
+  // Worker writes `tracks.url` as `tracks/<job_id>/<attempt_id>.wav` (full
+  // bucket-qualified path). The Storage SDK's createSignedUrl wants the
+  // bucket-relative path, so strip the leading `tracks/`. RLS policy
+  // `tracks_storage_select_via_job` lets the signed-URL call succeed for
+  // any job this user owns.
+  const TRACK_BUCKET_PREFIX = "tracks/";
+  const tracksApi = supabase.storage.from("tracks");
+  const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1h is the user's "library session"
+
+  const songs = await Promise.all(
+    (data ?? []).map(async (row) => {
+      const latestTrack = (row.tracks ?? [])
+        .slice()
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
+      let audioUrl: string | null = null;
+      if (latestTrack?.url && row.status === "completed") {
+        const path = latestTrack.url.startsWith(TRACK_BUCKET_PREFIX)
+          ? latestTrack.url.slice(TRACK_BUCKET_PREFIX.length)
+          : latestTrack.url;
+        const { data: signed } = await tracksApi.createSignedUrl(
+          path,
+          SIGNED_URL_TTL_SECONDS,
+        );
+        audioUrl = signed?.signedUrl ?? null;
+      }
+      return {
+        id: row.id,
+        status: row.status,
+        error: row.error,
+        created_at: row.created_at,
+        language: row.song_documents?.language ?? null,
+        style_family: row.song_documents?.style_family ?? null,
+        audio_url: audioUrl,
+        duration_seconds: latestTrack?.duration_seconds ?? null,
+      };
+    }),
+  );
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-10 px-6 py-12">

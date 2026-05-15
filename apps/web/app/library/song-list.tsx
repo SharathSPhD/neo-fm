@@ -113,11 +113,13 @@ export function SongList({
             />
           ) : (
             <span className="text-xs text-foreground/40">
-              {s.status === "ready"
+              {s.status === "completed"
                 ? "Audio URL pending..."
                 : s.status === "failed"
                   ? "Failed"
-                  : "Queued"}
+                  : s.status === "processing"
+                    ? "Generating..."
+                    : "Queued"}
             </span>
           )}
         </li>
@@ -128,7 +130,7 @@ export function SongList({
 
 function StatusPill({ status, error }: { status: string; error: string | null }) {
   const tone =
-    status === "ready"
+    status === "completed"
       ? "border-emerald-400/40 text-emerald-300"
       : status === "failed"
         ? "border-red-400/40 text-red-300"
