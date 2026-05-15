@@ -94,14 +94,14 @@ export function SongList({
           key={s.id}
           className="flex flex-wrap items-center gap-3 rounded-md border border-muted/30 bg-muted/10 px-4 py-3"
         >
-          <div className="flex flex-1 flex-col">
+          <Link href={`/songs/${s.id}`} className="flex flex-1 flex-col hover:opacity-80">
             <span className="text-base font-medium font-mono text-foreground/70">
               {s.id.slice(0, 8)}
             </span>
             <span className="text-xs text-foreground/50">
               {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
             </span>
-          </div>
+          </Link>
           <StatusPill status={s.status} error={s.error} />
           {s.audio_url ? (
             // eslint-disable-next-line jsx-a11y/media-has-caption

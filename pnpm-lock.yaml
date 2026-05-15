@@ -20,6 +20,9 @@ importers:
       '@neo-fm/co-composer':
         specifier: workspace:*
         version: link:../../packages/co-composer
+      '@neo-fm/lyrics':
+        specifier: workspace:*
+        version: link:../../packages/lyrics
       '@neo-fm/song-doc':
         specifier: workspace:*
         version: link:../../packages/song-doc

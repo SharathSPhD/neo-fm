@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@neo-fm/co-composer": "workspace:*",
+    "@neo-fm/lyrics": "workspace:*",
     "@neo-fm/song-doc": "workspace:*",
     "@neo-fm/style-presets": "workspace:*",
     "@supabase/ssr": "^0.10.3",

@@ -19,7 +19,8 @@
     "typecheck": "tsc -b tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build-phase-3-request": "tsx scripts/build-phase-3-request.ts"
+    "build-phase-3-request": "tsx scripts/build-phase-3-request.ts",
+    "bundle:corpus": "tsx scripts/bundle-corpus.ts"
   },
   "dependencies": {
     "@neo-fm/song-doc": "workspace:*"

@@ -1,5 +1,10 @@
 export type { LyricsEntry, LoadCorpusOptions } from "./corpus.js";
 export { loadCorpus } from "./corpus.js";
+export {
+  BUNDLED_CORPUS,
+  bundledCorpusForLanguage,
+  findBundledLyric,
+} from "./bundled-corpus.js";
 export type {
   LyricsProvider,
   LyricsRequest,
