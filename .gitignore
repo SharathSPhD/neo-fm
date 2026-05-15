@@ -30,6 +30,9 @@ build/
 .env
 .env.local
 .env.*.local
+infra/.env.dgx
+infra/.env.dgx.local
+demos/phase-*-bringup.txt
 *.pem
 
 # Model weights and large blobs (download via tooling, never commit)
