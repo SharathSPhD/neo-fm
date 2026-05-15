@@ -30,6 +30,14 @@ def _settings(**overrides: object) -> Settings:
         music_inference_url="https://inference.test",
         music_inference_hmac_secret="hmac",
         music_inference_timeout_seconds=10.0,
+        # Sprint 5: vocal-synth is opt-in via env. Default tests run
+        # instrumental-only so the existing matrix stays representative
+        # of the no-GPU dev path.
+        vocal_synth_url="",
+        vocal_synth_hmac_secret="",
+        vocal_synth_timeout_seconds=10.0,
+        vocal_languages=(),
+        vocal_voice_timbre="androgynous",
         queue_name="song_generation_jobs",
         dlq_name="song_generation_jobs_dlq",
         visibility_timeout_seconds=300,
@@ -51,7 +59,7 @@ def _seed(db: FakeWorkerDB, *, message: dict[str, object]) -> int:
 
 async def test_happy_path_writes_track_completes_and_archives() -> None:
     db = FakeWorkerDB()
-    inference = FakeInferenceClient(response=b"WAV-OK")
+    inference = FakeInferenceClient()
     storage = FakeStorageClient()
     msg = make_message()
     msg_id = _seed(db, message=msg)
@@ -71,11 +79,14 @@ async def test_happy_path_writes_track_completes_and_archives() -> None:
     assert job.attempt_id == msg["attempt_id"]
     assert job.error is None
 
-    # storage upload happened exactly once at the conventional path
+    # storage upload happened exactly once at the conventional path; the
+    # actual bytes are the mixer's stereo 48k WAV (not the raw bytes
+    # returned by the inference fake) -- Sprint 5 added mix_to_stereo_48k.
     assert len(storage.uploads) == 1
     path, content, ctype = storage.uploads[0]
     assert path == f"{msg['job_id']}/{msg['attempt_id']}.wav"
-    assert content == b"WAV-OK"
+    assert content[:4] == b"RIFF"
+    assert content[8:12] == b"WAVE"
     assert ctype == "audio/wav"
 
     # track row inserted (idempotency key (job_id, attempt_id))
@@ -262,7 +273,7 @@ async def test_inference_network_error_is_retryable() -> None:
 
 async def test_storage_failure_is_retryable() -> None:
     db = FakeWorkerDB()
-    inference = FakeInferenceClient(response=b"WAV")
+    inference = FakeInferenceClient()
     storage = FakeStorageClient(fail_on_upload=True)
     msg = make_message()
     msg_id = _seed(db, message=msg)
@@ -287,7 +298,7 @@ async def test_redelivery_while_lease_is_fresh_does_not_steal_job() -> None:
     takeover from processing".
     """
     db = FakeWorkerDB()
-    inference = FakeInferenceClient(response=b"WAV")
+    inference = FakeInferenceClient()
     storage = FakeStorageClient()
     msg = make_message()
     job_id = str(msg["job_id"])
@@ -329,7 +340,7 @@ async def test_queue_payload_mismatched_user_id_is_rejected() -> None:
     refuse the claim. Regression for the adversarial-review finding
     "Queue payload trust boundary"."""
     db = FakeWorkerDB()
-    inference = FakeInferenceClient(response=b"WAV")
+    inference = FakeInferenceClient()
     storage = FakeStorageClient()
     msg = make_message()
     job_id = str(msg["job_id"])
@@ -359,7 +370,7 @@ async def test_queue_payload_mismatched_user_id_is_rejected() -> None:
 
 async def test_idempotent_replay_does_not_double_insert_track() -> None:
     db = FakeWorkerDB()
-    inference = FakeInferenceClient(response=b"WAV")
+    inference = FakeInferenceClient()
     storage = FakeStorageClient()
     msg = make_message()
     msg_id = _seed(db, message=msg)
@@ -395,11 +406,13 @@ async def test_heartbeat_loop_runs_during_long_inference(monkeypatch: pytest.Mon
     msg_id = _seed(db, message=msg)
 
     # 0.05s heartbeat interval, ~0.15s "inference" call => ~3 renews.
+    inference = FakeInferenceClient()
+    canonical_wav = inference.response
+
     async def slow_generate(**_: object) -> bytes:
         await asyncio.sleep(0.15)
-        return b"WAV"
+        return canonical_wav
 
-    inference = FakeInferenceClient(response=b"WAV")
     monkeypatch.setattr(inference, "generate", slow_generate)
     storage = FakeStorageClient()
 

@@ -1,16 +1,25 @@
 [project]
-name = "neo-fm-dgx-worker"
-version = "0.0.0"
-description = "DGX-side worker: polls pgmq, calls music-inference, uploads to Supabase Storage."
+name = "neo-fm-vocal-synth"
+version = "0.1.0"
+description = "Indic singing voice synthesis (kenpath/svara-tts-v1 + Indic-Parler) for neo-fm."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.10"
 license = { text = "Apache-2.0" }
 dependencies = [
-  "httpx>=0.27",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
   "pydantic>=2.9.0",
-  "psycopg[binary]>=3.2",
   "numpy>=1.26",
   "soundfile>=0.12",
+]
+
+[project.optional-dependencies]
+# Only installed on the DGX where the real TTS pipeline runs.
+# CI / unit tests rely on the FakeVocalModel path and skip these.
+tts = [
+  "transformers>=4.45",
+  "torch>=2.4",
+  "huggingface_hub>=0.25",
 ]
 
 [build-system]
@@ -22,17 +31,11 @@ packages = ["app"]
 
 [dependency-groups]
 dev = [
+  "httpx>=0.27",
   "pytest>=8.3",
-  "pytest-asyncio>=0.24",
-  "respx>=0.21",
   "ruff>=0.7",
   "mypy>=1.13",
 ]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-addopts = "-q"
 
 [tool.ruff]
 line-length = 100

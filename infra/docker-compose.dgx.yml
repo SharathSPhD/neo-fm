@@ -102,15 +102,67 @@ services:
     env_file:
       - .env.dgx
     environment:
-      PHASE: "4"
+      PHASE: "5"
       MUSIC_INFERENCE_URL: "http://music-inference:8000"
+      # Sprint 5: when VOCAL_SYNTH_URL is set the worker fans out to
+      # vocal-synth per language and mixes the stems on top of the
+      # HeartMuLa instrumental (see services/dgx-worker/app/mixer.py).
+      # Leave VOCAL_SYNTH_URL empty to run instrumental-only.
+      VOCAL_SYNTH_URL: "${VOCAL_SYNTH_URL:-}"
+      VOCAL_SYNTH_HMAC_SECRET: "${VOCAL_SYNTH_HMAC_SECRET:-}"
+      VOCAL_LANGUAGES: "${VOCAL_LANGUAGES:-hi,kn,ta,te,bn}"
+      VOCAL_VOICE_TIMBRE: "${VOCAL_VOICE_TIMBRE:-androgynous}"
+      VOCAL_SYNTH_TIMEOUT_SECONDS: "${VOCAL_SYNTH_TIMEOUT_SECONDS:-300}"
       LOG_LEVEL: "INFO"
 
   vocal-synth:
+    # Sprint 5: vocal-synth becomes a real Indic singing-voice sidecar
+    # (kenpath/svara-tts-v1 by default). The `dgx` Dockerfile stage
+    # builds on top of nvcr.io/nvidia/pytorch and brings in torch +
+    # transformers; the `ci` stage is the lighter no-GPU image.
     build:
       context: ../services/vocal-synth
       dockerfile: Dockerfile
-    image: neo-fm/vocal-synth:phase-0
+      target: "${VOCAL_SYNTH_STAGE:-dgx}"
+    image: "neo-fm/vocal-synth:${VOCAL_SYNTH_STAGE:-dgx}"
     container_name: neo-fm-vocal-synth
-    restart: "no"
-    profiles: ["phase-7"]
+    restart: unless-stopped
+    expose:
+      - "8089"
+    ports:
+      - "127.0.0.1:8089:8089"
+    env_file:
+      - .env.dgx
+    environment:
+      PHASE: "5"
+      VOCAL_SYNTH_HMAC_SECRET: "${VOCAL_SYNTH_HMAC_SECRET:?VOCAL_SYNTH_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
+      VOCAL_SYNTH_HMAC_SECRET_NEXT: "${VOCAL_SYNTH_HMAC_SECRET_NEXT:-}"
+      VOCAL_MODEL_BACKEND: "${VOCAL_MODEL_BACKEND:-auto}"
+      VOCAL_MODEL_ID: "${VOCAL_MODEL_ID:-kenpath/svara-tts-v1}"
+      HF_HOME: "${VOCAL_HF_HOME:-/var/cache/huggingface}"
+      NEO_FM_OFFLINE: "${NEO_FM_OFFLINE:-0}"
+      NEO_FM_REQUIRE_REAL_MODEL: "${NEO_FM_REQUIRE_REAL_MODEL:-0}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - "${VOCAL_HF_HOME_HOST:-/var/cache/huggingface}:/var/cache/huggingface:ro"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - >-
+          import urllib.request,sys;
+          r=urllib.request.urlopen('http://localhost:8089/healthz', timeout=4);
+          sys.exit(0 if r.status==200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+    profiles: ["vocal"]

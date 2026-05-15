@@ -223,13 +223,79 @@ class FakeStorageClient:
         return None
 
 
+def _tiny_valid_wav(seconds: float = 0.1, sr: int = 24000) -> bytes:
+    """Produce a tiny but valid 16-bit PCM mono WAV for tests.
+
+    The dgx-worker now mixes through `mixer.mix_to_stereo_48k`, which
+    requires a real WAV (it decodes via soundfile). The historical
+    sentinel of ``b"WAVDATA"`` predates that step; the canonical fake
+    now produces a real (silent) WAV so the entire happy path works.
+    """
+    import io as _io
+    import struct as _s
+
+    n = int(seconds * sr)
+    pcm = b"\x00\x00" * n
+    chunk_size = 36 + len(pcm)
+    return (
+        b"RIFF"
+        + _s.pack("<I", chunk_size)
+        + b"WAVEfmt "
+        + _s.pack("<I", 16)
+        + _s.pack("<H", 1)
+        + _s.pack("<H", 1)
+        + _s.pack("<I", sr)
+        + _s.pack("<I", sr * 2)
+        + _s.pack("<H", 2)
+        + _s.pack("<H", 16)
+        + b"data"
+        + _s.pack("<I", len(pcm))
+        + pcm
+    )
+
+
+_DEFAULT_FAKE_WAV = _tiny_valid_wav()
+
+
 class FakeInferenceClient:
-    def __init__(self, *, response: bytes = b"WAVDATA", exc: Exception | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        response: bytes = _DEFAULT_FAKE_WAV,
+        exc: Exception | None = None,
+    ) -> None:
         self.response = response
         self.exc = exc
         self.calls: list[dict[str, Any]] = []
 
     async def generate(self, *, request_body: dict[str, Any], trace_id: str) -> bytes:
+        self.calls.append({"request": request_body, "trace_id": trace_id})
+        if self.exc is not None:
+            raise self.exc
+        return self.response
+
+    async def aclose(self) -> None:
+        return None
+
+
+class FakeVocalClient:
+    """Mirror of `FakeInferenceClient` but for vocal-synth.
+
+    Sprint 5 worker tests use this when they want to exercise the
+    vocal-mix codepath without standing up a real vocal-synth service.
+    """
+
+    def __init__(
+        self,
+        *,
+        response: bytes = _DEFAULT_FAKE_WAV,
+        exc: Exception | None = None,
+    ) -> None:
+        self.response = response
+        self.exc = exc
+        self.calls: list[dict[str, Any]] = []
+
+    async def vocalize(self, *, request_body: dict[str, Any], trace_id: str) -> bytes:
         self.calls.append({"request": request_body, "trace_id": trace_id})
         if self.exc is not None:
             raise self.exc

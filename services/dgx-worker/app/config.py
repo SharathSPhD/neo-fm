@@ -36,6 +36,17 @@ class Settings:
     music_inference_hmac_secret: str
     music_inference_timeout_seconds: float
 
+    # Optional vocal-synth (Sprint 5). When `vocal_synth_url` is empty
+    # the worker skips vocals entirely and writes an instrumental-only
+    # WAV; this is how local docker-compose without GPU keeps working.
+    vocal_synth_url: str
+    vocal_synth_hmac_secret: str
+    vocal_synth_timeout_seconds: float
+    # Comma-separated list of languages (BCP-47-ish: en/hi/kn/ta/te/bn).
+    # When empty, no vocals are rendered even if URL is set.
+    vocal_languages: tuple[str, ...]
+    vocal_voice_timbre: str
+
     # Queue tuning (ADR 0008).
     queue_name: str
     dlq_name: str
@@ -46,6 +57,10 @@ class Settings:
 
 
 def load_settings() -> Settings:
+    raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
+    vocal_languages = tuple(
+        s.strip() for s in raw_langs.split(",") if s.strip()
+    )
     return Settings(
         pg_dsn=_required("PG_DSN"),
         supabase_url=_required("SUPABASE_URL"),
@@ -56,6 +71,13 @@ def load_settings() -> Settings:
         music_inference_timeout_seconds=float(
             os.environ.get("MUSIC_INFERENCE_TIMEOUT_SECONDS", "600"),
         ),
+        vocal_synth_url=os.environ.get("VOCAL_SYNTH_URL", ""),
+        vocal_synth_hmac_secret=os.environ.get("VOCAL_SYNTH_HMAC_SECRET", ""),
+        vocal_synth_timeout_seconds=float(
+            os.environ.get("VOCAL_SYNTH_TIMEOUT_SECONDS", "600"),
+        ),
+        vocal_languages=vocal_languages,
+        vocal_voice_timbre=os.environ.get("VOCAL_VOICE_TIMBRE", "androgynous"),
         queue_name=os.environ.get("QUEUE_NAME", "song_generation_jobs"),
         dlq_name=os.environ.get("DLQ_NAME", "song_generation_jobs_dlq"),
         visibility_timeout_seconds=int(

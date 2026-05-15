@@ -46,8 +46,10 @@ from pydantic import ValidationError
 from .config import Settings, load_settings
 from .db import WorkerDB
 from .inference_client import MusicInferenceClient
+from .mixer import MixSettings, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
 from .storage import StorageClient
+from .vocal_client import VocalSynthClient
 
 LOG = logging.getLogger("neo_fm.dgx_worker")
 
@@ -136,6 +138,102 @@ _RETRYABLE_INFERENCE_ERRORS = frozenset(
 )
 
 
+def build_vocal_request(
+    message: QueueMessage,
+    song_document: SongDocument,
+    *,
+    language: str,
+    voice_timbre: str,
+) -> dict[str, Any]:
+    """Per-language vocalize body. Section lyrics come straight from
+    the Song Document; the worker doesn't translate.
+
+    The vocal-synth service handles missing transliteration by
+    falling back to lyrics when present.
+    """
+    return {
+        "job_id": str(message.job_id),
+        "trace_id": message.trace_id,
+        "language": language,
+        "style_family": song_document.style_family,
+        "voice_timbre": voice_timbre,
+        "sample_rate": 48000,
+        "target_duration_seconds": song_document.target_duration_seconds,
+        "sections": [
+            {
+                "id": s.id,
+                "type": s.type,
+                "lyrics": s.lyrics,
+                # `language` is an optional extra on the section
+                # (model_config extra='allow'); fall back to the song's
+                # language when the section doesn't carry one.
+                "language": (getattr(s, "language", None) or language),
+                "script": s.script,
+                "transliteration": s.transliteration,
+                "target_seconds": s.target_seconds,
+                "tempo_bpm": song_document.tempo_bpm,
+                "raga_name": (
+                    song_document.raga.get("name")
+                    if isinstance(song_document.raga, dict)
+                    else None
+                ),
+            }
+            for s in song_document.sections
+        ],
+    }
+
+
+async def _vocalize_all_languages(
+    *,
+    vocal: VocalSynthClient,
+    settings: Settings,
+    message: QueueMessage,
+    song_document: SongDocument,
+) -> tuple[list[bytes], list[str]]:
+    """Render one vocal stem per configured language, in parallel.
+
+    Returns (stems, failed_languages). Failures don't abort the job; we
+    just produce a partially-vocal song. The worker logs per-language
+    failures so the operator dashboard surfaces them.
+    """
+    if not settings.vocal_languages or not settings.vocal_synth_url:
+        return [], []
+
+    async def one(lang: str) -> tuple[str, bytes | BaseException]:
+        try:
+            wav = await vocal.vocalize(
+                request_body=build_vocal_request(
+                    message,
+                    song_document,
+                    language=lang,
+                    voice_timbre=settings.vocal_voice_timbre,
+                ),
+                trace_id=message.trace_id,
+            )
+            return lang, wav
+        except BaseException as exc:  # noqa: BLE001 - we record per-lang failure
+            return lang, exc
+
+    tasks = [asyncio.create_task(one(lang)) for lang in settings.vocal_languages]
+    results = await asyncio.gather(*tasks)
+    stems: list[bytes] = []
+    failed: list[str] = []
+    for lang, payload in results:
+        if isinstance(payload, BaseException):
+            LOG.warning(
+                "vocal_lang_failed",
+                extra={
+                    "job_id": str(message.job_id),
+                    "language": lang,
+                    "err": str(payload),
+                },
+            )
+            failed.append(lang)
+        else:
+            stems.append(payload)
+    return stems, failed
+
+
 async def process_one(
     *,
     settings: Settings,
@@ -143,6 +241,7 @@ async def process_one(
     inference: MusicInferenceClient,
     storage: StorageClient,
     queue_msg: dict[str, Any],
+    vocal: VocalSynthClient | None = None,
 ) -> str:
     """Process a single leased queue message; return one of JobOutcome.*."""
     msg_id = int(queue_msg["msg_id"])
@@ -256,12 +355,51 @@ async def process_one(
                 raw_payload=raw_payload,
             )
 
+        # ---- 5b. vocals (parallel per language, optional) ----------------
+        vocal_stems: list[bytes] = []
+        vocal_failures: list[str] = []
+        if vocal is not None and settings.vocal_languages and settings.vocal_synth_url:
+            vocal_stems, vocal_failures = await _vocalize_all_languages(
+                vocal=vocal,
+                settings=settings,
+                message=message,
+                song_document=song_document,
+            )
+
+        # ---- 5c. mixdown to stereo 48k -----------------------------------
+        try:
+            final_audio = mix_to_stereo_48k(
+                instrumental_wav=audio_bytes,
+                vocal_wavs=vocal_stems or None,
+                target_duration_seconds=song_document.target_duration_seconds,
+                settings=MixSettings(),
+            )
+        except Exception as exc:
+            LOG.error(
+                "mixdown_failed",
+                extra={
+                    "job_id": job_id,
+                    "err": str(exc),
+                    "vocal_failures": vocal_failures,
+                },
+            )
+            # Mixer failures are retryable: they're not the request's
+            # fault, they're a runtime numerics / decode issue.
+            return await _handle_retryable_failure(
+                settings=settings,
+                db=db,
+                message=message,
+                msg_id=msg_id,
+                error="mixdown_failed",
+                raw_payload=raw_payload,
+            )
+
         # ---- 6. storage upload (idempotent) ------------------------------
         object_path = storage.object_path(job_id, str(message.attempt_id), "wav")
         try:
             await storage.put_object(
                 object_path=object_path,
-                content=audio_bytes,
+                content=final_audio,
                 content_type="audio/wav",
             )
         except Exception as exc:
@@ -284,14 +422,20 @@ async def process_one(
                 url=storage.storage_url(object_path),
                 duration_seconds=song_document.target_duration_seconds,
                 format_="wav",
-                bytes_=len(audio_bytes),
+                bytes_=len(final_audio),
             )
             db.mark_completed(conn, job_id)
             db.archive(conn, settings.queue_name, msg_id)
 
         LOG.info(
             "job completed",
-            extra={"job_id": job_id, "trace_id": message.trace_id, "bytes": len(audio_bytes)},
+            extra={
+                "job_id": job_id,
+                "trace_id": message.trace_id,
+                "bytes": len(final_audio),
+                "vocal_stems": len(vocal_stems),
+                "vocal_failures": vocal_failures,
+            },
         )
         return JobOutcome.COMPLETED
 
@@ -366,6 +510,13 @@ async def main_loop(
         hmac_secret=settings.music_inference_hmac_secret,
         timeout_seconds=settings.music_inference_timeout_seconds,
     )
+    vocal: VocalSynthClient | None = None
+    if settings.vocal_synth_url and settings.vocal_synth_hmac_secret:
+        vocal = VocalSynthClient(
+            base_url=settings.vocal_synth_url,
+            hmac_secret=settings.vocal_synth_hmac_secret,
+            timeout_seconds=settings.vocal_synth_timeout_seconds,
+        )
     storage = StorageClient(
         supabase_url=settings.supabase_url,
         service_role_key=settings.supabase_service_role_key,
@@ -398,9 +549,12 @@ async def main_loop(
                 inference=inference,
                 storage=storage,
                 queue_msg=msg,
+                vocal=vocal,
             )
     finally:
         await inference.aclose()
+        if vocal is not None:
+            await vocal.aclose()
         await storage.aclose()
         LOG.info("worker stopped")
 
