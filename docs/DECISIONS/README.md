@@ -35,8 +35,8 @@ What becomes easier or harder. Tradeoffs accepted.
 | 0007 | [Observability lands incrementally, not all in Phase 11](0007-observability-from-phase-1.md)    | Accepted |
 | 0008 | [pgmq job leases, retries, and dead-letter handling](0008-pgmq-leases.md)                       | Accepted |
 | 0009 | [Quota reconciliation — monthly rows + bytes per tier](0009-quota-reconciliation.md)            | Accepted |
-| 0010 | [Phase 7 vocal stack — licensing prerequisites gate](0010-vocal-stack-licensing.md)             | Proposed |
-| 0011 | [GPU governor — lease semantics across pre-emption](0011-governor-and-leases.md)                | Proposed |
+| 0010 | [Phase 7 vocal stack — licensing prerequisites gate](0010-vocal-stack-licensing.md)             | Accepted |
+| 0011 | [GPU governor — lease semantics across pre-emption](0011-governor-and-leases.md)                | Accepted |
 
 ## How TRIZ contradictions get recorded here
 

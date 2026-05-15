@@ -103,21 +103,26 @@ DGX Spark against the real Supabase project. All are on `main`.
 ## Phase status
 
 - **Phases 1–4**: Live, end-to-end verified against production Supabase.
-- **Phase 5 (web UI)**: Merged. The library page subscribes to
-  `postgres_changes` on `public.jobs`, so the completed run above
-  surfaces in real time without a manual refresh.
-- **Phase 7 (vocal synth)**: Gated on the licensing evidence required
-  by [ADR 0010][ADR10]. No `services/vocal-synth/` work starts until at
-  least one TTS model has its license artifact under `docs/licenses/`.
-- **Phase 8 (GPU governor)**: Design-only until [ADR 0011][ADR11]
-  moves from Proposed to Accepted.
-- **Vercel `vercel --prod` deploy of the merged Phase 5 web UI**: the
-  Vercel project is already linked and previews are green. Final
-  production promote is a deliberate human decision now that the
-  end-to-end is verified.
+- **Phase 5 (web UI)**: Merged and auto-deployed. The library page
+  subscribes to `postgres_changes` on `public.jobs`, so the completed
+  run above surfaces in real time without a manual refresh. Vercel is
+  configured to auto-promote every push to `main` to production; the
+  latest production deployment is `READY` against commit `9b7e577`.
+- **Phase 7 (vocal synth)**: Unblocked. [ADR 0010][ADR10] is now
+  **Accepted** as of 2026-05-15: two HF-resident candidates clear the
+  commercial-use gate — `kenpath/svara-tts-v1` (Apache-2.0; Llama 3.2
+  Community License underneath via Orpheus) and
+  `ai4bharat/indic-parler-tts` (Apache-2.0, gated). Evidence under
+  [`docs/licenses/`][LIC]. Phase 7 implementation may begin against
+  either model.
+- **Phase 8 (GPU governor)**: Design complete. [ADR 0011][ADR11] is
+  now **Accepted** with concrete lease + pre-empt pseudocode (§5) and
+  a three-gate test plan (§6). Phase 8 implementation may begin
+  against the documented protocol.
 
 [ADR10]: DECISIONS/0010-vocal-stack-licensing.md
 [ADR11]: DECISIONS/0011-governor-and-leases.md
+[LIC]: licenses/README.md
 
 ## Reproducing this state from a fresh DGX
 

@@ -1,6 +1,6 @@
 # ADR 0010: Phase 7 vocal stack — licensing prerequisites gate
 
-Status: Proposed (blocking Phase 7)
+Status: Accepted (Phase 7 unblocked on 2026-05-15 via two viable candidates)
 
 ## Context
 
@@ -14,12 +14,12 @@ metadata into a vocal stem the music-inference output can be mixed against.
 
 The candidate Phase 7 components are all third-party research artifacts:
 
-| Component             | Source                                     | License status (as of this ADR) |
-| --------------------- | ------------------------------------------ | ------------------------------- |
-| svara-TTS             | IIT-M speech lab, raga-conditioned TTS     | License **unset** in published artifacts (SPEC §187); contact required |
-| Kenpath ("Sruti")     | Kenpath Research TTS for Indian languages  | License **unset** in HF model cards (SPEC §189); contact required |
-| AI4Bharat Indic-TTS   | AI4Bharat (IIT-M)                          | Research / CC variants per model; per-model review required |
-| IITM-CLS              | IIT-M Common Label Set phoneme inventory   | Documented as **research-use only** (SPEC §192) |
+| Component             | Source                                     | License status (verified 2026-05-15) |
+| --------------------- | ------------------------------------------ | ----------------------------------- |
+| svara-TTS (IIT-M)     | IIT-M speech lab, raga-conditioned TTS     | Not on HF; license still unset in publications. **Defer** |
+| Kenpath svara-tts-v1  | Kenpath Research TTS for Indian languages  | **Apache-2.0** on HF model card; Llama-3.2 base via two Orpheus checkpoints. Reviewed in `docs/licenses/kenpath--svara-tts-v1.review.md`. **Accept** |
+| AI4Bharat Indic-TTS   | AI4Bharat (IIT-M)                          | `ai4bharat/indic-parler-tts` and `-pretrained` both **Apache-2.0** (gated). Reviewed in `docs/licenses/ai4bharat--indic-parler-tts.review.md`. **Accept** |
+| IITM-CLS              | IIT-M Common Label Set phoneme inventory   | Inventory only — labels usable as an alphabet; training audio and dictionaries are **not** redistributed. Phase 7 G2P code may reference CLS labels with citation. |
 
 The project's commercial posture is set by [ADR 0002][ADR2]: HeartMuLa-OSS
 is the production music model precisely because its license permits
@@ -79,6 +79,27 @@ model:
 When all gating evidence for at least one viable vocal model is on file,
 Phase 7 may start. ADR 0010 will be amended (or a successor ADR opened)
 to record the accepted model and link to the captured license artifacts.
+
+### Resolution (2026-05-15)
+
+Two HF-resident models clear the gate:
+
+- `kenpath/svara-tts-v1` — Apache-2.0 (LoRA on Orpheus-3B, which is
+  Apache-2.0 on top of Meta `Llama-3.2-3B-Instruct` under the Llama
+  3.2 Community License). See
+  [docs/licenses/kenpath--svara-tts-v1.review.md][R1].
+- `ai4bharat/indic-parler-tts` — Apache-2.0, gated. See
+  [docs/licenses/ai4bharat--indic-parler-tts.review.md][R2].
+
+Both cover the project's target Indian languages (Hindi, Kannada,
+Sanskrit) and both clear ADR 0010's commercial-use checklist. Phase 7
+implementation is unblocked. Carrying two compatible options de-risks
+Phase 7 against an upstream re-license. Llama 3.2 Community License's
+700M-MAU clause is not a blocker at neo-fm's current scale and will be
+re-evaluated alongside any future scale milestone.
+
+[R1]: ../licenses/kenpath--svara-tts-v1.review.md
+[R2]: ../licenses/ai4bharat--indic-parler-tts.review.md
 
 ## Consequences
 

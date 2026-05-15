@@ -1,6 +1,6 @@
 # ADR 0011: GPU governor — lease semantics across pre-emption
 
-Status: Proposed (design-only; blocks Phase 8 implementation)
+Status: Accepted (2026-05-15; Phase 8 implementation unblocked)
 
 ## Context
 
@@ -105,6 +105,116 @@ This is *correct*. The governor's drain deadline lets the operator
 choose whether to wait or to pre-empt; the worker's heartbeat keeps the
 existing job intact while the choice is being made. ADR 0008 is not
 modified by Phase 8; ADR 0011 simply layers on top.
+
+### 5. Concrete lease + pre-empt protocol (pseudocode)
+
+The governor and the worker share **one** filesystem coordination point
+(plus signals). Choice of filesystem marker over an admin HTTP endpoint
+keeps the worker container free of a new listener and survives the
+worker process being SIGSTOPped (HTTP wouldn't be answered, but the
+filesystem flag survives).
+
+The shared contract lives at `/var/run/neo-fm/governor.state` inside
+the worker container (bind-mounted from the host):
+
+| Field             | Type       | Meaning                                                                |
+| ----------------- | ---------- | ---------------------------------------------------------------------- |
+| `stop_new_jobs`   | bool       | If true, worker MUST NOT call `pgmq.read()`. In-flight jobs continue.  |
+| `drain_deadline`  | unix-ms?   | Optional. If set, governor will SIGTERM the worker at this time.       |
+| `tenant`          | string?    | Who is asking. Logged by the worker for observability.                 |
+
+Worker main loop (`services/dgx-worker/app/worker.py`):
+
+```python
+async def main_loop(settings, db, inference, storage, signals):
+    while not signals.shutdown:
+        if governor_state().stop_new_jobs:
+            await asyncio.sleep(2)        # don't busy-poll; no work to claim
+            continue
+        msg = read_one(db, settings.queue_name)
+        if msg is None:
+            await asyncio.sleep(1)        # normal pgmq backoff
+            continue
+        await process_one(
+            settings=settings, db=db,
+            inference=inference, storage=storage,
+            queue_msg=msg,
+        )
+```
+
+Inside `process_one()`, the heartbeat task runs *unconditionally*
+while the job is in flight, even if `stop_new_jobs` flips to true
+mid-flight. ADR 0008's heartbeat semantics are untouched.
+
+Worker SIGTERM handler:
+
+```python
+def on_sigterm():
+    signals.shutdown = True
+    # The heartbeat task observes signals.shutdown and exits WITHOUT
+    # calling renew_lease. The pgmq message stays "in flight" until its
+    # VT expires (default 300s, ADR 0008), at which point another worker
+    # can take over. We do NOT call pgmq.archive / pgmq.delete here:
+    # archiving would terminate the job; deleting would lose it.
+    sys.exit(0)
+```
+
+Governor sequence (single tenant requesting GPU):
+
+```text
+1. governor writes:  {stop_new_jobs: true, drain_deadline: now+120s, tenant: "llm-ft-7b"}
+2. worker observes stop_new_jobs at the top of its next loop iteration
+   (within ~2s).
+3. governor polls `select status from public.jobs
+                   where status='processing' and lease_renewed_at > now()-INTERVAL '90s'`.
+4. when zero rows match OR now() >= drain_deadline:
+     governor proceeds.
+   The worker has either finished its song (zero processing rows)
+   or hit the drain deadline.
+5. on drain-deadline path: governor sends SIGTERM to the worker
+   container. ADR 0008 lease takes over; worker exits without acking;
+   pgmq redelivers after VT to either this worker or a future one.
+   The redelivered message's processing classification is
+   `inference_preempted` (see §3).
+6. governor brings up its own tenant.
+7. when the tenant finishes, governor writes:  {stop_new_jobs: false}
+   and the worker resumes its next pgmq.read().
+```
+
+The protocol has **no race** because:
+
+- The worker only consults `stop_new_jobs` between jobs, not mid-job.
+- The heartbeat is decoupled from the inference call, so a paused
+  worker (e.g. SIGSTOPped by the governor for diagnostics) still
+  refreshes the lease until the kernel resumes it.
+- SIGTERM is the only way to actually interrupt an in-flight job, and
+  the SIGTERM path explicitly does not renew the lease — ADR 0008's
+  expiry-based redelivery is the only recovery path.
+
+### 6. Test plan for Phase 8
+
+Three required gates before Phase 8 can merge:
+
+1. **Drain-respects-in-flight test.** Governor sets `stop_new_jobs=true`
+   while a 30s song is in flight; lease never expires, song completes,
+   `tracks` row inserted, governor proceeds without SIGTERM. Verified
+   by the same E2E harness used for Phase 4 (`proof_e2e.py`).
+
+2. **Drain-deadline-hits-SIGTERM test.** Inject a slow inference (e.g.
+   sleep 180s in a test stub); governor's 120s drain deadline fires;
+   worker exits; pgmq redelivers; second worker (or restarted same
+   worker) picks up; final job status is `completed` after the second
+   attempt. Confirms ADR 0008 redelivery still works under governor
+   pre-emption.
+
+3. **`inference_preempted` taxonomy test.** Assert that the worker's
+   error classification surfaces `inference_preempted` (not
+   `inference_timeout`) on the redelivered attempt of a pre-empted
+   job. Confirms §3 of this ADR is wired into Phase 11 observability
+   from day one.
+
+These three test names will appear as gating items in the Phase 8
+implementation plan.
 
 ## Consequences
 
