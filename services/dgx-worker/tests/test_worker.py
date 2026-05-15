@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import replace
+from pathlib import Path
 
 import httpx
 import pytest
@@ -44,6 +45,10 @@ def _settings(**overrides: object) -> Settings:
         heartbeat_interval_seconds=60,
         poll_interval_seconds=0.1,
         max_attempts=3,
+        # ADR 0011 governor: point at a path that is unlikely to exist
+        # so default tests keep behaving as "no governor active".
+        governor_state_path=Path("/tmp/neo-fm-governor-disabled.state"),
+        governor_poll_seconds=0.01,
     )
     return replace(base, **overrides)  # type: ignore[arg-type]
 

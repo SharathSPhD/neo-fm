@@ -7,6 +7,7 @@ suite plus a `FakeVocalClient`. The mixer runs for real (pure numpy).
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -44,6 +45,8 @@ def _settings_with_vocals(*langs: str, **overrides: object) -> Settings:
         heartbeat_interval_seconds=60,
         poll_interval_seconds=0.1,
         max_attempts=3,
+        governor_state_path=Path("/tmp/neo-fm-governor-vocal-disabled.state"),
+        governor_poll_seconds=0.01,
     )
     return replace(base, **overrides)  # type: ignore[arg-type]
 

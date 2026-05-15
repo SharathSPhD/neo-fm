@@ -45,6 +45,7 @@ from pydantic import ValidationError
 
 from .config import Settings, load_settings
 from .db import WorkerDB
+from .governor import DEFAULT_STATE_PATH, GovernorState, read_state
 from .inference_client import MusicInferenceClient
 from .mixer import MixSettings, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
@@ -242,6 +243,7 @@ async def process_one(
     storage: StorageClient,
     queue_msg: dict[str, Any],
     vocal: VocalSynthClient | None = None,
+    shutdown: asyncio.Event | None = None,
 ) -> str:
     """Process a single leased queue message; return one of JobOutcome.*."""
     msg_id = int(queue_msg["msg_id"])
@@ -320,10 +322,42 @@ async def process_one(
 
         # ---- 5. inference -------------------------------------------------
         try:
-            audio_bytes = await inference.generate(
-                request_body=build_inference_request(message, song_document),
-                trace_id=message.trace_id,
-            )
+            if shutdown is not None:
+                gen_task = asyncio.create_task(
+                    inference.generate(
+                        request_body=build_inference_request(message, song_document),
+                        trace_id=message.trace_id,
+                    ),
+                )
+                shutdown_task = asyncio.create_task(shutdown.wait())
+                done, _pending = await asyncio.wait(
+                    {gen_task, shutdown_task},
+                    return_when=asyncio.FIRST_COMPLETED,
+                )
+                if shutdown_task in done and gen_task not in done:
+                    # ADR 0011: SIGTERM during inference. Do NOT renew
+                    # the lease, do NOT ack the pgmq message. Mark the
+                    # job failed with the preempted taxonomy so the
+                    # next attempt is classified correctly.
+                    gen_task.cancel()
+                    with suppress(asyncio.CancelledError, BaseException):
+                        await gen_task
+                    LOG.warning(
+                        "inference_preempted",
+                        extra={"job_id": job_id, "trace_id": message.trace_id},
+                    )
+                    with db.connect() as conn:
+                        db.mark_failed(conn, job_id, "inference_preempted")
+                    return JobOutcome.FAILED_RETRY
+                shutdown_task.cancel()
+                with suppress(asyncio.CancelledError):
+                    await shutdown_task
+                audio_bytes = await gen_task
+            else:
+                audio_bytes = await inference.generate(
+                    request_body=build_inference_request(message, song_document),
+                    trace_id=message.trace_id,
+                )
         except (httpx.HTTPError, httpx.TimeoutException) as exc:
             classification = classify_inference_error(exc)
             LOG.error(
@@ -527,6 +561,7 @@ async def main_loop(
     _install_signal_handlers(stop)
 
     LOG.info("worker started", extra={"queue": settings.queue_name})
+    last_governor_tenant: str | None = None
     try:
         while not stop.is_set():
             if poll is not None:
@@ -534,6 +569,31 @@ async def main_loop(
                 if not should_continue:
                     return
                 continue
+
+            # ADR 0011: cooperative pre-emption. When the governor has
+            # set stop_new_jobs=true we don't read new pgmq messages,
+            # but in-flight jobs (none here at the top of the loop)
+            # would keep heartbeating. We log the pause once per
+            # tenant transition so observability sees who's holding us.
+            governor = read_state(settings.governor_state_path)
+            if governor.is_paused:
+                if governor.tenant != last_governor_tenant:
+                    LOG.info(
+                        "governor_paused",
+                        extra={
+                            "tenant": governor.tenant,
+                            "drain_deadline_ms": governor.drain_deadline_ms,
+                        },
+                    )
+                    last_governor_tenant = governor.tenant
+                try:
+                    await asyncio.wait_for(stop.wait(), timeout=settings.governor_poll_seconds)
+                except TimeoutError:
+                    pass
+                continue
+            if last_governor_tenant is not None:
+                LOG.info("governor_resumed", extra={"prev_tenant": last_governor_tenant})
+                last_governor_tenant = None
 
             with db.connect() as conn:
                 msg = db.read_one(conn, settings.queue_name, settings.visibility_timeout_seconds)
@@ -550,6 +610,7 @@ async def main_loop(
                 storage=storage,
                 queue_msg=msg,
                 vocal=vocal,
+                shutdown=stop,
             )
     finally:
         await inference.aclose()

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 
 
 def _required(name: str) -> str:
@@ -55,6 +56,10 @@ class Settings:
     poll_interval_seconds: float
     max_attempts: int
 
+    # GPU governor coordination (ADR 0011).
+    governor_state_path: Path
+    governor_poll_seconds: float
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -88,4 +93,10 @@ def load_settings() -> Settings:
         ),
         poll_interval_seconds=float(os.environ.get("POLL_INTERVAL_SECONDS", "5")),
         max_attempts=int(os.environ.get("MAX_ATTEMPTS", "3")),
+        governor_state_path=Path(
+            os.environ.get("GOVERNOR_STATE_PATH", "/var/run/neo-fm/governor.state"),
+        ),
+        governor_poll_seconds=float(
+            os.environ.get("GOVERNOR_POLL_SECONDS", "2"),
+        ),
     )

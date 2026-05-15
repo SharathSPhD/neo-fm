@@ -113,7 +113,14 @@ services:
       VOCAL_LANGUAGES: "${VOCAL_LANGUAGES:-hi,kn,ta,te,bn}"
       VOCAL_VOICE_TIMBRE: "${VOCAL_VOICE_TIMBRE:-androgynous}"
       VOCAL_SYNTH_TIMEOUT_SECONDS: "${VOCAL_SYNTH_TIMEOUT_SECONDS:-300}"
+      # ADR 0011 governor coordination. The host bind-mount of
+      # /var/run/neo-fm lets `scripts/neo-fm-governor.py` pause/resume
+      # the worker from outside the container.
+      GOVERNOR_STATE_PATH: "${GOVERNOR_STATE_PATH:-/var/run/neo-fm/governor.state}"
+      GOVERNOR_POLL_SECONDS: "${GOVERNOR_POLL_SECONDS:-2}"
       LOG_LEVEL: "INFO"
+    volumes:
+      - "${GOVERNOR_STATE_HOST_DIR:-/var/run/neo-fm}:/var/run/neo-fm"
 
   vocal-synth:
     # Sprint 5: vocal-synth becomes a real Indic singing-voice sidecar
