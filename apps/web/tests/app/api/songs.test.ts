@@ -198,4 +198,115 @@ describe("POST /api/songs", () => {
     const body = await res.json();
     expect(body.error).toBe("create_song_job_failed");
   });
+
+  // ---------- Co-composer integration (Sprint 1, Phase 6) ----------------
+  //
+  // The adversarial review flagged that /api/songs forwarded the user's
+  // raw Song Document straight to the RPC -- HeartMuLa never saw the
+  // co-composer's tags / raga / tala / instrumentation for any style.
+  // These tests guard against regressing back to that state.
+
+  it("happy path western: persists composer-elaborated document, not raw", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(req(validBody()));
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        style_family: string;
+        sections: Array<{ tags?: string[] }>;
+      };
+    };
+    const tagsFromFirstSection = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tagsFromFirstSection).toContain("style:western");
+    expect(tagsFromFirstSection).toContain("section:verse");
+    // Western composer adds a key + progression even when the producer
+    // didn't supply one. This is the strongest marker that the composer
+    // ran instead of pass-through.
+    expect(
+      tagsFromFirstSection.some((t) => t.startsWith("progression:")),
+    ).toBe(true);
+  });
+
+  it("happy path carnatic: composer adds raga + tala + aroha tags", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "hi",
+          style_family: "carnatic",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "p1", type: "pallavi", target_seconds: 30 },
+            { id: "a1", type: "anupallavi", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        raga?: { name: string; system: string };
+        tala?: string;
+        sections: Array<{ tags?: string[]; type: string }>;
+      };
+    };
+    // composer should have promoted raga onto the document
+    expect(persisted.p_song_document.raga?.system).toBe("carnatic");
+    expect(persisted.p_song_document.tala).toBeDefined();
+    // and tagged every section with style + raga + tala + function
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags).toContain("style:carnatic");
+    expect(tags.some((t) => t.startsWith("raga:"))).toBe(true);
+    expect(tags.some((t) => t.startsWith("tala:"))).toBe(true);
+    expect(tags.some((t) => t.startsWith("function:"))).toBe(true);
+    expect(tags.some((t) => t.startsWith("aroha:"))).toBe(true);
+  });
+
+  it("happy path kannada-folk: composer adds genre tag and folk instrumentation", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "kn",
+          style_family: "kannada-folk",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "r1", type: "folk_refrain", target_seconds: 30 },
+            { id: "s1", type: "folk_stanza", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        orchestration?: { instruments?: string[] };
+        sections: Array<{ tags?: string[] }>;
+      };
+    };
+    expect(
+      persisted.p_song_document.orchestration?.instruments ?? [],
+    ).toContain("dhol");
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags.some((t) => t.startsWith("genre:"))).toBe(true);
+    expect(tags).toContain("style:kannada-folk");
+  });
 });

@@ -23,6 +23,7 @@
  * path that can create jobs -- closing the "bypass /api/songs via
  * PostgREST" hole flagged in the Phase 4 adversarial review.
  */
+import { getCoComposer } from "@neo-fm/co-composer";
 import { allocateSectionDurations, SongDocumentSchema } from "@neo-fm/song-doc";
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
@@ -139,7 +140,52 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  const song_document = docCheck.data;
+  const validated_document = docCheck.data;
+
+  // --- Co-composer hot path -----------------------------------------------
+  //
+  // The adversarial review (Phase 1 of v1-finish plan) flagged that the
+  // /api/songs hot path was forwarding the user-supplied Song Document
+  // verbatim to the worker -- so HeartMuLa never saw the composer's tags
+  // for ANY style. The user could request `style_family: carnatic` and
+  // the model would receive only the section types + lyrics, with no
+  // raga / tala / instrumentation conditioning.
+  //
+  // We elaborate before persistence so the stored document IS the
+  // elaborated one. The detail page (Sprint 2) will render exactly what
+  // got generated; the worker forwards exactly what got stored. No
+  // hidden state.
+  //
+  // Producer-supplied tags / raga / tala still win (see tag-merge.ts).
+  let song_document = validated_document;
+  try {
+    const cc = getCoComposer(validated_document.style_family);
+    song_document = await cc.elaborate(validated_document);
+    // Defence in depth: the composer should never produce a document
+    // that fails the schema (its tests enforce this), but if it
+    // somehow does, surface as a 500 rather than silently DLQ later.
+    const elaboratedCheck = SongDocumentSchema.safeParse(song_document);
+    if (!elaboratedCheck.success) {
+      return NextResponse.json(
+        {
+          error: "co_composer_emitted_invalid_document",
+          details: elaboratedCheck.error.flatten(),
+        },
+        { status: 500 },
+      );
+    }
+    song_document = elaboratedCheck.data;
+  } catch (err) {
+    // A composer reject (e.g. mismatched style/raga combination that
+    // slipped past Zod, or an unsupported tempo) is a 400 -- it tells
+    // the user their inputs were not compatible. Distinct from a 500
+    // (the composer crashed on what should have been a valid doc).
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: "co_composer_rejected", details: message },
+      { status: 400 },
+    );
+  }
 
   // ----- 2. atomic create_song_job RPC ----------------------------------
   // Bundles: per-user advisory lock, quota check, song_document insert,

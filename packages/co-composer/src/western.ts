@@ -40,6 +40,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { mergeTags } from "./tag-merge.js";
 
 type Key = "C" | "G" | "D" | "A" | "E" | "F" | "Bb" | "Eb";
 
@@ -106,36 +107,6 @@ function instrumentTags(orch: Orchestration | undefined): string[] {
   return out;
 }
 
-// Tag families that are "single-valued" — once the producer supplies one,
-// the composer must NOT add a competing value with the same prefix. Without
-// this, a producer's `key:G` plus the composer's `key:C` would both end up
-// in the bag and HeartMuLa would condition on contradictory information.
-const SINGLE_VALUED_PREFIXES = [
-  "section:",
-  "key:",
-  "style:",
-  "tempo:",
-  "time_sig:",
-  "lead_vocal:",
-  "texture:",
-  "progression:",
-];
-
-function isComposerTagSuperseded(
-  composerTag: string,
-  producerTags: ReadonlySet<string>,
-): boolean {
-  for (const prefix of SINGLE_VALUED_PREFIXES) {
-    if (composerTag.startsWith(prefix)) {
-      for (const p of producerTags) {
-        if (p.startsWith(prefix)) return true;
-      }
-      return false;
-    }
-  }
-  return false;
-}
-
 function elaborateSection(
   section: Section,
   globalTags: string[],
@@ -153,21 +124,8 @@ function elaborateSection(
   // pinning "bright" or "minor-ish"). Producer values come first and win for
   // both exact duplicates AND single-valued prefix families (key:, style:,
   // tempo:, etc.). Free-form tags ("mood:bright") pass through both directions.
-  const producerSet = new Set(section.tags ?? []);
-  const seen = new Set<string>();
-  const merged: string[] = [];
-  for (const t of section.tags ?? []) {
-    if (seen.has(t)) continue;
-    seen.add(t);
-    merged.push(t);
-  }
-  for (const t of composerTags) {
-    if (seen.has(t)) continue;
-    if (isComposerTagSuperseded(t, producerSet)) continue;
-    seen.add(t);
-    merged.push(t);
-  }
-  return { ...section, tags: merged };
+  // See tag-merge.ts for the rules (shared by every co-composer).
+  return { ...section, tags: mergeTags(section.tags, composerTags) };
 }
 
 export class WesternCoComposer implements CoComposer {
