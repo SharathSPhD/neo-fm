@@ -1,0 +1,208 @@
+{
+  "title": "neo-fm overview",
+  "uid": "neo-fm-overview",
+  "schemaVersion": 38,
+  "version": 1,
+  "tags": ["neo-fm", "phase-7"],
+  "editable": true,
+  "timezone": "browser",
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "ds",
+        "label": "Prometheus",
+        "type": "datasource",
+        "query": "prometheus",
+        "current": {"text": "Prometheus", "value": "Prometheus"}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Jobs completed (24h)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 0, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(increase(neofm_worker_jobs_total{outcome=\"completed\"}[24h]))",
+          "refId": "A"
+        }
+      ],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Jobs failed (24h)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 4, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(increase(neofm_worker_jobs_total{outcome=~\"failed_.*\"}[24h]))",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 5},
+              {"color": "red", "value": 25}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Preemptions (24h)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 8, "y": 0},
+      "targets": [
+        {
+          "expr": "sum(increase(neofm_worker_preempted_total[24h]))",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Queue lag (oldest queued)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 12, "y": 0},
+      "targets": [{"expr": "max(neofm_worker_queue_lag_seconds)", "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 60},
+              {"color": "red", "value": 300}
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Worker in-flight",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 16, "y": 0},
+      "targets": [{"expr": "max(neofm_worker_in_flight)", "refId": "A"}]
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Governor paused?",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 20, "y": 0},
+      "targets": [{"expr": "max(neofm_worker_governor_paused)", "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"text": "running"}}, "type": "value"},
+            {"options": {"1": {"text": "paused"}}, "type": "value"}
+          ]
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "/v1/generate p50/p95 latency",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 5},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(neofm_music_inference_request_latency_seconds_bucket{route=\"/v1/generate\"}[5m])) by (le))",
+          "refId": "A",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(neofm_music_inference_request_latency_seconds_bucket{route=\"/v1/generate\"}[5m])) by (le))",
+          "refId": "B",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "HeartMuLa wall seconds by style",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 5},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(neofm_music_inference_wall_seconds_bucket[5m])) by (le, style_family))",
+          "refId": "A",
+          "legendFormat": "p95 {{style_family}}"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "Worker jobs by outcome (rate)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 14},
+      "targets": [
+        {
+          "expr": "sum by (outcome) (rate(neofm_worker_jobs_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Vocal-synth p95 latency by language",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 14},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(neofm_vocal_synth_wall_seconds_bucket[5m])) by (le, language))",
+          "refId": "A",
+          "legendFormat": "p95 {{language}}"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 11,
+      "type": "timeseries",
+      "title": "Vocal failures (per lang, per 5m)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 23},
+      "targets": [
+        {
+          "expr": "sum by (language) (increase(neofm_worker_vocal_failures_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{language}}"
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "GPU memory used (MB)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 23},
+      "targets": [{"expr": "max(neofm_music_inference_gpu_memory_mb)", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "decmbytes"}}
+    }
+  ]
+}

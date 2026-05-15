@@ -66,6 +66,7 @@ def _base_settings(state_path: Path, **overrides: object) -> Settings:
         max_attempts=3,
         governor_state_path=state_path,
         governor_poll_seconds=0.01,
+        metrics_port=0,
     )
     return replace(base, **overrides)  # type: ignore[arg-type]
 

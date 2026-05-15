@@ -47,6 +47,7 @@ def _settings_with_vocals(*langs: str, **overrides: object) -> Settings:
         max_attempts=3,
         governor_state_path=Path("/tmp/neo-fm-governor-vocal-disabled.state"),
         governor_poll_seconds=0.01,
+        metrics_port=0,
     )
     return replace(base, **overrides)  # type: ignore[arg-type]
 

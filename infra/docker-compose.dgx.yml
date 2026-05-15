@@ -96,6 +96,10 @@ services:
     image: neo-fm/dgx-worker:phase-4
     container_name: neo-fm-dgx-worker
     restart: unless-stopped
+    expose:
+      - "9101"
+    ports:
+      - "127.0.0.1:9101:9101"
     depends_on:
       music-inference:
         condition: service_healthy
@@ -118,6 +122,9 @@ services:
       # the worker from outside the container.
       GOVERNOR_STATE_PATH: "${GOVERNOR_STATE_PATH:-/var/run/neo-fm/governor.state}"
       GOVERNOR_POLL_SECONDS: "${GOVERNOR_POLL_SECONDS:-2}"
+      # Sprint 7 observability: dgx-worker's embedded /metrics HTTP
+      # listener. Scraped by Prometheus on the compose network.
+      METRICS_PORT: "${WORKER_METRICS_PORT:-9101}"
       LOG_LEVEL: "INFO"
     volumes:
       - "${GOVERNOR_STATE_HOST_DIR:-/var/run/neo-fm}:/var/run/neo-fm"
@@ -173,3 +180,43 @@ services:
       retries: 3
       start_period: 120s
     profiles: ["vocal"]
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: neo-fm-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=14d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - "./prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "./grafana/alerts.yaml:/etc/neo-fm/alerts.yaml:ro"
+      - "neo-fm-prom-data:/prometheus"
+    ports:
+      - "127.0.0.1:9090:9090"
+    profiles: ["monitoring"]
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: neo-fm-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: "${GRAFANA_ADMIN_USER:-admin}"
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_ADMIN_PASSWORD:-admin}"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - "./grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "./grafana/neo-fm-overview.json:/var/lib/grafana/dashboards/neo-fm-overview.json:ro"
+      - "neo-fm-grafana-data:/var/lib/grafana"
+    ports:
+      - "127.0.0.1:3001:3000"
+    profiles: ["monitoring"]
+
+volumes:
+  neo-fm-prom-data: {}
+  neo-fm-grafana-data: {}

@@ -43,6 +43,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from . import metrics
 from .config import Settings, load_settings
 from .db import WorkerDB
 from .governor import DEFAULT_STATE_PATH, GovernorState, read_state
@@ -229,6 +230,7 @@ async def _vocalize_all_languages(
                     "err": str(payload),
                 },
             )
+            metrics.vocal_failures_total.labels(language=lang).inc()
             failed.append(lang)
         else:
             stems.append(payload)
@@ -246,6 +248,33 @@ async def process_one(
     shutdown: asyncio.Event | None = None,
 ) -> str:
     """Process a single leased queue message; return one of JobOutcome.*."""
+    metrics.in_flight.inc()
+    try:
+        outcome = await _process_one_impl(
+            settings=settings,
+            db=db,
+            inference=inference,
+            storage=storage,
+            queue_msg=queue_msg,
+            vocal=vocal,
+            shutdown=shutdown,
+        )
+    finally:
+        metrics.in_flight.dec()
+    metrics.jobs_total.labels(outcome=outcome).inc()
+    return outcome
+
+
+async def _process_one_impl(
+    *,
+    settings: Settings,
+    db: WorkerDB,
+    inference: MusicInferenceClient,
+    storage: StorageClient,
+    queue_msg: dict[str, Any],
+    vocal: VocalSynthClient | None = None,
+    shutdown: asyncio.Event | None = None,
+) -> str:
     msg_id = int(queue_msg["msg_id"])
     raw_payload = queue_msg["message"]
 
@@ -321,6 +350,8 @@ async def process_one(
             return JobOutcome.FAILED_DLQ
 
         # ---- 5. inference -------------------------------------------------
+        import time as _time  # local import: avoid global churn for tests
+        inference_started = _time.perf_counter()
         try:
             if shutdown is not None:
                 gen_task = asyncio.create_task(
@@ -346,6 +377,7 @@ async def process_one(
                         "inference_preempted",
                         extra={"job_id": job_id, "trace_id": message.trace_id},
                     )
+                    metrics.preempted_total.inc()
                     with db.connect() as conn:
                         db.mark_failed(conn, job_id, "inference_preempted")
                     return JobOutcome.FAILED_RETRY
@@ -358,7 +390,9 @@ async def process_one(
                     request_body=build_inference_request(message, song_document),
                     trace_id=message.trace_id,
                 )
+            metrics.inference_seconds.observe(_time.perf_counter() - inference_started)
         except (httpx.HTTPError, httpx.TimeoutException) as exc:
+            metrics.inference_seconds.observe(_time.perf_counter() - inference_started)
             classification = classify_inference_error(exc)
             LOG.error(
                 "inference call failed",
@@ -401,6 +435,7 @@ async def process_one(
             )
 
         # ---- 5c. mixdown to stereo 48k -----------------------------------
+        mix_started = _time.perf_counter()
         try:
             final_audio = mix_to_stereo_48k(
                 instrumental_wav=audio_bytes,
@@ -408,6 +443,7 @@ async def process_one(
                 target_duration_seconds=song_document.target_duration_seconds,
                 settings=MixSettings(),
             )
+            metrics.mix_seconds.observe(_time.perf_counter() - mix_started)
         except Exception as exc:
             LOG.error(
                 "mixdown_failed",
@@ -560,6 +596,9 @@ async def main_loop(
     stop = asyncio.Event()
     _install_signal_handlers(stop)
 
+    if settings.metrics_port:
+        metrics.start_metrics_server(port=settings.metrics_port)
+
     LOG.info("worker started", extra={"queue": settings.queue_name})
     last_governor_tenant: str | None = None
     try:
@@ -576,6 +615,7 @@ async def main_loop(
             # would keep heartbeating. We log the pause once per
             # tenant transition so observability sees who's holding us.
             governor = read_state(settings.governor_state_path)
+            metrics.governor_paused.set(1.0 if governor.is_paused else 0.0)
             if governor.is_paused:
                 if governor.tenant != last_governor_tenant:
                     LOG.info(
@@ -594,6 +634,15 @@ async def main_loop(
             if last_governor_tenant is not None:
                 LOG.info("governor_resumed", extra={"prev_tenant": last_governor_tenant})
                 last_governor_tenant = None
+
+            # Sample queue lag so the operator dashboard can show
+            # pressure even between job pickups.
+            try:
+                with db.connect() as conn:
+                    lag = db.queue_lag_seconds(conn)
+                metrics.queue_lag_seconds.set(lag if lag is not None else 0.0)
+            except Exception as exc:  # noqa: BLE001 - metrics never block the loop
+                LOG.debug("queue_lag_sample_failed", extra={"err": str(exc)})
 
             with db.connect() as conn:
                 msg = db.read_one(conn, settings.queue_name, settings.visibility_timeout_seconds)

@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
+from app import metrics as metrics_module
 from app import model as model_module
 from app.model import VocalRequest, VocalSection
 
@@ -159,9 +160,18 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
 
         request.state.request_id = request_id
         request.state.trace_id = trace_id
+        route_label = request.url.path
+        metrics_module.in_flight.labels(route=route_label).inc()
         try:
             response = await call_next(request)
             latency_ms = int((time.perf_counter() - start) * 1000)
+            metrics_module.requests_total.labels(
+                route=route_label,
+                status_code=str(response.status_code),
+            ).inc()
+            metrics_module.request_latency_seconds.labels(
+                route=route_label,
+            ).observe(latency_ms / 1000.0)
             extra: dict[str, Any] = {
                 "request_id": request_id,
                 "trace_id": trace_id,
@@ -180,6 +190,13 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
             return response
         except Exception:
             latency_ms = int((time.perf_counter() - start) * 1000)
+            metrics_module.requests_total.labels(
+                route=route_label,
+                status_code="500",
+            ).inc()
+            metrics_module.request_latency_seconds.labels(
+                route=route_label,
+            ).observe(latency_ms / 1000.0)
             log.exception(
                 "request_failed",
                 extra={
@@ -192,6 +209,8 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
                 },
             )
             raise
+        finally:
+            metrics_module.in_flight.labels(route=route_label).dec()
 
 
 @asynccontextmanager
@@ -258,12 +277,24 @@ class ErrorBody(BaseModel):
 @app.get("/healthz", response_model=HealthzResponse, tags=["health"])
 def healthz() -> HealthzResponse:
     m = model_module.get_active_model()
+    metrics_module.set_model_info(
+        model_version=(m.model_version if m else None),
+        phase=PHASE,
+        loaded=bool(m and m.model_loaded),
+    )
     return HealthzResponse(
         status="ok" if (m is None or m.model_loaded) else "degraded",
         model_loaded=bool(m and m.model_loaded),
         model_version=(m.model_version if m else None),
         phase=PHASE,
     )
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics_endpoint() -> FastAPIResponse:
+    """Prometheus exposition endpoint (ADR 0007, Sprint 7)."""
+    payload, ctype = metrics_module.render_metrics()
+    return FastAPIResponse(content=payload, media_type=ctype)
 
 
 def _coerce(req: VocalizeRequest) -> VocalRequest:
@@ -327,6 +358,12 @@ async def vocalize(req: VocalizeRequest, request: Request) -> FastAPIResponse:
     wall = round(time.perf_counter() - start, 3)
     request.state.model_version = m.model_version or "unknown"
     request.state.wall_seconds = wall
+    metrics_module.wall_seconds.labels(language=req.language).observe(wall)
+    metrics_module.set_model_info(
+        model_version=m.model_version,
+        phase=PHASE,
+        loaded=True,
+    )
     return FastAPIResponse(
         content=audio_bytes,
         media_type="audio/wav",

@@ -60,6 +60,10 @@ class Settings:
     governor_state_path: Path
     governor_poll_seconds: float
 
+    # Sprint 7 observability. 0 disables the embedded metrics HTTP server
+    # (useful in tests / one-shot scripts).
+    metrics_port: int
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -99,4 +103,5 @@ def load_settings() -> Settings:
         governor_poll_seconds=float(
             os.environ.get("GOVERNOR_POLL_SECONDS", "2"),
         ),
+        metrics_port=int(os.environ.get("METRICS_PORT", "9101")),
     )

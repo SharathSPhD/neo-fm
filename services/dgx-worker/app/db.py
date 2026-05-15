@@ -216,6 +216,28 @@ class WorkerDB:
                 (job_id,),
             )
 
+    def queue_lag_seconds(
+        self,
+        conn: psycopg.Connection[dict[str, Any]],
+    ) -> float | None:
+        """Return the age (seconds) of the oldest queued job.
+
+        Used by Sprint 7's Prometheus exporter so the dashboard can
+        show queue pressure. Returns ``None`` when the queue is empty.
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                select extract(epoch from (now() - min(created_at)))::float as lag
+                  from public.jobs
+                 where status = 'queued'
+                """,
+            )
+            row = cur.fetchone()
+            if not row or row.get("lag") is None:
+                return None
+            return float(row["lag"])
+
     def insert_track(
         self,
         conn: psycopg.Connection[dict[str, Any]],

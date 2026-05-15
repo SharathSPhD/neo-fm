@@ -117,6 +117,30 @@ def test_healthz_unauthenticated_and_reports_phase_1(client: TestClient) -> None
     assert "gpu_utilization_pct" in body
 
 
+def test_metrics_endpoint_exposes_prometheus_text(client: TestClient) -> None:
+    """Sprint 7: /metrics returns Prometheus exposition text.
+
+    The endpoint is unauthenticated by design (loopback-only in compose).
+    We just need it to:
+      - be reachable without HMAC,
+      - return text/plain Prometheus content,
+      - emit at least the request counter the middleware bumps.
+    """
+    # Hit /healthz first so the middleware records a request.
+    client.get("/healthz")
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/plain")
+    body = r.text
+    # Request counter for /healthz (from the middleware) is present.
+    assert "neofm_music_inference_requests_total" in body
+    assert 'route="/healthz"' in body
+    # Histogram metadata for request latency is exported.
+    assert "neofm_music_inference_request_latency_seconds_bucket" in body
+    # Model info family is present even with the fake model.
+    assert "neofm_music_inference_model_info" in body
+
+
 def test_healthz_reports_degraded_when_no_model(monkeypatch: pytest.MonkeyPatch) -> None:
     """If the model failed to load, /healthz must say so rather than
     masking it with a false 'ok'."""

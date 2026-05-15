@@ -1,0 +1,124 @@
+# Prometheus alerting rules for neo-fm (Sprint 7).
+#
+# Load with `--alertmanager.url=...` or wire into a Grafana alerting
+# unified provider. Threshold rationale lives in
+# docs/DECISIONS/0017-observability.md.
+
+groups:
+  - name: neo-fm.worker
+    interval: 30s
+    rules:
+      - alert: NeoFmWorkerQueueLagHigh
+        expr: max(neofm_worker_queue_lag_seconds) > 300
+        for: 2m
+        labels:
+          severity: warning
+          service: dgx-worker
+        annotations:
+          summary: "Oldest queued neo-fm job has been waiting > 5 minutes."
+          description: |
+            Queue lag (oldest queued job age) has exceeded 5 minutes.
+            Either: the worker is stuck/paused, the music-inference
+            service is degraded, or job arrival rate has spiked beyond
+            single-worker throughput. Check the worker logs, then the
+            governor state file before scaling out.
+
+      - alert: NeoFmWorkerJobFailuresElevated
+        expr: |
+          sum(increase(neofm_worker_jobs_total{outcome=~"failed_.*"}[15m]))
+            / clamp_min(sum(increase(neofm_worker_jobs_total[15m])), 1) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: dgx-worker
+        annotations:
+          summary: "More than 10% of jobs failed in the last 15 minutes."
+          description: |
+            Failed jobs (failed_retry + failed_dlq) make up >10% of
+            attempts over a 15-min window. Likely culprits:
+            inference_timeout (HeartMuLa stalled), storage_upload_failed
+            (Supabase outage), or inference_http_4xx (cloud sending
+            malformed payloads after a schema change).
+
+      - alert: NeoFmWorkerPreemptedBurst
+        expr: sum(increase(neofm_worker_preempted_total[10m])) > 3
+        for: 5m
+        labels:
+          severity: info
+          service: dgx-worker
+        annotations:
+          summary: "More than 3 ADR 0011 pre-emptions in 10 minutes."
+          description: |
+            The GPU governor pre-empted multiple songs in a short
+            window. This is expected during a planned LLM fine-tune
+            slot, but if no operator action was scheduled the alert
+            highlights a possibly misconfigured tenant.
+
+      - alert: NeoFmWorkerNoCompletionsInWindow
+        expr: |
+          sum(rate(neofm_worker_jobs_total{outcome="completed"}[15m])) == 0
+            and sum(neofm_worker_queue_lag_seconds) > 60
+        for: 10m
+        labels:
+          severity: critical
+          service: dgx-worker
+        annotations:
+          summary: "Worker has not completed any jobs in 15 minutes."
+          description: |
+            Backlog is growing (queue_lag > 60s) yet zero completions
+            are emitting. Check: is the worker process up? is the
+            governor paused? is the music-inference container healthy?
+
+  - name: neo-fm.music-inference
+    interval: 30s
+    rules:
+      - alert: NeoFmMusicInferenceP95Slow
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(neofm_music_inference_request_latency_seconds_bucket{route="/v1/generate"}[5m]))
+              by (le)
+          ) > 60
+        for: 10m
+        labels:
+          severity: warning
+          service: music-inference
+        annotations:
+          summary: "/v1/generate p95 > 60s for 10 minutes."
+          description: |
+            Inference latency degraded. Likely root causes:
+            cold-loaded weights (check model_info.loaded), GPU memory
+            pressure (gpu_memory_used_mb), or a new style_family
+            arriving with longer target_duration_seconds than expected.
+
+      - alert: NeoFmMusicInferenceModelUnloaded
+        expr: neofm_music_inference_model_info{loaded="false"} == 1
+        for: 5m
+        labels:
+          severity: critical
+          service: music-inference
+        annotations:
+          summary: "music-inference reports model_loaded=false for 5m."
+          description: |
+            HeartMuLa failed to load and stayed unloaded. The next
+            /v1/generate will 503 indefinitely; the worker will retry
+            then DLQ. Check the music-inference container's startup
+            logs for `model_load_failed`.
+
+  - name: neo-fm.vocal-synth
+    interval: 30s
+    rules:
+      - alert: NeoFmVocalLanguageFailuresElevated
+        expr: |
+          sum by (language) (increase(neofm_worker_vocal_failures_total[15m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: vocal-synth
+        annotations:
+          summary: "vocal-synth language {{$labels.language}} failed > 5x in 15m."
+          description: |
+            ADR 0015 (Sprint 5) makes per-language vocal failures
+            soft. This alert fires when the soft-failure rate breaches
+            5/15min for one language, indicating a model or input
+            issue specific to that language.

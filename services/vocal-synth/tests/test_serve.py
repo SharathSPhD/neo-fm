@@ -49,6 +49,22 @@ def test_healthz_unauthenticated() -> None:
     assert body["phase"] == 5
 
 
+def test_metrics_endpoint_exposes_prometheus_text() -> None:
+    """Sprint 7 — /metrics is reachable without HMAC and emits
+    the request counter for prior calls.
+    """
+    client = TestClient(app)
+    client.get("/healthz")
+    r = client.get("/metrics")
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/plain")
+    body = r.text
+    assert "neofm_vocal_synth_requests_total" in body
+    assert 'route="/healthz"' in body
+    assert "neofm_vocal_synth_request_latency_seconds_bucket" in body
+    assert "neofm_vocal_synth_model_info" in body
+
+
 def test_vocalize_rejects_without_hmac() -> None:
     client = TestClient(app)
     r = client.post("/v1/vocalize", json={"job_id": "j", "language": "hi"})

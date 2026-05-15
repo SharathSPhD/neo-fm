@@ -49,6 +49,7 @@ def _settings(**overrides: object) -> Settings:
         # so default tests keep behaving as "no governor active".
         governor_state_path=Path("/tmp/neo-fm-governor-disabled.state"),
         governor_poll_seconds=0.01,
+        metrics_port=0,
     )
     return replace(base, **overrides)  # type: ignore[arg-type]
 

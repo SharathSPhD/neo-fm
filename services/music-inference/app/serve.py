@@ -43,6 +43,7 @@ from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
+from app import metrics as metrics_module
 from app import model as model_module
 from app.model import (
     GenerationRequest,
@@ -218,9 +219,18 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
 
         request.state.request_id = request_id
         request.state.trace_id = trace_id
+        route_label = request.url.path
+        metrics_module.in_flight.labels(route=route_label).inc()
         try:
             response = await call_next(request)
             latency_ms = int((time.perf_counter() - start) * 1000)
+            metrics_module.requests_total.labels(
+                route=route_label,
+                status_code=str(response.status_code),
+            ).inc()
+            metrics_module.request_latency_seconds.labels(
+                route=route_label,
+            ).observe(latency_ms / 1000.0)
             extra_fields: dict[str, Any] = {
                 "request_id": request_id,
                 "trace_id": trace_id,
@@ -242,6 +252,13 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
             return response
         except Exception:
             latency_ms = int((time.perf_counter() - start) * 1000)
+            metrics_module.requests_total.labels(
+                route=route_label,
+                status_code="500",
+            ).inc()
+            metrics_module.request_latency_seconds.labels(
+                route=route_label,
+            ).observe(latency_ms / 1000.0)
             log.exception(
                 "request_failed",
                 extra={
@@ -254,6 +271,8 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
                 },
             )
             raise
+        finally:
+            metrics_module.in_flight.labels(route=route_label).dec()
 
 
 @asynccontextmanager
@@ -388,15 +407,35 @@ class ErrorBody(BaseModel):
 @app.get("/healthz", response_model=HealthzResponse, tags=["health"])
 def healthz() -> HealthzResponse:
     m = model_module.get_active_model()
+    gpu_mb = _gpu_memory_used_mb()
+    if gpu_mb is not None:
+        metrics_module.gpu_memory_mb.set(gpu_mb)
+    metrics_module.set_model_info(
+        model_version=m.model_version if m else None,
+        phase=PHASE,
+        loaded=bool(m and m.model_loaded),
+    )
     return HealthzResponse(
         status="ok" if (m is None or m.model_loaded) else "degraded",
         model_loaded=bool(m and m.model_loaded),
         model_version=m.model_version if m else None,
-        gpu_memory_used_mb=_gpu_memory_used_mb(),
+        gpu_memory_used_mb=gpu_mb,
         gpu_utilization_pct=None,
         queue_lag_seconds=None,
         phase=PHASE,
     )
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics_endpoint() -> FastAPIResponse:
+    """Prometheus exposition endpoint (ADR 0007, Sprint 7).
+
+    Unauthenticated by design: only the docker-compose network can
+    reach this port. If the service is ever moved off the trusted
+    network, gate this endpoint behind HMAC like /v1/generate.
+    """
+    payload, ctype = metrics_module.render_metrics()
+    return FastAPIResponse(content=payload, media_type=ctype)
 
 
 def _coerce_request(req: GenerateRequest) -> GenerationRequest:
@@ -474,14 +513,25 @@ async def generate(req: GenerateRequest, request: Request) -> FastAPIResponse:
     # event loop. asyncio.to_thread schedules on the default executor.
     model_start = time.perf_counter()
     audio_bytes = await asyncio.to_thread(m.generate, gen_req)
-    wall_seconds = round(time.perf_counter() - model_start, 3)
+    wall = round(time.perf_counter() - model_start, 3)
 
     # ADR 0007: hand observability fields to the middleware via request.state
     # rather than emitting a second log line. /healthz reads gpu memory the
     # same way so the two endpoints stay consistent.
     request.state.model_version = m.model_version or "unknown"
-    request.state.gpu_memory_used_mb = _gpu_memory_used_mb()
-    request.state.wall_seconds = wall_seconds
+    gpu_mb = _gpu_memory_used_mb()
+    request.state.gpu_memory_used_mb = gpu_mb
+    request.state.wall_seconds = wall
+
+    # Sprint 7: feed Prometheus alongside the JSON log line.
+    metrics_module.wall_seconds.labels(style_family=req.style_family).observe(wall)
+    if gpu_mb is not None:
+        metrics_module.gpu_memory_mb.set(gpu_mb)
+    metrics_module.set_model_info(
+        model_version=m.model_version,
+        phase=PHASE,
+        loaded=True,
+    )
 
     return FastAPIResponse(
         content=audio_bytes,
