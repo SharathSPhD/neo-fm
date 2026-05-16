@@ -51,7 +51,8 @@ export async function GET(
       song_documents (
         document_json,
         language,
-        style_family
+        style_family,
+        title
       )
     `,
     )
@@ -67,6 +68,7 @@ export async function GET(
         document_json: Record<string, unknown>;
         language: string;
         style_family: string;
+        title: string | null;
       } | null;
     }>();
 
@@ -86,6 +88,7 @@ export async function GET(
       status: data.status,
       visibility: data.published_visibility,
       published_at: data.published_at,
+      title: data.song_documents?.title ?? null,
       language: data.song_documents?.language,
       style_family: data.song_documents?.style_family,
       song_document: data.song_documents?.document_json ?? null,

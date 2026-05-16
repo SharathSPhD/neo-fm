@@ -80,6 +80,7 @@ interface PublicSongRow {
     document_json: SongDocumentView;
     language: string;
     style_family: string;
+    title: string | null;
   } | null;
   tracks:
     | {
@@ -104,7 +105,7 @@ async function loadPublicSong(publicId: string): Promise<PublicSongRow | null> {
       published_at,
       published_visibility,
       song_documents (
-        document_json, language, style_family
+        document_json, language, style_family, title
       ),
       tracks (
         id, url, duration_seconds, format, created_at
@@ -132,7 +133,11 @@ export async function generateMetadata({
     return { title: "neo-fm" };
   }
   const doc = data.song_documents.document_json;
-  const title = `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
+  const stored = data.song_documents.title?.trim();
+  const title =
+    stored && stored.length > 0
+      ? stored
+      : `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
   const description = doc.raga
     ? `Composed in raga ${doc.raga.name} (${doc.raga.system}). Generated on neo-fm.`
     : `${doc.target_duration_seconds}s composition generated on neo-fm.`;
@@ -168,6 +173,13 @@ export default async function PublicSongPage({
   const data = await loadPublicSong(idCheck.data);
   if (!data) notFound();
   const doc = data.song_documents?.document_json;
+  const storedTitle = data.song_documents?.title?.trim();
+  const displayTitle =
+    storedTitle && storedTitle.length > 0
+      ? storedTitle
+      : doc
+        ? prettyStyle(doc.style_family)
+        : "Song";
 
   let signedUrl: string | null = null;
   let latestTrack: PublicSongRow["tracks"] extends (infer T)[] | null
@@ -198,11 +210,11 @@ export default async function PublicSongPage({
           neo-fm
         </Link>
         <h1 className="text-3xl font-medium tracking-tight">
-          {doc ? prettyStyle(doc.style_family) : "Song"}
+          {displayTitle}
         </h1>
         <p className="text-sm text-foreground/60">
           {doc
-            ? `${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
+            ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
             : ""}
           {data.published_visibility === "unlisted" ? (
             <span className="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">

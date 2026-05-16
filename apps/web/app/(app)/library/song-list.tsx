@@ -13,6 +13,7 @@ export type LibrarySong = {
   status: string;
   error: string | null;
   created_at: string;
+  title: string | null;
   language: string | null;
   style_family: string | null;
   audio_url: string | null;
@@ -86,6 +87,7 @@ export function SongList({
                 status: j.status,
                 error: null,
                 created_at: j.created_at,
+                title: null,
                 language: null,
                 style_family: null,
                 audio_url: null,
@@ -169,8 +171,8 @@ export function SongList({
           className="flex flex-wrap items-center gap-3 rounded-md border border-muted/30 bg-muted/10 px-4 py-3"
         >
           <Link href={`/songs/${s.id}`} className="flex flex-1 flex-col hover:opacity-80">
-            <span className="text-base font-medium font-mono text-foreground/70">
-              {s.id.slice(0, 8)}
+            <span className="text-base font-medium text-foreground" title={s.title ?? undefined}>
+              {s.title ?? songFallbackTitle(s)}
             </span>
             <span className="text-xs text-foreground/50">
               {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
@@ -208,6 +210,17 @@ export function SongList({
       ))}
     </ul>
   );
+}
+
+/**
+ * Render-time fallback when a row predates migration 0017 and somehow
+ * arrived here with a NULL title. Migration 0017 also backfills the
+ * column server-side; this fallback is belt-and-braces.
+ */
+function songFallbackTitle(s: LibrarySong): string {
+  const style = s.style_family ?? "song";
+  const date = s.created_at.slice(0, 10);
+  return `${style.charAt(0).toUpperCase() + style.slice(1)} - ${date}`;
 }
 
 /**

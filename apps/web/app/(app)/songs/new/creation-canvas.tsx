@@ -1,6 +1,7 @@
 "use client";
 
 import type { Section, SongDocument } from "@neo-fm/song-doc";
+import { SONG_TITLE_MAX_CHARS } from "@neo-fm/song-doc";
 import type { StylePreset } from "@neo-fm/style-presets";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
@@ -57,6 +58,7 @@ export function CreationCanvas() {
   const [status, setStatus] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
+  const [title, setTitle] = useState<string>("");
   const [activePreset, setActivePreset] = useState<StylePreset | null>(null);
   const [sections, setSections] = useState<Section[]>(() => initialSections(DEFAULT_FORM));
   const [libraryOpenFor, setLibraryOpenFor] = useState<number | null>(null);
@@ -100,9 +102,10 @@ export function CreationCanvas() {
       target_duration_seconds: d.target_duration_seconds as Duration,
     };
     setForm(nextForm);
-    // Use the preset's section structure verbatim -- it already sums to
-    // the preset's target_duration_seconds.
     setSections(d.sections.map((s) => ({ ...s })));
+    // Seed the title with the preset's name if the user hasn't typed
+    // their own. Preserves user edits if they already entered one.
+    if (!title.trim()) setTitle(p.title);
     setError(null);
     setStatus(`Loaded preset: ${p.title}`);
   }
@@ -129,7 +132,7 @@ export function CreationCanvas() {
       return;
     }
 
-    const song_document = buildSongDocument(form, activePreset, sections);
+    const song_document = buildSongDocument(form, activePreset, sections, title);
 
     // Validate session client-side first so we don't burn a 401 round-trip.
     const supabase = createBrowserSupabase();
@@ -177,6 +180,22 @@ export function CreationCanvas() {
           onPick={pickPreset}
           activeId={activePreset?.id ?? null}
         />
+
+        <Field name="title" label="Title">
+          <input
+            id="title"
+            name="title"
+            type="text"
+            value={title}
+            maxLength={SONG_TITLE_MAX_CHARS}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Morning Rain in Saveri"
+            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+          />
+          <span className="text-[10px] text-foreground/40">
+            Optional. {SONG_TITLE_MAX_CHARS - title.length} characters left.
+          </span>
+        </Field>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <Field name="style_family" label="Style">
@@ -376,17 +395,23 @@ function buildSongDocument(
   form: FormState,
   preset: StylePreset | null,
   editedSections: Section[],
+  title: string,
 ): Record<string, unknown> {
+  const trimmedTitle = title.trim();
+  const titleField =
+    trimmedTitle.length > 0
+      ? { title: trimmedTitle.slice(0, SONG_TITLE_MAX_CHARS) }
+      : {};
+
   if (preset) {
     const base = preset.song_document;
     const styleChanged = base.style_family !== form.style_family;
     const folkStyle = form.style_family === "kannada-folk";
-    // Edited sections already sum to target_duration_seconds (we keep
-    // them in sync via setDuration/setStyle), so no rescale needed here.
     return {
       ...base,
       ...(styleChanged ? { raga: undefined } : {}),
       ...(folkStyle ? { raga: undefined } : {}),
+      ...titleField,
       style_family: form.style_family,
       language: form.language,
       target_duration_seconds: form.target_duration_seconds,
@@ -395,6 +420,7 @@ function buildSongDocument(
   }
 
   return {
+    ...titleField,
     style_family: form.style_family,
     language: form.language,
     target_duration_seconds: form.target_duration_seconds,

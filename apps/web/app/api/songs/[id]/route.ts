@@ -28,6 +28,7 @@ type SongWithRelations = {
     language: string;
     style_family: string;
     document_json: unknown;
+    title: string | null;
     created_at: string;
   } | null;
   tracks:
@@ -67,7 +68,7 @@ export async function GET(
       finished_at,
       song_document_id,
       song_documents (
-        id, language, style_family, document_json, created_at
+        id, language, style_family, document_json, title, created_at
       ),
       tracks (
         id, url, duration_seconds, format, bytes, expires_at, created_at

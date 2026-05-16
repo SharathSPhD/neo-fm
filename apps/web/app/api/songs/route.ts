@@ -52,6 +52,7 @@ type SongListRow = {
     language: string;
     style_family: string;
     document_json: unknown;
+    title: string | null;
     created_at: string;
   } | null;
   tracks:
@@ -308,7 +309,7 @@ export async function GET(request: NextRequest) {
       finished_at,
       song_document_id,
       song_documents (
-        id, language, style_family, document_json, created_at
+        id, language, style_family, document_json, title, created_at
       ),
       tracks (
         url, duration_seconds, format, created_at

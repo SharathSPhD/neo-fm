@@ -38,7 +38,7 @@ export default async function OgImage({
         `
         public_id,
         published_visibility,
-        song_documents ( document_json, language, style_family )
+        song_documents ( document_json, language, style_family, title )
       `,
       )
       .eq("public_id", idCheck.data)
@@ -55,14 +55,19 @@ export default async function OgImage({
           };
           language: string;
           style_family: string;
+          title: string | null;
         } | null;
       }>();
     if (data?.song_documents) {
       const doc = data.song_documents.document_json;
-      title = `${prettyStyle(doc.style_family)} song`;
+      const stored = data.song_documents.title?.trim();
+      title =
+        stored && stored.length > 0
+          ? stored
+          : `${prettyStyle(doc.style_family)} song`;
       subtitle = doc.raga
-        ? `in raga ${doc.raga.name}, ${prettyLanguage(doc.language)} · neo-fm`
-        : `in ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · neo-fm`;
+        ? `${prettyStyle(doc.style_family)} · raga ${doc.raga.name} · ${prettyLanguage(doc.language)} · neo-fm`
+        : `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · neo-fm`;
     }
   }
 

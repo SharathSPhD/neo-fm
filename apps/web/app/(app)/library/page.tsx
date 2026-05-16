@@ -18,6 +18,7 @@ type RawJobRow = {
         id: string;
         language: string;
         style_family: string;
+        title: string | null;
       }
     | null;
   tracks:
@@ -42,7 +43,7 @@ export default async function LibraryPage() {
     .select(
       `
       id, status, error, created_at, finished_at,
-      song_documents ( id, language, style_family ),
+      song_documents ( id, language, style_family, title ),
       tracks ( url, duration_seconds, format, created_at )
     `,
     )
@@ -81,6 +82,7 @@ export default async function LibraryPage() {
         status: row.status,
         error: row.error,
         created_at: row.created_at,
+        title: row.song_documents?.title ?? null,
         language: row.song_documents?.language ?? null,
         style_family: row.song_documents?.style_family ?? null,
         audio_url: audioUrl,

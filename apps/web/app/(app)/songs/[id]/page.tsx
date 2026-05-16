@@ -98,7 +98,7 @@ export default async function SongDetailPage({
       public_id,
       published_visibility,
       song_documents (
-        id, language, style_family, document_json, created_at
+        id, language, style_family, document_json, title, created_at
       ),
       tracks (
         id, url, duration_seconds, format, bytes, created_at
@@ -121,6 +121,7 @@ export default async function SongDetailPage({
         language: string;
         style_family: string;
         document_json: SongDocumentView;
+        title: string | null;
         created_at: string;
       } | null;
       tracks:
@@ -158,6 +159,9 @@ export default async function SongDetailPage({
   const regenChildren = regenChildrenRaw ?? [];
 
   const doc = data.song_documents?.document_json;
+  const title =
+    data.song_documents?.title ??
+    (doc ? prettyStyle(doc.style_family) : "Song");
   const tracks = (data.tracks ?? [])
     .slice()
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
@@ -177,19 +181,15 @@ export default async function SongDetailPage({
       <Breadcrumbs
         items={[
           { href: "/library", label: "Library" },
-          {
-            label: doc ? prettyStyle(doc.style_family) : "Song",
-          },
+          { label: title },
         ]}
       />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-3xl font-medium tracking-tight">
-            {doc ? prettyStyle(doc.style_family) : "Song"}
-          </h1>
+          <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
           <p className="text-sm text-foreground/60">
             {doc
-              ? `${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · ${data.status}`
+              ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · ${data.status}`
               : data.status}
           </p>
         </div>

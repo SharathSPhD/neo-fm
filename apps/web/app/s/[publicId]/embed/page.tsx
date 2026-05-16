@@ -39,6 +39,7 @@ interface EmbedRow {
     };
     language: string;
     style_family: string;
+    title: string | null;
   } | null;
   tracks:
     | {
@@ -68,7 +69,7 @@ export default async function EmbedPage({
       status,
       public_id,
       published_visibility,
-      song_documents ( document_json, language, style_family ),
+      song_documents ( document_json, language, style_family, title ),
       tracks ( id, url, duration_seconds, format, created_at )
     `,
     )
@@ -98,8 +99,12 @@ export default async function EmbedPage({
   return (
     <main className="flex h-full min-h-[160px] flex-col gap-3 bg-background px-4 py-4">
       <header className="flex items-baseline justify-between gap-2">
-        <span className="text-sm font-medium">
-          {doc ? prettyStyle(doc.style_family) : "Song"}
+        <span className="truncate text-sm font-medium" title={data.song_documents?.title ?? undefined}>
+          {data.song_documents?.title?.trim()?.length
+            ? data.song_documents.title
+            : doc
+              ? prettyStyle(doc.style_family)
+              : "Song"}
           <span className="ml-2 text-xs text-foreground/50">
             {doc ? prettyLanguage(doc.language) : ""}
           </span>

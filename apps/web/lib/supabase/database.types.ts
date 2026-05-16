@@ -112,6 +112,7 @@ export type Database = {
           id: string
           language: Database["public"]["Enums"]["language_enum"]
           style_family: Database["public"]["Enums"]["style_family_enum"]
+          title: string | null
           user_id: string
         }
         Insert: {
@@ -120,6 +121,7 @@ export type Database = {
           id?: string
           language: Database["public"]["Enums"]["language_enum"]
           style_family: Database["public"]["Enums"]["style_family_enum"]
+          title?: string | null
           user_id: string
         }
         Update: {
@@ -128,6 +130,7 @@ export type Database = {
           id?: string
           language?: Database["public"]["Enums"]["language_enum"]
           style_family?: Database["public"]["Enums"]["style_family_enum"]
+          title?: string | null
           user_id?: string
         }
         Relationships: [
