@@ -3,9 +3,9 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true
+    "composite": true,
+    "resolveJsonModule": true
   },
-  "references": [{ "path": "../song-doc" }, { "path": "../g2p" }],
   "include": ["src/**/*"],
-  "exclude": ["dist", "node_modules"]
+  "exclude": ["dist", "node_modules", "tests"]
 }

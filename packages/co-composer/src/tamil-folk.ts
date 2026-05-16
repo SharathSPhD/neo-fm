@@ -25,6 +25,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { attachPhonemes } from "./phonemes.js";
 import { mergeTags } from "./tag-merge.js";
 
 const DEFAULT_TIME_SIG = "4/4";
@@ -121,7 +122,7 @@ export class TamilFolkCoComposer implements CoComposer {
       elaborateSection(s, globalTags),
     );
 
-    return {
+    const elaborated: SongDocument = {
       ...doc,
       tempo_bpm: doc.tempo_bpm ?? tempo,
       time_signature: doc.time_signature ?? timeSig,
@@ -138,5 +139,6 @@ export class TamilFolkCoComposer implements CoComposer {
         },
       },
     };
+    return attachPhonemes(elaborated);
   }
 }

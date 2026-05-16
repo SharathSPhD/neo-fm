@@ -36,6 +36,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { attachPhonemes } from "./phonemes.js";
 import { mergeTags } from "./tag-merge.js";
 
 // We keep "bhavageete" as a recognised override value purely for
@@ -155,7 +156,7 @@ export class KannadaFolkCoComposer implements CoComposer {
       elaborateSection(s, globalTags),
     );
 
-    return {
+    const elaborated: SongDocument = {
       ...doc,
       // Promote inferred values onto the Song Document. Note: folk style
       // doesn't carry a raga -- the Zod schema enforces this -- so we
@@ -175,5 +176,6 @@ export class KannadaFolkCoComposer implements CoComposer {
         },
       },
     };
+    return attachPhonemes(elaborated);
   }
 }

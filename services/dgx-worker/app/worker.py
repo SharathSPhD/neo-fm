@@ -174,6 +174,11 @@ def build_vocal_request(
                 "language": (getattr(s, "language", None) or language),
                 "script": s.script,
                 "transliteration": s.transliteration,
+                # v1.3 Sprint 4: forward co-composer phonemes so the
+                # vocal-synth router can hand them to the chosen
+                # backend. Older Song Documents that pre-date Sprint 4
+                # leave this null; vocal-synth tolerates both.
+                "phonemes": s.phonemes,
                 "target_seconds": s.target_seconds,
                 "tempo_bpm": song_document.tempo_bpm,
                 "raga_name": (

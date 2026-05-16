@@ -34,6 +34,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { attachPhonemes } from "./phonemes.js";
 import { mergeTags } from "./tag-merge.js";
 
 interface RagaEntry {
@@ -245,7 +246,7 @@ export class CarnaticCoComposer implements CoComposer {
     // the song detail page, the tracks table) see what the composer chose,
     // not just what the producer typed. The Zod schema enforces
     // raga.system === "carnatic" for carnatic style; we set it explicitly.
-    return {
+    const elaborated: SongDocument = {
       ...doc,
       raga: doc.raga ?? {
         name: raga.name,
@@ -269,5 +270,6 @@ export class CarnaticCoComposer implements CoComposer {
         },
       },
     };
+    return attachPhonemes(elaborated);
   }
 }

@@ -1,0 +1,26 @@
+{
+  "description": "Tamil canonicalisation cases. v1.3 only canonicalises Tamil-script → Roman intermediate; deeper sandhi rules are scheduled for v1.4 along with the Tamil-folk vocal training pass.",
+  "cases": [
+    {
+      "name": "tamil — Tamil-script word for 'Tamil'",
+      "text": "தமிழ்",
+      "language": "ta",
+      "script": "tamil",
+      "phonemes": ["t", "a", "m", "i", "zh"]
+    },
+    {
+      "name": "vanakkam — greeting",
+      "text": "வணக்கம்",
+      "language": "ta",
+      "script": "tamil",
+      "phonemes": ["v", "a", "N", "a", "k", "k", "a", "m"]
+    },
+    {
+      "name": "anbu — vowel-initial",
+      "text": "அன்பு",
+      "language": "ta",
+      "script": "tamil",
+      "phonemes": ["a", "n", "p", "u"]
+    }
+  ]
+}

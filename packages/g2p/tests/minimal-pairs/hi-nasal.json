@@ -1,0 +1,33 @@
+{
+  "description": "Hindi nasal-assimilation minimal pairs. The anusvara takes the place of the following stop. v1 (no rule pack) emitted a generic /n/ for all of these and the singer sounded wrong on /m/-place and /ng/-place cases.",
+  "cases": [
+    {
+      "name": "ank — anusvara before velar /k/ → /ng/",
+      "text": "अंक",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["a", "ng", "k"]
+    },
+    {
+      "name": "panch — anusvara before palatal /ch/ → /ny/",
+      "text": "पंच",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["p", "a", "ny", "ch"]
+    },
+    {
+      "name": "dant — anusvara before dental /t/ → /n/",
+      "text": "दंत",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["d", "a", "n", "t"]
+    },
+    {
+      "name": "shankha — anusvara before velar conjunct (kh) → /ng/",
+      "text": "शंख",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["sh", "a", "ng", "kh"]
+    }
+  ]
+}

@@ -152,3 +152,131 @@ def test_routing_model_refuses_to_silently_fallback_when_required(
     )
     with pytest.raises(RuntimeError):
         rm.synthesise(req)
+
+
+def test_routing_model_forwards_phonemes_into_backend(monkeypatch: pytest.MonkeyPatch) -> None:
+    """v1.3 Sprint 4: when the producer (co-composer) supplies phonemes,
+    the router splices them into the backend's `transliteration` so the
+    upstream tokeniser sees the canonical pronunciation, not the raw
+    Devanagari surface form. Backends that ignore phonemes today still
+    sing -- but the audible pronunciation regression we shipped in v1
+    cannot reproduce against the new pipeline.
+    """
+
+    captured: list[VocalSection] = []
+
+    class _SpyBackend:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            for s in req.sections:
+                captured.append(s)
+            # Return a deterministic stub WAV.
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_SpyBackend(),  # type: ignore[arg-type]
+        parler=_SpyBackend(),  # type: ignore[arg-type]
+    )
+    sec = VocalSection(
+        id="s1",
+        type="mukhda",
+        lyrics="\u0928\u092e\u0938\u094d\u0915\u093e\u0930",  # नमस्कार
+        language="hi",
+        script="devanagari",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=90,
+        raga_name=None,
+        voice_timbre="androgynous",
+        phonemes=("n", "a", "m", "a", "s", "k", "aa", "r"),
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="hi",
+        style_family="hindustani",
+        voice_timbre="androgynous",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    assert len(captured) == 1
+    spliced = captured[0]
+    assert spliced.script == "ipa"
+    assert spliced.transliteration == "n a m a s k aa r"
+
+
+def test_routing_model_falls_back_to_preprocessor_output_when_no_phonemes() -> None:
+    """If phonemes are absent the router should still feed the prepared
+    utterance text into the backend (the v1.2 'dead code' gap)."""
+
+    captured: list[VocalSection] = []
+
+    class _SpyBackend:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            for s in req.sections:
+                captured.append(s)
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_SpyBackend(),  # type: ignore[arg-type]
+        parler=_SpyBackend(),  # type: ignore[arg-type]
+    )
+    # Hinglish input (latin script, language=hi) routes to parler with
+    # IPA hints from the preprocessor.
+    sec = VocalSection(
+        id="s1",
+        type="verse",
+        lyrics="aaja aaja",
+        language="hi",
+        script="latin",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=90,
+        raga_name=None,
+        voice_timbre="androgynous",
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="hi",
+        style_family="hindustani",
+        voice_timbre="androgynous",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    assert len(captured) == 1
+    # The preprocessor wraps Hinglish input in `[ipa:...]` so we know
+    # something genuinely fed through.
+    spliced = captured[0]
+    assert spliced.transliteration is not None
+    assert spliced.transliteration != sec.lyrics
+    assert "ipa" in (spliced.script or "") or spliced.transliteration.startswith(
+        "[ipa:"
+    )

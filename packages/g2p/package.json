@@ -1,8 +1,8 @@
 {
-  "name": "@neo-fm/co-composer",
+  "name": "@neo-fm/g2p",
   "version": "0.0.0",
   "private": true,
-  "description": "Style-aware co-composition modules (western, carnatic, hindustani, kannada-folk). Interface only at Phase 0.",
+  "description": "Grapheme-to-phoneme rule packs (hi/kn) + Tamil canonicalization for neo-fm. Drives the phonemes[] field on Song Document sections so the vocal-synth backends receive a canonical pronunciation hint instead of raw user lyrics. ADR 0010 promised this; v1.3 Sprint 4 ships it.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -18,16 +18,10 @@
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc -b tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "build-phase-2-request": "tsx scripts/build-phase-2-request.ts"
-  },
-  "dependencies": {
-    "@neo-fm/g2p": "workspace:*",
-    "@neo-fm/song-doc": "workspace:*"
+    "test:watch": "vitest"
   },
   "devDependencies": {
-    "tsx": "^4.19.2",
     "typescript": "^5.6.3",
-    "vitest": "^2.1.5"
+    "vitest": "^2.1.9"
   }
 }
