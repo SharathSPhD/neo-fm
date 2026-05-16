@@ -22,18 +22,23 @@ async function checkSupabase(): Promise<{
   latencyMs: number | null;
 }> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return { status: "missing", latencyMs: null };
+  const key =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return { status: "missing", latencyMs: null };
   const t0 = Date.now();
   try {
-    // Supabase Auth ships a public `/auth/v1/health` endpoint that
-    // returns 200 + JSON when the project is reachable. This is the
-    // smallest probe we can run from a cold start without burning
-    // a SDK client. (Postgrest, Realtime, and Storage all live in
-    // front of the same fleet -- if auth is reachable from us, the
-    // project is.)
-    const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/health`, {
+    // Supabase's gateway-level health endpoint. Sends the
+    // publishable / anon key so the API gateway accepts the call.
+    // (`/auth/v1/health` rejects without a key; `/rest/v1/` returns
+    // a 200 with `{}` when the project is reachable.)
+    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
       signal: AbortSignal.timeout(800),
-      headers: { "user-agent": "neo-fm-health/1.0" },
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "user-agent": "neo-fm-health/1.0",
+      },
     });
     if (!res.ok) return { status: "degraded", latencyMs: Date.now() - t0 };
     return { status: "ok", latencyMs: Date.now() - t0 };
