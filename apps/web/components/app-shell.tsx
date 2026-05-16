@@ -66,7 +66,7 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <Link
-            href="/library"
+            href="/"
             className="text-base font-semibold tracking-tight text-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-lg"
           >
             neo-fm
