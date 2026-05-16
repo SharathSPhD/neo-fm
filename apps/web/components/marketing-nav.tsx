@@ -28,6 +28,12 @@ export function MarketingNav({
           {showSubLinks && (
             <>
               <Link
+                href="/discover"
+                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+              >
+                Discover
+              </Link>
+              <Link
                 href="/pricing"
                 className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
               >

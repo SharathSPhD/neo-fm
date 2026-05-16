@@ -24,6 +24,7 @@ import {
   createServerClient,
   createServiceRoleClient,
 } from "@/lib/supabase/server";
+import { LikeButton } from "@/components/like-button";
 
 import { PublicSongAudio } from "./public-song-audio";
 
@@ -200,6 +201,55 @@ export default async function PublicSongPage({
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  // Like state. Anonymous visitors get the count but not their own
+  // "liked" state (it's always false). Sprint G feature.
+  const supabase = createServerClient();
+  const [likesCountRes, currentUserRes] = await Promise.all([
+    (
+      supabase.from("song_likes" as never) as unknown as {
+        select: (
+          s: string,
+          opts: { count: "exact"; head: true },
+        ) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => Promise<{ count: number | null }>;
+        };
+      }
+    )
+      .select("job_id", { count: "exact", head: true })
+      .eq("job_id", data.id),
+    supabase.auth.getUser(),
+  ]);
+  const likeCount = likesCountRes.count ?? 0;
+  const currentUserId = currentUserRes.data.user?.id ?? null;
+  let initiallyLiked = false;
+  if (currentUserId) {
+    const probe = await (
+      supabase.from("song_likes" as never) as unknown as {
+        select: (s: string) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => {
+            eq: (
+              col2: string,
+              val2: string,
+            ) => {
+              maybeSingle: () => Promise<{ data: unknown }>;
+            };
+          };
+        };
+      }
+    )
+      .select("job_id")
+      .eq("job_id", data.id)
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+    initiallyLiked = !!probe.data;
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
@@ -225,13 +275,22 @@ export default async function PublicSongPage({
       </header>
 
       {signedUrl && latestTrack ? (
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3">
           <PublicSongAudio
             publicId={data.public_id}
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
           />
+          <div className="flex items-center gap-2">
+            <LikeButton
+              songId={data.id}
+              publicId={data.public_id}
+              initialLiked={initiallyLiked}
+              initialCount={likeCount}
+              signedIn={!!currentUserId}
+            />
+          </div>
         </section>
       ) : (
         <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
