@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
@@ -18,6 +19,7 @@ export type LibrarySong = {
   style_family: string | null;
   audio_url: string | null;
   duration_seconds: number | null;
+  is_favorite: boolean;
 };
 
 export function SongList({
@@ -27,7 +29,59 @@ export function SongList({
   initialSongs: LibrarySong[];
   userId: string;
 }) {
+  const router = useRouter();
   const [songs, setSongs] = useState<LibrarySong[]>(initialSongs);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [, startTransition] = useTransition();
+  const [editing, setEditing] = useState<{ id: string; value: string } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setSongs(initialSongs);
+  }, [initialSongs]);
+
+  async function toggleFavorite(id: string, current: boolean) {
+    setBusyId(id);
+    setSongs((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, is_favorite: !current } : s)),
+    );
+    const res = await fetch(`/api/songs/${id}/favorite`, { method: "POST" });
+    if (!res.ok) {
+      setSongs((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, is_favorite: current } : s)),
+      );
+    }
+    setBusyId(null);
+  }
+
+  async function deleteSong(id: string) {
+    if (!window.confirm("Delete this song? This can't be undone.")) return;
+    setBusyId(id);
+    const res = await fetch(`/api/songs/${id}`, { method: "DELETE" });
+    if (res.ok) {
+      setSongs((prev) => prev.filter((s) => s.id !== id));
+      startTransition(() => router.refresh());
+    }
+    setBusyId(null);
+  }
+
+  async function saveRename(id: string, title: string) {
+    setBusyId(id);
+    const res = await fetch(`/api/songs/${id}/rename`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
+    if (res.ok) {
+      const payload = (await res.json()) as { title: string };
+      setSongs((prev) =>
+        prev.map((s) => (s.id === id ? { ...s, title: payload.title } : s)),
+      );
+    }
+    setEditing(null);
+    setBusyId(null);
+  }
 
   useEffect(() => {
     const supabase = createBrowserSupabase();
@@ -92,6 +146,7 @@ export function SongList({
                 style_family: null,
                 audio_url: null,
                 duration_seconds: null,
+                is_favorite: false,
               };
               return [stub, ...prev];
             }
@@ -170,14 +225,64 @@ export function SongList({
           key={s.id}
           className="flex flex-wrap items-center gap-3 rounded-md border border-muted/30 bg-muted/10 px-4 py-3"
         >
-          <Link href={`/songs/${s.id}`} className="flex flex-1 flex-col hover:opacity-80">
-            <span className="text-base font-medium text-foreground" title={s.title ?? undefined}>
-              {s.title ?? songFallbackTitle(s)}
-            </span>
-            <span className="text-xs text-foreground/50">
-              {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
-            </span>
-          </Link>
+          <button
+            type="button"
+            onClick={() => toggleFavorite(s.id, s.is_favorite)}
+            disabled={busyId === s.id}
+            aria-label={s.is_favorite ? "Unfavorite" : "Favorite"}
+            className={cn(
+              "rounded-full px-2 py-1 text-base transition",
+              s.is_favorite
+                ? "text-amber-300"
+                : "text-foreground/30 hover:text-foreground/70",
+            )}
+            title={s.is_favorite ? "Unfavorite" : "Favorite"}
+          >
+            {s.is_favorite ? "★" : "☆"}
+          </button>
+          {editing?.id === s.id ? (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                void saveRename(s.id, editing.value);
+              }}
+              className="flex flex-1 items-center gap-2"
+            >
+              <input
+                autoFocus
+                type="text"
+                maxLength={120}
+                value={editing.value}
+                onChange={(e) =>
+                  setEditing({ id: s.id, value: e.target.value })
+                }
+                onBlur={() => setEditing(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditing(null);
+                }}
+                className="flex-1 rounded-md border border-accent/40 bg-transparent px-3 py-1.5 text-base outline-none"
+              />
+              <button
+                type="submit"
+                disabled={busyId === s.id}
+                className="text-xs text-accent hover:underline"
+              >
+                Save
+              </button>
+            </form>
+          ) : (
+            <Link href={`/songs/${s.id}`} className="flex flex-1 flex-col hover:opacity-80">
+              <span
+                className="text-base font-medium text-foreground"
+                title={s.title ?? undefined}
+              >
+                {s.title ?? songFallbackTitle(s)}
+              </span>
+              <span className="text-xs text-foreground/50">
+                {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
+              </span>
+            </Link>
+          )}
           <StatusPill status={s.status} error={s.error} />
           {s.audio_url ? (
             // eslint-disable-next-line jsx-a11y/media-has-caption
@@ -206,9 +311,84 @@ export function SongList({
               ) : null}
             </div>
           )}
+          <RowActions
+            disabled={busyId === s.id || editing?.id === s.id}
+            onRename={() =>
+              setEditing({ id: s.id, value: s.title ?? "" })
+            }
+            onDelete={() => void deleteSong(s.id)}
+          />
         </li>
       ))}
     </ul>
+  );
+}
+
+function RowActions({
+  disabled,
+  onRename,
+  onDelete,
+}: {
+  disabled: boolean;
+  onRename: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    function onClick() {
+      setOpen(false);
+    }
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, [open]);
+
+  return (
+    <div
+      className="relative"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="More actions"
+        className="rounded-md border border-muted/30 px-2 py-1 text-foreground/60 hover:border-accent/40 hover:text-foreground disabled:opacity-50"
+      >
+        ⋯
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-10 mt-1 w-32 overflow-hidden rounded-md border border-muted/40 bg-background text-sm shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onRename();
+            }}
+            className="block w-full px-3 py-2 text-left text-foreground/85 hover:bg-muted/20"
+          >
+            Rename
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              onDelete();
+            }}
+            className="block w-full px-3 py-2 text-left text-red-300 hover:bg-red-400/10"
+          >
+            Delete
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
