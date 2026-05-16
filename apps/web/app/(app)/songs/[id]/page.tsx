@@ -19,6 +19,7 @@ import { notFound, redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createServerClient } from "@/lib/supabase/server";
 
+import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
@@ -229,10 +230,18 @@ export default async function SongDetailPage({
           />
         </section>
       ) : data.status === "completed" ? (
-        <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-          Song is completed but the rendered track is still being indexed.
-          Refresh in a few seconds.
-        </p>
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+          <span>
+            This song is marked completed but the rendered track is missing
+            (orphan). Click Recover to re-queue it.
+          </span>
+          <RecoverButton songId={data.id} label="Recover" />
+        </div>
+      ) : data.status === "failed" ? (
+        <div className="flex flex-wrap items-center gap-3 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+          <span>Generation failed{data.error ? `: ${data.error}` : "."}</span>
+          <RecoverButton songId={data.id} label="Retry" />
+        </div>
       ) : (
         <p className="text-sm text-foreground/60">
           {data.status === "processing"

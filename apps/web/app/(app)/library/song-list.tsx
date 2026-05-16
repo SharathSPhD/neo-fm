@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
 
+import { RecoverButton } from "./recover-button";
+
 export type LibrarySong = {
   id: string;
   status: string;
@@ -184,20 +186,46 @@ export function SongList({
               className="h-9 w-full max-w-sm"
             />
           ) : (
-            <span className="text-xs text-foreground/40">
-              {s.status === "completed"
-                ? "Audio URL pending..."
-                : s.status === "failed"
-                  ? "Failed"
-                  : s.status === "processing"
-                    ? "Generating..."
-                    : "Queued"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-foreground/40">
+                {s.status === "completed"
+                  ? "Audio URL pending…"
+                  : s.status === "failed"
+                    ? "Failed"
+                    : s.status === "processing"
+                      ? "Generating…"
+                      : "Queued"}
+              </span>
+              {isStuck(s) ? (
+                <RecoverButton
+                  songId={s.id}
+                  label={s.status === "failed" ? "Retry" : "Recover"}
+                />
+              ) : null}
+            </div>
           )}
         </li>
       ))}
     </ul>
   );
+}
+
+/**
+ * "Stuck" = the user is staring at a row that won't finish on its own.
+ *  - failed: model rejected, transient backend failure, etc.
+ *  - completed without audio_url for more than 60s: the orphan case
+ *    (no tracks row was written). Sprint C-b's recover RPC fixes both
+ *    by re-enqueueing.
+ *
+ * 60 s grace window keeps us from flashing the button while the
+ * realtime audio-url refetch is still in flight on a fresh completion.
+ */
+function isStuck(s: LibrarySong): boolean {
+  if (s.status === "failed") return true;
+  if (s.status !== "completed") return false;
+  if (s.audio_url) return false;
+  const ageMs = Date.now() - new Date(s.created_at).getTime();
+  return ageMs > 60_000;
 }
 
 function StatusPill({ status, error }: { status: string; error: string | null }) {

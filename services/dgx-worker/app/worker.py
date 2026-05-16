@@ -484,18 +484,31 @@ async def _process_one_impl(
             )
 
         # ---- 7+8. track + completed --------------------------------------
+        # Sprint C bug-b: the three mutations below MUST land atomically.
+        # If any of them fails after a successful storage upload, the
+        # whole block must roll back so the message stays in the queue
+        # and the next worker retry will re-insert the track row.
+        # psycopg's connection context manager already commits on
+        # successful __exit__ / rolls back on exception, but we make
+        # the boundary explicit with `conn.transaction()` so a future
+        # author who adds a fourth statement here can't accidentally
+        # split the transaction. (The user-reported "Audio URL pending"
+        # orphan came from an earlier code path that did the storage
+        # upload, the insert_track, and the mark_completed across
+        # separate connections.)
         with db.connect() as conn:
-            db.insert_track(
-                conn,
-                job_id=job_id,
-                attempt_id=str(message.attempt_id),
-                url=storage.storage_url(object_path),
-                duration_seconds=song_document.target_duration_seconds,
-                format_="wav",
-                bytes_=len(final_audio),
-            )
-            db.mark_completed(conn, job_id)
-            db.archive(conn, settings.queue_name, msg_id)
+            with conn.transaction():
+                db.insert_track(
+                    conn,
+                    job_id=job_id,
+                    attempt_id=str(message.attempt_id),
+                    url=storage.storage_url(object_path),
+                    duration_seconds=song_document.target_duration_seconds,
+                    format_="wav",
+                    bytes_=len(final_audio),
+                )
+                db.mark_completed(conn, job_id)
+                db.archive(conn, settings.queue_name, msg_id)
 
         LOG.info(
             "job completed",
