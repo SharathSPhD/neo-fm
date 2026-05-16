@@ -27,6 +27,7 @@ import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/supabase/auth";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -178,14 +179,22 @@ export async function POST(
     return NextResponse.json({ error: "remix_failed" }, { status: 500 });
   }
 
-  // Stamp the lineage. RLS lets the owner UPDATE their own jobs, and
-  // create_song_job() already wrote the row as the authenticated user.
-  const { error: lineageErr } = await supabase
+  // Stamp the lineage. There is no jobs_update_own RLS policy (only
+  // SELECT and DELETE policies exist today), so a plain owner-scoped
+  // UPDATE would silently affect 0 rows. We use the service-role
+  // client and constrain the update to the row we just created for
+  // the caller (id+user_id match) so this can't be abused to backfill
+  // lineage onto someone else's job.
+  const svc = createServiceRoleClient();
+  const { error: lineageErr, data: lineageRows } = await svc
     .from("jobs")
     .update({ remixed_from: parentRow.id })
-    .eq("id", row.job_id);
+    .eq("id", row.job_id)
+    .eq("user_id", authed.user.id)
+    .select("id");
 
-  if (lineageErr) {
+  const lineageStamped = !lineageErr && (lineageRows?.length ?? 0) > 0;
+  if (!lineageStamped) {
     // The remix succeeded; we just couldn't tag it. Return the job
     // anyway so the user isn't blocked.
     return NextResponse.json(

@@ -33,7 +33,20 @@ vi.mock("../../../lib/supabase/auth", async () => {
   return { ...mod, requireUser: vi.fn() };
 });
 
+// The remix route uses the service-role client for the lineage stamp
+// (no jobs_update RLS policy exists in production). The mock returns
+// the same fake as the user-scoped client so test assertions can
+// inspect `state.updated`.
+vi.mock("../../../lib/supabase/server", async () => {
+  const mod =
+    await vi.importActual<typeof import("../../../lib/supabase/server")>(
+      "../../../lib/supabase/server",
+    );
+  return { ...mod, createServiceRoleClient: vi.fn() };
+});
+
 import { requireUser } from "../../../lib/supabase/auth";
+import { createServiceRoleClient } from "../../../lib/supabase/server";
 
 const USER_ID = "00000000-0000-0000-0000-000000000001";
 const PARENT_ID = "11111111-1111-1111-1111-111111111111";
@@ -88,6 +101,9 @@ function authed(supabase: FakeSupabase) {
     user: { id: USER_ID } as never,
     supabase: supabase as never,
   });
+  // Same fake stands in for the service-role client so the lineage
+  // stamp shows up in `__state.updated` and we can assert against it.
+  vi.mocked(createServiceRoleClient).mockReturnValue(supabase as never);
 }
 
 function seedParent(s: FakeSupabase) {
@@ -106,6 +122,7 @@ function seedParent(s: FakeSupabase) {
 
 beforeEach(() => {
   vi.mocked(requireUser).mockReset();
+  vi.mocked(createServiceRoleClient).mockReset();
 });
 
 afterEach(() => {

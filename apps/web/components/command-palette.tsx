@@ -131,6 +131,7 @@ export function CommandPalette() {
       open={open}
       onOpenChange={setOpen}
       label="Command palette"
+      title="Command palette"
       shouldFilter
       className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 p-4 backdrop-blur-sm sm:pt-24"
     >
