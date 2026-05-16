@@ -33,6 +33,19 @@ const TEMPLATES: Record<StyleFamily, SectionType[]> = {
   carnatic: ["pallavi", "anupallavi", "charanam"],
   hindustani: ["mukhda", "antara"],
   "kannada-folk": ["folk_refrain", "folk_stanza", "folk_refrain", "folk_stanza"],
+  // v1.3 Sprint 2:
+  // - Bhavageete is poem-set-to-frame; pallavi / charanam is the natural
+  //   light-classical shape (mirrors what the co-composer expects).
+  // - Tamil folk uses the same folk-refrain/stanza alternation as the
+  //   Kannada folk template; it's a regional / language split, not a
+  //   structural one.
+  "kannada-light-classical": ["pallavi", "charanam", "pallavi"],
+  "tamil-folk": [
+    "folk_refrain",
+    "folk_stanza",
+    "folk_refrain",
+    "folk_stanza",
+  ],
 };
 
 /** Section types whose body MUST be empty (no lyrics). */

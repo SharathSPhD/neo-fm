@@ -1020,9 +1020,15 @@ export type Database = {
     }
     Enums: {
       job_status_enum: "queued" | "processing" | "completed" | "failed"
-      language_enum: "en" | "hi" | "kn"
+      language_enum: "en" | "hi" | "kn" | "ta"
       song_visibility_enum: "private" | "unlisted" | "public"
-      style_family_enum: "western" | "carnatic" | "hindustani" | "kannada-folk"
+      style_family_enum:
+        | "western"
+        | "carnatic"
+        | "hindustani"
+        | "kannada-folk"
+        | "kannada-light-classical"
+        | "tamil-folk"
       tier_enum: "free" | "creator" | "pro"
       track_format_enum: "wav" | "mp3" | "flac"
     }
@@ -1153,9 +1159,16 @@ export const Constants = {
   public: {
     Enums: {
       job_status_enum: ["queued", "processing", "completed", "failed"],
-      language_enum: ["en", "hi", "kn"],
+      language_enum: ["en", "hi", "kn", "ta"],
       song_visibility_enum: ["private", "unlisted", "public"],
-      style_family_enum: ["western", "carnatic", "hindustani", "kannada-folk"],
+      style_family_enum: [
+        "western",
+        "carnatic",
+        "hindustani",
+        "kannada-folk",
+        "kannada-light-classical",
+        "tamil-folk",
+      ],
       tier_enum: ["free", "creator", "pro"],
       track_format_enum: ["wav", "mp3", "flac"],
     },

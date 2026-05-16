@@ -55,7 +55,14 @@ class VocalRequest:
     attempt_id: str | None
     trace_id: str | None
     language: str
-    style_family: Literal["western", "carnatic", "hindustani", "kannada-folk"]
+    style_family: Literal[
+        "western",
+        "carnatic",
+        "hindustani",
+        "kannada-folk",
+        "kannada-light-classical",
+        "tamil-folk",
+    ]
     voice_timbre: Literal["male", "female", "androgynous"]
     sample_rate: int
     sections: list[VocalSection]

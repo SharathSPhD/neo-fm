@@ -1,19 +1,23 @@
 /**
- * Kannada-folk co-composer.
+ * Kannada-folk (Janapada) co-composer.
  *
- * Janapada (folk song) and Bhavageete (Kannada light-classical lyric song)
- * share enough orchestration and rhythmic vocabulary that we serve them
- * with a single composer. The genre split is forwarded as `genre:` tag so
- * HeartMuLa can pick the right register.
+ * v1.3 Sprint 2 split this composer's concerns:
+ *
+ *   - Bhavageete (Kannada light-classical lyric song) used to default
+ *     through this composer too. It now lives in
+ *     `KannadaLightClassicalCoComposer` under the new
+ *     `kannada-light-classical` style family. This composer is now
+ *     pure Janapada (Kannada folk).
  *
  * Defaults:
  *
- *   - **Genre**: bhavageete (lyrical) -- the more common ask. Producers
- *     can pin `genre:janapada` (folk) via section.tags or by setting the
- *     SongDocument's `metadata.genre`.
- *   - **Time signature**: 6/8 (compound duple, the workhorse of Karnataka
- *     folk). Janapada often uses 4/4 or 3/4 too; producer override wins.
- *   - **Tempo**: 110 bpm (mid-tempo Bhavageete).
+ *   - **Genre**: janapada (folk). Producers can still override via
+ *     `metadata.genre` or section tags; the upstream router shouldn't
+ *     send us bhavageete any more (it has its own style family).
+ *   - **Time signature**: 6/8 (compound duple, the workhorse of
+ *     Karnataka folk). Janapada often uses 4/4 or 3/4 too; producer
+ *     override wins.
+ *   - **Tempo**: 110 bpm (mid-tempo folk).
  *   - **Orchestration**: female lead + dhol + flute + tabla + percussion.
  *   - **Section types**: folk_refrain / folk_stanza (the DSL's folk-native
  *     types), with western/Carnatic types passed through with closest
@@ -34,9 +38,14 @@ import type {
 import type { CoComposer } from "./index.js";
 import { mergeTags } from "./tag-merge.js";
 
+// We keep "bhavageete" as a recognised override value purely for
+// backward-compatibility: any v1.2 docs already on disk that pinned
+// metadata.genre = "bhavageete" will still elaborate cleanly. New
+// bhavageete content should use style_family="kannada-light-classical"
+// instead — the upstream router routes there.
 type Genre = "janapada" | "bhavageete";
 
-const DEFAULT_GENRE: Genre = "bhavageete";
+const DEFAULT_GENRE: Genre = "janapada";
 const DEFAULT_TIME_SIG = "6/8";
 const DEFAULT_TEMPO_BPM = 110;
 

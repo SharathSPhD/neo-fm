@@ -30,9 +30,21 @@ describe("style presets", () => {
   });
 
   it("the first three presets are Indian-origin styles (Indian-first ordering)", () => {
-    const first3 = PRESETS.slice(0, 3).map((p) => p.song_document.style_family);
+    // v1.3 Sprint 2 split bhavageete out of kannada-folk; the third
+    // card is now Kannada light-classical instead. All three remain
+    // Indian-origin, satisfying the "India-first" gallery contract.
+    const indianStyles = [
+      "carnatic",
+      "hindustani",
+      "kannada-folk",
+      "kannada-light-classical",
+      "tamil-folk",
+    ];
+    const first3 = PRESETS.slice(0, 3).map(
+      (p) => p.song_document.style_family,
+    );
     for (const s of first3) {
-      expect(["carnatic", "hindustani", "kannada-folk"]).toContain(s);
+      expect(indianStyles).toContain(s);
     }
   });
 

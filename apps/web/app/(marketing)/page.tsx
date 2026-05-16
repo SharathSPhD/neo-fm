@@ -38,12 +38,16 @@ const VALUE_PROPS = [
   },
 ] as const;
 
+// IDs must match `packages/style-presets/src/index.ts`. The card grid
+// silently drops any miss — Sprint 2 (v1.3) caught a stale
+// "tagore-rabindra-sangeet" ID that had been dropping the eighth card
+// for months; the correct id is "tagore-set".
 const HIGHLIGHT_PRESET_IDS = [
   "carnatic-kriti",
   "hindustani-khayal-sketch",
   "kannada-bhavageete",
   "kabir-doha",
-  "tagore-rabindra-sangeet",
+  "tagore-set",
   "bollywood-ballad",
   "tamil-folk",
   "western-pop",
