@@ -5,9 +5,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 export function Pagination({
   current,
   total,
+  view,
 }: {
   current: number;
   total: number;
+  /**
+   * Persisted so deep links keep the user's chosen grid / list mode after
+   * the next-page navigation. Optional; defaults to whatever's already
+   * in the URL.
+   */
+  view?: "grid" | "list";
 }) {
   const router = useRouter();
   const params = useSearchParams();
@@ -16,6 +23,7 @@ export function Pagination({
     const next = new URLSearchParams(params.toString());
     if (page <= 1) next.delete("page");
     else next.set("page", String(page));
+    if (view) next.set("view", view);
     router.replace(`/library?${next.toString()}`);
   }
 
