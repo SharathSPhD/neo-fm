@@ -1,28 +1,33 @@
 /**
- * POST /api/songs/[id]/cover-art
+ * /api/songs/[id]/cover-art
  *
- * Generates a cover-art image for the song using the Hugging Face
- * Inference API (Z-Image-Turbo by default). The PNG bytes are
- * uploaded to the `cover-art` bucket and a `cover_art` row is
- * inserted (migration 0026).
+ * v1.3 Sprint 3 — cover-art generation routes through DGX, not HF inference.
  *
- * If `HUGGINGFACE_API_TOKEN` isn't configured, the route returns 503
- * so the UI can fall back to the deterministic placeholder.
+ *   POST  — enqueue a cover-art job. Calls the `enqueue_cover_art_job`
+ *           SECURITY DEFINER RPC, which validates ownership, inserts a
+ *           `public.cover_art_attempts` row, and `pgmq.send`s onto
+ *           `cover_art_jobs` in a single transaction. The DGX worker's
+ *           cover-art consumer drains the queue, calls
+ *           `services/cover-art-synth`, uploads to Storage, and inserts
+ *           the artefact row. Returns 202 + `{ attempt_id, status }`.
  *
- * GET returns the most-recent cover-art row for the song with a
- * signed URL (1h TTL).
+ *   GET    — returns the most-recent attempt's status (queued / processing
+ *            / failed / dlq) along with the most-recent `public.cover_art`
+ *            row's signed URL (1h TTL). The UI polls this endpoint while
+ *            generation is in flight.
+ *
+ * The HF token path is gone — Vercel never calls a GPU sidecar in-request
+ * (ADR 0003). Direct INSERT on `cover_art_attempts` is revoked from
+ * `authenticated`, so the RPC is the only sanctioned path.
  */
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/supabase/auth";
-import { createServiceRoleClient } from "@/lib/supabase/server";
 
 const UUID_RE =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-const HF_TOKEN = process.env.HUGGINGFACE_API_TOKEN;
-const COVER_ART_MODEL =
-  process.env.NEO_FM_COVER_ART_MODEL ?? "tonyassi/z-image-turbo";
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 export const dynamic = "force-dynamic";
@@ -40,6 +45,36 @@ interface SongRow {
   } | null;
 }
 
+interface AttemptRow {
+  attempt_id: string;
+  status: string;
+  error: string | null;
+  storage_path: string | null;
+  model_version: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface CoverArtRow {
+  url: string;
+  created_at: string;
+}
+
+function buildPrompt(row: SongRow): string {
+  const title = row.song_documents?.title?.trim() ?? "an Indian classical song";
+  const style = row.song_documents?.style_family ?? "world";
+  const raga = row.song_documents?.document_json?.raga?.name;
+  const texture = row.song_documents?.document_json?.orchestration?.texture;
+  const parts = [
+    `Album cover art for "${title}"`,
+    `${style} musical style`,
+    raga ? `raga ${raga}` : null,
+    texture ? `${texture} texture` : null,
+    "elegant, atmospheric, no text, no watermarks, square 1:1, 4k",
+  ].filter(Boolean);
+  return parts.join(", ");
+}
+
 export async function GET(
   _req: Request,
   { params }: { params: { id: string } },
@@ -51,7 +86,35 @@ export async function GET(
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;
 
-  const probe = await (
+  // Latest attempt (queued/processing/completed/failed/dlq).
+  const attemptProbe = (await (
+    supabase.from("cover_art_attempts" as never) as unknown as {
+      select: (s: string) => {
+        eq: (
+          col: string,
+          val: string,
+        ) => {
+          order: (
+            col: string,
+            opts: { ascending: boolean },
+          ) => {
+            limit: (n: number) => {
+              maybeSingle: () => Promise<{ data: AttemptRow | null }>;
+            };
+          };
+        };
+      };
+    }
+  )
+    .select("attempt_id, status, error, storage_path, model_version, created_at, updated_at")
+    .eq("job_id", params.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle()) as { data: AttemptRow | null };
+
+  // Latest artefact (is_current=true) — independent of the attempt
+  // because a queued re-roll still shows the previous cover art.
+  const artProbe = (await (
     supabase.from("cover_art" as never) as unknown as {
       select: (s: string) => {
         eq: (
@@ -67,9 +130,7 @@ export async function GET(
               opts: { ascending: boolean },
             ) => {
               limit: (n: number) => {
-                maybeSingle: () => Promise<{
-                  data: { url: string; created_at: string } | null;
-                }>;
+                maybeSingle: () => Promise<{ data: CoverArtRow | null }>;
               };
             };
           };
@@ -82,20 +143,28 @@ export async function GET(
     .eq("is_current", true)
     .order("created_at", { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle()) as { data: CoverArtRow | null };
 
-  if (!probe.data) {
-    return NextResponse.json({ url: null });
+  let signedUrl: string | null = null;
+  if (artProbe.data) {
+    const objectPath = artProbe.data.url.replace(/^cover-art\//, "");
+    const { data: signed } = await supabase.storage
+      .from("cover-art")
+      .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
+    signedUrl = signed?.signedUrl ?? null;
   }
 
-  const objectPath = probe.data.url.replace(/^cover-art\//, "");
-  const { data: signed } = await supabase.storage
-    .from("cover-art")
-    .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
-
   return NextResponse.json({
-    url: signed?.signedUrl ?? null,
-    created_at: probe.data.created_at,
+    url: signedUrl,
+    created_at: artProbe.data?.created_at ?? null,
+    attempt: attemptProbe.data
+      ? {
+          attempt_id: attemptProbe.data.attempt_id,
+          status: attemptProbe.data.status,
+          error: attemptProbe.data.error,
+          updated_at: attemptProbe.data.updated_at,
+        }
+      : null,
   });
 }
 
@@ -106,21 +175,12 @@ export async function POST(
   if (!UUID_RE.test(params.id)) {
     return NextResponse.json({ error: "invalid_id" }, { status: 400 });
   }
-  if (!HF_TOKEN) {
-    return NextResponse.json(
-      {
-        error: "cover_art_disabled",
-        details: "HUGGINGFACE_API_TOKEN not configured on the server.",
-      },
-      { status: 503 },
-    );
-  }
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
-  const { user, supabase } = authed;
+  const { supabase } = authed;
 
-  // Load enough of the song to build a tasteful prompt. Ownership
-  // is implicit (RLS).
+  // Pull song metadata so the worker has a tasteful prompt. Ownership is
+  // enforced by both RLS here and the SECURITY DEFINER RPC below.
   const { data: song, error: songErr } = await supabase
     .from("jobs")
     .select(
@@ -137,98 +197,54 @@ export async function POST(
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
-  const title = song.song_documents.title?.trim() ?? "an Indian classical song";
-  const style = song.song_documents.style_family;
-  const raga = song.song_documents.document_json?.raga?.name;
-  const texture = song.song_documents.document_json?.orchestration?.texture;
-  const promptParts = [
-    `Album cover art for "${title}"`,
-    `${style} musical style`,
-    raga ? `raga ${raga}` : null,
-    texture ? `${texture} texture` : null,
-    "elegant, atmospheric, no text, no watermarks, square 1:1, 4k",
-  ].filter(Boolean);
-  const prompt = promptParts.join(", ");
+  const prompt = buildPrompt(song);
+  const attemptId = randomUUID();
+  const traceId = randomUUID();
 
-  // Call HF inference API.
-  const hfRes = await fetch(
-    `https://api-inference.huggingface.co/models/${COVER_ART_MODEL}`,
+  const { data: rpcData, error: rpcErr } = await supabase.rpc(
+    "enqueue_cover_art_job",
     {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
-        "content-type": "application/json",
-        accept: "image/png",
-      },
-      body: JSON.stringify({ inputs: prompt }),
-    },
+      p_song_id: params.id,
+      p_prompt: prompt,
+      p_attempt_id: attemptId,
+      p_trace_id: traceId,
+    } as never,
   );
-  if (!hfRes.ok) {
-    const text = await hfRes.text().catch(() => "");
-    return NextResponse.json(
-      {
-        error: "huggingface_inference_failed",
-        details: text,
-        status: hfRes.status,
-      },
-      { status: 502 },
-    );
-  }
-  const bytes = new Uint8Array(await hfRes.arrayBuffer());
 
-  // Upload via service-role so RLS doesn't reject the storage write.
-  const svc = createServiceRoleClient();
-  const objectPath = `${user.id}/${params.id}/${crypto.randomUUID()}.png`;
-  const upload = await svc.storage.from("cover-art").upload(objectPath, bytes, {
-    contentType: "image/png",
-    upsert: false,
-  });
-  if (upload.error) {
+  if (rpcErr) {
+    const msg = rpcErr.message ?? "";
+    if (msg.includes("unauthenticated")) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+    if (msg.includes("not_owner") || msg.includes("song_not_found")) {
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
+    }
+    if (msg.includes("prompt_too_long") || msg.includes("prompt_required")) {
+      return NextResponse.json(
+        { error: "invalid_prompt", details: msg },
+        { status: 400 },
+      );
+    }
     return NextResponse.json(
-      { error: "upload_failed", details: upload.error.message },
+      { error: "enqueue_cover_art_failed", details: msg },
       { status: 500 },
     );
   }
 
-  // Mark old current=true rows as false, then insert the new row.
-  const adminCover = svc as unknown as {
-    from: (t: string) => {
-      update: (r: Record<string, unknown>) => {
-        eq: (
-          c: string,
-          v: string,
-        ) => Promise<{ error: { message: string } | null }>;
-      };
-      insert: (
-        r: Record<string, unknown>,
-      ) => Promise<{ error: { message: string } | null }>;
-    };
-  };
-  await adminCover
-    .from("cover_art")
-    .update({ is_current: false })
-    .eq("job_id", params.id);
-  const insertRes = await adminCover.from("cover_art").insert({
-    job_id: params.id,
-    prompt,
-    url: `cover-art/${objectPath}`,
-    model_version: COVER_ART_MODEL,
-    is_current: true,
-  });
-  if (insertRes.error) {
+  const row = Array.isArray(rpcData) ? rpcData[0] : null;
+  if (!row) {
     return NextResponse.json(
-      { error: "insert_failed", details: insertRes.error.message },
+      { error: "enqueue_cover_art_failed" },
       { status: 500 },
     );
   }
 
-  const { data: signed } = await supabase.storage
-    .from("cover-art")
-    .createSignedUrl(objectPath, SIGNED_URL_TTL_SECONDS);
-
-  return NextResponse.json({
-    url: signed?.signedUrl ?? null,
-    model_version: COVER_ART_MODEL,
-    prompt,
-  });
+  return NextResponse.json(
+    {
+      attempt_id: row.attempt_id,
+      status: row.status,
+      prompt,
+    },
+    { status: 202 },
+  );
 }

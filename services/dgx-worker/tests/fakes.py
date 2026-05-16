@@ -59,6 +59,9 @@ class FakeWorkerDB:
     tracks: list[FakeTrack] = field(default_factory=list)
     heartbeats: list[tuple[int, str]] = field(default_factory=list)
     next_msg_id: int = 1
+    # v1.3 Sprint 3 — cover-art attempts + final artefacts.
+    cover_art_attempts: dict[tuple[str, str], dict[str, Any]] = field(default_factory=dict)
+    cover_art_rows: list[dict[str, Any]] = field(default_factory=list)
 
     @contextmanager
     def connect(self) -> Iterator[FakeWorkerDB]:
@@ -210,6 +213,80 @@ class FakeWorkerDB:
         if job_id in self.jobs:
             self.jobs[job_id].progress = progress
 
+    # --- cover-art (v1.3 Sprint 3) ----------------------------------------
+
+    def insert_cover_art_attempt(
+        self,
+        *,
+        job_id: str,
+        attempt_id: str,
+        prompt: str,
+        trace_id: str | None,
+    ) -> None:
+        """Test-only convenience; in prod the SECURITY DEFINER RPC does this."""
+        self.cover_art_attempts[(job_id, attempt_id)] = {
+            "status": "queued",
+            "prompt": prompt,
+            "trace_id": trace_id,
+            "error": None,
+            "storage_path": None,
+            "model_version": None,
+        }
+
+    def update_cover_art_attempt(
+        self,
+        _conn: Any,
+        *,
+        job_id: str,
+        attempt_id: str,
+        status: str,
+        error: str | None = None,
+        storage_path: str | None = None,
+        model_version: str | None = None,
+    ) -> None:
+        key = (job_id, attempt_id)
+        row = self.cover_art_attempts.get(key)
+        if row is None:
+            row = {
+                "status": status,
+                "prompt": "",
+                "trace_id": None,
+                "error": error,
+                "storage_path": storage_path,
+                "model_version": model_version,
+            }
+            self.cover_art_attempts[key] = row
+            return
+        row["status"] = status
+        if error is not None:
+            row["error"] = error
+        if storage_path is not None:
+            row["storage_path"] = storage_path
+        if model_version is not None:
+            row["model_version"] = model_version
+
+    def flip_current_cover_art(
+        self,
+        _conn: Any,
+        *,
+        job_id: str,
+        storage_url: str,
+        prompt: str,
+        model_version: str | None,
+    ) -> None:
+        for row in self.cover_art_rows:
+            if row["job_id"] == job_id and row["is_current"]:
+                row["is_current"] = False
+        self.cover_art_rows.append(
+            {
+                "job_id": job_id,
+                "url": storage_url,
+                "prompt": prompt,
+                "model_version": model_version,
+                "is_current": True,
+            },
+        )
+
 
 @dataclass
 class FakeStorageClient:
@@ -282,6 +359,42 @@ class FakeInferenceClient:
         if self.exc is not None:
             raise self.exc
         return self.response
+
+    async def aclose(self) -> None:
+        return None
+
+
+class FakeCoverArtSynthClient:
+    """Mirror of FakeInferenceClient but for cover-art-synth.
+
+    Returns (png_bytes, model_version, backend). Tests can set
+    `exc` to drive the error paths.
+    """
+
+    def __init__(
+        self,
+        *,
+        response: bytes = b"\x89PNG\r\n\x1a\nfake-png-bytes",
+        model_version: str = "fake-cover-art-0.1.0",
+        backend: str = "fake",
+        exc: Exception | None = None,
+    ) -> None:
+        self.response = response
+        self.model_version = model_version
+        self.backend = backend
+        self.exc = exc
+        self.calls: list[dict[str, Any]] = []
+
+    async def generate_cover(
+        self,
+        *,
+        request_body: dict[str, Any],
+        trace_id: str,
+    ) -> tuple[bytes, str | None, str | None]:
+        self.calls.append({"request": request_body, "trace_id": trace_id})
+        if self.exc is not None:
+            raise self.exc
+        return self.response, self.model_version, self.backend
 
     async def aclose(self) -> None:
         return None

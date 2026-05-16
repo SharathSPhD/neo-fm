@@ -66,6 +66,70 @@ export type Database = {
           },
         ]
       }
+      cover_art_attempts: {
+        Row: {
+          attempt_id: string
+          created_at: string
+          error: string | null
+          id: string
+          job_id: string
+          model_version: string | null
+          prompt: string
+          status: string
+          storage_path: string | null
+          trace_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          attempt_id: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id: string
+          model_version?: string | null
+          prompt: string
+          status: string
+          storage_path?: string | null
+          trace_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attempt_id?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          job_id?: string
+          model_version?: string | null
+          prompt?: string
+          status?: string
+          storage_path?: string | null
+          trace_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_art_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_art_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "cover_art_attempts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           body: string
@@ -928,6 +992,19 @@ export type Database = {
           job_id: string
           song_id: string
           status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      enqueue_cover_art_job: {
+        Args: {
+          p_attempt_id?: string
+          p_prompt: string
+          p_song_id: string
+          p_trace_id?: string
+        }
+        Returns: {
+          attempt_id: string
+          job_id: string
+          status: string
         }[]
       }
       enqueue_song_generation_job: { Args: { payload: Json }; Returns: number }
