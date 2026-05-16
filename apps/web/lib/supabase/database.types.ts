@@ -14,6 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
+      cover_art: {
+        Row: {
+          created_at: string
+          id: string
+          is_current: boolean
+          job_id: string
+          model_version: string | null
+          prompt: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          job_id: string
+          model_version?: string | null
+          prompt: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          job_id?: string
+          model_version?: string | null
+          prompt?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cover_art_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cover_art_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "cover_art_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
+      feedback: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          referrer: string | null
+          status: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          status?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          referrer?: string | null
+          status?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      follows: {
+        Row: {
+          created_at: string
+          followee_id: string
+          follower_id: string
+        }
+        Insert: {
+          created_at?: string
+          followee_id: string
+          follower_id: string
+        }
+        Update: {
+          created_at?: string
+          followee_id?: string
+          follower_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_followee_id_fkey"
+            columns: ["followee_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           attempt_id: string | null
@@ -31,6 +175,7 @@ export type Database = {
           public_id: string | null
           published_at: string | null
           published_visibility: Database["public"]["Enums"]["song_visibility_enum"]
+          recovered_at: string | null
           section_id: string | null
           song_document_id: string
           started_at: string | null
@@ -54,6 +199,7 @@ export type Database = {
           public_id?: string | null
           published_at?: string | null
           published_visibility?: Database["public"]["Enums"]["song_visibility_enum"]
+          recovered_at?: string | null
           section_id?: string | null
           song_document_id: string
           started_at?: string | null
@@ -77,6 +223,7 @@ export type Database = {
           public_id?: string | null
           published_at?: string | null
           published_visibility?: Database["public"]["Enums"]["song_visibility_enum"]
+          recovered_at?: string | null
           section_id?: string | null
           song_document_id?: string
           started_at?: string | null
@@ -93,10 +240,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "jobs_parent_job_id_fkey"
+            columns: ["parent_job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "jobs_parent_job_id_fkey"
+            columns: ["parent_job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+          {
             foreignKeyName: "jobs_song_document_id_fkey"
             columns: ["song_document_id"]
             isOneToOne: false
             referencedRelation: "song_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
           {
@@ -141,6 +309,127 @@ export type Database = {
             foreignKeyName: "song_documents_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      song_likes: {
+        Row: {
+          created_at: string
+          job_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          job_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          job_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_likes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_likes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "song_likes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "song_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      song_reports: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          reason: string
+          reporter_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          reason: string
+          reporter_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          reason?: string
+          reporter_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "song_reports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_reports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "song_reports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "song_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "song_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -179,8 +468,67 @@ export type Database = {
             foreignKeyName: "subscriptions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      track_stems: {
+        Row: {
+          bytes: number | null
+          created_at: string
+          format: Database["public"]["Enums"]["track_format_enum"]
+          id: string
+          job_id: string
+          kind: string
+          url: string
+        }
+        Insert: {
+          bytes?: number | null
+          created_at?: string
+          format?: Database["public"]["Enums"]["track_format_enum"]
+          id?: string
+          job_id: string
+          kind: string
+          url: string
+        }
+        Update: {
+          bytes?: number | null
+          created_at?: string
+          format?: Database["public"]["Enums"]["track_format_enum"]
+          id?: string
+          job_id?: string
+          kind?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "track_stems_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "track_stems_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "track_stems_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
           },
         ]
       }
@@ -196,6 +544,9 @@ export type Database = {
           id: string
           job_id: string
           url: string
+          vocal_backend: string | null
+          vocal_eval_score: number | null
+          vocal_model_version: string | null
         }
         Insert: {
           attempt_id: string
@@ -208,6 +559,9 @@ export type Database = {
           id?: string
           job_id: string
           url: string
+          vocal_backend?: string | null
+          vocal_eval_score?: number | null
+          vocal_model_version?: string | null
         }
         Update: {
           attempt_id?: string
@@ -220,6 +574,9 @@ export type Database = {
           id?: string
           job_id?: string
           url?: string
+          vocal_backend?: string | null
+          vocal_eval_score?: number | null
+          vocal_model_version?: string | null
         }
         Relationships: [
           {
@@ -229,12 +586,78 @@ export type Database = {
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tracks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "tracks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+        ]
+      }
+      user_billing: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          current_period_end: string | null
+          status: string
+          stripe_customer_id: string
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          status?: string
+          stripe_customer_id: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          current_period_end?: string | null
+          status?: string
+          stripe_customer_id?: string
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_billing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_billing_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       users: {
         Row: {
           created_at: string
           email: string
+          handle: string | null
           id: string
           locale: string | null
           name: string | null
@@ -243,6 +666,7 @@ export type Database = {
         Insert: {
           created_at?: string
           email: string
+          handle?: string | null
           id: string
           locale?: string | null
           name?: string | null
@@ -251,6 +675,7 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+          handle?: string | null
           id?: string
           locale?: string | null
           name?: string | null
@@ -258,8 +683,133 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string
+          tier: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string
+          tier: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string
+          tier?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waitlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waitlist_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      orphan_jobs: {
+        Row: {
+          attempt_id: string | null
+          attempts: number | null
+          created_at: string | null
+          error: string | null
+          finished_at: string | null
+          job_id: string | null
+          recovered_at: string | null
+          song_document_id: string | null
+          status: Database["public"]["Enums"]["job_status_enum"] | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_song_document_id_fkey"
+            columns: ["song_document_id"]
+            isOneToOne: false
+            referencedRelation: "song_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      public_profiles: {
+        Row: {
+          created_at: string | null
+          handle: string | null
+          id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          handle?: string | null
+          id?: string | null
+        }
+        Relationships: []
+      }
+      recent_vocal_quality: {
+        Row: {
+          created_at: string | null
+          job_id: string | null
+          language: Database["public"]["Enums"]["language_enum"] | null
+          style_family: Database["public"]["Enums"]["style_family_enum"] | null
+          user_id: string | null
+          vocal_backend: string | null
+          vocal_eval_score: number | null
+          vocal_model_version: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_user_storage_bytes: {
         Row: {
           bytes: number | null
@@ -267,6 +817,13 @@ export type Database = {
           user_id: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "jobs_user_id_fkey"
             columns: ["user_id"]
@@ -281,10 +838,44 @@ export type Database = {
             referencedRelation: "jobs"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tracks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "tracks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
         ]
       }
     }
     Functions: {
+      apply_stripe_subscription_state: {
+        Args: {
+          p_cancel_at_period_end: boolean
+          p_creator_price_id: string
+          p_current_period_end: string
+          p_price_id: string
+          p_pro_price_id: string
+          p_status: string
+          p_stripe_customer_id: string
+          p_subscription_id: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      claim_handle: {
+        Args: { p_handle: string }
+        Returns: {
+          handle: string
+        }[]
+      }
       create_section_regen_job: {
         Args: {
           p_attempt_id?: string
@@ -317,12 +908,76 @@ export type Database = {
       }
       enqueue_song_generation_job: { Args: { payload: Json }; Returns: number }
       gen_public_id: { Args: never; Returns: string }
+      join_waitlist: {
+        Args: { p_email: string; p_source?: string; p_tier: string }
+        Returns: {
+          already_on_list: boolean
+          joined: boolean
+        }[]
+      }
+      neo_fm_webhook_secret: { Args: never; Returns: string }
       publish_song: {
         Args: { p_job_id: string; p_visibility: string }
         Returns: {
           public_id: string
           published_at: string
           visibility: Database["public"]["Enums"]["song_visibility_enum"]
+        }[]
+      }
+      reconciler_recover_job: {
+        Args: { p_job_id: string }
+        Returns: {
+          attempt_id: string
+          job_id: string
+          status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      recover_song_job: {
+        Args: { p_job_id: string }
+        Returns: {
+          attempt_id: string
+          job_id: string
+          status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      rename_song: {
+        Args: { p_job_id: string; p_title: string }
+        Returns: {
+          id: string
+          title: string
+        }[]
+      }
+      report_song: {
+        Args: { p_job_id: string; p_reason: string }
+        Returns: {
+          id: string
+        }[]
+      }
+      submit_feedback: {
+        Args: { p_body: string; p_referrer?: string; p_subject: string }
+        Returns: {
+          id: string
+        }[]
+      }
+      toggle_favorite: {
+        Args: { p_job_id: string }
+        Returns: {
+          id: string
+          is_favorite: boolean
+        }[]
+      }
+      toggle_follow: {
+        Args: { p_followee: string }
+        Returns: {
+          follower_count: number
+          is_following: boolean
+        }[]
+      }
+      toggle_like: {
+        Args: { p_job_id: string }
+        Returns: {
+          is_liked: boolean
+          like_count: number
         }[]
       }
       user_concurrent_processing_count: {
@@ -337,46 +992,6 @@ export type Database = {
       user_tier_storage_bytes_cap: {
         Args: { p_user_id: string }
         Returns: number
-      }
-      toggle_favorite: {
-        Args: { p_job_id: string }
-        Returns: { id: string; is_favorite: boolean }[]
-      }
-      rename_song: {
-        Args: { p_job_id: string; p_title: string }
-        Returns: { id: string; title: string }[]
-      }
-      submit_feedback: {
-        Args: { p_subject: string; p_body: string; p_referrer?: string | null }
-        Returns: { id: string }[]
-      }
-      join_waitlist: {
-        Args: { p_email: string; p_tier: string; p_source?: string | null }
-        Returns: { joined: boolean; already_on_list: boolean }[]
-      }
-      reconciler_recover_job: {
-        Args: { p_job_id: string }
-        Returns: {
-          job_id: string
-          attempt_id: string
-          status: Database["public"]["Enums"]["job_status_enum"]
-        }[]
-      }
-      claim_handle: {
-        Args: { p_handle: string }
-        Returns: { handle: string }[]
-      }
-      toggle_like: {
-        Args: { p_job_id: string }
-        Returns: { is_liked: boolean; like_count: number }[]
-      }
-      toggle_follow: {
-        Args: { p_followee: string }
-        Returns: { is_following: boolean; follower_count: number }[]
-      }
-      report_song: {
-        Args: { p_job_id: string; p_reason: string }
-        Returns: { id: string }[]
       }
     }
     Enums: {

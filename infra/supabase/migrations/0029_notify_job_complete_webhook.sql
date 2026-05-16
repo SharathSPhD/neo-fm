@@ -98,7 +98,8 @@ begin
 end;
 $$;
 
-revoke all on function public.tg_notify_job_complete() from public;
+revoke all on function public.tg_notify_job_complete()
+  from public, anon, authenticated;
 
 comment on function public.tg_notify_job_complete() is
   'AFTER UPDATE trigger on public.jobs. Fires only when status transitions to completed. Async POST via pg_net to /notify-job-complete with x-webhook-secret header. Migration 0029.';
