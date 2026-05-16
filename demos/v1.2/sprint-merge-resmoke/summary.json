@@ -1,0 +1,94 @@
+{
+  "base": "https://neo-fm-web.vercel.app",
+  "finishedAt": "2026-05-16T18:02:03.935Z",
+  "steps": [
+    {
+      "name": "1-landing",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/",
+      "file": "01-landing.png"
+    },
+    {
+      "name": "2-pricing-anon",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/pricing",
+      "file": "02-pricing-anon.png"
+    },
+    {
+      "name": "3-discover-anon",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/discover",
+      "file": "03-discover-anon.png"
+    },
+    {
+      "name": "4-sign-in",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library"
+    },
+    {
+      "name": "5-library-grid",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library",
+      "file": "05-library-grid.png"
+    },
+    {
+      "name": "6-library-list",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library?view=list",
+      "file": "06-library-list.png"
+    },
+    {
+      "name": "7-cmd-palette",
+      "ok": true,
+      "file": "07-cmd-palette.png"
+    },
+    {
+      "name": "8-songs-new",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/new",
+      "file": "08-songs-new.png"
+    },
+    {
+      "name": "9-pricing-authed",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/pricing",
+      "file": "09-pricing-authed.png"
+    },
+    {
+      "name": "10-account",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/account",
+      "file": "10-account.png"
+    },
+    {
+      "name": "11-song-detail",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/96d58383-0f30-41c9-ad81-745efd29b0be",
+      "file": "11-song-detail.png",
+      "remixCtaVisible": true
+    },
+    {
+      "name": "health",
+      "ok": true,
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "phase": 1,
+        "version": "v1.2-bugfix-pack",
+        "commit": "1047186",
+        "env": "production",
+        "checks": {
+          "supabase": {
+            "status": "ok",
+            "latencyMs": 17
+          },
+          "upstash": {
+            "status": "missing",
+            "latencyMs": null
+          }
+        },
+        "timestamp": "2026-05-16T18:02:03.893Z"
+      }
+    }
+  ]
+}
