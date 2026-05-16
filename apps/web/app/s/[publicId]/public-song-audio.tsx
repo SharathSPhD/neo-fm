@@ -10,6 +10,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 
+import { AudioSpectrogram } from "@/components/audio-spectrogram";
+
 interface PublicSongAudioProps {
   publicId: string;
   initialUrl: string;
@@ -75,8 +77,10 @@ export function PublicSongAudio({
         preload="metadata"
         src={src}
         onError={onError}
+        crossOrigin="anonymous"
         className="w-full"
       />
+      <AudioSpectrogram audioRef={audioRef} height={72} />
       <div className="flex items-center justify-between gap-2 text-[10px] text-foreground/40">
         <span>
           {durationSeconds ? `${durationSeconds}s · ` : ""}

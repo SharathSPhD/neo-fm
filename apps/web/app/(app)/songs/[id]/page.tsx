@@ -23,6 +23,10 @@ import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
+import { StemsPanel } from "./stems-panel";
+import { KaraokeTicker } from "./karaoke-ticker";
+import { VariationButton } from "./variation-button";
+import { CoverArtPanel } from "./cover-art-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -200,6 +204,9 @@ export default async function SongDetailPage({
             initialPublicId={data.public_id}
             canShare={data.status === "completed"}
           />
+          {data.status === "completed" ? (
+            <VariationButton songId={data.id} />
+          ) : null}
           <code className="font-mono text-[11px] text-foreground/50">
             {data.id.slice(0, 8)}
           </code>
@@ -218,7 +225,7 @@ export default async function SongDetailPage({
       ) : null}
 
       {signedUrl ? (
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3">
           <h2 className="text-xs uppercase tracking-widest text-foreground/50">
             Playback
           </h2>
@@ -228,6 +235,16 @@ export default async function SongDetailPage({
             durationSeconds={latestTrack?.duration_seconds ?? null}
             format={latestTrack?.format ?? "wav"}
           />
+          {data.song_documents?.document_json &&
+          (data.song_documents.document_json as SongDocumentView)?.sections
+            ?.length ? (
+            <KaraokeTicker
+              sections={
+                (data.song_documents.document_json as SongDocumentView).sections
+              }
+            />
+          ) : null}
+          <StemsPanel songId={data.id} />
         </section>
       ) : data.status === "completed" ? (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
@@ -251,6 +268,10 @@ export default async function SongDetailPage({
               : `Status: ${data.status}.`}
         </p>
       )}
+
+      {data.status === "completed" ? (
+        <CoverArtPanel songId={data.id} />
+      ) : null}
 
       {doc ? (
         <>
