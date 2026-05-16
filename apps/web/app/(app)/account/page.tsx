@@ -1,20 +1,29 @@
 /**
- * /account -- authed account page (Sprint E).
+ * /account -- authed account page.
  *
- * Surfaces:
+ * Sprint E (v1.1) shipped:
  *   - email, plan badge, member-since date
- *   - "Change password" CTA (sends a Supabase reset email)
- *   - "Export my data" CTA (mints a signed JSON dump of the user's songs
- *     + song_documents; future: include tracks list)
- *   - "Delete account" CTA (hard delete; anonymises published songs)
- *   - "Sign out" + theme toggle already provided by the UserMenu in the shell
+ *   - Change password / Export / Delete CTAs
+ *   - Sign out + theme toggle (UserMenu)
+ *
+ * Sprint 5b (v1.2) layers Stripe-aware billing UI on top:
+ *   - If billing is enabled AND the user has a row in `user_billing`,
+ *     surface subscription status, renewal date, and a "Manage
+ *     subscription" button that opens the Stripe Customer Portal.
+ *   - If the query string carries `?upgraded=creator|pro` (returned
+ *     by checkout success URL), show a one-shot success banner that
+ *     reassures the user the upgrade landed. Webhook may not have
+ *     finished writing yet, so we soft-message "your plan will update
+ *     within a few seconds" rather than asserting the new tier.
  */
 import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { isBillingEnabled } from "@/lib/billing/config";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
+import { ManageBillingButton } from "./manage-billing-button";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +33,23 @@ const PLAN_LABEL: Record<string, string> = {
   pro: "Pro",
 };
 
-export default async function AccountPage() {
+const STATUS_LABEL: Record<string, string> = {
+  trialing: "Trialing",
+  active: "Active",
+  past_due: "Past due",
+  canceled: "Canceled",
+  incomplete: "Incomplete",
+  incomplete_expired: "Expired",
+  unpaid: "Unpaid",
+  paused: "Paused",
+  inactive: "Inactive",
+};
+
+interface PageProps {
+  searchParams?: { upgraded?: string };
+}
+
+export default async function AccountPage({ searchParams }: PageProps) {
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account");
@@ -35,11 +60,38 @@ export default async function AccountPage() {
     .eq("id", auth.user.id)
     .maybeSingle();
 
+  const billingEnabled = isBillingEnabled();
+  // Only query user_billing when billing is on -- the table exists
+  // either way, but the column is meaningless in dummy mode.
+  const { data: billing } = billingEnabled
+    ? await supabase
+        .from("user_billing")
+        .select(
+          "status, current_period_end, cancel_at_period_end, stripe_subscription_id",
+        )
+        .eq("user_id", auth.user.id)
+        .maybeSingle()
+    : { data: null as null };
+
   const plan = PLAN_LABEL[row?.tier ?? "free"] ?? "Free";
   const memberSince = row?.created_at
     ? new Date(row.created_at).toLocaleDateString(undefined, {
         year: "numeric",
         month: "long",
+      })
+    : null;
+
+  const upgradedToTier = normalizeUpgradedQuery(searchParams?.upgraded);
+  const showUpgradedBanner = upgradedToTier !== null;
+
+  const subscriptionStatusLabel = billing?.status
+    ? STATUS_LABEL[billing.status] ?? billing.status
+    : null;
+  const renews = billing?.current_period_end
+    ? new Date(billing.current_period_end).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       })
     : null;
 
@@ -52,6 +104,19 @@ export default async function AccountPage() {
           Manage your sign-in, plan, and data.
         </p>
       </header>
+
+      {showUpgradedBanner ? (
+        <section
+          role="status"
+          className="rounded-md border border-emerald-400/30 bg-emerald-400/5 px-5 py-3 text-sm text-emerald-200"
+        >
+          <strong className="font-medium">
+            Welcome to {PLAN_LABEL[upgradedToTier!] ?? "your new plan"}.
+          </strong>{" "}
+          Stripe confirmed payment; your plan will update here within a
+          few seconds.
+        </section>
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
         <Row label="Email" value={auth.user.email ?? "(unknown)"} />
@@ -71,14 +136,39 @@ export default async function AccountPage() {
             </span>
           }
         />
+        {billing && subscriptionStatusLabel ? (
+          <Row label="Subscription" value={subscriptionStatusLabel} />
+        ) : null}
+        {billing && renews ? (
+          <Row
+            label={billing.cancel_at_period_end ? "Ends on" : "Renews on"}
+            value={renews}
+          />
+        ) : null}
         {memberSince ? (
           <Row label="Member since" value={memberSince} />
         ) : null}
       </section>
 
+      {billing?.stripe_subscription_id ? (
+        <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+          <h2 className="text-sm font-medium tracking-tight">Billing</h2>
+          <p className="text-xs text-foreground/60">
+            Open the Stripe-hosted Customer Portal to change plan, update
+            your card, cancel, or download invoices.
+          </p>
+          <ManageBillingButton />
+        </section>
+      ) : null}
+
       <AccountActions email={auth.user.email ?? ""} />
     </div>
   );
+}
+
+function normalizeUpgradedQuery(raw: string | undefined): string | null {
+  if (raw === "creator" || raw === "pro") return raw;
+  return null;
 }
 
 function Row({

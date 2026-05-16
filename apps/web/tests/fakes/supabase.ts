@@ -100,12 +100,28 @@ export function makeFakeSupabase(): FakeSupabase {
       };
     };
     builder.update = function _update(row: unknown) {
-      return {
+      // Mini-chain that supports .eq() (one or more times) and an
+      // optional terminal .select() returning a stub rowset. Tests
+      // that need a different rowset can override via
+      // state.update_returns[table].
+      const chain = {
+        _eqs: [] as [string, unknown][],
         eq(col: string, val: unknown) {
+          chain._eqs.push([col, val]);
           state.updated.push({ table, row, eq: [col, val] });
-          return Promise.resolve({ data: null, error: null });
+          return chain;
+        },
+        select(_cols?: string) {
+          return Promise.resolve({
+            data: [{ id: chain._eqs[0]?.[1] ?? null }],
+            error: null,
+          });
+        },
+        then(resolve: (v: unknown) => void) {
+          resolve({ data: null, error: null });
         },
       };
+      return chain;
     };
     // Default thenable for list reads
     (builder as { then: (resolve: (v: unknown) => void) => void }).then = (

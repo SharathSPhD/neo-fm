@@ -78,7 +78,7 @@ export async function GET() {
     {
       status,
       phase: 1,
-      version: process.env.NEXT_PUBLIC_APP_VERSION ?? "v1.1-deep-dive",
+      version: process.env.NEXT_PUBLIC_APP_VERSION ?? "v1.2-bugfix-pack",
       commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
       env: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
       checks: {

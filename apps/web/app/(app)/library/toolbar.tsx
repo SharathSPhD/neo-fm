@@ -16,6 +16,7 @@ type Defaults = {
   status: string | null;
   sort: string;
   favOnly: boolean;
+  view: "grid" | "list";
 };
 
 export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
@@ -118,20 +119,52 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
         </button>
       </form>
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-foreground/60">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={defaults.favOnly}
-            onChange={(e) => update("fav", e.target.checked ? "1" : null)}
-          />
-          Favorites only
-        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={defaults.favOnly}
+              onChange={(e) => update("fav", e.target.checked ? "1" : null)}
+            />
+            Favorites only
+          </label>
+          <div
+            role="group"
+            aria-label="View mode"
+            className="inline-flex items-center overflow-hidden rounded-md border border-muted/30"
+          >
+            <button
+              type="button"
+              aria-pressed={defaults.view === "grid"}
+              onClick={() => update("view", defaults.view === "grid" ? null : "grid")}
+              className={
+                defaults.view === "grid"
+                  ? "bg-accent/15 px-3 py-1.5 text-accent"
+                  : "px-3 py-1.5 text-foreground/55 hover:text-foreground"
+              }
+            >
+              ▦ Grid
+            </button>
+            <button
+              type="button"
+              aria-pressed={defaults.view === "list"}
+              onClick={() => update("view", "list")}
+              className={
+                defaults.view === "list"
+                  ? "bg-accent/15 px-3 py-1.5 text-accent"
+                  : "px-3 py-1.5 text-foreground/55 hover:text-foreground"
+              }
+            >
+              ☰ List
+            </button>
+          </div>
+        </div>
         {(defaults.q ||
           defaults.style ||
           defaults.lang ||
           defaults.status ||
           defaults.favOnly ||
-          defaults.sort !== "newest") && (
+          defaults.sort !== "newest") ? (
           <button
             type="button"
             onClick={() => {
@@ -144,7 +177,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
           >
             Clear all filters
           </button>
-        )}
+        ) : null}
       </div>
     </section>
   );

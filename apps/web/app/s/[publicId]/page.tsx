@@ -25,6 +25,7 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 import { LikeButton } from "@/components/like-button";
+import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 
 import { PublicSongAudio } from "./public-song-audio";
 
@@ -282,7 +283,7 @@ export default async function PublicSongPage({
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <LikeButton
               songId={data.id}
               publicId={data.public_id}
@@ -290,6 +291,7 @@ export default async function PublicSongPage({
               initialCount={likeCount}
               signedIn={!!currentUserId}
             />
+            <RemixButton songId={data.id} variant="subtle" />
           </div>
         </section>
       ) : (

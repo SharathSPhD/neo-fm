@@ -1,6 +1,7 @@
 /**
  * Marketing nav. Auth-aware: when the visitor already has a session,
- * the right side swaps "Sign in / Get started" for "Open app".
+ * the right side swaps "Sign in / Get started" for a single "Library"
+ * link that takes them back into the authed app shell.
  *
  * The auth status is read on the server (in `(marketing)/layout.tsx`)
  * and passed in as a boolean prop so this stays a small server-component.
@@ -52,7 +53,7 @@ export function MarketingNav({
               href="/library"
               className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              Open app →
+              Library
             </Link>
           ) : (
             <>

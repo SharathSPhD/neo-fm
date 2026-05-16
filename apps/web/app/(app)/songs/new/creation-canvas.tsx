@@ -4,7 +4,7 @@ import type { Section, SongDocument } from "@neo-fm/song-doc";
 import { SONG_TITLE_MAX_CHARS } from "@neo-fm/song-doc";
 import type { StylePreset } from "@neo-fm/style-presets";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
@@ -63,6 +63,13 @@ export function CreationCanvas() {
   const [sections, setSections] = useState<Section[]>(() => initialSections(DEFAULT_FORM));
   const [libraryOpenFor, setLibraryOpenFor] = useState<number | null>(null);
 
+  // Ref to the form root so that picking a preset can scroll the page to
+  // the form selectors and pull keyboard focus onto the title input. The
+  // ref is also handy for the e2e Playwright spec which asserts the form
+  // is the active scroll target after a preset click.
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
+
   // When the global style or duration changes, regenerate the section
   // list from scratch (Sprint 2 keeps section editing simple: one
   // section per length tier; the co-composer can fan it out further if
@@ -94,6 +101,7 @@ export function CreationCanvas() {
   }
 
   function pickPreset(p: StylePreset) {
+    const alreadyActive = activePreset?.id === p.id;
     setActivePreset(p);
     const d = p.song_document;
     const nextForm: FormState = {
@@ -108,6 +116,29 @@ export function CreationCanvas() {
     if (!title.trim()) setTitle(p.title);
     setError(null);
     setStatus(`Loaded preset: ${p.title}`);
+
+    // Skip scroll/focus when the user re-clicks an already-active card so
+    // the page does not feel jumpy on small screens.
+    if (alreadyActive) return;
+
+    // Respect the user's motion preference. SSR-safe access via
+    // typeof window.
+    const reducedMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    formRef.current?.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    // Pull keyboard focus to the next logical control (the title input)
+    // on the following animation frame so the scroll has a chance to
+    // begin first.
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        titleInputRef.current?.focus({ preventScroll: true });
+      });
+    }
   }
 
   const totalLyricChars = useMemo(
@@ -175,7 +206,7 @@ export function CreationCanvas() {
 
   return (
     <>
-      <form className="flex flex-col gap-6" onSubmit={onSubmit}>
+      <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
           onPick={pickPreset}
           activeId={activePreset?.id ?? null}
@@ -184,6 +215,7 @@ export function CreationCanvas() {
         <Field name="title" label="Title">
           <input
             id="title"
+            ref={titleInputRef}
             name="title"
             type="text"
             value={title}

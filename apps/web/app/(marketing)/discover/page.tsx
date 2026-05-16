@@ -13,6 +13,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CoverArt } from "@/components/cover-art";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
@@ -50,6 +51,13 @@ type DiscoverRow = {
     language: string;
     style_family: string;
   } | null;
+  cover_art:
+    | {
+        url: string;
+        is_current: boolean;
+        created_at: string;
+      }[]
+    | null;
 };
 
 export default async function DiscoverPage({
@@ -69,7 +77,8 @@ export default async function DiscoverPage({
     .select(
       `
       id, public_id, published_at, user_id,
-      song_documents!inner ( title, language, style_family )
+      song_documents!inner ( title, language, style_family ),
+      cover_art ( url, is_current, created_at )
     `,
     )
     .eq("status", "completed")
@@ -84,6 +93,38 @@ export default async function DiscoverPage({
     .order("published_at", { ascending: false, nullsFirst: false })
     .range(offset, offset + PAGE_SIZE - 1)
     .returns<DiscoverRow[]>();
+
+  // Pre-sign cover-art URLs server-side so the rendered cards already
+  // have an immediately-renderable src. We do this here rather than in a
+  // client effect because the discover feed is fully SSR'd for SEO.
+  const coverApi = supabase.storage.from("cover-art");
+  const COVER_BUCKET_PREFIX = "cover-art/";
+  const COVER_TTL_SECONDS = 60 * 60;
+  const coverUrlByJob = new Map<string, string | null>();
+  await Promise.all(
+    (data ?? []).map(async (row) => {
+      const coverRow =
+        (row.cover_art ?? [])
+          .slice()
+          .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+          .find((c) => c.is_current) ??
+        (row.cover_art ?? [])
+          .slice()
+          .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
+      if (!coverRow?.url) {
+        coverUrlByJob.set(row.id, null);
+        return;
+      }
+      const path = coverRow.url.startsWith(COVER_BUCKET_PREFIX)
+        ? coverRow.url.slice(COVER_BUCKET_PREFIX.length)
+        : coverRow.url;
+      const { data: signed } = await coverApi.createSignedUrl(
+        path,
+        COVER_TTL_SECONDS,
+      );
+      coverUrlByJob.set(row.id, signed?.signedUrl ?? null);
+    }),
+  );
 
   // Optional follow-on: handles for each author. Single small lookup
   // batched into one query against the unauthenticated view.
@@ -164,46 +205,58 @@ export default async function DiscoverPage({
           .
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {data.map((row) => {
             const doc = row.song_documents;
             const title =
               doc?.title?.trim() ||
               (doc ? `${prettyStyle(doc.style_family)} song` : "Song");
             const author = handleMap[row.user_id];
+            const coverUrl = coverUrlByJob.get(row.id) ?? null;
             return (
-              <li
-                key={row.id}
-                className="flex flex-col gap-2 rounded-lg border border-muted/20 bg-muted/5 p-4 transition hover:border-accent/30"
-              >
+              <li key={row.id} className="group flex flex-col gap-2">
                 <Link
                   href={`/s/${row.public_id}`}
-                  className="text-base font-medium text-foreground hover:text-accent"
+                  className="relative block aspect-square overflow-hidden rounded-lg border border-muted/20 bg-muted/5 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  aria-label={`${title} – open public page`}
                 >
-                  {title}
+                  <CoverArt
+                    url={coverUrl}
+                    seed={row.public_id}
+                    styleFamily={doc?.style_family ?? null}
+                    alt={title}
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition group-hover:opacity-100"
+                  />
                 </Link>
-                <p className="text-xs text-foreground/55">
-                  {doc ? prettyStyle(doc.style_family) : "—"}
-                  {doc ? ` · ${prettyLanguage(doc.language)}` : ""}
-                </p>
-                {author ? (
-                  <p className="text-xs text-foreground/50">
-                    by{" "}
-                    <Link
-                      href={`/u/${author}`}
-                      className="underline hover:text-foreground"
-                    >
-                      @{author}
-                    </Link>
+                <div className="flex flex-col gap-0.5">
+                  <Link
+                    href={`/s/${row.public_id}`}
+                    className="line-clamp-1 text-sm font-medium text-foreground hover:text-accent"
+                    title={title}
+                  >
+                    {title}
+                  </Link>
+                  <p className="text-xs text-foreground/55">
+                    {doc ? prettyStyle(doc.style_family) : "—"}
+                    {doc ? ` · ${prettyLanguage(doc.language)}` : ""}
                   </p>
-                ) : (
-                  <p className="text-xs text-foreground/40">by anonymous</p>
-                )}
-                {row.published_at ? (
-                  <p className="text-[11px] text-foreground/35">
-                    {new Date(row.published_at).toLocaleDateString()}
-                  </p>
-                ) : null}
+                  {author ? (
+                    <p className="text-xs text-foreground/50">
+                      by{" "}
+                      <Link
+                        href={`/u/${author}`}
+                        className="underline hover:text-foreground"
+                      >
+                        @{author}
+                      </Link>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-foreground/40">by anonymous</p>
+                  )}
+                </div>
               </li>
             );
           })}

@@ -219,7 +219,77 @@ docker compose -f infra/docker-compose.dgx.yml \
 
 Then re-run the smoke matrix in `docs/REPRODUCIBILITY.md` §5.
 
-### 5.4 Roll back a bad migration
+### 5.4 Email (Resend) wiring
+
+The `notify-job-complete` Edge Function and its trigger are deployed
+(v1.2, migration 0029, ADR 0022) but **dormant** until the operator
+sets the four secrets and the vault entry. Until then, the trigger
+short-circuits to a no-op and nothing breaks.
+
+**Step 1 -- verify the Resend sender domain.**
+
+1. Go to https://resend.com/domains.
+2. If `neo-fm.app` (or your production domain) is not listed, click
+   "Add Domain", paste the DNS records into your registrar, and wait
+   for verification (typically <10 minutes).
+3. While the domain is unverified, the function falls back to
+   `neo-fm <onboarding@resend.dev>`, Resend's sandbox sender. Emails
+   send fine but the from-address looks generic.
+
+**Step 2 -- set the four Edge Function secrets.**
+
+Dashboard path: `Project Settings -> Edge Functions -> Secrets`. Add
+each row:
+
+| Key | Value |
+| --- | --- |
+| `RESEND_API_KEY` | The Resend API key (starts with `re_`). |
+| `RESEND_FROM` | `neo-fm <noreply@neo-fm.app>` once the domain is verified, otherwise omit (the function defaults to the sandbox sender). |
+| `NEO_FM_PUBLIC_APP_URL` | `https://neo-fm-web.vercel.app` (or your production URL). |
+| `NEO_FM_WEBHOOK_SECRET` | A 32-byte hex string. Generate locally with `openssl rand -hex 32`. Must match the vault entry from step 3 exactly. |
+
+**Step 3 -- populate the vault entry.**
+
+Run this in the dashboard SQL editor (replace the value with the same
+hex you put in `NEO_FM_WEBHOOK_SECRET`):
+
+```sql
+select vault.create_secret(
+  '<paste-the-same-hex>',
+  'neo_fm_webhook_secret',
+  'Shared secret between the notify_job_complete trigger and Edge Function. ADR 0022.'
+);
+```
+
+If a row already exists (`vault.secrets`), use:
+
+```sql
+update vault.secrets set secret = '<new-hex>' where name = 'neo_fm_webhook_secret';
+```
+
+**Step 4 -- smoke.**
+
+1. Pick a real test user, e.g. `e2e-smoke@neo-fm.test`.
+2. Queue a 30-second song via the UI.
+3. Wait for the job to reach `completed`.
+4. Confirm:
+   - Resend (https://resend.com/emails) shows the message.
+   - The user's inbox has the email; the deep link opens the song
+     detail page.
+
+**Step 5 -- rotation.**
+
+To rotate `NEO_FM_WEBHOOK_SECRET`:
+
+1. Generate a new hex: `openssl rand -hex 32`.
+2. Update the vault row (`update vault.secrets ...`).
+3. Update the function env var in the dashboard.
+4. The next completed job exercises the new pair.
+
+To rotate `RESEND_API_KEY`: issue a new key in Resend, update the
+function env var, revoke the old key.
+
+### 5.5 Roll back a bad migration
 
 1. Open the dashboard SQL editor.
 2. Manually craft an inverse migration. Tag it
@@ -229,6 +299,73 @@ Then re-run the smoke matrix in `docs/REPRODUCIBILITY.md` §5.
 4. **Never** drop a migration row from the migrations table by
    hand. The CLI uses ordering to compute which migrations to
    apply on the next push.
+
+### 5.5 Stripe billing wiring (v1.2)
+
+ADR 0023 has the architecture. This is the operator checklist.
+
+`STRIPE_*` envs are absent by default; the product runs in "dummy /
+waitlist" mode and the API returns 503 `billing_disabled` to any
+attempt to start a checkout. To enable real billing:
+
+1. **Dashboard -> Products** (test mode first):
+   - Create product "neo-fm Creator", monthly recurring price
+     ₹399 INR. Note the `price_...` id.
+   - Create product "neo-fm Pro", monthly recurring price
+     ₹1,499 INR. Note the `price_...` id.
+
+2. **Dashboard -> Developers -> API keys**:
+   - Copy the Publishable key (`pk_test_...`) and the Secret key
+     (`sk_test_...`).
+
+3. **Dashboard -> Developers -> Webhooks**:
+   - Add endpoint:
+     `https://neo-fm-web.vercel.app/api/billing/webhook`.
+   - Listen for the events:
+     `checkout.session.completed`,
+     `customer.subscription.created`,
+     `customer.subscription.updated`,
+     `customer.subscription.deleted`,
+     `customer.subscription.paused`,
+     `customer.subscription.resumed`.
+   - Reveal the signing secret (`whsec_...`).
+
+4. **Vercel -> Project Settings -> Environment Variables** (set both
+   `production` and `preview`):
+
+   | Name | Value |
+   | --- | --- |
+   | `STRIPE_SECRET_KEY` | `sk_test_...` |
+   | `STRIPE_WEBHOOK_SECRET` | `whsec_...` |
+   | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_test_...` |
+   | `STRIPE_PRICE_CREATOR_ID` | `price_...` |
+   | `STRIPE_PRICE_PRO_ID` | `price_...` |
+   | `NEXT_PUBLIC_APP_URL` | `https://neo-fm-web.vercel.app` |
+
+5. **Trigger a rebuild** so Next picks up the env vars (push any
+   commit or hit "Redeploy" in the Vercel UI).
+
+6. **Smoke** with a test card on `/pricing`:
+   - Pick Creator -> redirects to Stripe Checkout.
+   - Use `4242 4242 4242 4242`, any future expiry, any CVC.
+   - On return you land at `/account?upgraded=creator`.
+   - Verify: in Supabase SQL editor,
+     `select tier from public.users where id = '<user_id>';` should
+     read `creator`. `select status from public.user_billing` should
+     be `active`.
+   - Visit `/account`, click "Manage subscription" -> opens the
+     Stripe Customer Portal.
+
+7. **Rotate**: when migrating to live keys, replace all five Stripe
+   envs and trigger a rebuild. The DB rows persist; nothing else
+   changes.
+
+8. **Disable**: unset the five `STRIPE_*` envs. The product reverts to
+   waitlist mode. Existing paying users keep their tier in
+   `public.users.tier` until a future event flips them; for a clean
+   downgrade, run
+   `update public.users set tier = 'free' where id in (select user_id
+   from public.user_billing);` and `truncate public.user_billing;`.
 
 ---
 

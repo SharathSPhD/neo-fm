@@ -1,0 +1,53 @@
+{
+  "startedAt": "2026-05-16T17:30:30.604Z",
+  "baseUrl": "https://neo-fm-web.vercel.app",
+  "steps": [
+    {
+      "name": "sign-in",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library"
+    },
+    {
+      "name": "library-grid-default",
+      "ok": true,
+      "gridSelected": "true"
+    },
+    {
+      "name": "library-list-toggle",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library?view=list"
+    },
+    {
+      "name": "command-palette-opens",
+      "ok": true,
+      "cmdkRoot": true
+    },
+    {
+      "name": "command-palette-navigates",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/discover"
+    },
+    {
+      "name": "discover-renders",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/discover"
+    },
+    {
+      "name": "remix-creates-job",
+      "ok": true,
+      "beforePath": "/songs/5d789339-1927-4039-a5f4-b8493f087507",
+      "remixUrl": "https://neo-fm-web.vercel.app/songs/78cf4b76-bd5f-42ac-af8c-e87e734913b2"
+    },
+    {
+      "name": "remix-shows-backlink",
+      "ok": true,
+      "backlink": "Remixed from Western in English -- 2026-05-15 (remix)"
+    }
+  ],
+  "remixResponse": {
+    "status": 202,
+    "body": "{\"job_id\":\"78cf4b76-bd5f-42ac-af8c-e87e734913b2\",\"song_id\":\"2692f032-4d8a-4977-8215-99712838611b\",\"status\":\"queued\",\"remixed_from\":\"5d789339-1927-4039-a5f4-b8493f087507\"}"
+  },
+  "ok": true,
+  "finishedAt": "2026-05-16T17:30:51.918Z"
+}

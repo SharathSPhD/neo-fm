@@ -1,27 +1,27 @@
-// supabase/functions/notify-job-complete (Sprint 4)
+// supabase/functions/notify-job-complete -- transactional email on job complete
 //
-// Triggered by a Supabase Database Webhook on `public.jobs` UPDATE
+// Triggered by a Postgres trigger on public.jobs UPDATE
 // (filter: new.status = 'completed' AND old.status <> 'completed').
 //
 // The function:
 //   1. Validates the webhook payload shape.
-//   2. Uses the service-role key to look up the user's auth email.
-//   3. Sends a transactional mail via Resend (RESEND_API_KEY) with the
-//      song detail page link. Falls back to logging when no Resend
-//      key is configured so local supabase functions serve can still
-//      exercise the path.
-//   4. Returns 204 on success so the webhook is marked delivered.
+//   2. Validates the x-webhook-secret header against NEO_FM_WEBHOOK_SECRET.
+//   3. Uses the service-role key to look up the user's auth email and the
+//      song's title (joined via PostgREST embedding).
+//   4. Sends a transactional mail via Resend (RESEND_API_KEY) with the
+//      song detail page link. Falls back to logging when no Resend key
+//      is configured so we can dry-run before the keys are wired.
+//   5. Returns 204 on success so the webhook is marked delivered.
 //
-// Webhook setup (one-time, performed manually in the Supabase studio):
-//   Source  : public.jobs UPDATE
-//   Method  : POST
-//   URL     : https://<project>.functions.supabase.co/notify-job-complete
-//   Headers : x-webhook-secret: <NEO_FM_WEBHOOK_SECRET>
-//
-// Verified to compile on the Deno 1.45+ Supabase Edge runtime.
+// Webhook setup is performed by migration 0029_notify_job_complete_webhook.sql.
+// Required secrets (set via Supabase dashboard or the management API):
+//   RESEND_API_KEY               -- Resend account API key
+//   RESEND_FROM                  -- verified sender, e.g. "neo-fm <noreply@...>"
+//   NEO_FM_PUBLIC_APP_URL        -- e.g. https://neo-fm-web.vercel.app
+//   NEO_FM_WEBHOOK_SECRET        -- shared secret between the trigger and this fn
+// (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically.)
 //
 // deno-lint-ignore-file no-explicit-any
-/// <reference path="https://esm.sh/v135/@supabase/functions-js@2.4.1/src/edge-runtime.d.ts" />
 
 declare const Deno: { env: { get(name: string): string | undefined } };
 
@@ -41,10 +41,10 @@ type WebhookPayload = {
 };
 
 const PUBLIC_APP_URL =
-  Deno.env.get("NEO_FM_PUBLIC_APP_URL") ?? "https://neo-fm.app";
+  Deno.env.get("NEO_FM_PUBLIC_APP_URL") ?? "https://neo-fm-web.vercel.app";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const RESEND_FROM =
-  Deno.env.get("RESEND_FROM") ?? "neo-fm <noreply@neo-fm.app>";
+  Deno.env.get("RESEND_FROM") ?? "neo-fm <onboarding@resend.dev>";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -66,17 +66,39 @@ async function fetchUserEmail(userId: string): Promise<string | null> {
   return body.email ?? null;
 }
 
+async function fetchSongTitle(songId: string): Promise<string | null> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+  // Joins jobs -> song_documents via PostgREST embedding so the subject
+  // line reads "Morning Rain in Saveri is ready" rather than a UUID.
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/jobs?id=eq.${encodeURIComponent(songId)}&select=song_documents(title)`,
+    {
+      headers: {
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+      },
+    },
+  );
+  if (!res.ok) return null;
+  const rows = (await res.json()) as Array<{
+    song_documents?: { title?: string | null } | null;
+  }>;
+  return rows?.[0]?.song_documents?.title ?? null;
+}
+
 async function sendEmail(opts: {
   to: string;
   songId: string;
+  title: string | null;
 }): Promise<void> {
   const songUrl = `${PUBLIC_APP_URL}/songs/${opts.songId}`;
-  const subject = "Your neo-fm song is ready";
+  const title = opts.title?.trim() || "Your neo-fm song";
+  const subject = `${title} is ready`;
   const html = `<!doctype html>
 <html><body style="font-family:ui-sans-serif,system-ui,sans-serif;
   background:#0a0612;color:#fef7ea;padding:32px;line-height:1.5;">
   <h1 style="font-weight:500;letter-spacing:-0.02em;">
-    Your song is ready
+    ${title} is ready
   </h1>
   <p>The DGX worker just finished generating your track.</p>
   <p>
@@ -91,12 +113,13 @@ async function sendEmail(opts: {
   </p>
 </body></html>`;
   const text =
-    `Your neo-fm song is ready.\n\n` +
+    `${title} is ready.\n\n` +
     `Listen: ${songUrl}\n\n` +
     `--\nneo-fm`;
   if (!RESEND_API_KEY) {
     console.log("[notify-job-complete] no RESEND_API_KEY; would send", {
       to: opts.to,
+      subject,
       songUrl,
     });
     return;
@@ -143,7 +166,6 @@ async function sendEmail(opts: {
     payload.schema !== "public" ||
     payload.record?.status !== "completed"
   ) {
-    // Not relevant; mark as delivered.
     return new Response(null, { status: 204 });
   }
   // Suppress duplicate sends on re-deliveries.
@@ -164,7 +186,8 @@ async function sendEmail(opts: {
       console.log("[notify-job-complete] no email for user", { userId });
       return new Response(null, { status: 204 });
     }
-    await sendEmail({ to: email, songId });
+    const title = await fetchSongTitle(songId);
+    await sendEmail({ to: email, songId, title });
     return new Response(null, { status: 204 });
   } catch (err) {
     console.error("[notify-job-complete] failed", err);

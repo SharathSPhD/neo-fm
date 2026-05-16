@@ -73,3 +73,11 @@ logs/
 # Misc
 coverage/
 .cache/
+.vercel
+
+# Playwright e2e outputs (HTML reports, traces, screenshots, etc).
+# Specs themselves live under apps/web/tests/e2e/ and are tracked;
+# we only ignore the runtime artefacts.
+**/.playwright-report/
+**/.playwright-output/
+playwright/.cache/

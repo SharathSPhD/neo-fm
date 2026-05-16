@@ -12,6 +12,8 @@
  */
 import Link from "next/link";
 
+import { CommandPalette } from "./command-palette";
+import { CommandPaletteTrigger } from "./command-palette-trigger";
 import { UserMenu } from "./user-menu";
 
 type NavUser = {
@@ -56,6 +58,7 @@ export function AppShell({
         {children}
       </div>
       <MobileBottomNav active={active} />
+      <CommandPalette />
     </div>
   );
 }
@@ -66,7 +69,7 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <Link
-            href="/library"
+            href="/"
             className="text-base font-semibold tracking-tight text-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-lg"
           >
             neo-fm
@@ -94,6 +97,7 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
           </nav>
         </div>
         <div className="flex items-center gap-2">
+          <CommandPaletteTrigger />
           <Link
             href="/songs/new"
             className="hidden h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"

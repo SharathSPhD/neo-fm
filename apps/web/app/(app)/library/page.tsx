@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LibraryToolbar } from "./toolbar";
 import { LibraryOnboardingModal } from "./onboarding-modal";
 import { Pagination } from "./pagination";
+import { SongGrid } from "./song-grid";
 import { SongList } from "./song-list";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,13 @@ type RawJobRow = {
         created_at: string;
       }[]
     | null;
+  cover_art:
+    | {
+        url: string;
+        is_current: boolean;
+        created_at: string;
+      }[]
+    | null;
 };
 
 type SearchParams = {
@@ -53,7 +61,10 @@ type SearchParams = {
   sort?: string;
   fav?: string;
   page?: string;
+  view?: string;
 };
+
+const ALLOWED_VIEWS = new Set(["grid", "list"]);
 
 const ALLOWED_STYLES = new Set([
   "carnatic",
@@ -95,6 +106,9 @@ export default async function LibraryPage({
     : "newest";
   const favOnly = searchParams.fav === "1";
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const view = ALLOWED_VIEWS.has(searchParams.view ?? "")
+    ? (searchParams.view as "grid" | "list")
+    : "grid";
 
   // Build the count query separately from the row query so we can
   // show "showing X of Y" without fetching every row.
@@ -122,7 +136,8 @@ export default async function LibraryPage({
       `
       id, status, error, created_at, finished_at, is_favorite,
       song_documents!inner ( id, language, style_family, title ),
-      tracks ( url, duration_seconds, format, created_at )
+      tracks ( url, duration_seconds, format, created_at ),
+      cover_art ( url, is_current, created_at )
     `,
     )
     .eq("user_id", userData.user.id);
@@ -155,7 +170,9 @@ export default async function LibraryPage({
     .returns<RawJobRow[]>();
 
   const TRACK_BUCKET_PREFIX = "tracks/";
+  const COVER_BUCKET_PREFIX = "cover-art/";
   const tracksApi = supabase.storage.from("tracks");
+  const coverApi = supabase.storage.from("cover-art");
   const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
   let songs = await Promise.all(
@@ -174,6 +191,23 @@ export default async function LibraryPage({
         );
         audioUrl = signed?.signedUrl ?? null;
       }
+      // Pick the most-recent cover-art row marked is_current, fall back to
+      // the most-recent row overall (some legacy rows pre-date the flag).
+      const coverRows = (row.cover_art ?? []).slice().sort((a, b) =>
+        a.created_at < b.created_at ? 1 : -1,
+      );
+      const coverRow = coverRows.find((c) => c.is_current) ?? coverRows[0];
+      let coverUrl: string | null = null;
+      if (coverRow?.url) {
+        const path = coverRow.url.startsWith(COVER_BUCKET_PREFIX)
+          ? coverRow.url.slice(COVER_BUCKET_PREFIX.length)
+          : coverRow.url;
+        const { data: signed } = await coverApi.createSignedUrl(
+          path,
+          SIGNED_URL_TTL_SECONDS,
+        );
+        coverUrl = signed?.signedUrl ?? null;
+      }
       return {
         id: row.id,
         status: row.status,
@@ -185,6 +219,7 @@ export default async function LibraryPage({
         style_family: row.song_documents?.style_family ?? null,
         audio_url: audioUrl,
         duration_seconds: latestTrack?.duration_seconds ?? null,
+        cover_url: coverUrl,
       };
     }),
   );
@@ -215,7 +250,7 @@ export default async function LibraryPage({
       </header>
 
       <LibraryToolbar
-        defaults={{ q, style, lang, status, sort, favOnly }}
+        defaults={{ q, style, lang, status, sort, favOnly, view }}
       />
 
       {error ? (
@@ -237,9 +272,13 @@ export default async function LibraryPage({
         )
       ) : (
         <>
-          <SongList initialSongs={songs} userId={userData.user.id} />
+          {view === "grid" ? (
+            <SongGrid initialSongs={songs} userId={userData.user.id} />
+          ) : (
+            <SongList initialSongs={songs} userId={userData.user.id} />
+          )}
           {totalPages > 1 ? (
-            <Pagination current={page} total={totalPages} />
+            <Pagination current={page} total={totalPages} view={view} />
           ) : null}
         </>
       )}
