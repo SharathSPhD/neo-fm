@@ -28,17 +28,13 @@ async function checkSupabase(): Promise<{
   if (!url || !key) return { status: "missing", latencyMs: null };
   const t0 = Date.now();
   try {
-    // Supabase's gateway-level health endpoint. Sends the
-    // publishable / anon key so the API gateway accepts the call.
-    // (`/auth/v1/health` rejects without a key; `/rest/v1/` returns
-    // a 200 with `{}` when the project is reachable.)
-    const res = await fetch(`${url.replace(/\/$/, "")}/rest/v1/`, {
+    // Supabase's `/auth/v1/settings` returns 200 + JSON when the
+    // project is reachable and the publishable / anon key is
+    // accepted. (`/auth/v1/health` and `/rest/v1/` both require a
+    // secret key, so they can't double as anon-callable probes.)
+    const res = await fetch(`${url.replace(/\/$/, "")}/auth/v1/settings`, {
       signal: AbortSignal.timeout(800),
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        "user-agent": "neo-fm-health/1.0",
-      },
+      headers: { apikey: key, "user-agent": "neo-fm-health/1.0" },
     });
     if (!res.ok) return { status: "degraded", latencyMs: Date.now() - t0 };
     return { status: "ok", latencyMs: Date.now() - t0 };
