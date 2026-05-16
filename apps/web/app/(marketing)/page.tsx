@@ -19,12 +19,12 @@ const VALUE_PROPS = [
   {
     title: "Composition-aware",
     body:
-      "Not a TTS hack. neo-fm models verse / sthayi / pallavi and lets the co-composer pick the right raga, tala, and orchestration for the style you chose.",
+      "neo-fm models verse / sthayi / pallavi and lets the co-composer pick the right raga, tala, and orchestration for the style you chose.",
   },
   {
     title: "India-first by design",
     body:
-      "Carnatic, Hindustani, and Kannada-folk co-composers are built in. Hindi, Kannada, Tamil, Telugu, and Bengali vocals render in Devanagari, Tamil, Kannada, Telugu, and Bengali scripts.",
+      "Carnatic, Hindustani, Kannada light-classical, Kannada folk, and Tamil folk co-composers are built in. Hindi, Kannada, Tamil, Telugu, and Bengali vocals render in Devanagari, Tamil, Kannada, Telugu, and Bengali scripts.",
   },
   {
     title: "From one line to a song",
@@ -102,12 +102,12 @@ function Hero() {
           >
             See the templates
           </Link>
-          <a
-            href="https://github.com/SharathSPhD/neo-fm"
+          <Link
+            href="/discover"
             className="rounded-md px-2 py-2 text-foreground/70 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           >
-            View source ↗
-          </a>
+            Listen first →
+          </Link>
         </div>
         <dl className="grid grid-cols-3 gap-6 pt-4 text-sm text-foreground/70 sm:gap-12">
           <div>
@@ -302,16 +302,27 @@ function Footer() {
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p>
-          neo-fm · Apache-2.0 ·{" "}
-          <a
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
-            href="https://github.com/SharathSPhD/neo-fm"
-          >
-            github.com/SharathSPhD/neo-fm
-          </a>
+          © {new Date().getFullYear()} neo-fm · India-first AI music
         </p>
-        <p className="text-xs text-foreground/40">
-          Made with HeartMuLa-OSS-3B · Indic vocals by kenpath/svara-tts-v1.
+        <p className="flex flex-wrap items-center gap-4 text-xs text-foreground/50">
+          <Link
+            href="/pricing"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/help"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Help
+          </Link>
+          <Link
+            href="/feedback"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Contact
+          </Link>
         </p>
       </div>
     </footer>

@@ -24,12 +24,12 @@ const FAQ: readonly FaqEntry[] = [
     q: "How does neo-fm generate music?",
     a: (
       <p>
-        We ship the song through a composition-aware pipeline: a co-composer
-        elaborates your section list (raga / tala / orchestration), then
-        HeartMuLa generates a 44.1 kHz stem on our DGX. A vocal-synth
-        backend (Svara-TTS for Indic native script, Indic Parler-TTS for
-        Hinglish / English) lays down the singing, and a mixer aligns and
-        masters the final track. The whole loop usually takes 60-90 seconds.
+        Your song goes through a composition-aware pipeline. A co-composer
+        elaborates your section list (raga, tala, orchestration) into a
+        full arrangement, our music engine renders the instrumental, an
+        Indic-aware vocal layer sings the lyrics in the right script, and
+        a mixer aligns and masters the final track. The whole loop
+        usually takes 60–90 seconds.
       </p>
     ),
   },
@@ -37,9 +37,10 @@ const FAQ: readonly FaqEntry[] = [
     q: "What styles do you support?",
     a: (
       <p>
-        Carnatic, Hindustani, Kannada folk, and Western. Each style has its
+        Carnatic, Hindustani, Kannada light-classical (bhavageete), Kannada
+        folk (janapada), Tamil folk, and Western pop. Each style has its
         own section grammar (pallavi / anupallavi / charanam for Carnatic,
-        mukhda / antara for Hindustani, etc) and its own preset gallery on
+        mukhda / antara for Hindustani, etc.) and its own preset gallery on
         the new-song page.
       </p>
     ),
@@ -48,10 +49,10 @@ const FAQ: readonly FaqEntry[] = [
     q: "What languages can I sing in?",
     a: (
       <p>
-        Hindi, Kannada, and English. Hinglish (Hindi in Latin script) is
-        treated as a first-class case and gets phoneme-hinted before
-        synthesis (ADR 0020). Sanskrit shlokas in Devanagari work too --
-        they share the Hindi pipeline.
+        Hindi, Kannada, Tamil, and English today. Hinglish (Hindi in Latin
+        script) is treated as a first-class case and gets phoneme-hinted
+        before synthesis. Sanskrit shlokas in Devanagari work too — they
+        share the Hindi pipeline.
       </p>
     ),
   },
@@ -60,8 +61,8 @@ const FAQ: readonly FaqEntry[] = [
     a: (
       <p>
         3 completed songs per UTC month, up to 90 seconds each. Failed
-        renders don&apos;t count against your quota (ADR 0014). Want longer
-        songs and a bigger budget? See <Link href="/pricing">pricing</Link>.
+        renders don&apos;t count against your quota. Want longer songs
+        and a bigger budget? See <Link href="/pricing">pricing</Link>.
       </p>
     ),
   },
@@ -80,11 +81,9 @@ const FAQ: readonly FaqEntry[] = [
     q: "My song says 'Audio URL pending' forever. What do I do?",
     a: (
       <p>
-        Click <strong>Recover</strong> on the row. Behind the scenes the
-        button calls the orphan recovery RPC (ADR introduced in Sprint C),
-        which re-queues the job from where it stalled. If the same job
-        fails twice, drop us a note from the{" "}
-        <Link href="/feedback">feedback form</Link>.
+        Click <strong>Recover</strong> on the row. The button re-queues
+        the job from where it stalled. If the same job fails twice, drop
+        us a note from the <Link href="/feedback">feedback form</Link>.
       </p>
     ),
   },
@@ -92,9 +91,9 @@ const FAQ: readonly FaqEntry[] = [
     q: "Can I download stems?",
     a: (
       <p>
-        Stems (vocal / melody / percussion) are a <Link href="/pricing">Creator+ feature</Link>.
-        We export 44.1 kHz WAV per stem. The mastered mix is always
-        downloadable on every tier.
+        Stems (vocal / melody / percussion) are a{" "}
+        <Link href="/pricing">Creator+ feature</Link>. We export 44.1 kHz
+        WAV per stem. The mastered mix is always downloadable on every tier.
       </p>
     ),
   },

@@ -202,8 +202,8 @@ describe("POST /api/songs", () => {
   // ---------- Co-composer integration (Sprint 1, Phase 6) ----------------
   //
   // The adversarial review flagged that /api/songs forwarded the user's
-  // raw Song Document straight to the RPC -- HeartMuLa never saw the
-  // co-composer's tags / raga / tala / instrumentation for any style.
+  // raw Song Document straight to the RPC -- the music engine never saw
+  // the co-composer's tags / raga / tala / instrumentation for any style.
   // These tests guard against regressing back to that state.
 
   it("happy path western: persists composer-elaborated document, not raw", async () => {

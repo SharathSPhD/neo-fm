@@ -81,3 +81,11 @@ coverage/
 **/.playwright-report/
 **/.playwright-output/
 playwright/.cache/
+
+# Internal product docs / ADRs / runbooks: kept locally only, never
+# pushed to the remote. We deliberately do NOT delete the working tree
+# copies — only stop tracking them. History rewrite of past docs/
+# commits is intentionally out of scope (it would force-push and break
+# Vercel's deploy lineage). See sprint-1-privacy/SUMMARY.md.
+docs/
+voice-tts.md
