@@ -2,6 +2,16 @@
 
 Captured 2026-05-16 during v1.2 Sprint 5c.
 
+> **Status update:** Sprint 5c completed. Smoke is green on production
+> (`neo-fm-web.vercel.app`, commit `5b38fce`). See
+> [`sprint-5-stripe-smoke/SUMMARY.md`](./sprint-5-stripe-smoke/SUMMARY.md) for the
+> recorded run; screenshots live alongside it. The playbook below stays as the
+> standing operator runbook for rotating keys or onboarding a new Stripe
+> account. **Gotcha learned in this sprint:** when pasting price IDs from the
+> Stripe Dashboard or Vercel reveal UI, make sure the value field contains
+> **only** the `price_...` token -- copying the label and newlines around it
+> corrupts the env and Stripe rejects with `No such price`.
+
 ## What the agent did automatically (Stripe MCP, test mode)
 
 Stripe account confirmed in **TEST mode** (`livemode: false`,
