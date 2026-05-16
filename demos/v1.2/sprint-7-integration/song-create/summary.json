@@ -1,0 +1,40 @@
+{
+  "startedAt": "2026-05-16T17:39:44.938Z",
+  "baseUrl": "https://neo-fm-web.vercel.app",
+  "email": "e2e-smoke@neo-fm.test",
+  "steps": [
+    {
+      "name": "sign-in",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library"
+    },
+    {
+      "name": "post-songs",
+      "ok": true,
+      "status": 202,
+      "body": {
+        "job_id": "0c11fab0-8397-4c97-8d66-55784011a4bf",
+        "status": "queued",
+        "song_id": "c11e2380-c0f5-45c3-99e5-5d5e03fb69d8"
+      }
+    },
+    {
+      "name": "job-reaches-terminal",
+      "ok": true,
+      "status": "completed",
+      "error": null,
+      "durationMs": 42884
+    },
+    {
+      "name": "signed-audio-url-present",
+      "ok": true,
+      "url": "https://lsxicfgqtdxvlcivlwmd.supabase.co/storage/v1/object/sign/tracks/0c11fab0-8397-4c97-8d66-55784011a4bf/ad2fa836-54f",
+      "duration": 30
+    }
+  ],
+  "jobId": "0c11fab0-8397-4c97-8d66-55784011a4bf",
+  "finalStatus": "completed",
+  "finalDurationMs": 42884,
+  "ok": true,
+  "finishedAt": "2026-05-16T17:40:32.413Z"
+}
