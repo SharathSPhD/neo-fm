@@ -1,13 +1,24 @@
 /**
- * /pricing -- public tier comparison + waitlist CTAs (Sprint E).
+ * /pricing -- public tier comparison + tier CTAs.
  *
- * v1.1 deliberately ships *no* real billing. Creator and Pro show
- * "Join the waitlist" CTAs that POST to /api/waitlist; Free is the
- * existing quota tier and links straight to the app. A real Stripe
- * wiring lands in v1.2.
+ * Sprint E (v1.1) shipped this page with waitlist-only CTAs.
+ * Sprint 5b (v1.2) layers real Stripe Checkout on top:
+ *
+ *   - if billing env is fully configured AND the visitor is signed in,
+ *     Creator/Pro render an Upgrade button that POSTs to
+ *     /api/billing/checkout and forwards to Stripe Checkout.
+ *   - otherwise we keep the original waitlist CTA so v1.1 behaviour is
+ *     untouched. This matters because we run in "dummy" mode whenever
+ *     the operator hasn't filled in the Stripe env yet.
+ *
+ * The Free CTA is unchanged.
  */
 import type { Metadata } from "next";
 
+import { isBillingEnabled } from "@/lib/billing/config";
+import { createServerClient } from "@/lib/supabase/server";
+
+import { UpgradeButton } from "./upgrade-button";
 import { WaitlistButton } from "./waitlist-button";
 
 export const metadata: Metadata = {
@@ -81,7 +92,17 @@ const TIERS: readonly Tier[] = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  // Server-side check so we don't bundle the Stripe client when billing
+  // is off. `isBillingEnabled()` is also called inside /api/billing/*
+  // so dummy mode always returns 503, never an undefined-key crash.
+  const billingEnabled = isBillingEnabled();
+  let signedIn = false;
+  if (billingEnabled) {
+    const supabase = createServerClient();
+    const { data } = await supabase.auth.getUser();
+    signedIn = Boolean(data?.user);
+  }
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
       <header className="flex flex-col gap-3 text-center">
@@ -139,6 +160,18 @@ export default function PricingPage() {
                   className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
                 >
                   {tier.cta.label}
+                </a>
+              ) : billingEnabled && signedIn ? (
+                <UpgradeButton
+                  tier={tier.cta.tier}
+                  label={`Upgrade to ${tier.label}`}
+                />
+              ) : billingEnabled ? (
+                <a
+                  href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
+                  className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
+                >
+                  {`Upgrade to ${tier.label}`}
                 </a>
               ) : (
                 <WaitlistButton tier={tier.cta.tier} label={tier.cta.label} />
