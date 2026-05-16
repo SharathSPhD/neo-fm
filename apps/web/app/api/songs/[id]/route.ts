@@ -28,6 +28,7 @@ type SongWithRelations = {
     language: string;
     style_family: string;
     document_json: unknown;
+    title: string | null;
     created_at: string;
   } | null;
   tracks:
@@ -67,7 +68,7 @@ export async function GET(
       finished_at,
       song_document_id,
       song_documents (
-        id, language, style_family, document_json, created_at
+        id, language, style_family, document_json, title, created_at
       ),
       tracks (
         id, url, duration_seconds, format, bytes, expires_at, created_at
@@ -129,4 +130,45 @@ export async function GET(
     song_document: data.song_documents,
     track: signedTrack,
   });
+}
+
+/**
+ * DELETE /api/songs/{id}
+ *
+ * Removes a job. The Postgres cascade also deletes its tracks and the
+ * `public.public_songs` row if any. RLS scopes the delete to the
+ * caller's own rows.
+ *
+ * If the song was published (had a public_songs row), the underlying
+ * audio object is still in the bucket. Storage GC is run nightly via
+ * a Supabase Edge cron, so we don't block the request on the bucket
+ * delete; users see the row vanish instantly.
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } },
+) {
+  const authed = await requireUser();
+  if (authed instanceof NextResponse) return authed;
+  const { supabase } = authed;
+
+  const parsed = SongIdSchema.safeParse(params.id);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "invalid_id" }, { status: 400 });
+  }
+
+  const { error, count } = await supabase
+    .from("jobs")
+    .delete({ count: "exact" })
+    .eq("id", parsed.data);
+  if (error) {
+    return NextResponse.json(
+      { error: "delete_failed", details: error.message },
+      { status: 500 },
+    );
+  }
+  if (!count) {
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  return NextResponse.json({ deleted: true });
 }

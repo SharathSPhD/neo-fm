@@ -1,0 +1,223 @@
+"""
+`RoutingVocalModel`: language-aware backend picker (Sprint D, ADR 0020).
+
+The vocal-synth service used to be a single-backend pipeline: load
+Svara-TTS, run it for every section, ship the audio. v1.1's deep-dive
+review showed that:
+
+  - Svara handles Hindi/Kannada Devanagari/Kannada-script text well.
+  - Indic Parler-TTS is currently the best free Hinglish handler
+    (Latin-script Hindi) and the most natural for English.
+  - Neither model is the right call for all four song styles.
+
+The router picks per **section** (not per request) so a song that has
+a Sanskrit pallavi followed by an English bridge can use the right
+model in each segment. It also exposes a `target_backend(section)`
+hook the eval harness uses to A/B candidate routes.
+
+Backends are loaded lazily: the first time a route picks a backend
+that hasn't been loaded, we call `.load()` and cache it. If the load
+fails and `NEO_FM_REQUIRE_REAL_MODEL=1`, we re-raise; otherwise we
+fall back to the `FakeVocalModel` for that segment so the rest of
+the song still ships.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from typing import Literal
+
+import numpy as np
+
+from .model import (
+    FakeVocalModel,
+    SvaraTTSModel,
+    VocalRequest,
+    VocalSection,
+    _write_wav_mono,
+)
+from .parler import ParlerTTSModel
+from .preprocess import preprocess_section
+
+BackendKey = Literal["svara", "parler", "fake"]
+
+
+@dataclass
+class RouteDecision:
+    """Diagnostic record of which backend handled a section."""
+
+    section_id: str
+    backend: BackendKey
+    reason: str
+
+
+def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
+    """Pure routing logic, exposed for tests.
+
+    Rules (first match wins):
+
+      1. Instrumental / empty section -> `fake` (cheap silence).
+      2. Latin-script text in any non-English language -> `parler`
+         (Parler's voice descriptors carry pronunciation hints
+         better than Svara for Romanised input).
+      3. Language is English -> `parler` (Svara is Indic-only).
+      4. Otherwise (Devanagari / Kannada / Tamil / Telugu / Bengali
+         in their native scripts) -> `svara`.
+    """
+    if section.type == "instrumental" or not (section.lyrics or section.transliteration):
+        return "fake", "no-text"
+    text = section.transliteration or section.lyrics or ""
+    script = (section.script or "").lower()
+    if not script:
+        script = "latin" if all(ord(c) < 128 for c in text) else "devanagari"
+    if section.language == "en":
+        return "parler", "english-text"
+    if script == "latin":
+        return "parler", "latin-script-indic"
+    return "svara", "native-script-indic"
+
+
+class RoutingVocalModel:
+    """Composite model that picks a backend per section."""
+
+    def __init__(
+        self,
+        *,
+        svara: SvaraTTSModel | None = None,
+        parler: ParlerTTSModel | None = None,
+        fallback: FakeVocalModel | None = None,
+    ) -> None:
+        self._svara = svara or SvaraTTSModel(
+            os.environ.get("VOCAL_MODEL_ID_SVARA", "kenpath/svara-tts-v1"),
+        )
+        self._parler = parler or ParlerTTSModel(
+            os.environ.get("VOCAL_MODEL_ID_PARLER", "ai4bharat/indic-parler-tts"),
+        )
+        # Fallback is constructed lazily: FakeVocalModel refuses to
+        # exist when NEO_FM_REQUIRE_REAL_MODEL=1, and the prod path
+        # never reaches it. We only allocate it on first use.
+        self._fallback_factory = (lambda: fallback) if fallback is not None else FakeVocalModel
+        self._fallback: FakeVocalModel | None = fallback
+        self._svara_loaded = False
+        self._parler_loaded = False
+        self._last_decisions: list[RouteDecision] = []
+
+    def _get_fallback(self) -> FakeVocalModel:
+        if self._fallback is None:
+            self._fallback = self._fallback_factory()
+        return self._fallback
+
+    @property
+    def model_loaded(self) -> bool:
+        # A routing model is loaded if at least one real backend is
+        # available; the fallback is always loadable.
+        return self._svara_loaded or self._parler_loaded
+
+    @property
+    def model_version(self) -> str | None:
+        parts = []
+        if self._svara_loaded:
+            parts.append(f"svara={self._svara.model_version}")
+        if self._parler_loaded:
+            parts.append(f"parler={self._parler.model_version}")
+        if not parts:
+            return "routing+fake"
+        return "routing+" + ",".join(parts)
+
+    @property
+    def last_decisions(self) -> list[RouteDecision]:
+        return list(self._last_decisions)
+
+    def _ensure_backend(self, key: BackendKey) -> object:
+        require_real = os.environ.get("NEO_FM_REQUIRE_REAL_MODEL") == "1"
+        if key == "svara":
+            if not self._svara_loaded:
+                try:
+                    self._svara.load()
+                    self._svara_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._svara
+        if key == "parler":
+            if not self._parler_loaded:
+                try:
+                    self._parler.load()
+                    self._parler_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._parler
+        return self._get_fallback()
+
+    def synthesise(self, req: VocalRequest) -> bytes:
+        sr = req.sample_rate
+        chunks: list[np.ndarray] = []
+        decisions: list[RouteDecision] = []
+        for sec in req.sections:
+            key, reason = _pick_backend(sec)
+            decisions.append(
+                RouteDecision(section_id=sec.id, backend=key, reason=reason)
+            )
+            # Preprocess section text. We don't yet feed the prepared
+            # utterances back into the backend (the backends still
+            # consume the raw section), but we record the trace via
+            # logging so vocal-eval can analyse it post-hoc. The
+            # Sprint D follow-up wires utterance-level synthesis.
+            preprocess_section(
+                section_id=sec.id,
+                section_type=sec.type,
+                lyrics=sec.lyrics,
+                transliteration=sec.transliteration,
+                language=sec.language,
+                script=sec.script,
+                target_seconds=float(sec.target_seconds),
+                tempo_bpm=sec.tempo_bpm,
+            )
+            backend = self._ensure_backend(key)
+            # Each backend renders a one-section sub-request so we can
+            # concatenate the per-section outputs without per-backend
+            # state leaks.
+            sub_req = VocalRequest(
+                job_id=req.job_id,
+                attempt_id=req.attempt_id,
+                trace_id=req.trace_id,
+                language=req.language,
+                style_family=req.style_family,
+                voice_timbre=req.voice_timbre,
+                sample_rate=sr,
+                sections=[sec],
+                target_duration_seconds=sec.target_seconds,
+            )
+            sub_wav = backend.synthesise(sub_req)  # type: ignore[attr-defined]
+            # Decode the PCM body so we can re-concatenate without
+            # nested WAV headers.
+            chunks.append(_decode_wav_mono(sub_wav))
+        self._last_decisions = decisions
+
+        out = np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
+        target_n = int(req.target_duration_seconds * sr)
+        if out.size < target_n:
+            out = np.concatenate(
+                [out, np.zeros(target_n - out.size, dtype=np.float32)]
+            )
+        else:
+            out = out[:target_n]
+        peak = float(np.max(np.abs(out)) or 1.0)
+        if peak > 0.95:
+            out = out * (0.95 / peak)
+        return _write_wav_mono(out, sr)
+
+
+def _decode_wav_mono(buf: bytes) -> np.ndarray:
+    """Reverse of `_write_wav_mono` for a canonical 16-bit mono header."""
+    import struct
+
+    assert buf[:4] == b"RIFF"
+    assert buf[8:12] == b"WAVE"
+    data_size = struct.unpack("<I", buf[40:44])[0]
+    pcm = np.frombuffer(buf[44 : 44 + data_size], dtype=np.int16)
+    return (pcm.astype(np.float32) / 32767.0).copy()

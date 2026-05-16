@@ -5,7 +5,9 @@ import { describe, expect, it } from "vitest";
 import {
   LYRIC_PER_SECTION_MAX_CHARS,
   LYRIC_TOTAL_MAX_CHARS,
+  SONG_TITLE_MAX_CHARS,
   SongDocumentSchema,
+  SongTitleSchema,
   allocateSectionDurations,
   detectBlockedLyricTerms,
 } from "./index.js";
@@ -139,6 +141,29 @@ describe("SongDocumentSchema", () => {
       "commit suicide",
     );
     expect(detectBlockedLyricTerms("a friendly song")).toEqual([]);
+  });
+
+  it("accepts an optional title up to the max length", () => {
+    const ok = {
+      title: "Morning Rain in Saveri",
+      language: "kn" as const,
+      style_family: "carnatic" as const,
+      target_duration_seconds: 30 as const,
+      sections: [
+        { id: "s1", type: "pallavi" as const, target_seconds: 30 },
+      ],
+    };
+    expect(SongDocumentSchema.parse(ok).title).toBe("Morning Rain in Saveri");
+  });
+
+  it("rejects a title longer than SONG_TITLE_MAX_CHARS", () => {
+    const big = "T".repeat(SONG_TITLE_MAX_CHARS + 1);
+    expect(() => SongTitleSchema.parse(big)).toThrow();
+  });
+
+  it("rejects an empty / whitespace-only title via SongTitleSchema", () => {
+    expect(() => SongTitleSchema.parse("")).toThrow();
+    expect(() => SongTitleSchema.parse("   ")).toThrow();
   });
 });
 

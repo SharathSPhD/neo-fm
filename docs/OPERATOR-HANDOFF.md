@@ -1,13 +1,31 @@
-# neo-fm v1 — release notes & operator handoff
+# neo-fm v1 / v1.1 — release notes & operator handoff
 
-Status as of Sprint 8 close-out. This document is the canonical
-"what shipped, how to run it, what's next" hand-off for the v1
-release. It replaces the previous TODO-shaped handoff: every item that
-used to live here has been done in-band and is described below as
-shipped functionality.
+Status as of v1.1 deep-dive close-out (Sprint J). Originally written
+at v1 (Sprint 8); the v1.1 deep-dive added 10 sprints of hardening
+(reviews, app shell, auth callback, orphan recovery, song titles,
+TTS overhaul, pricing/account/help, library upgrades, discover +
+profiles + social, "wow" features, security advisors + HTTP
+hardening, and this doc rewrite). Every item below is shipped, not
+planned.
 
-If you're picking up the project: read this top-to-bottom, then jump
-into the *Reproducing this state* section.
+If you're picking up the project, read this top-to-bottom and
+follow the link to the appropriate doc rather than expecting the
+full content to live inline here. v1.1 split the operator content
+across five canonical docs:
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) — what runs where, who talks
+  to whom.
+- [REPRODUCIBILITY.md](REPRODUCIBILITY.md) — zero-to-running in
+  local / DGX / prod.
+- [PRODUCTION-MIGRATION.md](PRODUCTION-MIGRATION.md) — the path
+  from "single DGX + Supabase managed" to AWS, with cost tables.
+- [SECURITY.md](SECURITY.md) — trust boundaries, secrets, RLS
+  map, advisor sweeps.
+- [RUNBOOK.md](RUNBOOK.md) — daily ops, alert playbooks, recovery.
+
+This file remains the historical release-notes surface; jump into
+the *Reproducing this state* section below for the v1-era steps,
+or into REPRODUCIBILITY.md for the current canonical steps.
 
 ## 1. What v1 is
 
@@ -49,6 +67,23 @@ deliverables:
 | 7      | Observability             | `/metrics` Prometheus endpoints in `music-inference`, `vocal-synth`, and `dgx-worker` (embedded HTTP server in the worker). `/healthz` everywhere reports `queue_lag_seconds` + `jobs_in_flight`. `infra/grafana/neo-fm-overview.json` dashboard + `infra/grafana/alerts.yaml` rules. `docker-compose.dgx.yml` ships a `monitoring` profile with Prometheus + Grafana ([ADR 0017][ADR17]).                                                |
 | 8      | Landing + handoff         | Real India-first landing page (`apps/web/app/page.tsx`) with hero, value props, style gallery sourced from `@neo-fm/style-presets`, how-it-works, sign-up CTA, WCAG AA contrast on the dark palette. This release-notes rewrite.                                                                                                                                                                                                       |
 
+### v1.1 deep-dive (Sprints A-J)
+
+| Sprint | Theme | Headline deliverables |
+| --- | --- | --- |
+| A | Reviews | Six rigorous review docs under `docs/REVIEWS/`: architecture, security, ux, info-architecture, wow-factors, tts. |
+| B | App shell | Persistent auth-aware nav (top + mobile bottom + hamburger), user menu, theme toggle, loading/error boundaries, empty states, breadcrumbs. ADR 0019. |
+| C (a) | Auth callback | `/auth/callback` route exchanges code-from-email link for a session and redirects into the app; works around Vercel deployment protection. |
+| C (b) | Orphan recovery | `recover_song_job` RPC + `POST /api/songs/[id]/recover` + UI Recover button + `orphan-reconciler` edge function + migration `0016_recover_song_job`. Worker performs transactional audit on every ack. |
+| C (c) | Song titles | `title` field promoted on `SongDocumentSchema`; rendered in library, song detail, share, OG, embed. Preset titles populated. |
+| D | TTS overhaul | `preprocess.py` (NFC + ZWJ/ZWNJ + halant + IPA + prosody), `ParlerTTSModel`, `RoutingVocalModel` (svara -> parler -> fake), `vocal-eval.py` (librosa-based scoring). Migration `0018_vocal_telemetry` and ADR 0020. |
+| E | Pricing / account / help | `/pricing` (waitlist CTAs, no Stripe), `/account` (export + delete + plan badge), `/help` FAQ, `/feedback` form -> `public.feedback` (migration `0021_feedback`). |
+| F | Library upgrades | Search, filter, sort, pagination, rename, delete, favorite, onboarding modal. Migration `0022_library_upgrades`. |
+| G | Discover + profiles + social | `/discover` feed, `/u/[handle]` public profiles, `/onboarding/handle`, likes / follows / reports. Migrations `0023_user_handles`, `0024_social`. |
+| H | Wow features | Live spectrogram on every audio player; stem downloads (migration `0025_stems`); AI cover art via Hugging Face Inference (migration `0026_cover_art`); "Make a variation" button; lyrical karaoke ticker synced to audio.currentTime. |
+| I | Hardening | Migration `0027_security_advisors`: SECURITY DEFINER views -> INVOKER, tightened `song_reports` RLS, advisor-clean grants. ADR 0021. HTTP hardening: CSP + HSTS + permissions-policy + per-route rate limits + `/api/health` endpoint. |
+| J | Docs | This rewrite. New canonical docs: `docs/ARCHITECTURE.md`, `docs/REPRODUCIBILITY.md`, `docs/PRODUCTION-MIGRATION.md`, `docs/SECURITY.md`, `docs/RUNBOOK.md`. |
+
 [ADR11]: DECISIONS/0011-governor-and-leases.md
 [ADR12]: DECISIONS/0012-signed-url-playback.md
 [ADR13]: DECISIONS/0013-public-share-surface.md
@@ -56,6 +91,9 @@ deliverables:
 [ADR15]: DECISIONS/0015-vocal-synth-and-mixer.md
 [ADR16]: DECISIONS/0016-governor-implementation.md
 [ADR17]: DECISIONS/0017-observability-stack.md
+[ADR19]: DECISIONS/0019-app-shell-and-auth-lifecycle.md
+[ADR20]: DECISIONS/0020-vocal-synth-multi-backend-and-eval.md
+[ADR21]: DECISIONS/0021-security-definer-review.md
 
 ## 3. End-to-end pipeline state
 

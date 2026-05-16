@@ -24,6 +24,7 @@ import {
   createServerClient,
   createServiceRoleClient,
 } from "@/lib/supabase/server";
+import { LikeButton } from "@/components/like-button";
 
 import { PublicSongAudio } from "./public-song-audio";
 
@@ -80,6 +81,7 @@ interface PublicSongRow {
     document_json: SongDocumentView;
     language: string;
     style_family: string;
+    title: string | null;
   } | null;
   tracks:
     | {
@@ -104,7 +106,7 @@ async function loadPublicSong(publicId: string): Promise<PublicSongRow | null> {
       published_at,
       published_visibility,
       song_documents (
-        document_json, language, style_family
+        document_json, language, style_family, title
       ),
       tracks (
         id, url, duration_seconds, format, created_at
@@ -132,7 +134,11 @@ export async function generateMetadata({
     return { title: "neo-fm" };
   }
   const doc = data.song_documents.document_json;
-  const title = `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
+  const stored = data.song_documents.title?.trim();
+  const title =
+    stored && stored.length > 0
+      ? stored
+      : `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
   const description = doc.raga
     ? `Composed in raga ${doc.raga.name} (${doc.raga.system}). Generated on neo-fm.`
     : `${doc.target_duration_seconds}s composition generated on neo-fm.`;
@@ -168,6 +174,13 @@ export default async function PublicSongPage({
   const data = await loadPublicSong(idCheck.data);
   if (!data) notFound();
   const doc = data.song_documents?.document_json;
+  const storedTitle = data.song_documents?.title?.trim();
+  const displayTitle =
+    storedTitle && storedTitle.length > 0
+      ? storedTitle
+      : doc
+        ? prettyStyle(doc.style_family)
+        : "Song";
 
   let signedUrl: string | null = null;
   let latestTrack: PublicSongRow["tracks"] extends (infer T)[] | null
@@ -188,6 +201,55 @@ export default async function PublicSongPage({
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  // Like state. Anonymous visitors get the count but not their own
+  // "liked" state (it's always false). Sprint G feature.
+  const supabase = createServerClient();
+  const [likesCountRes, currentUserRes] = await Promise.all([
+    (
+      supabase.from("song_likes" as never) as unknown as {
+        select: (
+          s: string,
+          opts: { count: "exact"; head: true },
+        ) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => Promise<{ count: number | null }>;
+        };
+      }
+    )
+      .select("job_id", { count: "exact", head: true })
+      .eq("job_id", data.id),
+    supabase.auth.getUser(),
+  ]);
+  const likeCount = likesCountRes.count ?? 0;
+  const currentUserId = currentUserRes.data.user?.id ?? null;
+  let initiallyLiked = false;
+  if (currentUserId) {
+    const probe = await (
+      supabase.from("song_likes" as never) as unknown as {
+        select: (s: string) => {
+          eq: (
+            col: string,
+            val: string,
+          ) => {
+            eq: (
+              col2: string,
+              val2: string,
+            ) => {
+              maybeSingle: () => Promise<{ data: unknown }>;
+            };
+          };
+        };
+      }
+    )
+      .select("job_id")
+      .eq("job_id", data.id)
+      .eq("user_id", currentUserId)
+      .maybeSingle();
+    initiallyLiked = !!probe.data;
+  }
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
@@ -198,11 +260,11 @@ export default async function PublicSongPage({
           neo-fm
         </Link>
         <h1 className="text-3xl font-medium tracking-tight">
-          {doc ? prettyStyle(doc.style_family) : "Song"}
+          {displayTitle}
         </h1>
         <p className="text-sm text-foreground/60">
           {doc
-            ? `${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
+            ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
             : ""}
           {data.published_visibility === "unlisted" ? (
             <span className="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">
@@ -213,13 +275,22 @@ export default async function PublicSongPage({
       </header>
 
       {signedUrl && latestTrack ? (
-        <section className="flex flex-col gap-2">
+        <section className="flex flex-col gap-3">
           <PublicSongAudio
             publicId={data.public_id}
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
           />
+          <div className="flex items-center gap-2">
+            <LikeButton
+              songId={data.id}
+              publicId={data.public_id}
+              initialLiked={initiallyLiked}
+              initialCount={likeCount}
+              signedIn={!!currentUserId}
+            />
+          </div>
         </section>
       ) : (
         <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">

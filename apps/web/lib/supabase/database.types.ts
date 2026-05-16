@@ -22,6 +22,7 @@ export type Database = {
           error: string | null
           finished_at: string | null
           id: string
+          is_favorite: boolean
           last_attempt_at: string | null
           lease_renewed_at: string | null
           parent_job_id: string | null
@@ -44,6 +45,7 @@ export type Database = {
           error?: string | null
           finished_at?: string | null
           id?: string
+          is_favorite?: boolean
           last_attempt_at?: string | null
           lease_renewed_at?: string | null
           parent_job_id?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           error?: string | null
           finished_at?: string | null
           id?: string
+          is_favorite?: boolean
           last_attempt_at?: string | null
           lease_renewed_at?: string | null
           parent_job_id?: string | null
@@ -112,6 +115,7 @@ export type Database = {
           id: string
           language: Database["public"]["Enums"]["language_enum"]
           style_family: Database["public"]["Enums"]["style_family_enum"]
+          title: string | null
           user_id: string
         }
         Insert: {
@@ -120,6 +124,7 @@ export type Database = {
           id?: string
           language: Database["public"]["Enums"]["language_enum"]
           style_family: Database["public"]["Enums"]["style_family_enum"]
+          title?: string | null
           user_id: string
         }
         Update: {
@@ -128,6 +133,7 @@ export type Database = {
           id?: string
           language?: Database["public"]["Enums"]["language_enum"]
           style_family?: Database["public"]["Enums"]["style_family_enum"]
+          title?: string | null
           user_id?: string
         }
         Relationships: [
@@ -331,6 +337,46 @@ export type Database = {
       user_tier_storage_bytes_cap: {
         Args: { p_user_id: string }
         Returns: number
+      }
+      toggle_favorite: {
+        Args: { p_job_id: string }
+        Returns: { id: string; is_favorite: boolean }[]
+      }
+      rename_song: {
+        Args: { p_job_id: string; p_title: string }
+        Returns: { id: string; title: string }[]
+      }
+      submit_feedback: {
+        Args: { p_subject: string; p_body: string; p_referrer?: string | null }
+        Returns: { id: string }[]
+      }
+      join_waitlist: {
+        Args: { p_email: string; p_tier: string; p_source?: string | null }
+        Returns: { joined: boolean; already_on_list: boolean }[]
+      }
+      reconciler_recover_job: {
+        Args: { p_job_id: string }
+        Returns: {
+          job_id: string
+          attempt_id: string
+          status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      claim_handle: {
+        Args: { p_handle: string }
+        Returns: { handle: string }[]
+      }
+      toggle_like: {
+        Args: { p_job_id: string }
+        Returns: { is_liked: boolean; like_count: number }[]
+      }
+      toggle_follow: {
+        Args: { p_followee: string }
+        Returns: { is_following: boolean; follower_count: number }[]
+      }
+      report_song: {
+        Args: { p_job_id: string; p_reason: string }
+        Returns: { id: string }[]
       }
     }
     Enums: {

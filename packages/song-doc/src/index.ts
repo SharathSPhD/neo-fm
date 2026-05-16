@@ -152,10 +152,25 @@ export type Orchestration = z.infer<typeof OrchestrationSchema>;
  * `allocateSectionDurations` helper below to fill in defaults *before*
  * validating if your producer cannot supply every value.
  */
+/**
+ * Maximum song title length. Long enough for a full Sanskrit shloka
+ * line, short enough to fit a Twitter card and one-line list item.
+ * Kept in lockstep with `public.song_documents.title` and
+ * `public.public_songs.title` (migration 0017).
+ */
+export const SONG_TITLE_MAX_CHARS = 120;
+
+export const SongTitleSchema = z
+  .string()
+  .trim()
+  .min(1, "title cannot be empty")
+  .max(SONG_TITLE_MAX_CHARS, `title exceeds ${SONG_TITLE_MAX_CHARS} chars`);
+
 export const SongDocumentSchema = z
   .object({
     id: z.string().uuid().optional(),
     user_id: z.string().uuid().optional(),
+    title: SongTitleSchema.optional(),
     language: LanguageSchema,
     style_family: StyleFamilySchema,
     tempo_bpm: z.number().int().min(30).max(240).optional(),

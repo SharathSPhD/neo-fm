@@ -64,6 +64,15 @@ class FakeWorkerDB:
     def connect(self) -> Iterator[FakeWorkerDB]:
         yield self
 
+    @contextmanager
+    def transaction(self) -> Iterator[None]:
+        # Sprint C (b) audit: the real connection wraps the
+        # storage-upload / insert_track / mark_completed sequence in a
+        # single transaction. The fake is in-memory and idempotent, so
+        # a no-op context manager keeps the production call site
+        # exercising the same shape.
+        yield None
+
     def enqueue(self, payload: dict[str, Any]) -> int:
         msg_id = self.next_msg_id
         self.next_msg_id += 1

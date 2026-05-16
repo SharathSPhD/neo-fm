@@ -15,18 +15,22 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { enforceRateLimit, pickRule } from "./lib/rate-limit";
+import { applySecurityHeaders, supabaseHost } from "./lib/security-headers";
 import type { Database } from "./lib/supabase/database.types";
 
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+  const sbHost = supabaseHost();
+
   // Per-IP edge rate-limit for /api/* (Sprint 4). Upstash when wired,
   // in-memory fallback otherwise. Static routes and Server Component
   // navigation are not rate-limited here -- they remain Supabase-quota
   // and DGX-worker bound at deeper layers.
-  if (request.nextUrl.pathname.startsWith("/api/")) {
-    const rule = pickRule(request.nextUrl.pathname);
+  if (pathname.startsWith("/api/")) {
+    const rule = pickRule(pathname);
     const verdict = await enforceRateLimit(request, rule);
     if (!verdict.ok) {
-      return new NextResponse(
+      const blocked = new NextResponse(
         JSON.stringify({
           error: "rate_limited",
           retry_after_seconds: verdict.resetSeconds,
@@ -42,6 +46,10 @@ export async function middleware(request: NextRequest) {
           },
         },
       );
+      return applySecurityHeaders(blocked, {
+        pathname,
+        supabaseHost: sbHost,
+      });
     }
   }
 
@@ -56,36 +64,40 @@ export async function middleware(request: NextRequest) {
 
   if (!url || !key) {
     // Don't take the whole site down because env isn't wired locally.
-    return response;
+    return applySecurityHeaders(response, { pathname, supabaseHost: sbHost });
   }
 
-  const supabase = createServerClient<Database>(url, key, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
+  // Skip the session-touch for healthchecks so they stay cheap and
+  // don't allocate a Supabase client per probe.
+  const skipAuth = pathname === "/api/healthz" || pathname === "/api/health";
+  if (!skipAuth) {
+    const supabase = createServerClient<Database>(url, key, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(toSet) {
+          toSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          toSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
       },
-      setAll(toSet) {
-        toSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        toSet.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options),
-        );
-      },
-    },
-  });
+    });
+    await supabase.auth.getUser();
+  }
 
-  // Touch the session so the cookie is refreshed if the access token is
-  // about to expire.
-  await supabase.auth.getUser();
-
-  return response;
+  return applySecurityHeaders(response, { pathname, supabaseHost: sbHost });
 }
 
 export const config = {
   matcher: [
-    // Run on every route except Next's internal asset paths, the
-    // unauthenticated healthcheck, and image/font/etc.
-    "/((?!_next/static|_next/image|favicon.ico|api/healthz|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$).*)",
+    // Run on every route except Next's internal asset paths and
+    // image/font/etc. We *do* keep /api/health(z) in the matcher
+    // because security headers should still apply there, but the
+    // handler above bypasses the auth touch for both.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$).*)",
   ],
 };

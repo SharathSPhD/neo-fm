@@ -73,6 +73,19 @@ export function pickRule(pathname: string): RateLimitRule {
   if (/^\/api\/songs\/[^/]+\/publish\/?$/.test(pathname)) {
     return { bucket: "songs:publish", limit: 30 };
   }
+  // Anonymous-write endpoints: keep the budget low so a single host
+  // can't fill the feedback table or the waitlist.
+  if (/^\/api\/feedback\/?$/.test(pathname)) {
+    return { bucket: "anon:feedback", limit: 6 };
+  }
+  if (/^\/api\/waitlist\/?$/.test(pathname)) {
+    return { bucket: "anon:waitlist", limit: 10 };
+  }
+  // Cover art / variation / stems are tier-gated; the request is
+  // server-side expensive (HF + storage). Keep tight.
+  if (/^\/api\/songs\/[^/]+\/(cover-art|variation)\/?$/.test(pathname)) {
+    return { bucket: "songs:gen-aux", limit: 6 };
+  }
   // Public share-surface reads.
   if (pathname.startsWith("/api/p/")) {
     return { bucket: "public:read", limit: 120 };
