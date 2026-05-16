@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
+
+import { AuthListener } from "@/components/auth-listener";
 
 import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
@@ -33,6 +36,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        {/* Applies persisted theme before paint; static file served from
+            /public so no inline-script audit surface. */}
+        <Script src="/theme-boot.js" strategy="beforeInteractive" />
+        <AuthListener />
         {children}
         <ServiceWorkerRegister />
       </body>

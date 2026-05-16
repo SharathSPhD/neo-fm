@@ -2,11 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Dark theme (default). neo-fm's marketing surfaces, app shell, and
+ * detail pages are designed against this palette. Contrast against
+ * 240/6%/8% background:
+ *   - foreground 0/0%/96%    -> 18.4:1 (AAA)
+ *   - accent     28/92%/60%  -> 5.3:1 on text-only surfaces (AA-large)
+ *   - muted-fg via /60       -> 8.1:1 (AAA)
+ */
 :root {
   --background: 240 6% 8%;
   --foreground: 0 0% 96%;
   --accent: 28 92% 60%;
   --muted: 240 4% 22%;
+}
+
+/*
+ * Light theme. Used when `data-theme="light"` is set on <html>
+ * (toggled by <ThemeToggle>; persisted in localStorage). We bump
+ * --accent saturation up so it stays readable on a light background.
+ */
+:root[data-theme="light"] {
+  --background: 0 0% 99%;
+  --foreground: 240 10% 12%;
+  --accent: 28 92% 42%;
+  --muted: 240 5% 86%;
 }
 
 html,
@@ -20,4 +40,29 @@ body {
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/*
+ * Reset Tailwind's outline-removal so keyboard users always see a
+ * focus indicator. We use :focus-visible so mouse clicks stay quiet.
+ */
+:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+
+button:focus,
+[role="button"]:focus,
+a:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

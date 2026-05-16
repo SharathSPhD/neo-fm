@@ -56,43 +56,12 @@ const HIGHLIGHT_PRESETS = HIGHLIGHT_PRESET_IDS.map((id) =>
 export default function Page() {
   return (
     <main className="min-h-screen">
-      <SiteHeader />
       <Hero />
       <ValueProps />
       <StyleGallery />
       <HowItWorks />
       <Footer />
     </main>
-  );
-}
-
-function SiteHeader() {
-  return (
-    <header className="border-b border-muted/30">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-        <Link
-          href="/"
-          aria-label="neo-fm home"
-          className="text-lg font-semibold tracking-tight"
-        >
-          neo-fm
-        </Link>
-        <nav aria-label="Primary" className="flex items-center gap-3 text-sm">
-          <Link
-            href="/sign-in"
-            className="rounded-md border border-muted/40 px-3 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/sign-up"
-            className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
-          >
-            Get started
-          </Link>
-        </nav>
-      </div>
-    </header>
   );
 }
 

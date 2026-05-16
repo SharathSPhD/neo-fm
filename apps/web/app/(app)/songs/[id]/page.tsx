@@ -14,9 +14,9 @@
  * for songs the user doesn't own (RLS hides them transparently from
  * the maybeSingle query).
  */
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
+import { Breadcrumbs } from "@/components/breadcrumbs";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { RegenerateButton } from "./regenerate-button";
@@ -136,11 +136,11 @@ export default async function SongDetailPage({
 
   if (error) {
     return (
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <div className="mx-auto max-w-3xl">
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
           Couldn&apos;t load song: {error.message}
         </p>
-      </main>
+      </div>
     );
   }
   if (!data) {
@@ -172,15 +172,17 @@ export default async function SongDetailPage({
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-10">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <Breadcrumbs
+        items={[
+          { href: "/library", label: "Library" },
+          {
+            label: doc ? prettyStyle(doc.style_family) : "Song",
+          },
+        ]}
+      />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <Link
-            href="/library"
-            className="text-[11px] uppercase tracking-widest text-foreground/40 hover:text-foreground/70"
-          >
-            ← Library
-          </Link>
           <h1 className="text-3xl font-medium tracking-tight">
             {doc ? prettyStyle(doc.style_family) : "Song"}
           </h1>
@@ -289,7 +291,7 @@ export default async function SongDetailPage({
           </ul>
         </section>
       ) : null}
-    </main>
+    </div>
   );
 }
 

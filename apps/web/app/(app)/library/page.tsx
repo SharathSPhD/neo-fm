@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
+import { EmptyState } from "@/components/empty-state";
 
 import { SongList } from "./song-list";
 
@@ -90,7 +90,7 @@ export default async function LibraryPage() {
   );
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-10 px-6 py-12">
+    <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-3xl font-medium tracking-tight">Library</h1>
@@ -98,31 +98,21 @@ export default async function LibraryPage() {
             Your latest songs. Free tier caps at 3 per month.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/songs/new"
-            className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20"
-          >
-            New song
-          </Link>
-          <form action="/sign-out" method="post">
-            <button
-              type="submit"
-              className="rounded-md border border-muted/30 px-3 py-2 text-sm text-foreground/70 hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
       </header>
 
       {error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
           Couldn&apos;t load songs: {error.message}
         </p>
+      ) : songs.length === 0 ? (
+        <EmptyState
+          title="No songs yet"
+          body="Pick a style preset, type a verse, hit Generate. Your first song will land here in about a minute."
+          cta={{ href: "/songs/new", label: "Create your first song" }}
+        />
       ) : (
         <SongList initialSongs={songs} userId={userData.user.id} />
       )}
-    </main>
+    </div>
   );
 }
