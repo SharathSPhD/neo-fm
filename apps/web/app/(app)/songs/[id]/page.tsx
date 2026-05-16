@@ -21,12 +21,14 @@ import { createServerClient } from "@/lib/supabase/server";
 
 import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
+import { RemixButton } from "./remix-button";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 import { StemsPanel } from "./stems-panel";
 import { KaraokeTicker } from "./karaoke-ticker";
 import { VariationButton } from "./variation-button";
 import { CoverArtPanel } from "./cover-art-panel";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -101,6 +103,7 @@ export default async function SongDetailPage({
       song_document_id,
       public_id,
       published_visibility,
+      remixed_from,
       song_documents (
         id, language, style_family, document_json, title, created_at
       ),
@@ -120,6 +123,7 @@ export default async function SongDetailPage({
       song_document_id: string;
       public_id: string | null;
       published_visibility: "public" | "unlisted" | "private";
+      remixed_from: string | null;
       song_documents: {
         id: string;
         language: string;
@@ -162,6 +166,29 @@ export default async function SongDetailPage({
     .returns<RegenChildView[]>();
   const regenChildren = regenChildrenRaw ?? [];
 
+  // If this song is itself a remix, fetch the parent's title for the
+  // "Remixed from …" backlink. RLS may hide it (parent went private),
+  // in which case we render "a deleted/private song" instead.
+  let remixedFromInfo: { id: string; title: string | null } | null = null;
+  if (data.remixed_from) {
+    const { data: parent } = await supabase
+      .from("jobs")
+      .select("id, song_documents ( title )")
+      .eq("id", data.remixed_from)
+      .maybeSingle<{
+        id: string;
+        song_documents: { title: string | null } | null;
+      }>();
+    if (parent) {
+      remixedFromInfo = {
+        id: parent.id,
+        title: parent.song_documents?.title ?? null,
+      };
+    } else {
+      remixedFromInfo = { id: data.remixed_from, title: null };
+    }
+  }
+
   const doc = data.song_documents?.document_json;
   const title =
     data.song_documents?.title ??
@@ -196,6 +223,23 @@ export default async function SongDetailPage({
               ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · ${data.status}`
               : data.status}
           </p>
+          {remixedFromInfo ? (
+            <p className="text-xs text-foreground/55">
+              Remixed from{" "}
+              {remixedFromInfo.title ? (
+                <Link
+                  href={`/songs/${remixedFromInfo.id}`}
+                  className="text-accent underline-offset-4 hover:underline"
+                >
+                  {remixedFromInfo.title}
+                </Link>
+              ) : (
+                <span className="italic text-foreground/45">
+                  a private or deleted song
+                </span>
+              )}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-col items-end gap-2">
           <ShareButton
@@ -205,7 +249,10 @@ export default async function SongDetailPage({
             canShare={data.status === "completed"}
           />
           {data.status === "completed" ? (
-            <VariationButton songId={data.id} />
+            <div className="flex flex-col items-end gap-2">
+              <VariationButton songId={data.id} />
+              <RemixButton songId={data.id} />
+            </div>
           ) : null}
           <code className="font-mono text-[11px] text-foreground/50">
             {data.id.slice(0, 8)}

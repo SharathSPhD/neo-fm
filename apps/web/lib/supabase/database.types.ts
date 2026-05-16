@@ -176,6 +176,7 @@ export type Database = {
           published_at: string | null
           published_visibility: Database["public"]["Enums"]["song_visibility_enum"]
           recovered_at: string | null
+          remixed_from: string | null
           section_id: string | null
           song_document_id: string
           started_at: string | null
@@ -200,6 +201,7 @@ export type Database = {
           published_at?: string | null
           published_visibility?: Database["public"]["Enums"]["song_visibility_enum"]
           recovered_at?: string | null
+          remixed_from?: string | null
           section_id?: string | null
           song_document_id: string
           started_at?: string | null
@@ -224,6 +226,7 @@ export type Database = {
           published_at?: string | null
           published_visibility?: Database["public"]["Enums"]["song_visibility_enum"]
           recovered_at?: string | null
+          remixed_from?: string | null
           section_id?: string | null
           song_document_id?: string
           started_at?: string | null
@@ -249,6 +252,27 @@ export type Database = {
           {
             foreignKeyName: "jobs_parent_job_id_fkey"
             columns: ["parent_job_id"]
+            isOneToOne: false
+            referencedRelation: "recent_vocal_quality"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "jobs_remixed_from_fkey"
+            columns: ["remixed_from"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_remixed_from_fkey"
+            columns: ["remixed_from"]
+            isOneToOne: false
+            referencedRelation: "orphan_jobs"
+            referencedColumns: ["job_id"]
+          },
+          {
+            foreignKeyName: "jobs_remixed_from_fkey"
+            columns: ["remixed_from"]
             isOneToOne: false
             referencedRelation: "recent_vocal_quality"
             referencedColumns: ["job_id"]
