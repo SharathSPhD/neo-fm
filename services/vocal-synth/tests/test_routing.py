@@ -486,3 +486,171 @@ def test_routing_model_falls_back_to_preprocessor_output_when_no_phonemes() -> N
     assert "ipa" in (spliced.script or "") or spliced.transliteration.startswith(
         "[ipa:"
     )
+
+
+def test_routing_model_marks_chant_when_style_family_is_sanskrit_shloka() -> None:
+    """v1.4 Sprint 14: when style_family='sanskrit-shloka', every
+    section's RouteDecision carries chant_style_applied=True and the
+    reason field cites the style trigger."""
+
+    class _Spy:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_Spy(),  # type: ignore[arg-type]
+        parler=_Spy(),  # type: ignore[arg-type]
+        indicf5=_Spy(),  # type: ignore[arg-type]
+        nemo=_Spy(),  # type: ignore[arg-type]
+    )
+    sec = VocalSection(
+        id="s1",
+        type="shloka_verse",
+        lyrics="\u0950 \u0928\u092e\u094b \u092d\u0917\u0935\u0924\u0947",
+        language="sa",
+        script="devanagari",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=60,
+        raga_name=None,
+        voice_timbre="androgynous",
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="sa",
+        style_family="sanskrit-shloka",
+        voice_timbre="androgynous",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    decisions = rm.last_decisions
+    assert len(decisions) == 1
+    assert decisions[0].chant_style_applied is True
+    assert "chant:" in decisions[0].reason
+
+
+def test_routing_model_marks_chant_when_voice_id_is_chant_persona() -> None:
+    """v1.4 Sprint 14: a chant_* voice_id triggers chant prosody even
+    when the song's style_family isn't sanskrit-shloka. This lets
+    bhavageete / kabir-doha presets opt in to chant per section."""
+
+    class _Spy:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_Spy(),  # type: ignore[arg-type]
+        parler=_Spy(),  # type: ignore[arg-type]
+        indicf5=_Spy(),  # type: ignore[arg-type]
+        nemo=_Spy(),  # type: ignore[arg-type]
+    )
+    sec = VocalSection(
+        id="s1",
+        type="verse",
+        lyrics="\u0928\u092e\u0938\u094d\u0915\u093e\u0930",
+        language="hi",
+        script="devanagari",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=70,
+        raga_name=None,
+        voice_timbre="androgynous",
+        voice_id="chant_devotional",
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="hi",
+        style_family="hindustani",  # NOT sanskrit-shloka
+        voice_timbre="androgynous",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    decisions = rm.last_decisions
+    assert len(decisions) == 1
+    assert decisions[0].chant_style_applied is True
+    assert "chant:voice_id:chant_devotional" in decisions[0].reason
+
+
+def test_routing_model_does_not_mark_chant_for_regular_sections() -> None:
+    """Confirm chant prosody is only applied when explicitly triggered:
+    a vanilla Western verse with no chant voice gets the regular path."""
+
+    class _Spy:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_Spy(),  # type: ignore[arg-type]
+        parler=_Spy(),  # type: ignore[arg-type]
+        indicf5=_Spy(),  # type: ignore[arg-type]
+        nemo=_Spy(),  # type: ignore[arg-type]
+    )
+    sec = VocalSection(
+        id="s1",
+        type="verse",
+        lyrics="hello world",
+        language="en",
+        script="latin",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=120,
+        raga_name=None,
+        voice_timbre="female",
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="en",
+        style_family="western",
+        voice_timbre="female",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    decisions = rm.last_decisions
+    assert len(decisions) == 1
+    assert decisions[0].chant_style_applied is False
+    assert "chant:" not in decisions[0].reason

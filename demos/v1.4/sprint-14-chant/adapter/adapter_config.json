@@ -1,0 +1,1 @@
+{"base_model": "indicf5", "adapter_id": "neo-fm/chant-style-v1", "rank": 16, "alpha": 32, "dropout": 0.05, "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"], "epochs": 40, "learning_rate": 0.0001, "batch_size": 8, "task": "vocal-style", "style_family": "sanskrit-shloka"}

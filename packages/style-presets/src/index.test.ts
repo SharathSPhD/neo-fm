@@ -5,8 +5,22 @@ import { SongDocumentSchema } from "@neo-fm/song-doc";
 import { findPreset, PRESETS } from "./index.js";
 
 describe("style presets", () => {
-  it("ships exactly eight curated presets", () => {
-    expect(PRESETS).toHaveLength(8);
+  it("ships exactly nine curated presets", () => {
+    // v1.4 Sprint 14 adds the Sanskrit-shloka chant preset; the
+    // gallery grows from 8 -> 9 cards. The earlier "eight" assertion
+    // pinned the v1.3 gallery shape.
+    expect(PRESETS).toHaveLength(9);
+  });
+
+  it("includes the Sanskrit shloka preset (Sprint 14)", () => {
+    const shloka = findPreset("sanskrit-shloka");
+    expect(shloka).toBeDefined();
+    expect(shloka?.song_document.style_family).toBe("sanskrit-shloka");
+    expect(shloka?.song_document.language).toBe("sa");
+    const types = shloka?.song_document.sections.map((s) => s.type) ?? [];
+    expect(types).toContain("shloka_verse");
+    expect(types).toContain("shloka_refrain");
+    expect(types).toContain("phalashruti");
   });
 
   it("every preset has a unique id", () => {

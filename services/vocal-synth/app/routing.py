@@ -30,6 +30,12 @@ from typing import Literal
 
 import numpy as np
 
+from .chant_style import (
+    ChantStyleSpec,
+    apply_chant_prosody,
+    load_chant_spec,
+    should_use_chant_style,
+)
 from .indicf5 import IndicF5Model
 from .model import (
     FakeVocalModel,
@@ -53,6 +59,11 @@ class RouteDecision:
     section_id: str
     backend: BackendKey
     reason: str
+    # v1.4 Sprint 14: was the chant-style adapter activated for
+    # this section? ``None`` means "not asked"; ``False`` means
+    # asked + declined; ``True`` means the chant prosody pass
+    # ran. The eval harness inspects this to attribute chant MOS.
+    chant_style_applied: bool | None = None
 
 
 def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
@@ -112,6 +123,7 @@ class RoutingVocalModel:
         indicf5: IndicF5Model | None = None,
         nemo: NeMoTTSModel | None = None,
         fallback: FakeVocalModel | None = None,
+        chant_spec: ChantStyleSpec | None = None,
     ) -> None:
         self._svara = svara or SvaraTTSModel(
             os.environ.get("VOCAL_MODEL_ID_SVARA", "kenpath/svara-tts-v1"),
@@ -132,7 +144,12 @@ class RoutingVocalModel:
         self._parler_loaded = False
         self._indicf5_loaded = False
         self._nemo_loaded = False
+        self._chant_spec = chant_spec if chant_spec is not None else load_chant_spec()
         self._last_decisions: list[RouteDecision] = []
+
+    @property
+    def chant_spec(self) -> ChantStyleSpec:
+        return self._chant_spec
 
     def _get_fallback(self) -> FakeVocalModel:
         if self._fallback is None:
@@ -218,9 +235,22 @@ class RoutingVocalModel:
         chunks: list[np.ndarray] = []
         decisions: list[RouteDecision] = []
         for sec in req.sections:
-            key, reason = _pick_backend(sec)
+            key, base_reason = _pick_backend(sec)
+            use_chant, chant_reason = should_use_chant_style(
+                style_family=req.style_family,
+                section_type=sec.type,
+                voice_id=sec.voice_id,
+            )
+            reason = (
+                f"{base_reason}+chant:{chant_reason}" if use_chant else base_reason
+            )
             decisions.append(
-                RouteDecision(section_id=sec.id, backend=key, reason=reason)
+                RouteDecision(
+                    section_id=sec.id,
+                    backend=key,
+                    reason=reason,
+                    chant_style_applied=False if not use_chant else None,
+                )
             )
             # v1.3 Sprint 4: actually consume the preprocessor output
             # instead of running it for trace-only side-effects. The
@@ -275,6 +305,7 @@ class RoutingVocalModel:
                         f"{reason}+prepared({trace.utterances_emitted}"
                         f"{'-phon' if sec.phonemes else ''})"
                     ),
+                    chant_style_applied=decisions[-1].chant_style_applied,
                 )
             backend = self._ensure_backend(key)
             # Each backend renders a one-section sub-request so we can
@@ -294,7 +325,25 @@ class RoutingVocalModel:
             sub_wav = backend.synthesise(sub_req)  # type: ignore[attr-defined]
             # Decode the PCM body so we can re-concatenate without
             # nested WAV headers.
-            chunks.append(_decode_wav_mono(sub_wav))
+            decoded = _decode_wav_mono(sub_wav)
+            if use_chant:
+                # The chant prosody pass is mass-preserving in peak
+                # and length, so we don't need to renormalise here.
+                # The LoRA itself shapes pitch + timbre at backend
+                # synthesise() time when mounted; this pass is the
+                # always-on envelope companion (see chant_style.py).
+                decoded = apply_chant_prosody(
+                    decoded,
+                    spec=self._chant_spec,
+                    sample_rate=sr,
+                )
+                decisions[-1] = RouteDecision(
+                    section_id=decisions[-1].section_id,
+                    backend=decisions[-1].backend,
+                    reason=decisions[-1].reason,
+                    chant_style_applied=True,
+                )
+            chunks.append(decoded)
         self._last_decisions = decisions
 
         out = np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
