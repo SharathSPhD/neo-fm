@@ -796,3 +796,149 @@ training paths. If real tuning happened off-repo, it needs artifact
 hashes, training logs, sample WAVs, and deployment health evidence
 before it should count as shipped.
 
+---
+
+## Closeout addendum (2026-05-17, branch `closeout/v1.4-gate-closure`)
+
+This addendum tracks the work done in response to this review on the
+`closeout/v1.4-gate-closure` branch (cut off `main@f7b3a13`). Each
+entry is "what the audit found" -> "what was changed and verified".
+
+### Stop-the-bleed (P0)
+
+1. **CI contracts job was missing the schema files.**
+   `docs/contracts/queue-message.schema.json`, `openapi-cloud.yaml`,
+   and `openapi-dgx.yaml` were restored and updated for v1.4. They
+   now include `top_n_candidates`, `candidate_index`/`seed`,
+   `voice_id` at section level, the widened style/language enums,
+   `POST /api/songs/{id}/preferences`, and
+   `POST /api/songs/publish-batch`. Validated locally with
+   `jsonschema.Draft202012Validator` and `openapi-spec-validator`.
+
+2. **TypeScript voice_id-on-section type error.**
+   `packages/song-doc/src/index.ts` was extended to put `voice_id`
+   (and a new `language` field) on `SectionSchema`, then
+   `pnpm --filter @neo-fm/song-doc export-schema` was re-run and
+   `_generated.py` was regenerated via `scripts/song-doc-codegen.py`.
+   The TS<->Py parity dump (`pnpm normalize-fixtures` vs
+   `uv run python tests/parity_dump.py`) matches byte-for-byte.
+   `pnpm -r typecheck` is green locally.
+
+3. **`WorkerDB.insert_track` was incompatible with migration 0041.**
+   `services/dgx-worker/app/db.py` now inserts `(job_id, attempt_id,
+   candidate_index, is_current)` and conflict-targets
+   `(job_id, attempt_id, candidate_index)` to match the unique index
+   created by `0041_preference_pairs_and_candidates.sql`. A new
+   `set_current_track` helper atomically flips the partial-unique
+   `is_current=true` flag for the winning candidate.
+
+4. **prod-smoke accepted `cardCount=0` on Discover.**
+   `infra/scripts/prod-smoke.mjs` now fails steps 16/17/18 when the
+   Sanskrit / Bengali / Telugu Discover filters return zero public
+   cards. The legacy soft-fail behavior is preserved behind an
+   explicit `STRICT_V14_DISCOVER=0` env override for pre-seed runs.
+
+### Wire RLHF / top-N for real (P0)
+
+5. **Worker now generates `top_n_candidates` candidates.**
+   `services/dgx-worker/app/worker.py` was refactored so a
+   `QueueMessage(top_n_candidates=N>1)` does:
+   - N deterministic inference calls with seeds derived from
+     `(trace_id, candidate_index)`,
+   - N mixer passes that share vocal / stems output,
+   - N storage uploads under `tracks/<job_id>/<attempt_id>__c<k>.wav`,
+   - N `insert_track(..., candidate_index=k, is_current=False)` rows,
+   - one `select_best_candidate` call via the deterministic reranker
+     (`services/reranker/neofm_reranker.score`), with a fallback path
+     that defaults to candidate 0 when scoring fails,
+   - one `set_current_track` flip to mark the winner.
+
+   When `top_n_candidates == 1` the legacy single-candidate path is
+   preserved bit-for-bit.
+
+6. **Test coverage for top-N.** Added
+   `services/dgx-worker/tests/test_worker_top_n.py` (4 cases) that
+   verifies seed determinism, N candidate inserts with `is_current`
+   flipping to the reranker winner, replay idempotency, and legacy
+   N=1 behavior. The full `services/dgx-worker` suite is now
+   **89 passed / 1 skipped**.
+
+7. **Metrics + config.** `metrics.reranker_runs_total` is incremented
+   on every winner selection; the optional
+   `RERANKER_CHECKPOINT_PATH` env is now read by `Settings` (used by
+   `select_best_candidate`).
+
+### Honest evidence labelling
+
+8. **Benchmark docs labelled proxy / dry-run.**
+   `demos/v1.4/sprint-12-indicf5/benchmark.md` and
+   `demos/v1.4/sprint-13-nemo-kannada/benchmark.md` both now have a
+   "PROXY / DRY-RUN" banner and rename every column to
+   `proxy MOS`. `docs/OPERATOR-HANDOFF.md` was rewritten so the
+   per-engine table calls out "plan target" vs "real-run evidence"
+   for every Sprint-8-through-14 LoRA / TTS path, and so the
+   `+0.288` reranker uplift is labelled as a deterministic proxy
+   delta, not a listener-evaluated MOS uplift. The
+   `evals/v1.4-bench/README.md` "compare runs" step was reworded the
+   same way.
+
+9. **`merge-gate.md` migration table corrected.** The aspirational
+   names `0035_voice_catalog.sql` /
+   `0036_indic_corpus_audit.sql` / reserved `0038` were replaced
+   with the actual filenames in `infra/supabase/migrations/`.
+
+### CI matrix expansion
+
+10. **`.github/workflows/ci.yml` now runs the full Python surface.**
+    The `python (uv)` matrix was expanded from three projects to
+    nine -- `services/reranker`, `services/lyric-gen`,
+    `services/vocal-synth`, `services/stems-synth`,
+    `services/cover-art-synth`, and `evals/v1.4-bench` are now
+    CI-enforced. Each project's `pyproject.toml` was upgraded with
+    realistic mypy overrides for the dynamic-ML / sys-path test
+    surfaces, plus ruff per-file-ignores for legitimate IPA / x
+    notation in comments and docstrings. New `pyproject.toml` files
+    were added for the two services that lacked them
+    (`services/reranker`, `evals/v1.4-bench`).
+
+### Local gate (now green on `closeout/v1.4-gate-closure`)
+
+| Surface | Result |
+| --- | --- |
+| `pnpm -r typecheck` | green |
+| `pnpm -r test` (TS + web vitest) | **419 / 419** |
+| `jsonschema` queue-message schema | OK |
+| `openapi-spec-validator` cloud + dgx | OK |
+| `packages/song-doc/python` ruff / mypy / pytest | 10 / 10 |
+| `services/music-inference` ruff / mypy / pytest | 90 / 90 |
+| `services/dgx-worker` ruff / mypy / pytest | 89 / 90 (1 DGX-only skip) |
+| `services/reranker` ruff / mypy / pytest | 23 / 23 |
+| `services/lyric-gen` ruff / mypy / pytest | 22 / 22 |
+| `services/vocal-synth` ruff / mypy / pytest | 128 / 129 (1 DGX-only skip) |
+| `services/stems-synth` ruff / mypy / pytest | 31 / 31 |
+| `services/cover-art-synth` ruff / mypy / pytest | 14 / 14 |
+| `evals/v1.4-bench` ruff / mypy / pytest | 6 / 6 |
+| `song-doc` codegen drift + TS<->Py parity | green |
+
+### What is still not done (carry into v1.5)
+
+These items from sections 4 and 8 of this review remain open after
+the closeout, because they require operator-only DGX runs that the
+repo cannot perform on its own:
+
+- Real HeartMuLa / MusicGen / Stable Audio / NeMo / chant LoRA
+  artifacts. Every committed trainer still raises
+  `NotImplementedError` outside `--dry-run`.
+- A real MERT-95M `train_apply.py` in `services/reranker`.
+- A listener-evaluated MOS panel for any v1.4 backend.
+- An `--apply` seed of Discover with real WAV objects in storage
+  (the seed manifest still has `"apply": false`).
+- Production Vercel deploy + post-deploy `prod-smoke.mjs` run. The
+  closeout commit and merge are queued to fire that pipeline; the
+  resulting `SUMMARY.md` will land as a follow-up commit per the
+  AGENTS.md merge-gate contract.
+
+Until those land, v1.4 should be marketed as "scaffold +
+runtime-integration complete" rather than "trained artifact
+complete" or "production verified".
+

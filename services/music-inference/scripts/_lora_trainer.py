@@ -150,9 +150,9 @@ def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
     hands off to the audiocraft-style trainer in a sibling checkout.
     """
     try:
-        import torch  # type: ignore[import-not-found]  # noqa: F401
-        import peft  # type: ignore[import-not-found]  # noqa: F401
         import heartlib  # type: ignore[import-not-found]  # noqa: F401
+        import peft  # type: ignore[import-not-found]  # noqa: F401
+        import torch  # type: ignore[import-not-found]  # noqa: F401
     except ImportError as exc:
         raise SystemExit(
             f"ML deps missing: {exc}. Run `uv sync --extra training` on "

@@ -61,3 +61,34 @@ select = ["E", "F", "I", "B", "UP", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+explicit_package_bases = true
+mypy_path = "scripts"
+
+[[tool.mypy.overrides]]
+module = ["scripts.*", "tests.*", "curate_stems", "train_stems_lora"]
+disable_error_code = [
+  "arg-type",
+  "no-untyped-def",
+  "no-untyped-call",
+  "unused-ignore",
+  "import-untyped",
+  "import-not-found",
+  "no-any-return",
+  "type-arg",
+]
+
+# Backend models are Literal["fake"] / Literal["stable-audio-open"]
+# subtypes of the StemModel protocol whose backend field is `str`.
+# This is intentional; mypy refuses to widen the Literal automatically.
+[[tool.mypy.overrides]]
+module = ["app.model", "app.serve"]
+disable_error_code = [
+  "unused-ignore",
+  "arg-type",
+  "assignment",
+  "return-value",
+]
+
+[[tool.mypy.overrides]]
+module = ["yaml", "_corpus_pipeline"]
+ignore_missing_imports = true

@@ -171,6 +171,13 @@ export const SectionSchema = z.object({
   // Mirrors the `tags` field on GenerateRequestSection in openapi-dgx.yaml; the
   // worker forwards them verbatim to music-inference.
   tags: z.array(z.string()).optional(),
+  // v1.4 Sprint 5: per-section override of the song-level `voice_id`.
+  // The dgx-worker already forwards both fields to vocal-synth; lifting it
+  // into the Zod / JSON contract makes the round-trip explicit.
+  voice_id: z.string().min(1).max(64).optional(),
+  // Per-section language override (e.g. an English bridge inside a Kannada
+  // song). The worker falls back to the song-level language when omitted.
+  language: z.string().min(2).max(16).optional(),
 });
 export type Section = z.infer<typeof SectionSchema>;
 

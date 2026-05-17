@@ -40,7 +40,6 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-
 SUPPORTED_LANGUAGES = ("en", "hi", "kn", "ta", "te", "bn", "sa")
 SUPPORTED_STYLES = (
     "western",

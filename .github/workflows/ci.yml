@@ -43,6 +43,14 @@ jobs:
           - packages/song-doc/python
           - services/music-inference
           - services/dgx-worker
+          # v1.4 sprint 7-17 added these sidecars; CI now enforces them
+          # alongside the original three projects.
+          - services/reranker
+          - services/lyric-gen
+          - services/vocal-synth
+          - services/stems-synth
+          - services/cover-art-synth
+          - evals/v1.4-bench
     steps:
       - uses: actions/checkout@v4
 

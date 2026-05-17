@@ -20,7 +20,7 @@ run `pnpm --filter @neo-fm/song-doc export-schema && python3 scripts/song-doc-co
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 
 from pydantic import model_validator
 
@@ -43,8 +43,9 @@ class SongDocument(_generated._SongDocumentBase):
 
     # v1.4 Sprint 2: mirror of STYLE_RAGA_ALLOWLIST in
     # packages/song-doc/src/index.ts. Keep this map and the Zod
-    # allow-list in lock-step.
-    _STYLE_RAGA_ALLOWLIST: dict[str, frozenset[str] | None] = {  # type: ignore[misc]
+    # allow-list in lock-step. Annotated as ClassVar so Pydantic does
+    # not try to coerce it into a field (Pydantic 2 + ruff RUF012).
+    _STYLE_RAGA_ALLOWLIST: ClassVar[dict[str, frozenset[str] | None]] = {
         "western": None,
         "bollywood-ballad": None,
         "carnatic": frozenset({"carnatic"}),

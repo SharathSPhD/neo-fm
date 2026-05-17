@@ -26,7 +26,6 @@ import os
 from dataclasses import dataclass, field
 from typing import Literal, Protocol
 
-
 Backend = Literal["indicbart", "fake"]
 
 # Mirrors @neo-fm/song-doc Language union. Keep in sync with

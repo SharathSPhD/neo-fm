@@ -111,11 +111,19 @@ cover_art_jobs_total = Counter(
     registry=REGISTRY,
 )
 
+# v1.4 Sprint 16 — RLHF reranker calls (top-N candidate selection).
+reranker_runs_total = Counter(
+    "neofm_worker_reranker_runs_total",
+    "Reranker invocations grouped by outcome (success vs fallback to c0).",
+    ["outcome"],
+    registry=REGISTRY,
+)
+
 
 class _MetricsHandler(BaseHTTPRequestHandler):
     server_version = "neofm-worker-metrics/0.1"
 
-    def do_GET(self) -> None:  # noqa: N802 - http.server expected name
+    def do_GET(self) -> None:
         if self.path not in ("/metrics", "/healthz"):
             self.send_response(404)
             self.end_headers()
@@ -133,7 +141,7 @@ class _MetricsHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(payload)
 
-    def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+    def log_message(self, format: str, *args: object) -> None:
         # Quiet the stdout spam; the worker's main logger handles
         # request observability and these are scraped frequently.
         LOG.debug(format, *args)

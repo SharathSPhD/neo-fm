@@ -97,13 +97,16 @@ def _resample(samples: np.ndarray, src_sr: int, dst_sr: int) -> np.ndarray:
     if src_sr == dst_sr or samples.size == 0:
         return samples
     ratio = dst_sr / src_sr
-    new_n = int(round(samples.size * ratio))
+    new_n = round(samples.size * ratio)
     if new_n <= 1:
         return samples
     # Linear interpolation; numpy's interp is fine for our use case
     # because the source is already low-passed by the upstream model.
     src_idx = np.linspace(0.0, samples.size - 1, new_n, dtype=np.float64)
-    return np.interp(src_idx, np.arange(samples.size), samples).astype(np.float32)
+    resampled: np.ndarray = np.interp(src_idx, np.arange(samples.size), samples).astype(
+        np.float32
+    )
+    return resampled
 
 
 def _pad_or_trim(samples: np.ndarray, target_n: int) -> np.ndarray:
@@ -133,11 +136,11 @@ def _one_pole_envelope(
         return signal
     a_coef = math.exp(-1.0 / max(1, int(attack_seconds * sample_rate)))
     r_coef = math.exp(-1.0 / max(1, int(release_seconds * sample_rate)))
-    abs_sig = np.abs(signal).astype(np.float32)
-    env = np.empty_like(abs_sig)
+    abs_sig: np.ndarray = np.abs(signal).astype(np.float32)
+    env: np.ndarray = np.empty_like(abs_sig)
     prev = 0.0
     for i in range(abs_sig.size):
-        x = abs_sig[i]
+        x = float(abs_sig[i])
         if x > prev:
             prev = a_coef * prev + (1 - a_coef) * x
         else:

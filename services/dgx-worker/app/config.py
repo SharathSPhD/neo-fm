@@ -91,6 +91,12 @@ class Settings:
     # bhavageete render).
     stems_max_inserts_per_song: int = 4
 
+    # v1.4 Sprint 16 — RLHF reranker checkpoint. Optional: when None the
+    # worker falls back to the bundled config-seeded head (deterministic
+    # hash-of-path scoring). On DGX this path lives under the trained
+    # reranker artefact directory.
+    reranker_checkpoint_path: Path | None = None
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -153,5 +159,10 @@ def load_settings() -> Settings:
         ),
         stems_max_inserts_per_song=int(
             os.environ.get("STEMS_MAX_INSERTS_PER_SONG", "4"),
+        ),
+        reranker_checkpoint_path=(
+            Path(os.environ["RERANKER_CHECKPOINT_PATH"])
+            if os.environ.get("RERANKER_CHECKPOINT_PATH")
+            else None
         ),
     )

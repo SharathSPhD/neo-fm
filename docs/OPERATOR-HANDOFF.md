@@ -63,36 +63,37 @@
 
 ## Performance numbers (per engine)
 
-Captured against the v1.4 100-prompt internal bench
-(`evals/v1.4-bench/`). Numbers are aggregated MOS uplift vs the
-v1.3 baseline (HeartMuLa + Indic-Parler routing). All training
-ran on the DGX Spark GB10; HuggingFace Hub was used for weight
-up/down only.
+> **Proxy / target numbers, not human MOS.** The table below records
+> the **target** uplift each Sprint trainer is wired to produce, and
+> the **proxy-score** the v1.4 CI rubric can compute on dry-run
+> placeholder audio. Real human MOS requires a listener panel and is
+> tracked in the v1.5 backlog. None of the trainers below are
+> auto-promoted on these proxy numbers; the operator runs the real
+> training path on DGX, listens to samples, and decides.
 
-| Engine / adapter | Per-style mean MOS uplift | Notes |
+| Engine / adapter | Plan target | Real-run evidence |
 | --- | --- | --- |
-| HeartMuLa baseline (v1.3) | — | reference |
-| HeartMuLa + Bhavageete LoRA (Sprint 8) | +0.42 MOS on `kannada-light-classical` | rank-32, ~3h on GB10 |
-| HeartMuLa + Tamil-folk LoRA (Sprint 9) | +0.38 MOS on `tamil-folk` | rank-32, ~2.5h on GB10 |
-| MusicGen-Medium + Carnatic LoRA (Sprint 10) | +0.31 MOS on `carnatic` (A/B vs HeartMuLa) | A/B routes 35% of carnatic at launch |
-| MusicGen-Medium + Hindustani LoRA (Sprint 10) | +0.29 MOS on `hindustani` | A/B routes 35% at launch |
-| Stable Audio Open stems (Sprint 11) | +0.21 MOS on transitions (binary judge) | short-clip adapter only |
-| IndicF5 vocal (Sprint 12) | +0.18 MOS on Hindi vocal naturalness | third routing backend |
-| NeMo Kannada TTS (Sprint 13) | +0.45 MOS on Kannada vocal naturalness | fourth routing backend |
-| Sanskrit chant style adapter (Sprint 14) | +0.36 MOS on `sanskrit-shloka` prosody | chant-specific LoRA |
+| HeartMuLa baseline (v1.3) | reference | shipped in v1.3 |
+| HeartMuLa + Bhavageete LoRA (Sprint 8) | +0.42 proxy on `kannada-light-classical` | trainer is **operator-only on DGX**; no committed checkpoint yet |
+| HeartMuLa + Tamil-folk LoRA (Sprint 9) | +0.38 proxy on `tamil-folk` | trainer is **operator-only on DGX**; no committed checkpoint yet |
+| MusicGen-Medium + Carnatic LoRA (Sprint 10) | +0.31 proxy on `carnatic` (A/B vs HeartMuLa) | trainer is **operator-only on DGX**; routing-only in repo |
+| MusicGen-Medium + Hindustani LoRA (Sprint 10) | +0.29 proxy on `hindustani` | trainer is **operator-only on DGX**; routing-only in repo |
+| Stable Audio Open stems (Sprint 11) | +0.21 proxy on transitions (binary judge) | adapter trainer is **operator-only**; mixer hook ships |
+| IndicF5 vocal (Sprint 12) | +0.18 proxy on Hindi vocal naturalness | routing-only; benchmark.md is proxy/dry-run |
+| NeMo Kannada TTS (Sprint 13) | +0.45 proxy on Kannada vocal naturalness | dry-run emits 1-byte `.nemo` placeholders |
+| Sanskrit chant style adapter (Sprint 14) | +0.36 proxy on `sanskrit-shloka` prosody | dry-run emits 0-byte `.safetensors`; no real adapter |
 
-**RLHF reranker uplift** (Sprint 16):
+**RLHF reranker proxy uplift** (Sprint 16):
 
 | Setup | mean_top1 score |
 | --- | --- |
 | Random pick of 4 candidates | 0.481 |
-| Reranker-picked (trained head) | 0.769 |
-| **Uplift** | **+0.288 MOS** (target: ≥ 0.3) |
+| Reranker-picked (deterministic head, dry-run) | 0.769 |
+| **Proxy uplift** | **+0.288 (proxy delta, not listener MOS)** |
 
-The trained head is `services/reranker/checkpoints/head.json`;
-the next training pass after enough live `preference_pairs`
-rows accumulate (target: ≥ 5,000 votes) is queued for the
-v1.5 cycle.
+The dry-run head is `services/reranker/checkpoints/head.json`. The
+real MERT-95M `train_apply.py` path is queued for v1.5 once enough
+live `preference_pairs` accumulate (target: ≥ 5,000 votes).
 
 ## Known sharp edges
 

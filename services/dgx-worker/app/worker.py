@@ -32,6 +32,7 @@ Lifecycle of one job:
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import signal
 import sys
@@ -48,7 +49,7 @@ from .config import Settings, load_settings
 from .cover_art_client import CoverArtSynthClient
 from .cover_art_worker import cover_art_consumer_loop
 from .db import WorkerDB
-from .governor import DEFAULT_STATE_PATH, GovernorState, read_state
+from .governor import read_state
 from .inference_client import MusicInferenceClient
 from .mixer import MixSettings, StemInsert, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
@@ -66,14 +67,24 @@ class JobOutcome:
     FAILED_DLQ = "failed_dlq"
 
 
-def build_inference_request(message: QueueMessage, song_document: SongDocument) -> dict[str, Any]:
+def build_inference_request(
+    message: QueueMessage,
+    song_document: SongDocument,
+    *,
+    candidate_index: int = 0,
+) -> dict[str, Any]:
     """Translate (queue message + song document) into the music-inference body.
 
     Mirrors the structure expected by openapi-dgx.yaml. Sections from the
     Song Document get forwarded verbatim (the worker is intentionally dumb
     about co-composition semantics; that's Phase 2's job).
+
+    v1.4 Sprint 16: when ``candidate_index > 0`` the body also carries
+    ``candidate_index`` and a deterministic ``seed`` derived from the
+    trace_id. The seed is stable across retries with the same trace_id
+    so a redelivered queue message reproduces the same N alternates.
     """
-    return {
+    body: dict[str, Any] = {
         "job_id": str(message.job_id),
         "trace_id": message.trace_id,
         "language": song_document.language,
@@ -85,6 +96,23 @@ def build_inference_request(message: QueueMessage, song_document: SongDocument) 
         "orchestration": song_document.orchestration,
         "sections": [s.model_dump(exclude_none=True) for s in song_document.sections],
     }
+    if message.top_n_candidates > 1:
+        body["candidate_index"] = candidate_index
+        body["seed"] = _candidate_seed(message.trace_id, candidate_index)
+    return body
+
+
+def _candidate_seed(trace_id: str, candidate_index: int) -> int:
+    """Deterministic 32-bit seed derived from ``(trace_id, candidate_index)``.
+
+    Using SHA-256 keeps the seed stable across worker restarts and across
+    retries (which reuse the trace_id), so the same alternate index always
+    maps to the same sampling seed. The truncation to 32 bits matches what
+    PyTorch / numpy generators expect.
+    """
+    payload = f"{trace_id}|{candidate_index}".encode()
+    digest = hashlib.sha256(payload).digest()
+    return int.from_bytes(digest[:4], "big")
 
 
 async def _heartbeat_loop(
@@ -231,7 +259,7 @@ async def _vocalize_all_languages(
                 trace_id=message.trace_id,
             )
             return lang, wav
-        except BaseException as exc:  # noqa: BLE001 - we record per-lang failure
+        except BaseException as exc:
             return lang, exc
 
     tasks = [asyncio.create_task(one(lang)) for lang in settings.vocal_languages]
@@ -446,46 +474,65 @@ async def _process_one_impl(
             return JobOutcome.FAILED_DLQ
 
         # ---- 5. inference -------------------------------------------------
+        # v1.4 Sprint 16: when top_n_candidates > 1 the worker iterates
+        # 0..N-1, asking music-inference for one alternate per call. The
+        # vocal/stem/mix pipeline below runs once with the shared lyrics
+        # set and re-uses those stems across every candidate render so
+        # the GPU cost scales O(N) on the music backend only.
         import time as _time  # local import: avoid global churn for tests
+        n_candidates = max(1, message.top_n_candidates)
+        candidate_instrumentals: list[bytes] = []
         inference_started = _time.perf_counter()
         try:
-            if shutdown is not None:
-                gen_task = asyncio.create_task(
-                    inference.generate(
-                        request_body=build_inference_request(message, song_document),
-                        trace_id=message.trace_id,
-                    ),
+            for k in range(n_candidates):
+                request_body = build_inference_request(
+                    message,
+                    song_document,
+                    candidate_index=k,
                 )
-                shutdown_task = asyncio.create_task(shutdown.wait())
-                done, _pending = await asyncio.wait(
-                    {gen_task, shutdown_task},
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-                if shutdown_task in done and gen_task not in done:
-                    # ADR 0011: SIGTERM during inference. Do NOT renew
-                    # the lease, do NOT ack the pgmq message. Mark the
-                    # job failed with the preempted taxonomy so the
-                    # next attempt is classified correctly.
-                    gen_task.cancel()
-                    with suppress(asyncio.CancelledError, BaseException):
-                        await gen_task
-                    LOG.warning(
-                        "inference_preempted",
-                        extra={"job_id": job_id, "trace_id": message.trace_id},
+                if shutdown is not None:
+                    gen_task = asyncio.create_task(
+                        inference.generate(
+                            request_body=request_body,
+                            trace_id=message.trace_id,
+                        ),
                     )
-                    metrics.preempted_total.inc()
-                    with db.connect() as conn:
-                        db.mark_failed(conn, job_id, "inference_preempted")
-                    return JobOutcome.FAILED_RETRY
-                shutdown_task.cancel()
-                with suppress(asyncio.CancelledError):
-                    await shutdown_task
-                audio_bytes = await gen_task
-            else:
-                audio_bytes = await inference.generate(
-                    request_body=build_inference_request(message, song_document),
-                    trace_id=message.trace_id,
-                )
+                    shutdown_task = asyncio.create_task(shutdown.wait())
+                    done, _pending = await asyncio.wait(
+                        {gen_task, shutdown_task},
+                        return_when=asyncio.FIRST_COMPLETED,
+                    )
+                    if shutdown_task in done and gen_task not in done:
+                        # ADR 0011: SIGTERM during inference. Do NOT renew
+                        # the lease, do NOT ack the pgmq message. Mark the
+                        # job failed with the preempted taxonomy so the
+                        # next attempt is classified correctly.
+                        gen_task.cancel()
+                        with suppress(asyncio.CancelledError, BaseException):
+                            await gen_task
+                        LOG.warning(
+                            "inference_preempted",
+                            extra={
+                                "job_id": job_id,
+                                "trace_id": message.trace_id,
+                                "candidate_index": k,
+                            },
+                        )
+                        metrics.preempted_total.inc()
+                        with db.connect() as conn:
+                            db.mark_failed(conn, job_id, "inference_preempted")
+                        return JobOutcome.FAILED_RETRY
+                    shutdown_task.cancel()
+                    with suppress(asyncio.CancelledError):
+                        await shutdown_task
+                    candidate_instrumentals.append(await gen_task)
+                else:
+                    candidate_instrumentals.append(
+                        await inference.generate(
+                            request_body=request_body,
+                            trace_id=message.trace_id,
+                        ),
+                    )
             metrics.inference_seconds.observe(_time.perf_counter() - inference_started)
         except (httpx.HTTPError, httpx.TimeoutException) as exc:
             metrics.inference_seconds.observe(_time.perf_counter() - inference_started)
@@ -551,15 +598,24 @@ async def _process_one_impl(
                 )
 
         # ---- 5c. mixdown to stereo 48k -----------------------------------
+        # When top_n_candidates > 1 we mix each candidate against the
+        # shared vocal + stem track. The reranker scores the final
+        # mixed audio (or, in CI, the storage URL string), so paying
+        # the mix cost per candidate is necessary for the comparison
+        # the user will actually hear on the compare page.
+        candidate_mixes: list[bytes] = []
         mix_started = _time.perf_counter()
         try:
-            final_audio = mix_to_stereo_48k(
-                instrumental_wav=audio_bytes,
-                vocal_wavs=vocal_stems or None,
-                stem_inserts=stem_inserts or None,
-                target_duration_seconds=song_document.target_duration_seconds,
-                settings=MixSettings(),
-            )
+            for instrumental in candidate_instrumentals:
+                candidate_mixes.append(
+                    mix_to_stereo_48k(
+                        instrumental_wav=instrumental,
+                        vocal_wavs=vocal_stems or None,
+                        stem_inserts=stem_inserts or None,
+                        target_duration_seconds=song_document.target_duration_seconds,
+                        settings=MixSettings(),
+                    ),
+                )
             metrics.mix_seconds.observe(_time.perf_counter() - mix_started)
         except Exception as exc:
             LOG.error(
@@ -569,6 +625,7 @@ async def _process_one_impl(
                     "err": str(exc),
                     "vocal_failures": vocal_failures,
                     "stem_failures": len(stem_plan_summary) - len(stem_inserts),
+                    "n_candidates": n_candidates,
                 },
             )
             # Mixer failures are retryable: they're not the request's
@@ -581,15 +638,27 @@ async def _process_one_impl(
                 error="mixdown_failed",
                 raw_payload=raw_payload,
             )
+        final_audio = candidate_mixes[0]
 
         # ---- 6. storage upload (idempotent) ------------------------------
-        object_path = storage.object_path(job_id, str(message.attempt_id), "wav")
+        # One upload per candidate. candidate_index=0 keeps the legacy
+        # path so old signed-URL workers still resolve the canonical
+        # render; candidate_index>0 lands at `<job>/<attempt>__c<k>.wav`.
+        candidate_object_paths: list[str] = []
         try:
-            await storage.put_object(
-                object_path=object_path,
-                content=final_audio,
-                content_type="audio/wav",
-            )
+            for k, audio in enumerate(candidate_mixes):
+                object_path = storage.object_path(
+                    job_id,
+                    str(message.attempt_id),
+                    "wav",
+                    candidate_index=k,
+                )
+                await storage.put_object(
+                    object_path=object_path,
+                    content=audio,
+                    content_type="audio/wav",
+                )
+                candidate_object_paths.append(object_path)
         except Exception as exc:
             LOG.error("storage upload failed", extra={"job_id": job_id, "err": str(exc)})
             return await _handle_retryable_failure(
@@ -601,30 +670,84 @@ async def _process_one_impl(
                 raw_payload=raw_payload,
             )
 
-        # ---- 7+8. track + completed --------------------------------------
-        # Sprint C bug-b: the three mutations below MUST land atomically.
-        # If any of them fails after a successful storage upload, the
-        # whole block must roll back so the message stays in the queue
-        # and the next worker retry will re-insert the track row.
-        # psycopg's connection context manager already commits on
-        # successful __exit__ / rolls back on exception, but we make
-        # the boundary explicit with `conn.transaction()` so a future
-        # author who adds a fourth statement here can't accidentally
-        # split the transaction. (The user-reported "Audio URL pending"
-        # orphan came from an earlier code path that did the storage
-        # upload, the insert_track, and the mark_completed across
-        # separate connections.)
+        # ---- 6b. rerank candidates --------------------------------------
+        # Single-candidate jobs skip the reranker entirely (cheaper, and
+        # the migration's `is_current=true` default already covers it).
+        chosen_candidate_index = 0
+        candidate_scores: list[tuple[int, float]] = [(0, 0.0)]
+        if n_candidates > 1:
+            try:
+                from .bench_dispatch import select_best_candidate
+
+                paths_for_rerank = [
+                    (k, storage.storage_url(p))
+                    for k, p in enumerate(candidate_object_paths)
+                ]
+                selection = select_best_candidate(
+                    job_id=job_id,
+                    candidate_audio_paths=paths_for_rerank,
+                    checkpoint_path=settings.reranker_checkpoint_path,
+                )
+                chosen_candidate_index = selection.chosen_candidate_index
+                candidate_scores = list(selection.all_scores)
+                metrics.reranker_runs_total.labels(
+                    outcome="success",
+                ).inc()
+            except Exception as exc:
+                # Reranker failure is non-fatal: we fall back to
+                # candidate 0 (already mixed) so the user still gets
+                # an `is_current=true` track. Operators see this in
+                # logs and the `reranker_runs_total{outcome="failed"}`
+                # counter.
+                LOG.warning(
+                    "reranker_failed_falling_back_to_c0",
+                    extra={
+                        "job_id": job_id,
+                        "trace_id": message.trace_id,
+                        "err": str(exc),
+                        "n_candidates": n_candidates,
+                    },
+                )
+                metrics.reranker_runs_total.labels(outcome="failed").inc()
+                chosen_candidate_index = 0
+                candidate_scores = [(k, 0.0) for k in range(n_candidates)]
+
+        # ---- 7+8. tracks + completed -------------------------------------
+        # Sprint C bug-b: the mutations below MUST land atomically. If
+        # any of them fails after a successful storage upload, the whole
+        # block must roll back so the message stays in the queue and
+        # the next worker retry re-inserts every candidate row.
+        # v1.4 Sprint 16 expands the block: each candidate is inserted
+        # with is_current=false, then set_current_track flips one row
+        # to true. The partial-unique index on (job_id) WHERE is_current
+        # requires this two-step flip to avoid the constraint violation
+        # we would hit if N rows were inserted with default is_current=true.
         with db.connect() as conn:
             with conn.transaction():
-                db.insert_track(
-                    conn,
-                    job_id=job_id,
-                    attempt_id=str(message.attempt_id),
-                    url=storage.storage_url(object_path),
-                    duration_seconds=song_document.target_duration_seconds,
-                    format_="wav",
-                    bytes_=len(final_audio),
-                )
+                for k, (object_path, audio) in enumerate(
+                    zip(candidate_object_paths, candidate_mixes, strict=True),
+                ):
+                    db.insert_track(
+                        conn,
+                        job_id=job_id,
+                        attempt_id=str(message.attempt_id),
+                        url=storage.storage_url(object_path),
+                        duration_seconds=song_document.target_duration_seconds,
+                        format_="wav",
+                        bytes_=len(audio),
+                        candidate_index=k,
+                        # Two-phase: insert is_current=false for ALL when N>1
+                        # so the partial-unique index never sees a transient
+                        # collision; the chosen row is flipped to true below.
+                        is_current=(n_candidates == 1 and k == 0),
+                    )
+                if n_candidates > 1:
+                    db.set_current_track(
+                        conn,
+                        job_id=job_id,
+                        attempt_id=str(message.attempt_id),
+                        candidate_index=chosen_candidate_index,
+                    )
                 db.mark_completed(conn, job_id)
                 db.archive(conn, settings.queue_name, msg_id)
 
@@ -636,6 +759,9 @@ async def _process_one_impl(
                 "bytes": len(final_audio),
                 "vocal_stems": len(vocal_stems),
                 "vocal_failures": vocal_failures,
+                "n_candidates": n_candidates,
+                "chosen_candidate_index": chosen_candidate_index,
+                "candidate_scores": candidate_scores,
             },
         )
         return JobOutcome.COMPLETED
@@ -809,7 +935,7 @@ async def main_loop(
                 with db.connect() as conn:
                     lag = db.queue_lag_seconds(conn)
                 metrics.queue_lag_seconds.set(lag if lag is not None else 0.0)
-            except Exception as exc:  # noqa: BLE001 - metrics never block the loop
+            except Exception as exc:
                 LOG.debug("queue_lag_sample_failed", extra={"err": str(exc)})
 
             with db.connect() as conn:

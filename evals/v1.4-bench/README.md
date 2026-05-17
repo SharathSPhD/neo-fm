@@ -59,8 +59,10 @@ This shape is consumed by `scripts/bench_loader.py:Prompt`.
    writes `summary.json` with per-prompt top-1 selection + per-style mean
    reward.
 4. **Compare runs.** Use the per-style mean reward delta vs a previous run
-   to demonstrate quality uplift (target ≥ 0.3 MOS uplift over random
-   selection per the plan).
+   to demonstrate quality uplift. The plan target was `≥ 0.3` reward
+   uplift; this is a **proxy-score uplift**, not a listener-evaluated
+   MOS uplift. Real MOS requires a human panel and is out of scope for
+   CI evidence.
 
 ## Why 10 × 10 and not larger
 

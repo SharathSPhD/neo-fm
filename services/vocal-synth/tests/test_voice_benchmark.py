@@ -16,12 +16,10 @@ folder is importable as `scripts.voice_benchmark`.
 from __future__ import annotations
 
 import json
-import struct
 import sys
 from pathlib import Path
 
 import numpy as np
-import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))

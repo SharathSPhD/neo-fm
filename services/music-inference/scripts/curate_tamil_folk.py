@@ -66,7 +66,9 @@ def run_dry(manifest_path: Path, out_dir: Path) -> dict[str, Any]:
     return emit_manifest_summary(clips, out_dir)
 
 
-def run_full(manifest_path: Path, out_dir: Path, *, stage: str) -> dict[str, Any]:  # pragma: no cover
+def run_full(  # pragma: no cover
+    manifest_path: Path, out_dir: Path, *, stage: str,
+) -> dict[str, Any]:
     if stage in ("all", "validate"):
         return run_dry(manifest_path, out_dir)
     raise NotImplementedError(

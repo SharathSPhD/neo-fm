@@ -213,7 +213,7 @@ def render_one(
     )
     try:
         wav = model.synthesise(req)
-    except Exception as exc:  # noqa: BLE001 - benchmark records failure
+    except Exception as exc:
         return CellResult(
             prompt_id=prompt.prompt_id,
             backend=backend,
@@ -252,10 +252,10 @@ def load_backends(*, dry_run: bool) -> dict[str, Any]:
         return {b: fake for b in BACKENDS}
     backends: dict[str, Any] = {}
     # Heavy imports + loads happen *only* outside of dry-run.
-    from app.indicf5 import IndicF5Model  # noqa: WPS433
-    from app.model import SvaraTTSModel  # noqa: WPS433
-    from app.nemo import NeMoTTSModel  # noqa: WPS433
-    from app.parler import ParlerTTSModel  # noqa: WPS433
+    from app.indicf5 import IndicF5Model
+    from app.model import SvaraTTSModel
+    from app.nemo import NeMoTTSModel
+    from app.parler import ParlerTTSModel
 
     for name, factory in [
         ("svara", lambda: SvaraTTSModel(
@@ -273,7 +273,7 @@ def load_backends(*, dry_run: bool) -> dict[str, Any]:
             m = factory()
             m.load()
             backends[name] = m
-        except Exception as exc:  # noqa: BLE001 - log but continue
+        except Exception as exc:
             print(f"[voice_benchmark] {name} unavailable: {exc}", file=sys.stderr)
     return backends
 

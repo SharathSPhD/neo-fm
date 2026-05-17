@@ -24,7 +24,6 @@ import os
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
-
 Backend = Literal["z-image", "sdxl-turbo", "fake"]
 
 

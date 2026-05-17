@@ -79,7 +79,7 @@ class RerankerHead:
     b2: float
 
     @classmethod
-    def from_config(cls, config: HeadConfig) -> "RerankerHead":
+    def from_config(cls, config: HeadConfig) -> RerankerHead:
         # Glorot init seeded off config.init_seed so two calls with
         # the same config produce identical weights.
         rng_state = config.init_seed & 0xFFFFFFFF

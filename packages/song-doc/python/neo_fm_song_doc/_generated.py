@@ -28,6 +28,8 @@ class Section(BaseModel):
     phonemes: list[str] | None = None
     target_seconds: int = Field(ge=1, le=360)
     tags: list[str] | None = None
+    voice_id: str | None = Field(default=None, min_length=1, max_length=64)
+    language: str | None = Field(default=None, min_length=2, max_length=16)
 
 
 class Orchestration(BaseModel):

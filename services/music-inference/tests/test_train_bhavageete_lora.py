@@ -126,5 +126,5 @@ def test_missing_corpus_summary_fails_loudly(tmp_path: Path) -> None:
         push_to_hub=None,
         trackio_project="x",
     )
-    with pytest.raises(SystemExit, match="summary.json"):
+    with pytest.raises(SystemExit, match=r"summary\.json"):
         trainer._dry_run_summary(args)

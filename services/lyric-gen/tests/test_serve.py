@@ -18,9 +18,9 @@ from fastapi.testclient import TestClient
 os.environ["LYRIC_GEN_SKIP_LIFESPAN"] = "1"
 os.environ.setdefault("LYRIC_GEN_HMAC_SECRET", "test-secret")
 
-from app import model as model_module  # noqa: E402
-from app.model import FakeLyricGenModel  # noqa: E402
-from app.serve import app  # noqa: E402
+from app import model as model_module
+from app.model import FakeLyricGenModel
+from app.serve import app
 
 
 @pytest.fixture(autouse=True)

@@ -7,7 +7,7 @@ download/upload only.
 
 The recipe is identical to Sprint 8's bhavageete LoRA (`_lora_trainer.py`);
 only the style label and the HF Hub push target change. Corpus size
-target is 30 min – 2 hours (vs bhavageete's 30 min – 4 hours) because
+target is 30 min - 2 hours (vs bhavageete's 30 min - 4 hours) because
 the Tamil-folk source pool is smaller and the operator's curation
 budget is tighter — the LoRA capacity at rank 32 stays oversized for
 the dataset so this is fine.
@@ -21,7 +21,6 @@ import sys
 from pathlib import Path
 
 from _lora_trainer import add_common_args, build_dry_run_summary, run_or_dry  # noqa: F401
-
 
 STYLE_FAMILY = "tamil-folk"
 DEFAULT_HUB_REPO = "neo-fm/heartmula-tamil-folk-lora-v1"

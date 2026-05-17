@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.preprocess import (
     UTTERANCE_MAX_CHARS,
     _apply_hinglish_hints,

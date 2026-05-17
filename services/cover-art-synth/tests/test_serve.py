@@ -18,9 +18,9 @@ from fastapi.testclient import TestClient
 os.environ["COVER_ART_SKIP_LIFESPAN"] = "1"
 os.environ.setdefault("COVER_ART_HMAC_SECRET", "test-secret")
 
-from app import model as model_module  # noqa: E402
-from app.model import FakeCoverArtModel  # noqa: E402
-from app.serve import app  # noqa: E402
+from app import model as model_module
+from app.model import FakeCoverArtModel
+from app.serve import app
 
 
 @pytest.fixture(autouse=True)

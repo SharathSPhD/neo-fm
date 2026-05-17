@@ -232,7 +232,7 @@ class MusicGenModel:
         if not self.model_loaded or self._mg is None:
             raise RuntimeError("MusicGenModel.generate called before load()")
 
-        import torch  # type: ignore[import-not-found]
+        import torch
 
         # MusicGen tops out at 30s per generation in the medium model;
         # for longer targets we will need to stitch (Sprint 11

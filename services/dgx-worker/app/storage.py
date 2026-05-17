@@ -31,8 +31,21 @@ class StorageClient:
     async def aclose(self) -> None:
         await self._client.aclose()
 
-    def object_path(self, job_id: str, attempt_id: str, ext: str) -> str:
-        # bucket-relative path, no leading slash
+    def object_path(
+        self,
+        job_id: str,
+        attempt_id: str,
+        ext: str,
+        *,
+        candidate_index: int = 0,
+    ) -> str:
+        # bucket-relative path, no leading slash.
+        # candidate_index>0 only changes the suffix so legacy single-candidate
+        # jobs keep writing to the canonical path the RLS policy already
+        # authorizes; multi-candidate (v1.4 Sprint 16) writes go to
+        # `<job_id>/<attempt_id>__c<k>.<ext>`.
+        if candidate_index > 0:
+            return f"{job_id}/{attempt_id}__c{candidate_index}.{ext}"
         return f"{job_id}/{attempt_id}.{ext}"
 
     def storage_url(self, object_path: str) -> str:

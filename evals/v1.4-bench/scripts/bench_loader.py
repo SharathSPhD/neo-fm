@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 BENCH_ROOT = Path(__file__).resolve().parent.parent

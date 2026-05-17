@@ -17,9 +17,9 @@ Schema (every row):
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, Iterator
 
 
 @dataclass(frozen=True)
@@ -32,7 +32,7 @@ class PreferenceRow:
     weight: float
 
     @classmethod
-    def from_dict(cls, row: dict[str, object]) -> "PreferenceRow":
+    def from_dict(cls, row: dict[str, object]) -> PreferenceRow:
         vote_source = str(row.get("vote_source", "compare-page"))
         # Tie votes are worth less. The reward model treats them as
         # weak labels rather than dropping them entirely.
@@ -46,7 +46,7 @@ class PreferenceRow:
             if row.get("language") is None
             else str(row["language"]),  # type: ignore[arg-type]
             vote_source=vote_source,
-            weight=float(weight_raw),
+            weight=float(weight_raw),  # type: ignore[arg-type]
         )
 
 
@@ -57,11 +57,11 @@ class PreferencePairsDataset:
         self._rows: list[PreferenceRow] = list(rows)
 
     @classmethod
-    def from_dicts(cls, rows: Iterable[dict[str, object]]) -> "PreferencePairsDataset":
+    def from_dicts(cls, rows: Iterable[dict[str, object]]) -> PreferencePairsDataset:
         return cls(PreferenceRow.from_dict(row) for row in rows)
 
     @classmethod
-    def from_jsonl(cls, path: Path) -> "PreferencePairsDataset":
+    def from_jsonl(cls, path: Path) -> PreferencePairsDataset:
         rows: list[PreferenceRow] = []
         with path.open("r", encoding="utf-8") as fh:
             for line in fh:
@@ -85,7 +85,7 @@ class PreferencePairsDataset:
         val_fraction: float = 0.1,
         *,
         seed: int = 0,
-    ) -> tuple["PreferencePairsDataset", "PreferencePairsDataset"]:
+    ) -> tuple[PreferencePairsDataset, PreferencePairsDataset]:
         """Deterministic train/val split.
 
         The split is purely positional after a hash-based shuffle so

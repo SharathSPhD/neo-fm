@@ -74,17 +74,25 @@ Vercel build, not the local dev server).
   earlier (`SECURITY DEFINER` + `authenticated`-callable for
   `publish_song_batch`, `record_preference_pair`).
 
-Notable v1.4 migrations:
+Notable v1.4 migrations (file names verified against
+`infra/supabase/migrations/`):
 
 | Migration | Purpose | Sprint |
 | --- | --- | --- |
-| `0035_voice_catalog.sql` | 16-persona voice catalogue table | 5 |
-| `0036_indic_corpus_audit.sql` | corpus rows audit + RLS | 6 |
-| `0037_user_presets.sql` | per-user advanced preset jars | 4 |
-| `0038_reserved` | (skipped — reserved for late-Sprint-7 add) | — |
-| `0039_published_visibility.sql` | published_visibility column on `jobs` | 15 |
+| `0035_jobs_favorite_security_definer.sql` | SECURITY DEFINER RPC for favorite/unfavorite | 1 |
+| `0036_cover_art_template.sql` | per-style cover-art template enum + template_kind | 1 |
+| `0037_song_doc_v1_4_widening.sql` | widen style/language/section enums + `voice_id` at section level | 2 |
+| `0038_user_presets.sql` | per-user advanced preset jars | 4 |
+| `0039_voice_samples_bucket.sql` | voice catalogue storage bucket + 16-row catalogue seed | 5 |
 | `0040_publish_song_batch.sql` | `publish_song_batch` SECURITY DEFINER RPC | 15 |
 | `0041_preference_pairs_and_candidates.sql` | RLHF preference pairs + `tracks.candidate_index/is_current` | 16 |
+
+Note: the original Sprint-17 evidence draft listed
+`0035_voice_catalog.sql`, `0036_indic_corpus_audit.sql`, and a reserved
+`0038`. Those names were aspirational; the actual filenames in `main`
+are the ones above. The capability the original names refer to
+landed (voice catalogue in `0039`, corpus audit columns inside
+`0037`).
 
 ## Vercel deploy gate
 

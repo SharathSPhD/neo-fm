@@ -15,7 +15,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent / "scripts"
 sys.path.insert(0, str(ROOT))
 
-from bench_loader import (  # noqa: E402
+from bench_loader import (
     EXPECTED_STYLES,
     PROMPTS_PER_STYLE,
     Prompt,

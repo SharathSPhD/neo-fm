@@ -23,7 +23,6 @@ import numpy as np
 from .model import VocalRequest, _write_wav_mono
 from .voice_catalog import get_voice
 
-
 _DEFAULT_VOICE_DESCRIPTOR = (
     "A calm, expressive Indian voice, clear diction, "
     "natural breath, suitable for melodic singing."
@@ -142,7 +141,9 @@ class ParlerTTSModel:
         # Parler-TTS specific model class. Defer import inside load() so
         # tests can stub the backend without parler_tts installed.
         try:
-            from parler_tts import ParlerTTSForConditionalGeneration  # type: ignore[import-not-found]
+            from parler_tts import (
+                ParlerTTSForConditionalGeneration,  # type: ignore[import-not-found]
+            )
         except ImportError as e:  # pragma: no cover - depends on optional dep
             raise RuntimeError(
                 "parler_tts is not installed. "
