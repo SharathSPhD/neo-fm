@@ -213,7 +213,7 @@ def render_one(
     )
     try:
         wav = model.synthesise(req)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - benchmark records failure
         return CellResult(
             prompt_id=prompt.prompt_id,
             backend=backend,
@@ -246,12 +246,16 @@ def load_backends(*, dry_run: bool) -> dict[str, Any]:
     """
     if dry_run:
         fake = FakeVocalModel()
-        return {b: fake for b in BACKENDS if b != "nemo"}
+        # Sprint 13: NeMo is real now, so the dry-run column reports
+        # a fake render too (not "not-available"). The DGX run uses
+        # the actual NeMoTTSModel.
+        return {b: fake for b in BACKENDS}
     backends: dict[str, Any] = {}
     # Heavy imports + loads happen *only* outside of dry-run.
-    from app.indicf5 import IndicF5Model
-    from app.model import SvaraTTSModel
-    from app.parler import ParlerTTSModel
+    from app.indicf5 import IndicF5Model  # noqa: WPS433
+    from app.model import SvaraTTSModel  # noqa: WPS433
+    from app.nemo import NeMoTTSModel  # noqa: WPS433
+    from app.parler import ParlerTTSModel  # noqa: WPS433
 
     for name, factory in [
         ("svara", lambda: SvaraTTSModel(
@@ -263,12 +267,13 @@ def load_backends(*, dry_run: bool) -> dict[str, Any]:
         ("indicf5", lambda: IndicF5Model(
             os.environ.get("VOCAL_MODEL_ID_INDICF5", "ai4bharat/IndicF5"),
         )),
+        ("nemo", lambda: NeMoTTSModel()),
     ]:
         try:
             m = factory()
             m.load()
             backends[name] = m
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - log but continue
             print(f"[voice_benchmark] {name} unavailable: {exc}", file=sys.stderr)
     return backends
 

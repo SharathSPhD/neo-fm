@@ -38,11 +38,12 @@ from .model import (
     VocalSection,
     _write_wav_mono,
 )
+from .nemo import NeMoTTSModel
 from .parler import ParlerTTSModel
 from .preprocess import preprocess_section
 from .voice_catalog import get_voice
 
-BackendKey = Literal["svara", "parler", "indicf5", "fake"]
+BackendKey = Literal["svara", "parler", "indicf5", "nemo", "fake"]
 
 
 @dataclass
@@ -84,6 +85,8 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
                 return "svara", f"voice_id:{entry.voice_id}"
             if entry.backend == "indicf5":
                 return "indicf5", f"voice_id:{entry.voice_id}"
+            if entry.backend == "nemo":
+                return "nemo", f"voice_id:{entry.voice_id}"
             return "parler", f"voice_id:{entry.voice_id}:fallback_to_parler"
     if section.type == "instrumental" or not (section.lyrics or section.transliteration):
         return "fake", "no-text"
@@ -107,6 +110,7 @@ class RoutingVocalModel:
         svara: SvaraTTSModel | None = None,
         parler: ParlerTTSModel | None = None,
         indicf5: IndicF5Model | None = None,
+        nemo: NeMoTTSModel | None = None,
         fallback: FakeVocalModel | None = None,
     ) -> None:
         self._svara = svara or SvaraTTSModel(
@@ -118,6 +122,7 @@ class RoutingVocalModel:
         self._indicf5 = indicf5 or IndicF5Model(
             os.environ.get("VOCAL_MODEL_ID_INDICF5", "ai4bharat/IndicF5"),
         )
+        self._nemo = nemo or NeMoTTSModel()
         # Fallback is constructed lazily: FakeVocalModel refuses to
         # exist when NEO_FM_REQUIRE_REAL_MODEL=1, and the prod path
         # never reaches it. We only allocate it on first use.
@@ -126,6 +131,7 @@ class RoutingVocalModel:
         self._svara_loaded = False
         self._parler_loaded = False
         self._indicf5_loaded = False
+        self._nemo_loaded = False
         self._last_decisions: list[RouteDecision] = []
 
     def _get_fallback(self) -> FakeVocalModel:
@@ -141,6 +147,7 @@ class RoutingVocalModel:
             self._svara_loaded
             or self._parler_loaded
             or self._indicf5_loaded
+            or self._nemo_loaded
         )
 
     @property
@@ -152,6 +159,8 @@ class RoutingVocalModel:
             parts.append(f"parler={self._parler.model_version}")
         if self._indicf5_loaded:
             parts.append(f"indicf5={self._indicf5.model_version}")
+        if self._nemo_loaded:
+            parts.append(f"nemo={self._nemo.model_version}")
         if not parts:
             return "routing+fake"
         return "routing+" + ",".join(parts)
@@ -192,6 +201,16 @@ class RoutingVocalModel:
                         raise
                     return self._get_fallback()
             return self._indicf5
+        if key == "nemo":
+            if not self._nemo_loaded:
+                try:
+                    self._nemo.load()
+                    self._nemo_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._nemo
         return self._get_fallback()
 
     def synthesise(self, req: VocalRequest) -> bytes:

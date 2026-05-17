@@ -61,15 +61,14 @@ def test_voices_for_language_filters() -> None:
 
 
 def test_pick_backend_with_known_voice_id_uses_catalog_backend() -> None:
-    key, reason = _pick_backend(_section_with_voice("indic_kn_female_bhajan"))
+    # Use a Sanskrit chant voice which is on Parler post-S13.
+    key, reason = _pick_backend(_section_with_voice("chant_sustained"))
     assert key == "parler"
-    assert reason == "voice_id:indic_kn_female_bhajan"
+    assert reason == "voice_id:chant_sustained"
 
 
 def test_sprint_12_indicf5_personas_are_pinned() -> None:
-    """v1.4 Sprint 12 contract: 8 indic_* personas point at IndicF5.
-    The 2 indic_kn_* personas remain on parler so Sprint 13 can flip
-    them to NeMo without rewriting the catalogue file."""
+    """v1.4 Sprint 12 contract: 8 indic_* personas point at IndicF5."""
     indicf5_voices = [v for v in VOICES.values() if v.backend == "indicf5"]
     assert {v.voice_id for v in indicf5_voices} == {
         "indic_hi_male_broadcast",
@@ -81,9 +80,16 @@ def test_sprint_12_indicf5_personas_are_pinned() -> None:
         "indic_bn_male_rabindra",
         "indic_bn_female",
     }
-    # The 2 Kannada personas stay on parler until Sprint 13.
-    assert VOICES["indic_kn_male_warm"].backend == "parler"
-    assert VOICES["indic_kn_female_bhajan"].backend == "parler"
+
+
+def test_sprint_13_nemo_personas_are_pinned() -> None:
+    """v1.4 Sprint 13 contract: 2 indic_kn_* personas flip from
+    Parler to custom NeMo Kannada. No other entry changes backend."""
+    nemo_voices = [v for v in VOICES.values() if v.backend == "nemo"]
+    assert {v.voice_id for v in nemo_voices} == {
+        "indic_kn_male_warm",
+        "indic_kn_female_bhajan",
+    }
 
 
 def test_pick_backend_indicf5_voice_routes_to_indicf5() -> None:

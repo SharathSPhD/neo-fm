@@ -88,9 +88,8 @@ def test_pick_backend_routes_indicf5_voice_id_to_indicf5() -> None:
     assert "indic_hi_male_broadcast" in reason
 
 
-def test_pick_backend_routes_parler_voice_id_to_parler() -> None:
-    """The 2 indic_kn_* personas stay on Parler in Sprint 12 (they
-    move to NeMo in Sprint 13). Pin that contract."""
+def test_pick_backend_routes_nemo_voice_id_to_nemo() -> None:
+    """v1.4 Sprint 13 contract: indic_kn_male_warm moves to NeMo."""
     sec = VocalSection(
         id="s1",
         type="verse",
@@ -104,8 +103,9 @@ def test_pick_backend_routes_parler_voice_id_to_parler() -> None:
         voice_timbre="male",
         voice_id="indic_kn_male_warm",
     )
-    key, _ = _pick_backend(sec)
-    assert key == "parler"
+    key, reason = _pick_backend(sec)
+    assert key == "nemo"
+    assert "indic_kn_male_warm" in reason
 
 
 def _wav_data_seconds(buf: bytes, sample_rate: int) -> float:
@@ -138,6 +138,7 @@ def test_routing_model_falls_back_to_fake_when_real_backends_missing() -> None:
         svara=_DeadModel(),  # type: ignore[arg-type]
         parler=_DeadModel(),  # type: ignore[arg-type]
         indicf5=_DeadModel(),  # type: ignore[arg-type]
+        nemo=_DeadModel(),  # type: ignore[arg-type]
         fallback=fb,
     )
     req = VocalRequest(
@@ -183,6 +184,7 @@ def test_routing_model_refuses_to_silently_fallback_when_required(
         svara=_DeadModel(),  # type: ignore[arg-type]
         parler=_DeadModel(),  # type: ignore[arg-type]
         indicf5=_DeadModel(),  # type: ignore[arg-type]
+        nemo=_DeadModel(),  # type: ignore[arg-type]
     )
     req = VocalRequest(
         job_id="j",
@@ -244,6 +246,7 @@ def test_routing_model_dispatches_indicf5_when_voice_id_set() -> None:
         svara=_OtherSpy(),  # type: ignore[arg-type]
         parler=_OtherSpy(),  # type: ignore[arg-type]
         indicf5=_IndicF5Spy(),  # type: ignore[arg-type]
+        nemo=_OtherSpy(),  # type: ignore[arg-type]
     )
     sec = VocalSection(
         id="s1",
@@ -275,6 +278,82 @@ def test_routing_model_dispatches_indicf5_when_voice_id_set() -> None:
     decisions = rm.last_decisions
     assert decisions and decisions[0].backend == "indicf5"
     assert "indic_hi_male_broadcast" in decisions[0].reason
+
+
+def test_routing_model_dispatches_nemo_when_kn_voice_id_set() -> None:
+    """v1.4 Sprint 13 end-to-end: a section with
+    voice_id='indic_kn_male_warm' (catalogue maps to backend='nemo')
+    must reach the NeMo backend, not Parler or IndicF5."""
+
+    nemo_calls: list[VocalRequest] = []
+    other_calls: list[VocalRequest] = []
+
+    class _NeMoSpy:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "nemo-spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            nemo_calls.append(req)
+            return FakeVocalModel().synthesise(req)
+
+    class _OtherSpy:
+        @property
+        def model_loaded(self) -> bool:
+            return True
+
+        @property
+        def model_version(self) -> str | None:
+            return "other-spy"
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: VocalRequest) -> bytes:
+            other_calls.append(req)
+            return FakeVocalModel().synthesise(req)
+
+    rm = RoutingVocalModel(
+        svara=_OtherSpy(),  # type: ignore[arg-type]
+        parler=_OtherSpy(),  # type: ignore[arg-type]
+        indicf5=_OtherSpy(),  # type: ignore[arg-type]
+        nemo=_NeMoSpy(),  # type: ignore[arg-type]
+    )
+    sec = VocalSection(
+        id="s1",
+        type="verse",
+        lyrics="\u0c95\u0ca8\u0ccd\u0ca8\u0ca1",  # ಕನ್ನಡ
+        language="kn",
+        script="kannada",
+        transliteration=None,
+        target_seconds=4,
+        tempo_bpm=90,
+        raga_name=None,
+        voice_timbre="male",
+        voice_id="indic_kn_male_warm",
+    )
+    req = VocalRequest(
+        job_id="j",
+        attempt_id=None,
+        trace_id=None,
+        language="kn",
+        style_family="kannada-light-classical",
+        voice_timbre="male",
+        sample_rate=24000,
+        sections=[sec],
+        target_duration_seconds=4,
+    )
+    rm.synthesise(req)
+    assert len(nemo_calls) == 1
+    assert other_calls == []
+    assert rm.last_decisions[0].backend == "nemo"
 
 
 def test_routing_model_forwards_phonemes_into_backend(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -310,6 +389,7 @@ def test_routing_model_forwards_phonemes_into_backend(monkeypatch: pytest.Monkey
         svara=_SpyBackend(),  # type: ignore[arg-type]
         parler=_SpyBackend(),  # type: ignore[arg-type]
         indicf5=_SpyBackend(),  # type: ignore[arg-type]
+        nemo=_SpyBackend(),  # type: ignore[arg-type]
     )
     sec = VocalSection(
         id="s1",
@@ -369,6 +449,7 @@ def test_routing_model_falls_back_to_preprocessor_output_when_no_phonemes() -> N
         svara=_SpyBackend(),  # type: ignore[arg-type]
         parler=_SpyBackend(),  # type: ignore[arg-type]
         indicf5=_SpyBackend(),  # type: ignore[arg-type]
+        nemo=_SpyBackend(),  # type: ignore[arg-type]
     )
     # Hinglish input (latin script, language=hi) routes to parler with
     # IPA hints from the preprocessor.

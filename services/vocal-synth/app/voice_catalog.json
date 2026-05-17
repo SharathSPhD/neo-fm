@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
-  "comment": "v1.4 Sprint 5 voice catalogue, extended in Sprint 12. 16 prompt-engineered personas; 8 indic_* entries point at IndicF5 (Sprint 12), the 2 indic_kn_* entries stay on Parler until Sprint 13 swaps them to NeMo Kannada. The catalogue grows by adding new personas — entries are append-only so saved SongDocuments referencing an older voice_id keep resolving. Preview WAVs live in the public `voice-samples` Supabase Storage bucket under `samples/<voice_id>.wav`; the operator regenerates them with `services/vocal-synth/scripts/render_voice_previews.py` when the prompt changes.",
+  "comment": "v1.4 Sprint 5 voice catalogue, extended in Sprints 12 and 13. 16 prompt-engineered personas; 8 indic_* entries point at IndicF5 (Sprint 12), 2 indic_kn_* entries point at custom NeMo Kannada (Sprint 13), the remaining 6 stay on Indic-Parler-TTS for English/Hindi/Sanskrit/cinematic personas. The catalogue grows by adding new personas — entries are append-only so saved SongDocuments referencing an older voice_id keep resolving. Preview WAVs live in the public `voice-samples` Supabase Storage bucket under `samples/<voice_id>.wav`; the operator regenerates them with `services/vocal-synth/scripts/render_voice_previews.py` when the prompt changes.",
   "voices": [
     {
       "voice_id": "indic_hi_male_broadcast",
@@ -29,7 +29,7 @@
       "gender": "male",
       "persona": "warm-storyteller",
       "label": "Kannada · Warm storyteller",
-      "backend": "parler",
+      "backend": "nemo",
       "prompt": "An adult Kannada male voice with a warm storyteller cadence, soft consonants, mid register, room ambience suggesting an evening recital.",
       "preview_path": "samples/indic_kn_male_warm.wav"
     },
@@ -39,7 +39,7 @@
       "gender": "female",
       "persona": "bhajan",
       "label": "Kannada · Bhajan female",
-      "backend": "parler",
+      "backend": "nemo",
       "prompt": "An adult Kannada female voice trained in bhajan/bhavageete singing, sustained vowels, light upward melisma, mid-bright timbre.",
       "preview_path": "samples/indic_kn_female_bhajan.wav"
     },

@@ -16,10 +16,12 @@ folder is importable as `scripts.voice_benchmark`.
 from __future__ import annotations
 
 import json
+import struct
 import sys
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -92,11 +94,10 @@ def test_load_prompts_skips_comments_and_blanks(tmp_path: Path) -> None:
     assert rows[0].prompt_id == "p1"
 
 
-def test_dry_run_load_backends_returns_three_fake_models() -> None:
+def test_dry_run_load_backends_returns_four_fake_models() -> None:
+    # Sprint 13: NeMo is real now, dry-run returns a fake for it too.
     backends = load_backends(dry_run=True)
-    assert set(backends.keys()) == {"svara", "parler", "indicf5"}
-    # NeMo isn't shipped in S12 — the table must report n/a for it.
-    assert "nemo" not in backends
+    assert set(backends.keys()) == {"svara", "parler", "indicf5", "nemo"}
 
 
 def test_render_one_emits_cell_for_dry_run_backend() -> None:
@@ -144,10 +145,8 @@ def test_aggregate_reports_per_backend_means() -> None:
     ]
     summary = aggregate(cells)
     assert set(summary.keys()) == set(BACKENDS)
-    # NeMo isn't loaded → 0 rows.
-    assert summary["nemo"]["count"] == 0.0
-    # The other backends each have 1 row.
-    for b in ("svara", "parler", "indicf5"):
+    # Sprint 13: every backend is fake-loaded in dry-run.
+    for b in BACKENDS:
         assert summary[b]["count"] == 1.0
 
 
