@@ -122,7 +122,11 @@ def evaluate_wav(
     )
 
     tempo_match_score: float | None = None
-    if requested_tempo_bpm is not None and estimated_tempo_bpm is not None and estimated_tempo_bpm > 0:
+    if (
+        requested_tempo_bpm is not None
+        and estimated_tempo_bpm is not None
+        and estimated_tempo_bpm > 0
+    ):
         # Score = 1 - |log2(est/req)| (saturating). Robust to harmonic
         # confusions (half- / double-time still scores high).
         ratio = max(estimated_tempo_bpm, 1.0) / max(float(requested_tempo_bpm), 1.0)

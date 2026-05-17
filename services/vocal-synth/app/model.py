@@ -21,7 +21,6 @@ human-voice substitute, but enough to exercise the mixer end-to-end.
 
 from __future__ import annotations
 
-import io
 import math
 import os
 import struct

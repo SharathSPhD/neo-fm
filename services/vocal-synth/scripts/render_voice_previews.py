@@ -52,12 +52,12 @@ SAMPLE_RATE = 48_000
 # preview is mostly the voice character, not the lyric.
 PREVIEW_LYRICS: dict[str, str] = {
     "en": "Hello, welcome to neo dot f m",
-    "hi": "नमस्ते, मैं तुम्हारी आवाज़ हूँ",  # noqa: RUF001
+    "hi": "नमस्ते, मैं तुम्हारी आवाज़ हूँ",
     "kn": "ಕನ್ನಡದ ಸ್ವರಕ್ಕೆ ಸ್ವಾಗತ",
     "ta": "வணக்கம், என் குரலை கேளுங்கள்",
     "te": "నమస్తే, నా స్వరం వినండి",
     "bn": "নমস্কার, আমার কণ্ঠস্বর শুনুন",
-    "sa": "ॐ शान्ति शान्ति शान्तिः",  # noqa: RUF001
+    "sa": "ॐ शान्ति शान्ति शान्तिः",
 }
 
 

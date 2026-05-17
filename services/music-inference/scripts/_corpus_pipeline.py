@@ -25,9 +25,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 
 @dataclass
@@ -87,7 +88,7 @@ ALL_LICENSES: frozenset[str] = frozenset(
 def clip_id(source_id: str, start: float, end: float) -> str:
     """Stable hash used as both the on-disk filename and the split key."""
     h = hashlib.sha1(
-        f"{source_id}|{start:.3f}|{end:.3f}".encode("utf-8")
+        f"{source_id}|{start:.3f}|{end:.3f}".encode()
     ).hexdigest()
     return h[:12]
 

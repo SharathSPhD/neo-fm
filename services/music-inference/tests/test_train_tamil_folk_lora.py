@@ -115,7 +115,7 @@ def test_missing_corpus_fails(tmp_path: Path) -> None:
         trackio_project="x",
         style_family="tamil-folk",
     )
-    with pytest.raises(SystemExit, match="summary.json"):
+    with pytest.raises(SystemExit, match=r"summary\.json"):
         build_dry_run_summary(args)
 
 

@@ -25,11 +25,11 @@ import logging
 import math
 import sys
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .data import PreferencePairsDataset, PreferenceRow
-from .model import HeadConfig, RerankerHead, _deterministic_features
+from .model import HeadConfig, RerankerHead
 from .score import save_checkpoint
 
 LOGGER = logging.getLogger("reranker.train")
@@ -83,9 +83,9 @@ def _train_dry(
     for epoch in range(epochs):
         running_loss = 0.0
         for row in train:
-            w = head.score(row.winner_audio_path)
-            l = head.score(row.loser_audio_path)
-            margin = w - l
+            winner_score = head.score(row.winner_audio_path)
+            loser_score = head.score(row.loser_audio_path)
+            margin = winner_score - loser_score
             loss = _bradley_terry_loss(margin, row.weight)
             running_loss += loss
             # First-order finite-step update on b2 only -- a real
@@ -96,9 +96,11 @@ def _train_dry(
         if len(val) > 0:
             v = 0.0
             for row in val:
-                w = head.score(row.winner_audio_path)
-                l = head.score(row.loser_audio_path)
-                v += _bradley_terry_loss(w - l, row.weight)
+                winner_score = head.score(row.winner_audio_path)
+                loser_score = head.score(row.loser_audio_path)
+                v += _bradley_terry_loss(
+                    winner_score - loser_score, row.weight
+                )
             val_loss = v / len(val)
         else:
             val_loss = math.nan
@@ -125,7 +127,7 @@ def _emit_scores_json(
         rows.append(
             {
                 "prompt_id": str(c["prompt_id"]),
-                "seed": int(c["seed"]),
+                "seed": int(c["seed"]),  # type: ignore[call-overload]
                 "score": head.score(audio_path),
             },
         )
@@ -172,7 +174,7 @@ def train(
     elif dataset_path is not None:
         # Parquet path goes through pandas which we only require on DGX.
         try:
-            import pandas as pd  # type: ignore[import-not-found]
+            import pandas as pd
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "Reading parquet datasets requires pandas; "
@@ -198,14 +200,14 @@ def train(
                 "Apply training requires services/reranker/app/train_apply.py "
                 "with torch + transformers + MERT-95M weights staged",
             ) from exc
-        head, train_loss, val_loss = train_with_torch(  # type: ignore[misc]
+        head, train_loss, val_loss = train_with_torch(
             dataset, epochs=epochs, learning_rate=learning_rate,
         )
 
     chosen_run_id = (
         run_id
         if run_id is not None
-        else datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        else datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     )
     run_dir = CHECKPOINT_ROOT / chosen_run_id
     run_dir.mkdir(parents=True, exist_ok=True)

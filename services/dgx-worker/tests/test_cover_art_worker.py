@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -17,7 +16,6 @@ from app.cover_art_worker import (
 )
 
 from .fakes import FakeCoverArtSynthClient, FakeStorageClient, FakeWorkerDB
-
 
 JOB_ID = "11111111-1111-1111-1111-111111111111"
 USER_ID = "22222222-2222-2222-2222-222222222222"
@@ -188,7 +186,11 @@ async def test_synth_http_4xx_is_dlq_no_retry() -> None:
     )
     db.enqueue(_payload())
     response = httpx.Response(400, request=httpx.Request("POST", "http://x"))
-    synth = FakeCoverArtSynthClient(exc=httpx.HTTPStatusError("bad", request=response.request, response=response))
+    synth = FakeCoverArtSynthClient(
+        exc=httpx.HTTPStatusError(
+            "bad", request=response.request, response=response,
+        ),
+    )
     msg = db.read_one(None, "cover_art_jobs", 120)
     assert msg is not None
 
@@ -215,7 +217,11 @@ async def test_synth_5xx_retries_then_dlqs_at_max_attempts() -> None:
     )
     db.enqueue(_payload())
     response = httpx.Response(503, request=httpx.Request("POST", "http://x"))
-    synth = FakeCoverArtSynthClient(exc=httpx.HTTPStatusError("oops", request=response.request, response=response))
+    synth = FakeCoverArtSynthClient(
+        exc=httpx.HTTPStatusError(
+            "oops", request=response.request, response=response,
+        ),
+    )
 
     # First read (read_ct=1) — should re-enqueue.
     msg = db.read_one(None, "cover_art_jobs", 120)

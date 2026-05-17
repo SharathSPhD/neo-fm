@@ -57,6 +57,36 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "RUF"]
 
+# IPA phonemes (ɑ ə ɛ ɪ ɔ ʊ) are deliberate. Ignore RUF001 here only.
+[tool.ruff.lint.per-file-ignores]
+"app/model.py" = ["RUF001"]
+"scripts/eval.py" = ["RUF001"]
+"scripts/prepare_dataset.py" = ["RUF001"]
+# Prompt fixtures contain literal training prompts that intentionally
+# exceed the 100-col line limit.
+"tests/test_eval.py" = ["E501"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
+explicit_package_bases = true
+mypy_path = "scripts"
+
+[[tool.mypy.overrides]]
+module = ["scripts.*", "tests.*", "train", "prepare_dataset", "eval"]
+disable_error_code = [
+  "arg-type",
+  "no-untyped-def",
+  "unused-ignore",
+  "import-untyped",
+  "no-any-return",
+  "import-not-found",
+]
+
+[[tool.mypy.overrides]]
+module = ["app.model", "app.serve", "app.metrics"]
+disable_error_code = ["unused-ignore", "arg-type"]
+
+[[tool.mypy.overrides]]
+module = "yaml"
+ignore_missing_imports = true

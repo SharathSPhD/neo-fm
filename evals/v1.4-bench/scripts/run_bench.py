@@ -18,7 +18,7 @@ import argparse
 import json
 import sys
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -65,7 +65,7 @@ def build_manifest(
         "top_n": top_n,
         "prompt_count": len(prompts),
         "candidate_count": len(rows),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "candidates": rows,
     }
 
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
     prompts = load_all()
     manifest = build_manifest(prompts, top_n=args.top_n, engine=args.engine)
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_dir = RUNS_DIR / f"{stamp}-{args.engine}"
     run_dir.mkdir(parents=True, exist_ok=True)
     candidates_dir = run_dir / "candidates"

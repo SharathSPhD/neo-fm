@@ -26,7 +26,7 @@ import json
 import statistics
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 THIS_DIR = Path(__file__).resolve().parent
@@ -48,7 +48,7 @@ def _deterministic_score(prompt_id: str, seed: int, style: str) -> float:
     always have a clear top-1; across prompts the distribution is
     approximately uniform.
     """
-    key = f"{style}:{prompt_id}:{seed}".encode("utf-8")
+    key = f"{style}:{prompt_id}:{seed}".encode()
     digest = hashlib.blake2b(key, digest_size=4).digest()
     raw = int.from_bytes(digest, "big") / 0xFFFFFFFF
     return round(raw, 6)
@@ -162,7 +162,7 @@ def score_run(
     return {
         "engine": manifest["engine"],
         "top_n": manifest["top_n"],
-        "scored_at": datetime.now(timezone.utc).isoformat(),
+        "scored_at": datetime.now(UTC).isoformat(),
         "reranker_scores_path": str(rerank_path),
         "reranker_available": head_scorer is not None,
         "per_prompt": per_prompt,

@@ -36,7 +36,7 @@ import json
 import logging
 import statistics
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -169,7 +169,7 @@ def aggregate_mos(
     baseline_all: list[float] = []
     adapter_all: list[float] = []
     for prompt_id, subs in sorted(grouped.items()):
-        a_label, b_label = label_by_prompt.get(prompt_id, ("baseline", "adapter"))
+        a_label, _b_label = label_by_prompt.get(prompt_id, ("baseline", "adapter"))
         a_scores = [s.mos_a for s in subs]
         b_scores = [s.mos_b for s in subs]
         baseline_scores = a_scores if a_label == "baseline" else b_scores

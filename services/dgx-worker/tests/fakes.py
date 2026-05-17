@@ -39,6 +39,8 @@ class FakeTrack:
     duration_seconds: int
     format_: str
     bytes_: int | None
+    candidate_index: int = 0
+    is_current: bool = True
 
 
 @dataclass
@@ -179,9 +181,18 @@ class FakeWorkerDB:
         format_: str,
         bytes_: int | None = None,
         expires_at: str | None = None,
+        candidate_index: int = 0,
+        is_current: bool = True,
     ) -> None:
+        # Migration 0041 mirror: idempotent on
+        # (job_id, attempt_id, candidate_index) so a top-N retry replay
+        # never double-inserts the same candidate row.
         for t in self.tracks:
-            if t.job_id == job_id and t.attempt_id == attempt_id:
+            if (
+                t.job_id == job_id
+                and t.attempt_id == attempt_id
+                and t.candidate_index == candidate_index
+            ):
                 return
         self.tracks.append(
             FakeTrack(
@@ -191,8 +202,37 @@ class FakeWorkerDB:
                 duration_seconds=duration_seconds,
                 format_=format_,
                 bytes_=bytes_,
+                candidate_index=candidate_index,
+                is_current=is_current,
             ),
         )
+
+    def set_current_track(
+        self,
+        _conn: Any,
+        *,
+        job_id: str,
+        attempt_id: str,
+        candidate_index: int,
+    ) -> None:
+        # Mirror the partial-unique flip in WorkerDB.set_current_track.
+        for t in self.tracks:
+            if (
+                t.job_id == job_id
+                and t.is_current
+                and not (
+                    t.attempt_id == attempt_id
+                    and t.candidate_index == candidate_index
+                )
+            ):
+                t.is_current = False
+        for t in self.tracks:
+            if (
+                t.job_id == job_id
+                and t.attempt_id == attempt_id
+                and t.candidate_index == candidate_index
+            ):
+                t.is_current = True
 
     def mark_completed(self, _conn: Any, job_id: str) -> None:
         job = self.jobs.get(job_id)
@@ -294,7 +334,16 @@ class FakeStorageClient:
     fail_on_upload: bool = False
     bucket: str = "tracks"
 
-    def object_path(self, job_id: str, attempt_id: str, ext: str) -> str:
+    def object_path(
+        self,
+        job_id: str,
+        attempt_id: str,
+        ext: str,
+        *,
+        candidate_index: int = 0,
+    ) -> str:
+        if candidate_index > 0:
+            return f"{job_id}/{attempt_id}__c{candidate_index}.{ext}"
         return f"{job_id}/{attempt_id}.{ext}"
 
     def storage_url(self, object_path: str) -> str:
@@ -317,7 +366,6 @@ def _tiny_valid_wav(seconds: float = 0.1, sr: int = 24000) -> bytes:
     sentinel of ``b"WAVDATA"`` predates that step; the canonical fake
     now produces a real (silent) WAV so the entire happy path works.
     """
-    import io as _io
     import struct as _s
 
     n = int(seconds * sr)
@@ -348,9 +396,14 @@ class FakeInferenceClient:
         self,
         *,
         response: bytes = _DEFAULT_FAKE_WAV,
+        responses: list[bytes] | None = None,
         exc: Exception | None = None,
     ) -> None:
+        # ``responses`` lets a single fake serve a deterministic
+        # sequence (used by the top-N candidate tests so each
+        # candidate_index gets distinct audio bytes).
         self.response = response
+        self.responses = list(responses) if responses else None
         self.exc = exc
         self.calls: list[dict[str, Any]] = []
 
@@ -358,6 +411,9 @@ class FakeInferenceClient:
         self.calls.append({"request": request_body, "trace_id": trace_id})
         if self.exc is not None:
             raise self.exc
+        if self.responses is not None:
+            idx = min(len(self.calls) - 1, len(self.responses) - 1)
+            return self.responses[idx]
         return self.response
 
     async def aclose(self) -> None:

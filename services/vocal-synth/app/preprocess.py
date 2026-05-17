@@ -60,8 +60,8 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Sequence
 
 # Hard cap per utterance so we never blow past Parler's context window.
 UTTERANCE_MAX_CHARS = 80

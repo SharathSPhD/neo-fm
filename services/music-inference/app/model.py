@@ -660,7 +660,15 @@ def initialise_from_env() -> MusicModel:
         )
         if os.environ.get("MUSICGEN_DEFER_LOAD") != "1":
             mg.load()
-        routed: MusicModel = RoutingMusicModel(heartmula=real, musicgen=mg)
+        # mypy cannot verify that RoutingMusicModel's read-only
+        # @property `model_loaded`/`model_version` satisfies the
+        # Protocol's writable-attribute hint; the protocol is read at
+        # runtime through the same accessors, so this assignment is
+        # safe in practice.
+        routed: MusicModel = RoutingMusicModel(  # type: ignore[assignment]
+            heartmula=real,
+            musicgen=mg,
+        )
         set_active_model(routed)
         return routed
 

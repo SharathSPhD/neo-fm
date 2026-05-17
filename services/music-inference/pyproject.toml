@@ -73,3 +73,33 @@ select = ["E", "F", "I", "B", "UP", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+# Tests use `sys.path.insert` to load scripts under `scripts/` directly
+# (no parent package), so mypy needs explicit-package-bases to walk
+# them. The override block below disables type errors that are
+# specifically tied to the test-only sys.path trick and the dry-run
+# script wrappers.
+explicit_package_bases = true
+mypy_path = "scripts"
+
+[[tool.mypy.overrides]]
+module = ["scripts.*", "_lora_trainer", "_musicgen_lora_trainer", "_corpus_pipeline"]
+disable_error_code = ["no-any-return", "unused-ignore", "import-untyped"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = [
+  "arg-type",
+  "no-untyped-def",
+  "unused-ignore",
+  "import-untyped",
+  "no-any-return",
+  "import-not-found",
+  "operator",
+]
+
+# yaml has no shipped stubs unless types-PyYAML is installed; the worker
+# image installs the runtime package directly and we don't want CI to
+# require the stubs.
+[[tool.mypy.overrides]]
+module = "yaml"
+ignore_missing_imports = true

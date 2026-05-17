@@ -102,9 +102,10 @@ imports so the new tests run on either env.
 ### 5. Operator hand-off
 
 `docs/OPERATOR-HANDOFF.md` was rewritten for v1.4 with:
-- per-engine MOS uplift table (Sprints 8 / 9 / 10 / 11 / 12
-  / 13 / 14),
-- RLHF reranker uplift (+0.288 MOS, target ≥ 0.3),
+- per-engine **proxy-score** table (Sprints 8 / 9 / 10 / 11 / 12
+  / 13 / 14) -- not human MOS; CI proxies only,
+- RLHF reranker proxy uplift `+0.288 (proxy delta vs random ranker;
+  not a listener-evaluated MOS uplift)`,
 - known sharp edges (RLS on candidate tracks, dev-env
   `soundfile`, MusicGen A/B at 35%),
 - v1.5 backlog,

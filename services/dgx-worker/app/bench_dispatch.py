@@ -18,10 +18,10 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
-
+from typing import Any
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
@@ -57,7 +57,7 @@ class BenchCandidate:
     voice_persona: str
 
     @classmethod
-    def from_row(cls, row: dict[str, Any]) -> "BenchCandidate":
+    def from_row(cls, row: dict[str, Any]) -> BenchCandidate:
         return cls(
             prompt_id=str(row["prompt_id"]),
             style=str(row["style"]),

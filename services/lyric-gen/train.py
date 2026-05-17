@@ -36,7 +36,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 SUPPORTED_LORA_TARGETS = ("q_proj", "k_proj", "v_proj", "out_proj")
 
 

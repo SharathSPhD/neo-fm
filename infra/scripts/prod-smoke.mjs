@@ -361,12 +361,24 @@ try {
     return { presetCount: seen.length };
   });
 
+  // v1.4 closeout: a "Discover style filter present with zero cards" is
+  // exactly the regression the smoke harness has to detect, so we fail
+  // these steps when cardCount === 0. Set `STRICT_V14_DISCOVER=0` to
+  // soften this (only useful when seed has not yet been applied).
+  const strictDiscover = process.env.STRICT_V14_DISCOVER !== "0";
+
   await step("16-discover-sanskrit", async () => {
     await page.goto(`${BASE}/discover?style=sanskrit-shloka`, {
       waitUntil: "networkidle",
     });
     const cardCount = await page.locator('a[href^="/p/"]').count();
     const file = await shot("16-discover-sanskrit");
+    if (strictDiscover && cardCount === 0) {
+      throw new Error(
+        "sanskrit-shloka Discover filter is rendering zero public cards " +
+          "(set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
+      );
+    }
     return { file: path.basename(file), cardCount };
   });
 
@@ -376,6 +388,12 @@ try {
     });
     const cardCount = await page.locator('a[href^="/p/"]').count();
     const file = await shot("17-discover-bengali");
+    if (strictDiscover && cardCount === 0) {
+      throw new Error(
+        "bengali-rabindrasangeet Discover filter is rendering zero public " +
+          "cards (set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
+      );
+    }
     return { file: path.basename(file), cardCount };
   });
 
@@ -385,6 +403,12 @@ try {
     });
     const cardCount = await page.locator('a[href^="/p/"]').count();
     const file = await shot("18-discover-telugu");
+    if (strictDiscover && cardCount === 0) {
+      throw new Error(
+        "telugu-keerthana Discover filter is rendering zero public cards " +
+          "(set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
+      );
+    }
     return { file: path.basename(file), cardCount };
   });
 

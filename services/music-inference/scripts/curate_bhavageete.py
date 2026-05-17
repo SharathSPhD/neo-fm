@@ -67,7 +67,9 @@ def run_dry(manifest_path: Path, out_dir: Path) -> dict[str, Any]:
     return emit_manifest_summary(clips, out_dir)
 
 
-def run_full(manifest_path: Path, out_dir: Path, *, stage: str) -> dict[str, Any]:  # pragma: no cover
+def run_full(  # pragma: no cover
+    manifest_path: Path, out_dir: Path, *, stage: str,
+) -> dict[str, Any]:
     """Operator path; lazy-imports yt-dlp, pyloudnorm, WhisperX, etc.
 
     Not exercised in CI (no GPU, no audio deps). Each stage writes its

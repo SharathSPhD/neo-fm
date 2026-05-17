@@ -248,14 +248,30 @@ class WorkerDB:
         format_: str,
         bytes_: int | None = None,
         expires_at: str | None = None,
+        *,
+        candidate_index: int = 0,
+        is_current: bool = True,
     ) -> None:
+        """Insert one row into public.tracks.
+
+        Schema notes (migration 0041):
+          - The legacy unique constraint on ``(job_id, attempt_id)`` was
+            dropped in favour of a unique index on
+            ``(job_id, attempt_id, candidate_index)`` so a single attempt
+            can persist multiple candidate renders.
+          - A partial unique index enforces "exactly one row per job has
+            ``is_current = true``". For top-N jobs the worker therefore
+            inserts every candidate with ``is_current=false`` first, then
+            calls :meth:`set_current_track` to flip the reranker's winner.
+        """
         with conn.cursor() as cur:
             cur.execute(
                 """
                 insert into public.tracks
-                  (job_id, attempt_id, url, duration_seconds, format, bytes, expires_at)
-                values (%s, %s, %s, %s, %s, %s, %s)
-                on conflict (job_id, attempt_id) do nothing;
+                  (job_id, attempt_id, url, duration_seconds, format, bytes,
+                   expires_at, candidate_index, is_current)
+                values (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                on conflict (job_id, attempt_id, candidate_index) do nothing;
                 """,
                 (
                     job_id,
@@ -265,7 +281,46 @@ class WorkerDB:
                     format_,
                     bytes_,
                     expires_at,
+                    candidate_index,
+                    is_current,
                 ),
+            )
+
+    def set_current_track(
+        self,
+        conn: psycopg.Connection[dict[str, Any]],
+        *,
+        job_id: str,
+        attempt_id: str,
+        candidate_index: int,
+    ) -> None:
+        """Flip the partial-unique `is_current=true` flag onto one candidate.
+
+        Two statements share the caller's transaction (the partial unique
+        index permits two rows with ``is_current=false`` but at most one
+        with ``is_current=true``, so we must clear the old current row
+        before flipping the new one).
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                update public.tracks
+                   set is_current = false
+                 where job_id = %s
+                   and is_current = true
+                   and not (attempt_id = %s and candidate_index = %s);
+                """,
+                (job_id, attempt_id, candidate_index),
+            )
+            cur.execute(
+                """
+                update public.tracks
+                   set is_current = true
+                 where job_id = %s
+                   and attempt_id = %s
+                   and candidate_index = %s;
+                """,
+                (job_id, attempt_id, candidate_index),
             )
 
     def mark_completed(

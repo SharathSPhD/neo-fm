@@ -1,10 +1,17 @@
-# v1.4 Sprint 12 — voice benchmark
+# v1.4 Sprint 12 — voice benchmark (PROXY / DRY-RUN)
 
 Prompts: 16 · Backends: svara, parler, indicf5, nemo · Dry-run: **True**
 
-## Per-prompt detail
+**These are deterministic proxy scores, not human MOS.** Every backend
+column reports the synthetic 5.00 ceiling our CI rubric returns on
+zero-byte placeholder audio. Treat these tables as smoke-test
+fixtures, not as listener-evaluation evidence. A real listening MOS
+requires DGX-run audio + a human panel; see
+`evals/v1.4-bench/README.md`.
 
-| prompt_id | language | voice_id | svara MOS / consistency / sec | parler MOS / consistency / sec | indicf5 MOS / consistency / sec | nemo MOS / consistency / sec |
+## Per-prompt detail (proxy)
+
+| prompt_id | language | voice_id | svara proxy MOS / consistency / sec | parler proxy MOS / consistency / sec | indicf5 proxy MOS / consistency / sec | nemo proxy MOS / consistency / sec |
 | --- | --- | --- | --- | --- | --- | --- |
 | hi-01 | hi | indic_hi_male_broadcast | 5.00 / 0.52 / 0.01s | 5.00 / 0.52 / 0.00s | 5.00 / 0.52 / 0.00s | not-available |
 | hi-02 | hi | indic_hi_female_lyrical | 5.00 / 0.52 / 0.00s | 5.00 / 0.52 / 0.00s | 5.00 / 0.52 / 0.00s | not-available |
@@ -24,9 +31,9 @@ Prompts: 16 · Backends: svara, parler, indicf5, nemo · Dry-run: **True**
 | te-04 | te | indic_te_male | 5.00 / 0.52 / 0.00s | 5.00 / 0.52 / 0.00s | 5.00 / 0.52 / 0.00s | not-available |
 
 
-## Per-backend means
+## Per-backend means (proxy)
 
-| backend | n | mean MOS | mean consistency | mean seconds |
+| backend | n | mean proxy MOS | mean consistency | mean seconds |
 | --- | --- | --- | --- | --- |
 | svara | 16 | 5.0 | 0.521 | 0.003 |
 | parler | 16 | 5.0 | 0.521 | 0.003 |

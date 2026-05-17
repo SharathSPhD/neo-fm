@@ -45,3 +45,26 @@ select = ["E", "F", "I", "B", "UP", "RUF"]
 [tool.mypy]
 python_version = "3.12"
 strict = true
+
+# Test fakes intentionally duck-type the concrete worker dependencies
+# (FakeWorkerDB, FakeInferenceClient, FakeStorageClient, ...) instead
+# of implementing the full real classes. We keep `app/` under full
+# strict-mode typing; the test directory is allowed to use the fakes
+# without rewriting every dependency into a Protocol.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = [
+  "arg-type",
+  "no-untyped-def",
+  "unused-ignore",
+  "import-untyped",
+  "no-any-return",
+  "import-not-found",
+  "str-bytes-safe",
+]
+
+# soundfile ships no py.typed marker; app/mixer.py guards every call with
+# a narrow shim, so we accept the import as untyped at the module level.
+[[tool.mypy.overrides]]
+module = "soundfile"
+ignore_missing_imports = true
