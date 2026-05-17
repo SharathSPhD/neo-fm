@@ -26,6 +26,13 @@ export type FakeSupabase = {
     insert_returns: Record<string, unknown>;
     inserted: { table: string; row: unknown }[];
     updated: { table: string; row: unknown; eq?: [string, unknown] }[];
+    uploaded: {
+      bucket: string;
+      path: string;
+      contentType: string | null;
+      upsert: boolean;
+      byteLength: number;
+    }[];
     signed_url: string;
   };
 };
@@ -39,6 +46,7 @@ export function makeFakeSupabase(): FakeSupabase {
     insert_returns: {},
     inserted: [],
     updated: [],
+    uploaded: [],
     signed_url: "https://signed.example.com/track.mp3",
   };
 
@@ -144,6 +152,23 @@ export function makeFakeSupabase(): FakeSupabase {
     return {
       createSignedUrl: (_path: string, _ttl: number) =>
         Promise.resolve({ data: { signedUrl: state.signed_url }, error: null }),
+      upload: (
+        path: string,
+        bytes: ArrayBufferLike | Uint8Array,
+        opts?: { contentType?: string; upsert?: boolean },
+      ) => {
+        state.uploaded.push({
+          bucket: _bucket,
+          path,
+          contentType: opts?.contentType ?? null,
+          upsert: opts?.upsert ?? false,
+          byteLength:
+            bytes instanceof Uint8Array
+              ? bytes.byteLength
+              : (bytes as ArrayBuffer).byteLength,
+        });
+        return Promise.resolve({ data: { path }, error: null });
+      },
     };
   }
 

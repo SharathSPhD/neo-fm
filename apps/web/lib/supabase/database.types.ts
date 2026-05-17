@@ -69,6 +69,7 @@ export type Database = {
       cover_art_attempts: {
         Row: {
           attempt_id: string
+          backend: string | null
           created_at: string
           error: string | null
           id: string
@@ -82,6 +83,7 @@ export type Database = {
         }
         Insert: {
           attempt_id: string
+          backend?: string | null
           created_at?: string
           error?: string | null
           id?: string
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           attempt_id?: string
+          backend?: string | null
           created_at?: string
           error?: string | null
           id?: string
@@ -1031,6 +1034,19 @@ export type Database = {
           attempt_id: string
           job_id: string
           status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      record_cover_art_template: {
+        Args: {
+          p_attempt_id: string
+          p_prompt: string
+          p_song_id: string
+          p_storage_path: string
+          p_trace_id?: string
+        }
+        Returns: {
+          attempt_id: string
+          cover_art_id: string
         }[]
       }
       recover_song_job: {

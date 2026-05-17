@@ -26,6 +26,9 @@ const STYLE_OPTIONS: { value: string; label: string }[] = [
   { value: "carnatic", label: "Carnatic" },
   { value: "hindustani", label: "Hindustani" },
   { value: "kannada-folk", label: "Kannada folk" },
+  { value: "kannada-light-classical", label: "Kannada bhavageete" },
+  { value: "tamil-folk", label: "Tamil folk" },
+  { value: "bollywood-ballad", label: "Bollywood ballad" },
   { value: "western", label: "Western" },
 ];
 
