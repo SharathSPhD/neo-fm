@@ -2,8 +2,12 @@
 
 ## Merge status
 
-- Local: `v1.4-deep-dive` queued for `git merge --no-ff` into `main`
-  after Sprint 17 closes (this file is the gate doc).
+- Local: `v1.4-deep-dive` merged into `main` via `git merge --no-ff`
+  on commit `82feb5b` ("Merge branch 'v1.4-deep-dive' into main")
+  with author/committer `SharathSPhD <qbz506@york.ac.uk>` (the
+  Vercel-verified email; matches the v1.3 unblock fix).
+- 18 sprint commits land on `main` underneath the merge commit
+  (`70a46e7..96e432f`).
 - Worktree: `/home/sharaths/projects/neo-fm-worktrees/v1.4-deep-dive`
   off `main@e028528`.
 - Branch retained for traceability; safe to delete after the
@@ -84,18 +88,20 @@ Notable v1.4 migrations:
 
 ## Vercel deploy gate
 
-To be filled in once the merge commit pushes to `origin/main`:
+Author-email gate cleared pre-push: `git log -1 --format='%an %ae'`
+on `82feb5b` returns `SharathSPhD qbz506@york.ac.uk` (the
+Vercel-verified email surfaced during the v1.3 unblock). The
+repo's local `user.email` was set in v1.3 so subsequent commits
+inherit it; no `filter-branch` rewrite needed for v1.4.
 
 | Deployment | Commit | State | Notes |
 | --- | --- | --- | --- |
-| `dpl_PLACEHOLDER` | `MERGECOMMIT` | _pending_ | live on `neo-fm-web.vercel.app` |
+| `dpl_PENDING` | `82feb5b` merge | _pending push_ | will land on `neo-fm-web.vercel.app` once `git push origin main` fires the webhook |
 
-Repeat the v1.3 author-email check before pushing the merge
-commit: `git log -1 --format='%an %ae'` on the merge commit
-must resolve to a Vercel-verified email; the operator's
-verified emails are `qbz506@york.ac.uk` (primary) and
-`sharath.sathish@outlook.com`. The repo's local `user.email`
-was set in v1.3 so subsequent commits inherit it.
+The deploy table will be filled in by the operator after the
+push; the script `infra/scripts/prod-smoke.mjs` (25 steps,
+Sprint 17 extension) is the gate that decides whether the new
+deploy alias is promoted.
 
 ## Post-merge prod-smoke
 
