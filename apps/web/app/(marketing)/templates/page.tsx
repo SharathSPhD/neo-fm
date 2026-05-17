@@ -16,7 +16,11 @@ import Link from "next/link";
 
 import { PRESETS, type StylePreset } from "@neo-fm/style-presets";
 
-export const dynamic = "force-static";
+// The shared MarketingLayout reads the auth session per-request
+// (createServerClient -> supabase.auth.getUser), so this page can't
+// be statically pre-rendered. force-static would trip the env-var
+// guard during `next build`. Use force-dynamic to match /discover.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Templates · neo-fm",
