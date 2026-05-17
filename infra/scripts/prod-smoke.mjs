@@ -363,11 +363,19 @@ try {
     return { presetCount: seen.length };
   });
 
-  // v1.4 closeout: a "Discover style filter present with zero cards" is
-  // exactly the regression the smoke harness has to detect, so we fail
-  // these steps when cardCount === 0. Set `STRICT_V14_DISCOVER=0` to
-  // soften this (only useful when seed has not yet been applied).
-  const strictDiscover = process.env.STRICT_V14_DISCOVER !== "0";
+  // v1.4 live-bug closeout (Phase 3.5): the Discover query now uses
+  // `tracks!inner (id)`, so a style chip with zero cards is legitimate
+  // when no published song in that style has a track row yet -- and
+  // that's the *correct* state, since the prior behavior surfaced
+  // catalog rows with no audio and confused users with "Audio is
+  // still being prepared". The smoke harness therefore no longer
+  // fails on cardCount === 0; it fails on the opposite invariant: if
+  // a card renders, the public-song page it links to must not show
+  // the still-being-prepared / preview-unavailable notices.
+  //
+  // The legacy STRICT_V14_DISCOVER knob is kept for back-compat but
+  // is now off by default to match the post-Phase-3.5 contract.
+  const strictDiscover = process.env.STRICT_V14_DISCOVER === "1";
   const strictAudio = process.env.STRICT_V14_AUDIO !== "0";
 
   // v1.4 closeout: Discover cards link to /s/<publicId>, not /p/.
@@ -375,50 +383,71 @@ try {
   // previously checked `a[href^="/p/"]` and matched zero.
   const publicLinkSelector = 'a[href^="/s/"]';
 
-  await step("16-discover-sanskrit", async () => {
-    await page.goto(`${BASE}/discover?style=sanskrit-shloka`, {
-      waitUntil: "networkidle",
-    });
-    const cardCount = await page.locator(publicLinkSelector).count();
-    const file = await shot("16-discover-sanskrit");
+  // Returns `{ cardCount, audioReady }` -- `audioReady` is true iff
+  // every card on the chip points at a public-song page that does
+  // NOT show "still being prepared" / "Audio preview not available".
+  // A chip with zero cards is treated as audio-ready (vacuous truth),
+  // matching the Phase 3.5 invariant.
+  const assertDiscoverChipAudioReady = async (label, chipUrl) => {
+    await page.goto(chipUrl, { waitUntil: "networkidle" });
+    const file = await shot(label);
+    const hrefs = await page.locator(publicLinkSelector).evaluateAll((els) =>
+      Array.from(new Set(els.map((e) => e.getAttribute("href")))).filter(
+        (h) => typeof h === "string" && h.startsWith("/s/"),
+      ),
+    );
+    const cardCount = hrefs.length;
     if (strictDiscover && cardCount === 0) {
       throw new Error(
-        "sanskrit-shloka Discover filter is rendering zero public cards " +
-          "(set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
+        `${label} Discover filter is rendering zero public cards ` +
+          "(STRICT_V14_DISCOVER=1 enforces a legacy contract; clear it for post-Phase-3.5 runs)",
       );
     }
-    return { file: path.basename(file), cardCount };
-  });
+    const offending = [];
+    for (const href of hrefs) {
+      const probe = await page.evaluate(async (h) => {
+        const r = await fetch(h, { credentials: "include" });
+        const text = await r.text();
+        return {
+          status: r.status,
+          stillPreparing: /Audio is still being prepared/i.test(text),
+          notAvailable: /Audio preview not available/i.test(text),
+        };
+      }, href);
+      if (probe.stillPreparing || probe.notAvailable) {
+        offending.push({ href, ...probe });
+      }
+    }
+    if (offending.length > 0) {
+      throw new Error(
+        `${label}: Discover surfaced cards that lack playable audio ` +
+          "(Phase 3.5 `tracks!inner` filter regressed?): " +
+          JSON.stringify(offending),
+      );
+    }
+    return { file: path.basename(file), cardCount, audioReady: true };
+  };
 
-  await step("17-discover-bengali", async () => {
-    await page.goto(`${BASE}/discover?style=bengali-rabindrasangeet`, {
-      waitUntil: "networkidle",
-    });
-    const cardCount = await page.locator(publicLinkSelector).count();
-    const file = await shot("17-discover-bengali");
-    if (strictDiscover && cardCount === 0) {
-      throw new Error(
-        "bengali-rabindrasangeet Discover filter is rendering zero public " +
-          "cards (set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
-      );
-    }
-    return { file: path.basename(file), cardCount };
-  });
+  await step("16-discover-sanskrit", async () =>
+    assertDiscoverChipAudioReady(
+      "16-discover-sanskrit",
+      `${BASE}/discover?style=sanskrit-shloka`,
+    ),
+  );
 
-  await step("18-discover-telugu", async () => {
-    await page.goto(`${BASE}/discover?style=telugu-keerthana`, {
-      waitUntil: "networkidle",
-    });
-    const cardCount = await page.locator(publicLinkSelector).count();
-    const file = await shot("18-discover-telugu");
-    if (strictDiscover && cardCount === 0) {
-      throw new Error(
-        "telugu-keerthana Discover filter is rendering zero public cards " +
-          "(set STRICT_V14_DISCOVER=0 only for pre-seed runs)",
-      );
-    }
-    return { file: path.basename(file), cardCount };
-  });
+  await step("17-discover-bengali", async () =>
+    assertDiscoverChipAudioReady(
+      "17-discover-bengali",
+      `${BASE}/discover?style=bengali-rabindrasangeet`,
+    ),
+  );
+
+  await step("18-discover-telugu", async () =>
+    assertDiscoverChipAudioReady(
+      "18-discover-telugu",
+      `${BASE}/discover?style=telugu-keerthana`,
+    ),
+  );
 
   await step("19-public-song-page", async () => {
     await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
@@ -628,10 +657,14 @@ try {
           "SUPABASE_URL not set in env; voice-preview HEAD probe skipped",
       };
     }
+    // These ids must match `packages/co-composer/src/voice-catalogue.ts`
+    // exactly -- they are the file names under `samples/` in the
+    // public `voice-samples` bucket. Pick three voices that span
+    // gender/language so the probe catches per-row upload gaps.
     const sampleVoiceIds = [
       "indic_hi_male_broadcast",
-      "indic_hi_female_devotional",
-      "indic_kn_female_folk",
+      "indic_hi_female_lyrical",
+      "indic_kn_female_bhajan",
     ];
     const results = {};
     for (const id of sampleVoiceIds) {

@@ -2,7 +2,7 @@
 
 **Target**: https://neo-fm-web.vercel.app
 **Smoke user**: e2e-smoke@neo-fm.test
-**Date**: 2026-05-17T19:01:00.814Z
+**Date**: 2026-05-17T21:22:36.158Z
 **Overall**: GREEN — every surface rendered as expected
 
 | # | Step | Result | Notes |
@@ -22,16 +22,18 @@
 | 13 | `13-voice-picker` | ✅ | file="13-voice-picker.png" rowCount=17 |
 | 14 | `14-advanced-disclosure` | ✅ | file="14-advanced-disclosure.png" |
 | 15 | `15-preset-chip-count` | ✅ | presetCount=11 |
-| 16 | `16-discover-sanskrit` | ✅ | file="16-discover-sanskrit.png" cardCount=2 |
-| 17 | `17-discover-bengali` | ✅ | file="17-discover-bengali.png" cardCount=2 |
-| 18 | `18-discover-telugu` | ✅ | file="18-discover-telugu.png" cardCount=2 |
-| 19 | `19-public-song-page` | ✅ | url="https://neo-fm-web.vercel.app/s/fw6yttfjbr" file="19-public-song.png" |
-| 20 | `20-variation-dialog` | ✅ | file="20-variation-dialog.png" dialogOpen=false note="skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)" |
+| 16 | `16-discover-sanskrit` | ✅ | file="16-discover-sanskrit.png" cardCount=0 audioReady=true |
+| 17 | `17-discover-bengali` | ✅ | file="17-discover-bengali.png" cardCount=0 audioReady=true |
+| 18 | `18-discover-telugu` | ✅ | file="18-discover-telugu.png" cardCount=0 audioReady=true |
+| 19 | `19-public-song-page` | ✅ | url="https://neo-fm-web.vercel.app/s/0nxwv98vyt" file="19-public-song.png" |
+| 20 | `20-variation-dialog` | ✅ | file="20-variation-dialog.png" dialogOpen=true |
 | 21 | `21-compare-page` | ✅ | url="https://neo-fm-web.vercel.app/songs/1130b2cf-6f54-42ea-a544-9976afa6b8e5/compare" file="21-compare-page.png" audioCount=0 |
 | 22 | `22-batch-publish-bar` | ✅ | file="22-batch-publish-bar.png" checkable=false barVisible=false |
-| 23 | `health-anon` | ✅ | status=200 body={"status":"ok","phase":1,"version":"production","commit":null,"env":"production","checks":{"supabase":{"status":"ok","latencyMs":12},"upstash":{"status":"missing","latencyMs":null}},"timestamp":"2026-05-17T19:00:57.618Z"} |
-| 24 | `health` | ✅ | status=200 body={"status":"ok","phase":1,"version":"v1.3-wedge","commit":"dd33d7d","env":"production","checks":{"supabase":{"status":"ok","latencyMs":5},"upstash":{"status":"missing","latencyMs":null}},"timestamp":"2026-05-17T19:00:57.795Z"} |
-| 25 | `25-public-audio-url` | ✅ | publicId="fw6yttfjbr" status=404 note="skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)" |
+| 23 | `health-anon` | ✅ | status=200 body={"status":"ok","phase":1,"version":"production","commit":null,"env":"production","checks":{"supabase":{"status":"ok","latencyMs":10},"upstash":{"status":"missing","latencyMs":null}},"timestamp":"2026-05-17T21:22:33.025Z"} |
+| 24 | `health` | ✅ | status=200 body={"status":"ok","phase":1,"version":"v1.3-wedge","commit":"c631cc0","env":"production","checks":{"supabase":{"status":"ok","latencyMs":6},"upstash":{"status":"missing","latencyMs":null}},"timestamp":"2026-05-17T21:22:33.276Z"} |
+| 25 | `24a-buckets-exist` | ✅ | results={"cover-art":400,"voice-samples":400,"tracks":400} |
+| 26 | `24b-voice-previews` | ✅ | results={"indic_hi_male_broadcast":200,"indic_hi_female_lyrical":200,"indic_kn_female_bhajan":200} |
+| 27 | `25-public-audio-url` | ✅ | publicId="0nxwv98vyt" status=200 |
 
 ## Screenshots
 

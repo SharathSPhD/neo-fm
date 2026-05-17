@@ -1,6 +1,6 @@
 {
   "base": "https://neo-fm-web.vercel.app",
-  "finishedAt": "2026-05-17T19:01:00.814Z",
+  "finishedAt": "2026-05-17T21:22:36.158Z",
   "steps": [
     {
       "name": "1-landing",
@@ -95,32 +95,34 @@
       "name": "16-discover-sanskrit",
       "ok": true,
       "file": "16-discover-sanskrit.png",
-      "cardCount": 2
+      "cardCount": 0,
+      "audioReady": true
     },
     {
       "name": "17-discover-bengali",
       "ok": true,
       "file": "17-discover-bengali.png",
-      "cardCount": 2
+      "cardCount": 0,
+      "audioReady": true
     },
     {
       "name": "18-discover-telugu",
       "ok": true,
       "file": "18-discover-telugu.png",
-      "cardCount": 2
+      "cardCount": 0,
+      "audioReady": true
     },
     {
       "name": "19-public-song-page",
       "ok": true,
-      "url": "https://neo-fm-web.vercel.app/s/fw6yttfjbr",
+      "url": "https://neo-fm-web.vercel.app/s/0nxwv98vyt",
       "file": "19-public-song.png"
     },
     {
       "name": "20-variation-dialog",
       "ok": true,
       "file": "20-variation-dialog.png",
-      "dialogOpen": false,
-      "note": "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)"
+      "dialogOpen": true
     },
     {
       "name": "21-compare-page",
@@ -149,14 +151,14 @@
         "checks": {
           "supabase": {
             "status": "ok",
-            "latencyMs": 12
+            "latencyMs": 10
           },
           "upstash": {
             "status": "missing",
             "latencyMs": null
           }
         },
-        "timestamp": "2026-05-17T19:00:57.618Z"
+        "timestamp": "2026-05-17T21:22:33.025Z"
       }
     },
     {
@@ -167,27 +169,44 @@
         "status": "ok",
         "phase": 1,
         "version": "v1.3-wedge",
-        "commit": "dd33d7d",
+        "commit": "c631cc0",
         "env": "production",
         "checks": {
           "supabase": {
             "status": "ok",
-            "latencyMs": 5
+            "latencyMs": 6
           },
           "upstash": {
             "status": "missing",
             "latencyMs": null
           }
         },
-        "timestamp": "2026-05-17T19:00:57.795Z"
+        "timestamp": "2026-05-17T21:22:33.276Z"
+      }
+    },
+    {
+      "name": "24a-buckets-exist",
+      "ok": true,
+      "results": {
+        "cover-art": 400,
+        "voice-samples": 400,
+        "tracks": 400
+      }
+    },
+    {
+      "name": "24b-voice-previews",
+      "ok": true,
+      "results": {
+        "indic_hi_male_broadcast": 200,
+        "indic_hi_female_lyrical": 200,
+        "indic_kn_female_bhajan": 200
       }
     },
     {
       "name": "25-public-audio-url",
       "ok": true,
-      "publicId": "fw6yttfjbr",
-      "status": 404,
-      "note": "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)"
+      "publicId": "0nxwv98vyt",
+      "status": 200
     }
   ]
 }
