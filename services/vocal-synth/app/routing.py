@@ -30,6 +30,7 @@ from typing import Literal
 
 import numpy as np
 
+from .indicf5 import IndicF5Model
 from .model import (
     FakeVocalModel,
     SvaraTTSModel,
@@ -41,7 +42,7 @@ from .parler import ParlerTTSModel
 from .preprocess import preprocess_section
 from .voice_catalog import get_voice
 
-BackendKey = Literal["svara", "parler", "fake"]
+BackendKey = Literal["svara", "parler", "indicf5", "fake"]
 
 
 @dataclass
@@ -73,17 +74,16 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
     if section.voice_id:
         entry = get_voice(section.voice_id)
         if entry is not None:
-            # Today the catalogue only ships `parler` entries; the
-            # narrowing here keeps the BackendKey contract intact and
-            # leaves room for `svara` once Sprint 5b lands singing
-            # personas on Svara. IndicF5 (Sprint 12) and NeMo
-            # (Sprint 13) will add their own arms.
+            # v1.4 Sprint 12: IndicF5 lands as a real third route.
+            # NeMo (Sprint 13) is still future; future-only backends
+            # fall back to parler so a catalogue entry tagged "nemo"
+            # before the model exists doesn't break a render.
             if entry.backend == "parler":
                 return "parler", f"voice_id:{entry.voice_id}"
             if entry.backend == "svara":
                 return "svara", f"voice_id:{entry.voice_id}"
-            # Future-only backends fall back to parler with a note
-            # so the operator can see what the catalogue *wanted*.
+            if entry.backend == "indicf5":
+                return "indicf5", f"voice_id:{entry.voice_id}"
             return "parler", f"voice_id:{entry.voice_id}:fallback_to_parler"
     if section.type == "instrumental" or not (section.lyrics or section.transliteration):
         return "fake", "no-text"
@@ -106,6 +106,7 @@ class RoutingVocalModel:
         *,
         svara: SvaraTTSModel | None = None,
         parler: ParlerTTSModel | None = None,
+        indicf5: IndicF5Model | None = None,
         fallback: FakeVocalModel | None = None,
     ) -> None:
         self._svara = svara or SvaraTTSModel(
@@ -114,6 +115,9 @@ class RoutingVocalModel:
         self._parler = parler or ParlerTTSModel(
             os.environ.get("VOCAL_MODEL_ID_PARLER", "ai4bharat/indic-parler-tts"),
         )
+        self._indicf5 = indicf5 or IndicF5Model(
+            os.environ.get("VOCAL_MODEL_ID_INDICF5", "ai4bharat/IndicF5"),
+        )
         # Fallback is constructed lazily: FakeVocalModel refuses to
         # exist when NEO_FM_REQUIRE_REAL_MODEL=1, and the prod path
         # never reaches it. We only allocate it on first use.
@@ -121,6 +125,7 @@ class RoutingVocalModel:
         self._fallback: FakeVocalModel | None = fallback
         self._svara_loaded = False
         self._parler_loaded = False
+        self._indicf5_loaded = False
         self._last_decisions: list[RouteDecision] = []
 
     def _get_fallback(self) -> FakeVocalModel:
@@ -132,7 +137,11 @@ class RoutingVocalModel:
     def model_loaded(self) -> bool:
         # A routing model is loaded if at least one real backend is
         # available; the fallback is always loadable.
-        return self._svara_loaded or self._parler_loaded
+        return (
+            self._svara_loaded
+            or self._parler_loaded
+            or self._indicf5_loaded
+        )
 
     @property
     def model_version(self) -> str | None:
@@ -141,6 +150,8 @@ class RoutingVocalModel:
             parts.append(f"svara={self._svara.model_version}")
         if self._parler_loaded:
             parts.append(f"parler={self._parler.model_version}")
+        if self._indicf5_loaded:
+            parts.append(f"indicf5={self._indicf5.model_version}")
         if not parts:
             return "routing+fake"
         return "routing+" + ",".join(parts)
@@ -171,6 +182,16 @@ class RoutingVocalModel:
                         raise
                     return self._get_fallback()
             return self._parler
+        if key == "indicf5":
+            if not self._indicf5_loaded:
+                try:
+                    self._indicf5.load()
+                    self._indicf5_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._indicf5
         return self._get_fallback()
 
     def synthesise(self, req: VocalRequest) -> bytes:

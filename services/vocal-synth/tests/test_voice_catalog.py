@@ -66,6 +66,33 @@ def test_pick_backend_with_known_voice_id_uses_catalog_backend() -> None:
     assert reason == "voice_id:indic_kn_female_bhajan"
 
 
+def test_sprint_12_indicf5_personas_are_pinned() -> None:
+    """v1.4 Sprint 12 contract: 8 indic_* personas point at IndicF5.
+    The 2 indic_kn_* personas remain on parler so Sprint 13 can flip
+    them to NeMo without rewriting the catalogue file."""
+    indicf5_voices = [v for v in VOICES.values() if v.backend == "indicf5"]
+    assert {v.voice_id for v in indicf5_voices} == {
+        "indic_hi_male_broadcast",
+        "indic_hi_female_lyrical",
+        "indic_ta_male_nadaswaram",
+        "indic_ta_female_devotional",
+        "indic_te_male",
+        "indic_te_female",
+        "indic_bn_male_rabindra",
+        "indic_bn_female",
+    }
+    # The 2 Kannada personas stay on parler until Sprint 13.
+    assert VOICES["indic_kn_male_warm"].backend == "parler"
+    assert VOICES["indic_kn_female_bhajan"].backend == "parler"
+
+
+def test_pick_backend_indicf5_voice_routes_to_indicf5() -> None:
+    """Spot-check: indic_hi_male_broadcast now routes to indicf5."""
+    key, reason = _pick_backend(_section_with_voice("indic_hi_male_broadcast"))
+    assert key == "indicf5"
+    assert reason == "voice_id:indic_hi_male_broadcast"
+
+
 def test_pick_backend_with_unknown_voice_id_falls_through() -> None:
     # Unknown ids fall through to the language-based decision.
     key, reason = _pick_backend(_section_with_voice("ghost-persona"))

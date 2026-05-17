@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "version": "1.0.0",
-  "comment": "v1.4 Sprint 5 voice catalogue. 16 prompt-engineered personas on top of the already-wired Indic-Parler-TTS backend; no new model weights. Sprint 12 lands IndicF5 as a third backend; Sprint 13 lands custom NeMo Kannada as a fourth. The catalogue grows by adding new personas — entries are append-only so saved SongDocuments referencing an older voice_id keep resolving. Preview WAVs live in the public `voice-samples` Supabase Storage bucket under `samples/<voice_id>.wav`; the operator regenerates them with `services/vocal-synth/scripts/render_voice_previews.py` when the prompt changes.",
+  "comment": "v1.4 Sprint 5 voice catalogue, extended in Sprint 12. 16 prompt-engineered personas; 8 indic_* entries point at IndicF5 (Sprint 12), the 2 indic_kn_* entries stay on Parler until Sprint 13 swaps them to NeMo Kannada. The catalogue grows by adding new personas — entries are append-only so saved SongDocuments referencing an older voice_id keep resolving. Preview WAVs live in the public `voice-samples` Supabase Storage bucket under `samples/<voice_id>.wav`; the operator regenerates them with `services/vocal-synth/scripts/render_voice_previews.py` when the prompt changes.",
   "voices": [
     {
       "voice_id": "indic_hi_male_broadcast",
@@ -9,7 +9,7 @@
       "gender": "male",
       "persona": "broadcast-clear",
       "label": "Hindi · Broadcast male",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Indian-Hindi male voice with broadcast clarity, mid-baritone register, neutral accent, even pacing, studio-quality dry recording.",
       "preview_path": "samples/indic_hi_male_broadcast.wav"
     },
@@ -19,7 +19,7 @@
       "gender": "female",
       "persona": "lyrical-warm",
       "label": "Hindi · Lyrical female",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Indian-Hindi female voice with a warm, lyrical timbre, light vibrato, slightly intimate microphone proximity, suited to ballads.",
       "preview_path": "samples/indic_hi_female_lyrical.wav"
     },
@@ -49,7 +49,7 @@
       "gender": "male",
       "persona": "classical-paired",
       "label": "Tamil · Classical-paired male",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Tamil male voice that pairs well with nadaswaram and thavil, declamatory devotional style, full chest resonance, slightly nasal projection.",
       "preview_path": "samples/indic_ta_male_nadaswaram.wav"
     },
@@ -59,7 +59,7 @@
       "gender": "female",
       "persona": "bhakti",
       "label": "Tamil · Bhakti female",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Tamil female voice for bhakti/devotional repertoire, clear diction, light reverb suggesting a temple hall, soft attack.",
       "preview_path": "samples/indic_ta_female_devotional.wav"
     },
@@ -69,7 +69,7 @@
       "gender": "male",
       "persona": "neutral",
       "label": "Telugu · Neutral male",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Telugu male voice, neutral accent, even-tempered, studio-quality dry recording, mid register.",
       "preview_path": "samples/indic_te_male.wav"
     },
@@ -79,7 +79,7 @@
       "gender": "female",
       "persona": "neutral",
       "label": "Telugu · Neutral female",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Telugu female voice, neutral accent, even-tempered, studio-quality dry recording, mid-bright register.",
       "preview_path": "samples/indic_te_female.wav"
     },
@@ -89,7 +89,7 @@
       "gender": "male",
       "persona": "rabindrasangeet",
       "label": "Bengali · Rabindrasangeet male",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Bengali male voice in the Rabindrasangeet tradition, deliberate vibrato, sustained vowels, light tanpura-room ambience.",
       "preview_path": "samples/indic_bn_male_rabindra.wav"
     },
@@ -99,7 +99,7 @@
       "gender": "female",
       "persona": "neutral",
       "label": "Bengali · Neutral female",
-      "backend": "parler",
+      "backend": "indicf5",
       "prompt": "An adult Bengali female voice, neutral accent, even pacing, studio-quality dry recording.",
       "preview_path": "samples/indic_bn_female.wav"
     },
