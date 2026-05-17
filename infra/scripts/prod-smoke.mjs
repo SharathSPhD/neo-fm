@@ -184,14 +184,24 @@ try {
       "western-pop",
       "kabir-doha",
     ];
-    const seen = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("a[href*='preset=']"))
-        .map((a) => {
-          const u = new URL(a.getAttribute("href"), location.origin);
-          return u.searchParams.get("preset");
-        })
-        .filter(Boolean),
-    );
+    // The creation canvas exposes presets as <button data-preset>
+    // chips (it doesn't navigate -- it mutates form state). The
+    // marketing landing exposes them as <a href="/songs/new?preset=">.
+    // Both are valid signals that a preset is wired up; check both so
+    // the smoke survives either UI.
+    const seen = await page.evaluate(() => {
+      const ids = new Set();
+      for (const el of document.querySelectorAll("[data-preset]")) {
+        const id = el.getAttribute("data-preset");
+        if (id) ids.add(id);
+      }
+      for (const a of document.querySelectorAll("a[href*='preset=']")) {
+        const u = new URL(a.getAttribute("href") || "", location.origin);
+        const id = u.searchParams.get("preset");
+        if (id) ids.add(id);
+      }
+      return Array.from(ids);
+    });
     const missing = requiredPresets.filter((p) => !seen.includes(p));
     if (missing.length > 0) {
       throw new Error(

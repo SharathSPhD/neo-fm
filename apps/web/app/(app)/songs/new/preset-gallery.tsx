@@ -75,6 +75,7 @@ function PresetCard({
       type="button"
       role="radio"
       aria-checked={active}
+      data-preset={preset.id}
       onClick={onPick}
       className={[
         "flex w-full flex-col gap-2 rounded-md border bg-gradient-to-b px-4 py-3 text-left transition",
