@@ -96,6 +96,14 @@ preempted_total = Counter(
     registry=REGISTRY,
 )
 
+# v1.3 Sprint 3 — cover-art consumer.
+cover_art_jobs_total = Counter(
+    "neofm_worker_cover_art_jobs_total",
+    "Cover-art jobs processed by outcome.",
+    ["outcome"],
+    registry=REGISTRY,
+)
+
 
 class _MetricsHandler(BaseHTTPRequestHandler):
     server_version = "neofm-worker-metrics/0.1"

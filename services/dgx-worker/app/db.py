@@ -315,3 +315,59 @@ class WorkerDB:
                 "update public.jobs set progress = %s where id = %s;",
                 (progress, job_id),
             )
+
+    # ----- cover-art (v1.3 Sprint 3) -------------------------------------
+
+    def update_cover_art_attempt(
+        self,
+        conn: psycopg.Connection[dict[str, Any]],
+        *,
+        job_id: str,
+        attempt_id: str,
+        status: str,
+        error: str | None = None,
+        storage_path: str | None = None,
+        model_version: str | None = None,
+    ) -> None:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                update public.cover_art_attempts
+                   set status = %s,
+                       error = coalesce(%s, error),
+                       storage_path = coalesce(%s, storage_path),
+                       model_version = coalesce(%s, model_version)
+                 where job_id = %s and attempt_id = %s
+                """,
+                (status, error, storage_path, model_version, job_id, attempt_id),
+            )
+
+    def flip_current_cover_art(
+        self,
+        conn: psycopg.Connection[dict[str, Any]],
+        *,
+        job_id: str,
+        storage_url: str,
+        prompt: str,
+        model_version: str | None,
+    ) -> None:
+        """Within ONE transaction: flip prior is_current=true rows for this
+        song to false, then insert a new is_current=true artefact row.
+
+        The two writes share the connection's implicit transaction; the
+        caller passes a `conn` that was opened by `db.connect()`.
+        """
+        with conn.cursor() as cur:
+            cur.execute(
+                "update public.cover_art set is_current = false "
+                "where job_id = %s and is_current = true;",
+                (job_id,),
+            )
+            cur.execute(
+                """
+                insert into public.cover_art
+                  (job_id, prompt, url, model_version, is_current)
+                values (%s, %s, %s, %s, true);
+                """,
+                (job_id, prompt, storage_url, model_version),
+            )

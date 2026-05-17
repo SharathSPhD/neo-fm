@@ -36,6 +36,7 @@ from starlette.responses import Response
 from app import metrics as metrics_module
 from app import model as model_module
 from app.model import VocalRequest, VocalSection
+from app.routing import RoutingVocalModel
 
 PHASE = 5
 
@@ -215,12 +216,28 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
 
 @asynccontextmanager
 async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    """Install the active vocal model.
+
+    v1.3 Sprint 4 wires `RoutingVocalModel` -- the language-aware
+    backend picker that was dead code through v1.2 -- as the default
+    when `VOCAL_MODEL_BACKEND=routing` (the new prod default). The
+    `initialise_from_env` path is preserved for single-backend
+    operators who want to pin Svara or Parler explicitly.
+    """
     if (
         os.environ.get("VOCAL_SYNTH_SKIP_LIFESPAN") != "1"
         and model_module.get_active_model() is None
     ):
+        backend = os.environ.get("VOCAL_MODEL_BACKEND", "routing")
         try:
-            await asyncio.to_thread(model_module.initialise_from_env)
+            if backend == "routing":
+                routing = RoutingVocalModel()
+                # The routing model is always "loaded" -- it falls back
+                # to FakeVocalModel per-section if a real backend can't
+                # be reached, which is exactly the v1.3 prod posture.
+                model_module.set_active_model(routing)
+            else:
+                await asyncio.to_thread(model_module.initialise_from_env)
         except Exception:
             log.exception("model_load_failed", extra={"extra_fields": {"phase": PHASE}})
     yield
@@ -252,6 +269,10 @@ class VocalizeRequestSection(BaseModel):
         | None
     ) = None
     transliteration: str | None = None
+    # v1.3 Sprint 4: co-composer phoneme stream. Omitted on legacy
+    # documents; the router falls back to text-based preprocessing
+    # when missing.
+    phonemes: list[str] | None = None
     target_seconds: Annotated[int, Field(ge=1, le=360)]
     tempo_bpm: int | None = None
     raga_name: str | None = None
@@ -262,7 +283,14 @@ class VocalizeRequest(BaseModel):
     attempt_id: str | None = None
     trace_id: str | None = None
     language: Literal["en", "hi", "kn", "ta", "te", "bn"]
-    style_family: Literal["western", "carnatic", "hindustani", "kannada-folk"]
+    style_family: Literal[
+        "western",
+        "carnatic",
+        "hindustani",
+        "kannada-folk",
+        "kannada-light-classical",
+        "tamil-folk",
+    ]
     voice_timbre: Literal["male", "female", "androgynous"] = "androgynous"
     sample_rate: int = 48000
     target_duration_seconds: Annotated[int, Field(ge=1, le=600)]
@@ -306,6 +334,7 @@ def _coerce(req: VocalizeRequest) -> VocalRequest:
             language=s.language or req.language,
             script=s.script,
             transliteration=s.transliteration,
+            phonemes=tuple(s.phonemes) if s.phonemes is not None else None,
             target_seconds=s.target_seconds,
             tempo_bpm=s.tempo_bpm,
             raga_name=s.raga_name,

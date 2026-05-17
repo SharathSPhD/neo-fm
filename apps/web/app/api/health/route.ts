@@ -2,7 +2,12 @@
  * /api/health -- richer healthcheck than /api/healthz.
  *
  * Reports:
- *   - app version + commit sha (from Vercel env when deployed)
+ *   - marketing version tag for everyone; real commit SHA + internal
+ *     version string only for callers that present the
+ *     `HEALTH_INTERNAL_TOKEN` (Authorization: Bearer …) or are signed in
+ *     to Supabase (sb-access-token cookie present). Anonymous callers
+ *     see `version: "production"` and `commit: null` so deploy lineage
+ *     doesn't leak through a public probe.
  *   - supabase reachability (cheap SELECT 1 via the publishable client)
  *   - upstash reachability when configured
  *   - boot timestamp
@@ -63,7 +68,28 @@ async function checkUpstash(): Promise<{
   }
 }
 
-export async function GET() {
+function isInternalCaller(req: Request): boolean {
+  // Internal-token bearer: a fixed, rotateable secret for internal
+  // monitors / runbooks that should see commit SHA + full version.
+  const expected = process.env.HEALTH_INTERNAL_TOKEN;
+  if (expected) {
+    const auth = req.headers.get("authorization") ?? "";
+    if (auth.startsWith("Bearer ")) {
+      const provided = auth.slice("Bearer ".length).trim();
+      if (provided.length > 0 && provided === expected) return true;
+    }
+  }
+  // Signed-in browser sessions: Supabase sets `sb-<ref>-auth-token`
+  // cookies. We don't need to validate the token here — presence is
+  // enough to gate the richer payload, because forging the cookie
+  // doesn't grant any extra access (the response only adds the SHA
+  // already shown in deploy logs to the team).
+  const cookie = req.headers.get("cookie") ?? "";
+  if (/(^|;\s*)sb-[^=]+-auth-token=/.test(cookie)) return true;
+  return false;
+}
+
+export async function GET(req: Request) {
   const [supabaseRes, upstashRes] = await Promise.all([
     checkSupabase(),
     checkUpstash(),
@@ -74,12 +100,15 @@ export async function GET() {
       : supabaseRes.status === "missing"
         ? "missing"
         : "degraded";
+  const internal = isInternalCaller(req);
+  const fullVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? "v1.3-wedge";
+  const fullCommit = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null;
   return NextResponse.json(
     {
       status,
       phase: 1,
-      version: process.env.NEXT_PUBLIC_APP_VERSION ?? "v1.2-bugfix-pack",
-      commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
+      version: internal ? fullVersion : "production",
+      commit: internal ? fullCommit : null,
       env: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
       checks: {
         supabase: supabaseRes,

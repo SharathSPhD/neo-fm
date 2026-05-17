@@ -53,6 +53,11 @@ def voice_descriptor(
         adornment = ", legato sustains, meditative"
     elif style_family == "kannada-folk":
         adornment = ", rural folk character, lively"
+    elif style_family == "kannada-light-classical":
+        # bhavageete: poem-set-to-frame; gentle ornaments, lyric phrasing.
+        adornment = ", gentle melismas, lyric phrasing, sugama-sangeetha"
+    elif style_family == "tamil-folk":
+        adornment = ", percussive call-and-response, parai energy"
     else:
         adornment = ", contemporary pop polish"
     raga_phrase = f", performing in raga {raga_name}" if raga_name else ""

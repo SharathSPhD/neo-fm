@@ -13,6 +13,10 @@ export function prettyStyle(style: string): string {
       return "Hindustani";
     case "kannada-folk":
       return "Kannada folk";
+    case "kannada-light-classical":
+      return "Kannada light-classical";
+    case "tamil-folk":
+      return "Tamil folk";
     case "western":
       return "Western";
     default:
@@ -28,6 +32,8 @@ export function prettyLanguage(lang: string): string {
       return "Hindi";
     case "kn":
       return "Kannada";
+    case "ta":
+      return "Tamil";
     default:
       return lang;
   }

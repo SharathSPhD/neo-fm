@@ -51,6 +51,10 @@ const STYLE_LANGUAGE_ALLOWED: Record<StyleFamily, ReadonlySet<Language>> = {
   carnatic: new Set<Language>(["kn"]),
   hindustani: new Set<Language>(["hi"]),
   "kannada-folk": new Set<Language>(["kn"]),
+  // v1.3 Sprint 2: bhavageete is Kannada light-classical; Tamil folk
+  // is Tamil janapada. Both got their own families + language route.
+  "kannada-light-classical": new Set<Language>(["kn"]),
+  "tamil-folk": new Set<Language>(["ta"]),
 };
 
 function findEntry(entries: LyricsEntry[], hint?: string): LyricsEntry {

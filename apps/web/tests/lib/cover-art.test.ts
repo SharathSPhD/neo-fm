@@ -75,4 +75,46 @@ describe("coverGradient", () => {
     expect(() => coverGradient("", "western")).not.toThrow();
     expect(coverGradient("", "western")).toMatch(HSL_RE);
   });
+
+  // v1.3 Sprint 2: bhavageete + Tamil folk got their own hue bands
+  // so the gallery visually distinguishes them from generic folk.
+  it("biases kannada-light-classical toward magenta-rose (~320°)", () => {
+    const samples = [
+      "k-1",
+      "k-2",
+      "k-3",
+      "k-4",
+      "k-5",
+    ].map(
+      (s) =>
+        Number(
+          coverGradient(s, "kannada-light-classical").match(HSL_RE)![1],
+        ),
+    );
+    for (const h of samples) {
+      // base 320, ±14 jitter → 306..334 mod 360
+      const delta = Math.min(
+        Math.abs(h - 320),
+        Math.abs(h - 320 + 360),
+        Math.abs(h - 320 - 360),
+      );
+      expect(delta).toBeLessThanOrEqual(14);
+    }
+  });
+
+  it("biases tamil-folk toward warm vermillion (~8°)", () => {
+    const samples = [
+      "t-1",
+      "t-2",
+      "t-3",
+      "t-4",
+      "t-5",
+    ].map(
+      (s) => Number(coverGradient(s, "tamil-folk").match(HSL_RE)![1]),
+    );
+    for (const h of samples) {
+      const folded = h > 180 ? 360 - h : h;
+      expect(Math.abs(folded - 8)).toBeLessThanOrEqual(14);
+    }
+  });
 });

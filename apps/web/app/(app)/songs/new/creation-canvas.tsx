@@ -12,19 +12,28 @@ import { LibraryPicker } from "./library-picker";
 import { PresetGallery } from "./preset-gallery";
 import { LYRIC_MAX_CHARS, SectionEditor } from "./section-editor";
 
-type StyleFamily = "western" | "carnatic" | "hindustani" | "kannada-folk";
-type Language = "en" | "hi" | "kn";
+type StyleFamily =
+  | "western"
+  | "carnatic"
+  | "hindustani"
+  | "kannada-folk"
+  | "kannada-light-classical"
+  | "tamil-folk";
+type Language = "en" | "hi" | "kn" | "ta";
 
 const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
   { value: "carnatic", label: "Carnatic" },
   { value: "hindustani", label: "Hindustani" },
+  { value: "kannada-light-classical", label: "Kannada light-classical" },
   { value: "kannada-folk", label: "Kannada folk" },
+  { value: "tamil-folk", label: "Tamil folk" },
   { value: "western", label: "Western" },
 ];
 
 const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: "hi", label: "Hindi" },
   { value: "kn", label: "Kannada" },
+  { value: "ta", label: "Tamil" },
   { value: "en", label: "English" },
 ];
 
@@ -49,6 +58,10 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
   carnatic: "pallavi",
   hindustani: "alaap",
   "kannada-folk": "folk_refrain",
+  // Bhavageete is a poem set to a melodic frame; pallavi is the
+  // natural opening section per the light-classical convention.
+  "kannada-light-classical": "pallavi",
+  "tamil-folk": "folk_refrain",
   western: "verse",
 };
 
@@ -380,6 +393,18 @@ function syncSectionsToStyle(prev: Section[], style: StyleFamily): Section[] {
     carnatic: ["pallavi", "anupallavi", "charanam", "alaap", "sargam"],
     hindustani: ["mukhda", "antara", "saranam", "alaap", "sargam"],
     "kannada-folk": ["folk_refrain", "folk_stanza", "intro", "outro"],
+    // v1.3 Sprint 2: bhavageete uses Carnatic-shaped sections (poem
+    // set to a melodic frame); Tamil folk uses the same folk-stanza
+    // alternation as Kannada folk.
+    "kannada-light-classical": [
+      "pallavi",
+      "charanam",
+      "anupallavi",
+      "alaap",
+      "intro",
+      "outro",
+    ],
+    "tamil-folk": ["folk_refrain", "folk_stanza", "intro", "outro"],
   };
   return prev.map((s) => {
     if (allowedFor[style].includes(s.type)) return s;

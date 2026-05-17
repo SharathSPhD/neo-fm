@@ -45,6 +45,8 @@ from pydantic import ValidationError
 
 from . import metrics
 from .config import Settings, load_settings
+from .cover_art_client import CoverArtSynthClient
+from .cover_art_worker import cover_art_consumer_loop
 from .db import WorkerDB
 from .governor import DEFAULT_STATE_PATH, GovernorState, read_state
 from .inference_client import MusicInferenceClient
@@ -172,6 +174,11 @@ def build_vocal_request(
                 "language": (getattr(s, "language", None) or language),
                 "script": s.script,
                 "transliteration": s.transliteration,
+                # v1.3 Sprint 4: forward co-composer phonemes so the
+                # vocal-synth router can hand them to the chosen
+                # backend. Older Song Documents that pre-date Sprint 4
+                # leave this null; vocal-synth tolerates both.
+                "phonemes": s.phonemes,
                 "target_seconds": s.target_seconds,
                 "tempo_bpm": song_document.tempo_bpm,
                 "raga_name": (
@@ -606,11 +613,41 @@ async def main_loop(
         bucket=settings.storage_bucket,
     )
 
+    # v1.3 Sprint 3 — separate Storage client targeting the cover-art
+    # bucket so the cover-art consumer can upload without coupling to
+    # the song-render bucket path convention.
+    cover_art_storage: StorageClient | None = None
+    cover_art_synth: CoverArtSynthClient | None = None
+    if settings.cover_art_synth_url and settings.cover_art_synth_hmac_secret:
+        cover_art_storage = StorageClient(
+            supabase_url=settings.supabase_url,
+            service_role_key=settings.supabase_service_role_key,
+            bucket=settings.cover_art_bucket,
+        )
+        cover_art_synth = CoverArtSynthClient(
+            base_url=settings.cover_art_synth_url,
+            hmac_secret=settings.cover_art_synth_hmac_secret,
+            timeout_seconds=settings.cover_art_synth_timeout_seconds,
+        )
+
     stop = asyncio.Event()
     _install_signal_handlers(stop)
 
     if settings.metrics_port:
         metrics.start_metrics_server(port=settings.metrics_port)
+
+    cover_art_task: asyncio.Task[None] | None = None
+    if cover_art_synth is not None and cover_art_storage is not None:
+        cover_art_task = asyncio.create_task(
+            cover_art_consumer_loop(
+                settings=settings,
+                db=db,
+                storage=cover_art_storage,
+                synth=cover_art_synth,
+                stop=stop,
+                poll_interval_seconds=settings.cover_art_poll_interval_seconds,
+            ),
+        )
 
     LOG.info("worker started", extra={"queue": settings.queue_name})
     last_governor_tenant: str | None = None
@@ -675,9 +712,18 @@ async def main_loop(
                 shutdown=stop,
             )
     finally:
+        if cover_art_task is not None:
+            stop.set()
+            cover_art_task.cancel()
+            with suppress(asyncio.CancelledError):
+                await cover_art_task
         await inference.aclose()
         if vocal is not None:
             await vocal.aclose()
+        if cover_art_synth is not None:
+            await cover_art_synth.aclose()
+        if cover_art_storage is not None:
+            await cover_art_storage.aclose()
         await storage.aclose()
         LOG.info("worker stopped")
 

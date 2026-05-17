@@ -100,6 +100,12 @@ function hueForStyle(styleFamily: string | null): number {
       return 215; // indigo-teal
     case "kannada-folk":
       return 45; // ochre
+    // v1.3 Sprint 2: bhavageete + Tamil folk get their own hues so
+    // gallery cards visually distinguish them from generic folk.
+    case "kannada-light-classical":
+      return 320; // magenta-rose (sugama lyric)
+    case "tamil-folk":
+      return 8; // warm vermillion (parai energy)
     case "western":
       return 210; // slate-blue
     default:

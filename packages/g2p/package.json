@@ -1,0 +1,27 @@
+{
+  "name": "@neo-fm/g2p",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Grapheme-to-phoneme rule packs (hi/kn) + Tamil canonicalization for neo-fm. Drives the phonemes[] field on Song Document sections so the vocal-synth backends receive a canonical pronunciation hint instead of raw user lyrics. ADR 0010 promised this; v1.3 Sprint 4 ships it.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc -b tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.9"
+  }
+}

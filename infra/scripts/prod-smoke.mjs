@@ -42,7 +42,7 @@ import fs from "node:fs";
 
 const BASE = process.env.SMOKE_BASE ?? "https://neo-fm-web.vercel.app";
 const OUT =
-  process.env.SMOKE_OUT ?? "/home/sharaths/projects/neo-fm/demos/v1.2/sprint-8-prod-smoke";
+  process.env.SMOKE_OUT ?? "/home/sharaths/projects/neo-fm/demos/v1.3/sprint-6-prod-smoke";
 const EMAIL = process.env.SMOKE_EMAIL ?? "e2e-smoke@neo-fm.test";
 const PASS = process.env.SMOKE_PASS ?? "SmokeTest!v12";
 
@@ -92,7 +92,21 @@ try {
   await step("1-landing", async () => {
     await page.goto(BASE, { waitUntil: "networkidle" });
     const file = await shot("01-landing");
-    return { url: page.url(), file: path.basename(file) };
+    // v1.3 wedge gate: the production landing must lead with the
+    // phoneme promise. If the H1 ever loses the word "phoneme" we
+    // want the smoke to go red, not silently roll back the wedge.
+    const h1 = (await page.locator("h1").first().textContent()) ?? "";
+    if (!/phoneme/i.test(h1)) {
+      throw new Error(
+        `landing H1 missing wedge keyword "phoneme": ${JSON.stringify(h1)}`,
+      );
+    }
+    if (!/Indian languages/i.test(h1)) {
+      throw new Error(
+        `landing H1 missing "Indian languages": ${JSON.stringify(h1)}`,
+      );
+    }
+    return { url: page.url(), file: path.basename(file), h1 };
   });
 
   await step("2-pricing-anon", async () => {
@@ -156,7 +170,39 @@ try {
   await step("8-songs-new", async () => {
     await page.goto(`${BASE}/songs/new`, { waitUntil: "networkidle" });
     const file = await shot("08-songs-new");
-    return { url: page.url(), file: path.basename(file) };
+    // v1.3 Sprint 2 split bhavageete out of folk and added Tamil
+    // folk + Kannada light-classical. Assert every preset chip is
+    // actually painted — silent-drop is what tagore-set was doing
+    // for months before v1.3.
+    const requiredPresets = [
+      "carnatic-kriti",
+      "hindustani-khayal-sketch",
+      "kannada-bhavageete",
+      "kannada-folk",
+      "tamil-folk",
+      "bollywood-ballad",
+      "western-pop",
+      "kabir-doha",
+    ];
+    const seen = await page.evaluate(() =>
+      Array.from(document.querySelectorAll("a[href*='preset=']"))
+        .map((a) => {
+          const u = new URL(a.getAttribute("href"), location.origin);
+          return u.searchParams.get("preset");
+        })
+        .filter(Boolean),
+    );
+    const missing = requiredPresets.filter((p) => !seen.includes(p));
+    if (missing.length > 0) {
+      throw new Error(
+        `presets missing from /songs/new: ${JSON.stringify(missing)}`,
+      );
+    }
+    return {
+      url: page.url(),
+      file: path.basename(file),
+      presetsFound: seen.length,
+    };
   });
 
   await step("9-pricing-authed", async () => {
@@ -204,6 +250,51 @@ try {
     };
   });
 
+  await step("12-cover-art-panel", async () => {
+    // We're already on a completed song detail from the previous
+    // step; capture the cover-art panel so v1.3 Sprint 3's
+    // DGX-rendered cover-art lifecycle is recorded against
+    // production. The panel polls GET /api/songs/[id]/cover-art so
+    // a stuck "Cover art generating…" copy is the failure mode
+    // we'd most want to spot.
+    const panel = page
+      .locator('[data-testid="cover-art-panel"], section:has(h2:text-matches("cover art", "i"))')
+      .first();
+    const visible = await panel
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    const file = await shot("12-cover-art-panel");
+    return { file: path.basename(file), panelVisible: visible };
+  });
+
+  await step("health-anon", async () => {
+    // v1.3 Sprint 1 privacy gate: anon /api/health must NOT leak
+    // a commit SHA. We re-issue the probe from a brand-new
+    // browser context so the auth cookies from step 4 don't
+    // leak into the request.
+    const anonCtx = await browser.newContext({ viewport: { width: 1, height: 1 } });
+    const anonPage = await anonCtx.newPage();
+    await anonPage.goto(BASE, { waitUntil: "domcontentloaded" });
+    const probe = await anonPage.evaluate(async () => {
+      const r = await fetch("/api/health");
+      return { status: r.status, body: await r.json().catch(() => null) };
+    });
+    await anonCtx.close();
+    if (probe.status !== 200) {
+      throw new Error(`health ${probe.status}: ${JSON.stringify(probe.body)}`);
+    }
+    const body = probe.body ?? {};
+    const looksLikeSha = (s) =>
+      typeof s === "string" && /^[0-9a-f]{7,40}$/.test(s);
+    if (looksLikeSha(body.commit) || looksLikeSha(body.version)) {
+      throw new Error(
+        `anon /api/health leaked commit SHA: ${JSON.stringify(body)}`,
+      );
+    }
+    return probe;
+  });
+
   await step("health", async () => {
     const probe = await page.evaluate(async () => {
       const r = await fetch("/api/health");
@@ -219,7 +310,7 @@ try {
 } finally {
   const allOk = steps.every((s) => s.ok);
   const lines = [
-    "# Sprint 8 — production smoke",
+    "# v1.3 Sprint 6 — production smoke",
     "",
     `**Target**: ${BASE}`,
     `**Smoke user**: ${EMAIL}`,

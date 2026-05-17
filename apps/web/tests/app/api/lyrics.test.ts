@@ -55,8 +55,11 @@ describe("GET /api/lyrics", () => {
   });
 
   it("rejects unknown languages with 400", async () => {
+    // v1.3 Sprint 2 promoted "ta" into LanguageSchema, so the
+    // original test (which used "ta" as the bogus value) is no
+    // longer valid. Use a genuinely unsupported code instead.
     authedRequire();
-    const req = new NextRequest("http://localhost/api/lyrics?language=ta");
+    const req = new NextRequest("http://localhost/api/lyrics?language=xx");
     const res = await GET_LIST(req);
     expect(res.status).toBe(400);
   });

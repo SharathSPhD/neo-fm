@@ -1,14 +1,25 @@
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
-export const LanguageSchema = z.enum(["en", "hi", "kn"]);
+// v1.3 Sprint 2: `ta` joins en/hi/kn so the Tamil-folk co-composer can
+// route through the same hot path as the other Indic languages instead
+// of leaning on `metadata.language_hint`. Migration 0033 mirrors this in
+// the Postgres language_enum.
+export const LanguageSchema = z.enum(["en", "hi", "kn", "ta"]);
 export type Language = z.infer<typeof LanguageSchema>;
 
+// v1.3 Sprint 2: split the misclassified bhavageete and Tamil-folk
+// presets out of the catch-all `kannada-folk` bucket. New families:
+//   - "kannada-light-classical": bhavageete / sugama-sangeetha
+//   - "tamil-folk": parai-style janapada
+// Migration 0032 mirrors this in the Postgres style_family_enum.
 export const StyleFamilySchema = z.enum([
   "western",
   "carnatic",
   "hindustani",
   "kannada-folk",
+  "kannada-light-classical",
+  "tamil-folk",
 ]);
 export type StyleFamily = z.infer<typeof StyleFamilySchema>;
 

@@ -26,6 +26,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { attachPhonemes } from "./phonemes.js";
 import { mergeTags } from "./tag-merge.js";
 
 interface RagaEntry {
@@ -207,7 +208,7 @@ export class HindustaniCoComposer implements CoComposer {
       elaborateSection(s, globalTags),
     );
 
-    return {
+    const elaborated: SongDocument = {
       ...doc,
       raga: doc.raga ?? {
         name: raga.name,
@@ -231,5 +232,6 @@ export class HindustaniCoComposer implements CoComposer {
         },
       },
     };
+    return attachPhonemes(elaborated);
   }
 }

@@ -28,7 +28,9 @@ describe("KannadaFolkCoComposer", () => {
     const out = await cc.elaborate(makeDoc());
     const tags = out.sections[0]?.tags ?? [];
     expect(tags).toContain("style:kannada-folk");
-    expect(tags).toContain("genre:bhavageete");
+    // v1.3 Sprint 2: default genre is janapada now that bhavageete
+    // has its own KannadaLightClassicalCoComposer.
+    expect(tags).toContain("genre:janapada");
     expect(tags).toContain("time_sig:6/8");
     expect(tags).toContain("tempo:mid-tempo");
     expect(tags).toContain("section:folk_refrain");
@@ -115,7 +117,7 @@ describe("KannadaFolkCoComposer", () => {
       neo_fm_co_composer: { name: string; genre: string };
     };
     expect(md.neo_fm_co_composer.name).toBe("KannadaFolkCoComposer");
-    expect(md.neo_fm_co_composer.genre).toBe("bhavageete");
+    expect(md.neo_fm_co_composer.genre).toBe("janapada");
   });
 
   it("refuses non-kannada-folk documents", async () => {

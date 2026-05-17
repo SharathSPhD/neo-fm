@@ -147,9 +147,9 @@ export async function POST(request: NextRequest) {
   //
   // The adversarial review (Phase 1 of v1-finish plan) flagged that the
   // /api/songs hot path was forwarding the user-supplied Song Document
-  // verbatim to the worker -- so HeartMuLa never saw the composer's tags
-  // for ANY style. The user could request `style_family: carnatic` and
-  // the model would receive only the section types + lyrics, with no
+  // verbatim to the worker -- so the music engine never saw the composer's
+  // tags for ANY style. The user could request `style_family: carnatic`
+  // and the model would receive only the section types + lyrics, with no
   // raga / tala / instrumentation conditioning.
   //
   // We elaborate before persistence so the stored document IS the

@@ -25,7 +25,7 @@ the song still ships.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal
 
 import numpy as np
@@ -162,12 +162,19 @@ class RoutingVocalModel:
             decisions.append(
                 RouteDecision(section_id=sec.id, backend=key, reason=reason)
             )
-            # Preprocess section text. We don't yet feed the prepared
-            # utterances back into the backend (the backends still
-            # consume the raw section), but we record the trace via
-            # logging so vocal-eval can analyse it post-hoc. The
-            # Sprint D follow-up wires utterance-level synthesis.
-            preprocess_section(
+            # v1.3 Sprint 4: actually consume the preprocessor output
+            # instead of running it for trace-only side-effects. The
+            # backends still take a `VocalSection`, so we splice the
+            # prepared utterance text into `transliteration` (the
+            # field they tokenise against) and stamp `script="ipa"` if
+            # the Hinglish hinter wrapped anything. If the producer
+            # supplied phonemes via @neo-fm/g2p (Sprint 4 co-composer
+            # path), we prefer those: a phoneme stream is a canonical
+            # pronunciation hint that beats raw text for the Indic
+            # backends. We *never* mutate the original `sec` -- a
+            # cloned VocalSection keeps the request's frozen-dataclass
+            # contract intact.
+            prepared_utts, trace = preprocess_section(
                 section_id=sec.id,
                 section_type=sec.type,
                 lyrics=sec.lyrics,
@@ -177,6 +184,38 @@ class RoutingVocalModel:
                 target_seconds=float(sec.target_seconds),
                 tempo_bpm=sec.tempo_bpm,
             )
+            cloned = sec
+            if sec.phonemes:
+                phoneme_str = " ".join(sec.phonemes)
+                cloned = replace(
+                    sec,
+                    transliteration=phoneme_str,
+                    script="ipa",
+                )
+            elif prepared_utts:
+                joined_text = " ".join(u.text for u in prepared_utts)
+                inferred_script = (
+                    prepared_utts[0].script_hint
+                    if prepared_utts[0].script_hint
+                    else (sec.script or "latin")
+                )
+                cloned = replace(
+                    sec,
+                    transliteration=joined_text,
+                    script=inferred_script,
+                )
+            # Trace is recorded via the underlying logger inside
+            # preprocess_section; we expose the count on decisions for
+            # callers that want a per-section view.
+            if trace.utterances_emitted:
+                decisions[-1] = RouteDecision(
+                    section_id=sec.id,
+                    backend=key,
+                    reason=(
+                        f"{reason}+prepared({trace.utterances_emitted}"
+                        f"{'-phon' if sec.phonemes else ''})"
+                    ),
+                )
             backend = self._ensure_backend(key)
             # Each backend renders a one-section sub-request so we can
             # concatenate the per-section outputs without per-backend
@@ -189,7 +228,7 @@ class RoutingVocalModel:
                 style_family=req.style_family,
                 voice_timbre=req.voice_timbre,
                 sample_rate=sr,
-                sections=[sec],
+                sections=[cloned],
                 target_duration_seconds=sec.target_seconds,
             )
             sub_wav = backend.synthesise(sub_req)  # type: ignore[attr-defined]

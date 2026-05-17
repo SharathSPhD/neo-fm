@@ -1,0 +1,40 @@
+{
+  "description": "Hindi schwa-deletion minimal pairs. Each entry: a Devanagari surface form and the expected phoneme stream. The cases focus on the rule that v1 (no G2P) consistently got wrong: word-final schwa drop. We do NOT exercise medial-schwa-drop here -- it's deferred to v1.4 along with the deeper rule pack.",
+  "cases": [
+    {
+      "name": "namaskar — single word, classic word-final schwa drop",
+      "text": "नमस्कार",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["n", "a", "m", "a", "s", "k", "aa", "r"]
+    },
+    {
+      "name": "kamal — final schwa drops, medial retained",
+      "text": "कमल",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["k", "a", "m", "a", "l"]
+    },
+    {
+      "name": "raam — long /aa/ matra survives, no schwa to drop",
+      "text": "राम",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["r", "aa", "m"]
+    },
+    {
+      "name": "gaon — anusvara stays nasal, schwa drops",
+      "text": "गाँव",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["g", "aa", "~", "v"]
+    },
+    {
+      "name": "ghar — aspirate stays distinct from g",
+      "text": "घर",
+      "language": "hi",
+      "script": "devanagari",
+      "phonemes": ["gh", "a", "r"]
+    }
+  ]
+}

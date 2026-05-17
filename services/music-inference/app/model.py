@@ -62,6 +62,26 @@ _STYLE_TAGS: dict[str, list[str]] = {
     "carnatic": ["carnatic", "indian-classical", "vocal", "tambura"],
     "hindustani": ["hindustani", "indian-classical", "vocal", "raga"],
     "kannada-folk": ["folk", "kannada", "indian", "acoustic"],
+    # v1.3 Sprint 2: bhavageete is sugama-sangeetha (light-classical
+    # lyric), not folk; Tamil folk is janapada-dance with parai-driven
+    # percussion. Tag sets steer HeartMuLa toward the right register.
+    "kannada-light-classical": [
+        "light-classical",
+        "kannada",
+        "bhavageete",
+        "vocal",
+        "harmonium",
+        "tabla",
+        "tanpura",
+    ],
+    "tamil-folk": [
+        "folk",
+        "tamil",
+        "indian",
+        "janapada",
+        "parai",
+        "nadaswaram",
+    ],
 }
 
 

@@ -1,0 +1,33 @@
+{
+  "description": "Kannada syllabification minimal pairs. Each consonant carries an inherent /a/ unless followed by a matra or virama+consonant cluster. Tests the four common patterns: CV, CCV (cluster), C+ANUSVARA, vowel-initial.",
+  "cases": [
+    {
+      "name": "kavi — two CV aksharas",
+      "text": "ಕವಿ",
+      "language": "kn",
+      "script": "kannada",
+      "phonemes": ["k", "a", "v", "i"]
+    },
+    {
+      "name": "namma — geminated /mm/ via virama cluster",
+      "text": "ನಮ್ಮ",
+      "language": "kn",
+      "script": "kannada",
+      "phonemes": ["n", "a", "m", "m", "a"]
+    },
+    {
+      "name": "amma — vowel-initial then geminated /mm/",
+      "text": "ಅಮ್ಮ",
+      "language": "kn",
+      "script": "kannada",
+      "phonemes": ["a", "m", "m", "a"]
+    },
+    {
+      "name": "kannada — anusvara + cluster /nn/ + /a/",
+      "text": "ಕನ್ನಡ",
+      "language": "kn",
+      "script": "kannada",
+      "phonemes": ["k", "a", "n", "n", "a", "D", "a"]
+    }
+  ]
+}

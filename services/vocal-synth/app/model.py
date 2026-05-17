@@ -45,6 +45,12 @@ class VocalSection:
     tempo_bpm: int | None
     raga_name: str | None
     voice_timbre: Literal["male", "female", "androgynous"]
+    # v1.3 Sprint 4: canonical phoneme stream produced by @neo-fm/g2p
+    # in the co-composer. Stored as a tuple so the dataclass stays
+    # frozen-hashable. `None` for legacy documents that pre-date the
+    # G2P rollout; the routing model treats missing == "fall back to
+    # text-based preprocessing".
+    phonemes: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -55,7 +61,14 @@ class VocalRequest:
     attempt_id: str | None
     trace_id: str | None
     language: str
-    style_family: Literal["western", "carnatic", "hindustani", "kannada-folk"]
+    style_family: Literal[
+        "western",
+        "carnatic",
+        "hindustani",
+        "kannada-folk",
+        "kannada-light-classical",
+        "tamil-folk",
+    ]
     voice_timbre: Literal["male", "female", "androgynous"]
     sample_rate: int
     sections: list[VocalSection]

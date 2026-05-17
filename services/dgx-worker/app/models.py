@@ -13,7 +13,16 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 Priority = Literal["normal", "high"]
-StyleFamily = Literal["western", "carnatic", "hindustani", "kannada-folk"]
+StyleFamily = Literal[
+    "western",
+    "carnatic",
+    "hindustani",
+    "kannada-folk",
+    # v1.3 Sprint 2: bhavageete + Tamil folk now have their own
+    # families so they stop being mis-routed through kannada-folk.
+    "kannada-light-classical",
+    "tamil-folk",
+]
 TargetDuration = Literal[30, 60, 90, 180]
 Tier = Literal["free", "creator", "pro"]
 

@@ -2,7 +2,7 @@
  * POST /api/songs/[id]/variation
  *
  * Creates a new generation job seeded with the source song's
- * SongDocument. HeartMuLa is stochastic, so re-running the same
+ * SongDocument. The music engine is stochastic, so re-running the same
  * document produces a different render -- the user gets a fresh
  * variation without having to re-author lyrics.
  *

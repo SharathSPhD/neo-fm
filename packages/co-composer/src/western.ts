@@ -40,6 +40,7 @@ import type {
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
+import { attachPhonemes } from "./phonemes.js";
 import { mergeTags } from "./tag-merge.js";
 
 type Key = "C" | "G" | "D" | "A" | "E" | "F" | "Bb" | "Eb";
@@ -155,7 +156,7 @@ export class WesternCoComposer implements CoComposer {
       elaborateSection(s, globalTags, key),
     );
 
-    return {
+    const elaborated: SongDocument = {
       ...doc,
       sections: elaboratedSections,
       metadata: {
@@ -172,5 +173,11 @@ export class WesternCoComposer implements CoComposer {
         },
       },
     };
+    // v1.3 Sprint 4: emit phonemes for Hinglish / Indic-Latin lyrics
+    // that producers occasionally drop into a Western pop track. The
+    // helper is a no-op for plain English (language === "en" routes
+    // through the English passthrough, which the singer hears as
+    // standard Roman lyrics).
+    return attachPhonemes(elaborated);
   }
 }

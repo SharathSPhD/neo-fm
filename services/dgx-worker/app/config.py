@@ -64,6 +64,21 @@ class Settings:
     # (useful in tests / one-shot scripts).
     metrics_port: int
 
+    # v1.3 Sprint 3 — cover-art sidecar (optional). Empty `cover_art_synth_url`
+    # disables the cover-art consumer entirely; the Next.js layer falls
+    # back to the gradient on `/songs/[id]` until a backend is configured.
+    # Defaults keep older Settings(...) call sites (and the existing
+    # song-render tests) working without forcing them to thread these.
+    cover_art_synth_url: str = ""
+    cover_art_synth_hmac_secret: str = ""
+    cover_art_synth_timeout_seconds: float = 180.0
+    cover_art_bucket: str = "cover-art"
+    cover_art_queue_name: str = "cover_art_jobs"
+    cover_art_dlq_name: str = "cover_art_jobs_dlq"
+    cover_art_visibility_seconds: int = 120
+    cover_art_max_attempts: int = 3
+    cover_art_poll_interval_seconds: float = 2.0
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -104,4 +119,19 @@ def load_settings() -> Settings:
             os.environ.get("GOVERNOR_POLL_SECONDS", "2"),
         ),
         metrics_port=int(os.environ.get("METRICS_PORT", "9101")),
+        cover_art_synth_url=os.environ.get("COVER_ART_SYNTH_URL", ""),
+        cover_art_synth_hmac_secret=os.environ.get("COVER_ART_SYNTH_HMAC_SECRET", ""),
+        cover_art_synth_timeout_seconds=float(
+            os.environ.get("COVER_ART_SYNTH_TIMEOUT_SECONDS", "180"),
+        ),
+        cover_art_bucket=os.environ.get("COVER_ART_BUCKET", "cover-art"),
+        cover_art_queue_name=os.environ.get("COVER_ART_QUEUE_NAME", "cover_art_jobs"),
+        cover_art_dlq_name=os.environ.get("COVER_ART_DLQ_NAME", "cover_art_jobs_dlq"),
+        cover_art_visibility_seconds=int(
+            os.environ.get("COVER_ART_VISIBILITY_SECONDS", "120"),
+        ),
+        cover_art_max_attempts=int(os.environ.get("COVER_ART_MAX_ATTEMPTS", "3")),
+        cover_art_poll_interval_seconds=float(
+            os.environ.get("COVER_ART_POLL_INTERVAL_SECONDS", "2"),
+        ),
     )

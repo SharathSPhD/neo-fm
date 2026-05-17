@@ -117,37 +117,37 @@ export const HINDUSTANI_KHAYAL_SKETCH = preset({
 export const KANNADA_BHAVAGEETE = preset({
   id: "kannada-bhavageete",
   title: "Kannada bhavageete",
-  subtitle: "6/8 lyric song",
+  subtitle: "Light-classical lyric song",
   description:
-    "A Kannada lyric song in compound duple time. Flute lead over dhol + tabla + percussion. Lyrics in Kannada script.",
-  chips: ["Kannada-folk", "Bhavageete", "6/8"],
+    "Sugama-sangeetha: a Kannada light-classical lyric song. Mid-tempo, harmonium-led, tabla + tanpura + flute. Not a folk song — bhavageete sits between Hindustani lyric form and Janapada folk.",
+  chips: ["Kannada", "Light-classical", "Sugama sangeetha"],
   song_document: {
     language: "kn",
-    style_family: "kannada-folk",
-    tempo_bpm: 110,
+    style_family: "kannada-light-classical",
+    tempo_bpm: 88,
     time_signature: "6/8",
     target_duration_seconds: 90,
     orchestration: {
       lead_vocal: "female",
-      instruments: ["dhol", "flute", "tabla", "percussion"],
-      texture: "lead+rhythm",
+      instruments: ["harmonium", "tabla", "tanpura", "flute"],
+      texture: "lead+rhythm+drone",
     },
     sections: [
       {
-        id: "r1",
-        type: "folk_refrain",
+        id: "p1",
+        type: "pallavi",
         target_seconds: 30,
         lyrics: "ಮಲೆನಾಡ ಮಳೆಯ ಸಂಜೆ",
         script: "kannada",
       },
       {
-        id: "s1",
-        type: "folk_stanza",
+        id: "c1",
+        type: "charanam",
         target_seconds: 30,
       },
       {
-        id: "r2",
-        type: "folk_refrain",
+        id: "p2",
+        type: "pallavi",
         target_seconds: 30,
       },
     ],
@@ -288,33 +288,30 @@ export const BOLLYWOOD_BALLAD = preset({
 export const TAMIL_FOLK = preset({
   id: "tamil-folk",
   title: "Tamil folk",
-  subtitle: "Janapada-style 4/4 dance",
+  subtitle: "Janapada dance, parai-driven 4/4",
   description:
-    "An upbeat Tamil-leaning folk dance, 4/4 time with parai-style percussion and flute lead. Lyrics in Tamil-script transliteration (full Tamil rendering arrives in Phase 7 vocal synth).",
-  chips: ["Kannada-folk", "Janapada", "Dance"],
+    "An upbeat Tamil folk dance. 4/4 parai pulse, nadaswaram + thavil + flute, male lead. Now routes through the dedicated TamilFolkCoComposer with native Tamil language support.",
+  chips: ["Tamil", "Janapada", "Folk dance"],
   song_document: {
-    // Tamil is not in the v1 LanguageSchema (en/hi/kn) yet; the
-    // user can still set `script:tamil` per section. We park this
-    // preset under `language:en` for the v1 router and tag the
-    // script + genre via metadata, so downstream rendering knows
-    // to use Tamil-script when set. Phase 7 broadens the language
-    // enum; the preset migrates without churn.
-    language: "en",
-    style_family: "kannada-folk",
+    // v1.3 Sprint 2: Tamil joined LanguageSchema and we have a
+    // dedicated tamil-folk style family. The preset no longer needs
+    // language_hint or to masquerade as Kannada folk.
+    language: "ta",
+    style_family: "tamil-folk",
     tempo_bpm: 124,
     time_signature: "4/4",
     target_duration_seconds: 90,
     orchestration: {
       lead_vocal: "male",
-      instruments: ["dhol", "flute", "tabla", "percussion"],
-      texture: "lead+rhythm",
+      instruments: ["parai", "thavil", "nadaswaram", "flute"],
+      texture: "percussion+lead",
     },
     sections: [
-      { id: "r1", type: "folk_refrain", target_seconds: 30 },
-      { id: "s1", type: "folk_stanza", target_seconds: 30 },
-      { id: "r2", type: "folk_refrain", target_seconds: 30 },
+      { id: "r1", type: "folk_refrain", target_seconds: 30, script: "tamil" },
+      { id: "s1", type: "folk_stanza", target_seconds: 30, script: "tamil" },
+      { id: "r2", type: "folk_refrain", target_seconds: 30, script: "tamil" },
     ],
-    metadata: { genre: "janapada", language_hint: "ta" },
+    metadata: { genre: "janapada", region: "tamil" },
   },
 });
 
