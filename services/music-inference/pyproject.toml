@@ -32,11 +32,13 @@ audio = [
 hub = [
   "huggingface_hub>=0.25",
 ]
-# v1.4 Sprint 8 LoRA training. DGX-only — pulls torch + peft +
-# audiocraft-trainer adjacent deps. Curation deps (pyyaml,
-# pyloudnorm, whisperx, silero-vad) need to be added per-stage if
+# v1.4 Sprint 8 LoRA training (HeartMuLa) and Sprint 10 (MusicGen).
+# DGX-only — pulls torch + peft + audiocraft. Curation deps
+# (pyloudnorm, whisperx, silero-vad) need to be added per-stage if
 # you want to run the heavy stages on DGX. CI only exercises the
-# scaffold (run with `--dry-run`).
+# scaffold (run with `--dry-run`). `audiocraft` is added by the
+# operator via `uv pip install` because it's git-only at the
+# version we target; see docs/DECISIONS/0030 for the install line.
 training = [
   "torch>=2.4",
   "transformers>=4.45",

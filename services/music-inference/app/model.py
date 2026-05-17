@@ -639,6 +639,31 @@ def initialise_from_env() -> MusicModel:
     )
     if os.environ.get("HEARTMULA_DEFER_LOAD") != "1":
         real.load()
+
+    # v1.4 Sprint 10: optionally wire in MusicGen as a second backend
+    # behind `RoutingMusicModel`. The flag is off by default so dev and
+    # CI environments (no AudioCraft, no GPU) don't accidentally pull
+    # MusicGen weights. On the DGX the operator flips
+    # `MUSIC_INFERENCE_ENABLE_MUSICGEN=1` after running
+    # `scripts/download-musicgen.py`.
+    if os.environ.get("MUSIC_INFERENCE_ENABLE_MUSICGEN") == "1":
+        from app.musicgen_model import MusicGenModel, style_adapters_from_env
+        from app.routing import RoutingMusicModel
+
+        mg = MusicGenModel(
+            device=os.environ.get("MUSICGEN_DEVICE", "cuda"),
+            dtype=os.environ.get("MUSICGEN_DTYPE", "bfloat16"),
+            weights_repo=os.environ.get(
+                "MUSICGEN_REPO", "facebook/musicgen-medium"
+            ),
+            style_adapters=style_adapters_from_env(),
+        )
+        if os.environ.get("MUSICGEN_DEFER_LOAD") != "1":
+            mg.load()
+        routed: MusicModel = RoutingMusicModel(heartmula=real, musicgen=mg)
+        set_active_model(routed)
+        return routed
+
     set_active_model(real)
     return real
 
