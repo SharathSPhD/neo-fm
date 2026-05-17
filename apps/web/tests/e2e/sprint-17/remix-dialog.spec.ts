@@ -2,17 +2,19 @@
  * v1.4 Sprint 17 — remix-dialog e2e.
  *
  * Covers the ForkSongDialog opening in "remix" mode: ensures the
- * dialog renders with the remix-only language toggle, that the
- * submission targets /api/songs/:id/remix, and that the resulting
- * song page stamps the `remixed_from` backlink. Complements the
- * existing remix.spec.ts by exercising override fields (target
- * language, voice override).
+ * dialog renders with the v1.4 controls, that the submission targets
+ * /api/songs/:id/remix, and that the resulting song page stamps the
+ * `remixed_from` backlink.
+ *
+ * v1.4 live-bug closeout (3.1): voice and raga are now <select>s, and
+ * the title input is no longer the only `placeholder="(inherit)"`
+ * input on the form. Use `getByLabel` to disambiguate.
  */
 import { expect, test } from "@playwright/test";
 
 import { signIn } from "../helpers/auth";
 
-test("Remix dialog with overrides forks the parent and routes to the remix", async ({
+test("Remix dialog with voice + raga + title overrides forks and routes", async ({
   page,
 }) => {
   await signIn(page);
@@ -34,15 +36,47 @@ test("Remix dialog with overrides forks the parent and routes to the remix", asy
   await trigger.waitFor({ state: "visible", timeout: 10_000 });
   await trigger.click();
 
-  // The remix dialog renders the same v1.4 controls as variation;
-  // assert at least the distance + title inputs land before we POST.
   await expect(
     page.getByLabel(/distance from the original/i),
   ).toBeVisible({ timeout: 5_000 });
-  await page
-    .locator('input[type="text"][placeholder="(inherit)"]')
-    .fill("Sprint 17 remix override");
+  await page.getByLabel(/^Title$/i).fill("Sprint 17 remix override");
 
+  // Voice dropdown: pick the first concrete option if one exists for
+  // the doc's language.
+  const voiceSelect = page.getByTestId("fork-voice");
+  const voiceOptions = voiceSelect.locator("option");
+  const voiceCount = await voiceOptions.count();
+  let pickedVoiceId: string | null = null;
+  if (voiceCount > 1) {
+    pickedVoiceId = await voiceOptions.nth(1).getAttribute("value");
+    if (pickedVoiceId) {
+      await voiceSelect.selectOption(pickedVoiceId);
+    }
+  }
+
+  // Raga dropdown: visible for raga-aware families. Pick the first
+  // concrete option so the request body carries `raga_override`.
+  const ragaSelect = page.getByTestId("fork-raga-name");
+  const ragaVisible = await ragaSelect.isVisible().catch(() => false);
+  let pickedRagaName: string | null = null;
+  if (ragaVisible) {
+    const ragaOptions = ragaSelect.locator("option");
+    const ragaCount = await ragaOptions.count();
+    if (ragaCount > 1) {
+      pickedRagaName = await ragaOptions.nth(1).getAttribute("value");
+      if (pickedRagaName) {
+        await ragaSelect.selectOption(pickedRagaName);
+      }
+    }
+  }
+
+  const reqPromise = page.waitForRequest(
+    (r) =>
+      r.url().includes("/api/songs/") &&
+      r.url().endsWith("/remix") &&
+      r.method() === "POST",
+    { timeout: 30_000 },
+  );
   const respPromise = page.waitForResponse(
     (r) =>
       r.url().includes("/api/songs/") &&
@@ -51,6 +85,14 @@ test("Remix dialog with overrides forks the parent and routes to the remix", asy
     { timeout: 30_000 },
   );
   await page.getByRole("button", { name: /make a remix/i }).nth(1).click();
+  const req = await reqPromise;
+  const sentBody = JSON.parse(req.postData() ?? "{}");
+  if (pickedVoiceId) {
+    expect(sentBody).toMatchObject({ voice_id: pickedVoiceId });
+  }
+  if (pickedRagaName) {
+    expect(sentBody.raga_override?.name).toBe(pickedRagaName);
+  }
   const resp = await respPromise;
   expect(resp.status()).toBe(202);
   const body = await resp.json();
