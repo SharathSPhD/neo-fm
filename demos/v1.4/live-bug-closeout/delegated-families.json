@@ -1,0 +1,43 @@
+{
+  "startedAt": "2026-05-17T21:16:07.811Z",
+  "base": "https://neo-fm-web.vercel.app",
+  "deployCommit": "c631cc074a9086cf28e7b6affee5b86920ed739c",
+  "notes": [
+    "Four delegated style families POSTed to /api/songs against prod.",
+    "Three returned 202 immediately. bollywood-ballad bounced once with",
+    "HTTP 429 concurrent_cap_exceeded (per-user Creator-tier cap = 3; the",
+    "three prior queued jobs filled the cap). After cancelling those three",
+    "orphan jobs (the prod worker is not picking them up), bollywood-ballad",
+    "POSTed and returned 202 cleanly. Crucially: NO body contained",
+    "`co_composer_rejected`, the v1.4 live-bug that this closeout fixes."
+  ],
+  "results": {
+    "sanskrit-shloka": {
+      "ok": true,
+      "status": 202,
+      "job_id": "abe21140-c4ed-46aa-b5e3-c4846a3fc9ea",
+      "error": null
+    },
+    "telugu-keerthana": {
+      "ok": true,
+      "status": 202,
+      "job_id": "5407829f-eb66-4132-86e2-3b0c3fd1a687",
+      "error": null
+    },
+    "bengali-rabindrasangeet": {
+      "ok": true,
+      "status": 202,
+      "job_id": "a9029b6e-e927-4f44-b88e-66303c6bfa73",
+      "error": null
+    },
+    "bollywood-ballad": {
+      "ok": true,
+      "status": 202,
+      "job_id": "d62385c1-7172-4501-ac05-576dbd1d54ca",
+      "error": null,
+      "retryNote": "first attempt hit 429 concurrent_cap_exceeded (unrelated to composer dispatch); second attempt after clearing 3 in-flight queued jobs returned 202"
+    }
+  },
+  "ok": true,
+  "finishedAt": "2026-05-17T21:21:46.000Z"
+}
