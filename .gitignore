@@ -69,6 +69,7 @@ logs/
 
 # Cursor / agent metadata
 .cursor/
+.serena/
 
 # Misc
 coverage/
@@ -89,3 +90,4 @@ playwright/.cache/
 # Vercel's deploy lineage). See sprint-1-privacy/SUMMARY.md.
 docs/
 voice-tts.md
+review/

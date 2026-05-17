@@ -26,10 +26,10 @@ No phase merges without all five. No mocks counted as "real". No "I'll add tests
 
 ```sh
 git config user.name SharathSPhD
-git config user.email ""
+git config user.email qbz506@york.ac.uk
 ```
 
-Empty email is intentional. Do not "fix" it.
+Empty email was tried in early phases; Vercel deploy protection blocks deployments whose commit author email is unrecognised (`Unknown`). Use the GitHub-verified `qbz506@york.ac.uk` instead. See v1.3 `demos/v1.3/merge-gate.md` for context.
 
 ## Commit policy
 
@@ -67,6 +67,15 @@ When two requirements conflict, log an ADR under `docs/DECISIONS/` and route thr
 - Queue: pgmq (Postgres extension) — see [docs/DECISIONS/0001-queue.md](docs/DECISIONS/0001-queue.md).
 - DGX services: Docker on DGX OS, NVIDIA Container Runtime preinstalled. Internal hop is the docker-compose bridge (`http://music-inference:8000`), not Tailscale.
 - Network trust boundary: DGX initiates all production traffic; cloud → DGX is forbidden ([SPEC §2.1](docs/SPEC.md), [ADR 0003](docs/DECISIONS/0003-internal-api-hmac.md)). Tailscale is **optional** for DGX outbound egress hardening; it is not the API trust boundary and must not gate dev-time SSH / IDE on LAN.
-- Models: `m-a-p/HeartMuLa-oss-3B` (Apache 2.0), `kenpath/svara-tts`, AI4Bharat Indic-TTS.
+- Models: `m-a-p/HeartMuLa-oss-3B` (Apache 2.0), `kenpath/svara-tts`, AI4Bharat Indic-TTS, IndicF5, IndicBART, MusicGen, Stable Audio Open, NeMo FastPitch+HiFi-GAN.
+
+## Compute rule (v1.4+)
+
+**All ML training and inference development runs LOCALLY on the DGX Spark (GB10 Grace Blackwell).**
+
+- Zero external compute cost.
+- HuggingFace Hub free tier is the only external dependency, used **only** to download base weights and upload our `neo-fm/*` adapters.
+- Do **not** propose or use HuggingFace Jobs, RunPod, Vast.ai, AWS / GCP / Azure GPU instances, or any other paid cloud GPU service.
+- This rule supersedes any conflicting suggestion in past plans or transcripts.
 
 v1 scope: web only; styles `{Western, Carnatic, Hindustani, Kannada-folk}`; langs `{en, hi, kn}`; durations `{30s, 60s, 90s, 3min}`. No payments. No MCP exposure.
