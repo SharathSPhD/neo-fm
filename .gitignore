@@ -88,6 +88,17 @@ playwright/.cache/
 # copies — only stop tracking them. History rewrite of past docs/
 # commits is intentionally out of scope (it would force-push and break
 # Vercel's deploy lineage). See sprint-1-privacy/SUMMARY.md.
-docs/
+#
+# Exception: docs/contracts/ is enumerated below so the contracts CI
+# job can validate the JSON Schema + OpenAPI specs on every push.
+# (We list parents and the files individually because gitignore
+# cannot re-include children of an excluded directory unless every
+# parent path component is also un-excluded.)
+docs/*
+!docs/contracts/
+docs/contracts/*
+!docs/contracts/queue-message.schema.json
+!docs/contracts/openapi-cloud.yaml
+!docs/contracts/openapi-dgx.yaml
 voice-tts.md
 review/
