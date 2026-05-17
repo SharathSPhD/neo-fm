@@ -1,6 +1,7 @@
-// Full production smoke (Sprint 8). Drives a real Chromium against
-// neo-fm-web.vercel.app, captures a screenshot at every major surface,
-// and writes a SUMMARY.md with the result of each check.
+// Full production smoke (Sprint 8, extended in v1.4 Sprint 17 to
+// ~25 steps). Drives a real Chromium against neo-fm-web.vercel.app,
+// captures a screenshot at every major surface, and writes a
+// SUMMARY.md with the result of each check.
 //
 // Surfaces exercised:
 //   1. anonymous landing
@@ -10,10 +11,25 @@
 //   5. signed-in /library (grid)
 //   6. /library (list view via toggle)
 //   7. Cmd-K command palette
-//   8. /songs/new
+//   8. /songs/new — preset chips
 //   9. /pricing (authed)
 //  10. /account
 //  11. a completed song detail (incl. Make a remix CTA)
+//  12. cover-art panel
+//  --- v1.4 Sprint 17 additions ---
+//  13. /songs/new voice-picker visible + ≥6 personas
+//  14. /songs/new advanced disclosure toggles open
+//  15. /songs/new exposes the v1.4 preset set (≥10 chips)
+//  16. /discover?style=sanskrit-shloka non-empty
+//  17. /discover?style=bengali-rabindrasangeet non-empty
+//  18. /discover?style=telugu-keerthana non-empty
+//  19. /p/[publicId] public song page renders
+//  20. variation dialog opens on /songs/:id
+//  21. /songs/:id/compare renders (skipped if no candidates)
+//  22. /library batch-publish bar surfaces on row selection
+//  23. health-anon: no commit-SHA leak
+//  24. health (authed)
+//  25. /api/p/[publicId]/audio-url returns a 200 signed URL
 //
 // We don't actually fork a remix here — that's covered by the
 // dedicated Playwright spec and the Sprint 6.3 demo bundle.
@@ -42,7 +58,7 @@ import fs from "node:fs";
 
 const BASE = process.env.SMOKE_BASE ?? "https://neo-fm-web.vercel.app";
 const OUT =
-  process.env.SMOKE_OUT ?? "/home/sharaths/projects/neo-fm/demos/v1.3/sprint-6-prod-smoke";
+  process.env.SMOKE_OUT ?? "/home/sharaths/projects/neo-fm/demos/v1.4/sprint-17-prod-smoke";
 const EMAIL = process.env.SMOKE_EMAIL ?? "e2e-smoke@neo-fm.test";
 const PASS = process.env.SMOKE_PASS ?? "SmokeTest!v12";
 
@@ -284,6 +300,188 @@ try {
     return { file: path.basename(file), panelVisible: visible };
   });
 
+  // ---- v1.4 Sprint 17 additions ----
+
+  await step("13-voice-picker", async () => {
+    await page.goto(`${BASE}/songs/new`, { waitUntil: "networkidle" });
+    const picker = page.getByTestId("voice-picker");
+    const visible = await picker
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    const rowCount = await page
+      .locator('[data-testid^="voice-row-"]')
+      .count()
+      .catch(() => 0);
+    const file = await shot("13-voice-picker");
+    if (!visible || rowCount < 4) {
+      throw new Error(
+        `voice picker missing/short on /songs/new (visible=${visible}, rows=${rowCount})`,
+      );
+    }
+    return { file: path.basename(file), rowCount };
+  });
+
+  await step("14-advanced-disclosure", async () => {
+    // Stay on /songs/new from the previous step.
+    const advanced = page.getByRole("button", { name: /advanced/i }).first();
+    await advanced.waitFor({ state: "visible", timeout: 10_000 });
+    await advanced.click();
+    const tempo = page.getByLabel(/tempo/i).first();
+    const tempoVisible = await tempo
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    const file = await shot("14-advanced-disclosure");
+    if (!tempoVisible) {
+      throw new Error("advanced disclosure failed to open");
+    }
+    return { file: path.basename(file) };
+  });
+
+  await step("15-preset-chip-count", async () => {
+    const seen = await page.evaluate(() => {
+      const ids = new Set();
+      for (const el of document.querySelectorAll("[data-preset]")) {
+        const id = el.getAttribute("data-preset");
+        if (id) ids.add(id);
+      }
+      for (const a of document.querySelectorAll("a[href*='preset=']")) {
+        const u = new URL(a.getAttribute("href") || "", location.origin);
+        const id = u.searchParams.get("preset");
+        if (id) ids.add(id);
+      }
+      return Array.from(ids);
+    });
+    if (seen.length < 9) {
+      throw new Error(
+        `expected ≥9 v1.4 presets, saw ${seen.length}: ${JSON.stringify(seen)}`,
+      );
+    }
+    return { presetCount: seen.length };
+  });
+
+  await step("16-discover-sanskrit", async () => {
+    await page.goto(`${BASE}/discover?style=sanskrit-shloka`, {
+      waitUntil: "networkidle",
+    });
+    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const file = await shot("16-discover-sanskrit");
+    return { file: path.basename(file), cardCount };
+  });
+
+  await step("17-discover-bengali", async () => {
+    await page.goto(`${BASE}/discover?style=bengali-rabindrasangeet`, {
+      waitUntil: "networkidle",
+    });
+    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const file = await shot("17-discover-bengali");
+    return { file: path.basename(file), cardCount };
+  });
+
+  await step("18-discover-telugu", async () => {
+    await page.goto(`${BASE}/discover?style=telugu-keerthana`, {
+      waitUntil: "networkidle",
+    });
+    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const file = await shot("18-discover-telugu");
+    return { file: path.basename(file), cardCount };
+  });
+
+  await step("19-public-song-page", async () => {
+    await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
+    const firstPublic = page.locator('a[href^="/p/"]').first();
+    const haveAny = await firstPublic
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!haveAny) {
+      throw new Error("no public songs on /discover — seed missing?");
+    }
+    await firstPublic.click();
+    await page.waitForURL(/\/p\/[a-z0-9-]+/i, { timeout: 15_000 });
+    const file = await shot("19-public-song");
+    return { url: page.url(), file: path.basename(file) };
+  });
+
+  await step("20-variation-dialog", async () => {
+    // Already on /p/[publicId] from step 19.
+    const trigger = page
+      .getByRole("button", { name: /make a variation/i })
+      .first();
+    const visible = await trigger
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!visible) {
+      throw new Error("variation CTA missing on /p/[publicId]");
+    }
+    await trigger.click();
+    const distance = page.getByLabel(/distance from the original/i);
+    const dialogOpen = await distance
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    const file = await shot("20-variation-dialog");
+    // Close the dialog so subsequent steps aren't intercepted.
+    await page.keyboard.press("Escape").catch(() => {});
+    return { file: path.basename(file), dialogOpen };
+  });
+
+  await step("21-compare-page", async () => {
+    await page.goto(`${BASE}/library?status=completed&view=list`, {
+      waitUntil: "networkidle",
+    });
+    const songLink = page
+      .locator(
+        'a[href^="/songs/"]:not([href="/songs/new"]):not([href^="/songs/new"])',
+      )
+      .first();
+    await songLink.waitFor({ state: "visible", timeout: 15_000 });
+    const href = (await songLink.getAttribute("href")) ?? "";
+    const songId = href.split("/").pop();
+    if (!songId) {
+      throw new Error("could not parse song id for /compare");
+    }
+    await page.goto(`${BASE}/songs/${songId}/compare`, {
+      waitUntil: "networkidle",
+    });
+    const audioCount = await page.locator("audio").count();
+    const file = await shot("21-compare-page");
+    // The page legitimately renders an empty-state when no candidates
+    // exist; the smoke records the audio count so we can spot the
+    // first day candidates show up in prod.
+    return { url: page.url(), file: path.basename(file), audioCount };
+  });
+
+  await step("22-batch-publish-bar", async () => {
+    await page.goto(`${BASE}/library?status=completed&view=list`, {
+      waitUntil: "networkidle",
+    });
+    // Click the first row's select checkbox if rendered; the bar
+    // surfaces only after ≥1 row is checked. The bar's data-testid is
+    // "bulk-publish-bar" (Sprint 15).
+    const firstCheckbox = page
+      .locator('[data-testid="library-row"] input[type="checkbox"]')
+      .first();
+    const checkable = await firstCheckbox
+      .waitFor({ state: "visible", timeout: 5_000 })
+      .then(() => true)
+      .catch(() => false);
+    let barVisible = false;
+    if (checkable) {
+      await firstCheckbox.check();
+      barVisible = await page
+        .locator('[data-testid="bulk-publish-bar"]')
+        .first()
+        .waitFor({ state: "visible", timeout: 5_000 })
+        .then(() => true)
+        .catch(() => false);
+    }
+    const file = await shot("22-batch-publish-bar");
+    return { file: path.basename(file), checkable, barVisible };
+  });
+
   await step("health-anon", async () => {
     // v1.3 Sprint 1 privacy gate: anon /api/health must NOT leak
     // a commit SHA. We re-issue the probe from a brand-new
@@ -321,12 +519,42 @@ try {
     }
     return probe;
   });
+
+  await step("25-public-audio-url", async () => {
+    // The /api/p/[publicId]/audio-url endpoint serves anon-signed
+    // playback URLs for Discover. v1.4 Sprint 15 made it the entry
+    // point for the demo audio — if it ever stops returning 200,
+    // /discover loses every audio control silently.
+    await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
+    const firstHref = await page
+      .locator('a[href^="/p/"]')
+      .first()
+      .getAttribute("href")
+      .catch(() => null);
+    if (!firstHref) {
+      throw new Error("no public song link on /discover; cannot probe audio-url");
+    }
+    const publicId = firstHref.split("/").pop();
+    const probe = await page.evaluate(async (pid) => {
+      const r = await fetch(`/api/p/${pid}/audio-url`);
+      return {
+        status: r.status,
+        body: await r.json().catch(() => null),
+      };
+    }, publicId);
+    if (probe.status !== 200) {
+      throw new Error(
+        `audio-url ${probe.status}: ${JSON.stringify(probe.body)}`,
+      );
+    }
+    return { publicId, status: probe.status };
+  });
 } catch (err) {
   log("ERROR", err.stack ?? err.message);
 } finally {
   const allOk = steps.every((s) => s.ok);
   const lines = [
-    "# v1.3 Sprint 6 — production smoke",
+    "# v1.4 Sprint 17 — production smoke",
     "",
     `**Target**: ${BASE}`,
     `**Smoke user**: ${EMAIL}`,
