@@ -13,6 +13,10 @@ export function RemixButton({
   styleFamily,
   sections,
   variant = "primary",
+  initialTempo,
+  initialKey,
+  initialVoiceId,
+  language,
 }: {
   songId: string;
   styleFamily: string;
@@ -24,6 +28,11 @@ export function RemixButton({
    * Follow chips).
    */
   variant?: "primary" | "subtle";
+  /** Parent doc seeds for the dialog dropdowns. All optional. */
+  initialTempo?: number;
+  initialKey?: string;
+  initialVoiceId?: string;
+  language?: string;
 }) {
   return (
     <ForkSongDialog
@@ -32,6 +41,10 @@ export function RemixButton({
       styleFamily={styleFamily}
       sections={sections}
       variant={variant}
+      initialTempo={initialTempo}
+      initialKey={initialKey}
+      initialVoiceId={initialVoiceId}
+      language={language}
     />
   );
 }

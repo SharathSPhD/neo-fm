@@ -71,6 +71,8 @@ interface SongDocumentView {
   raga?: RagaView;
   orchestration?: OrchestrationView;
   sections: SectionView[];
+  voice_id?: string;
+  metadata?: { key?: string } & Record<string, unknown>;
 }
 
 interface PublicSongRow {
@@ -300,6 +302,14 @@ export default async function PublicSongPage({
                 type: s.type,
               }))}
               variant="subtle"
+              initialTempo={doc?.tempo_bpm}
+              initialKey={
+                typeof doc?.metadata?.key === "string"
+                  ? doc.metadata.key
+                  : undefined
+              }
+              initialVoiceId={doc?.voice_id}
+              language={doc?.language}
             />
             <RemixButton
               songId={data.id}
@@ -309,12 +319,26 @@ export default async function PublicSongPage({
                 type: s.type,
               }))}
               variant="subtle"
+              initialTempo={doc?.tempo_bpm}
+              initialKey={
+                typeof doc?.metadata?.key === "string"
+                  ? doc.metadata.key
+                  : undefined
+              }
+              initialVoiceId={doc?.voice_id}
+              language={doc?.language}
             />
           </div>
         </section>
       ) : (
+        // v1.4 live-bug closeout: the previous copy said "Audio is still
+        // being prepared. Refresh in a moment." for any song without a
+        // track, including seeded catalog rows that will never get one.
+        // Branch by status so the message is honest.
         <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
-          Audio is still being prepared. Refresh in a moment.
+          {data.status === "queued" || data.status === "processing"
+            ? "Rendering now. Refresh in a moment."
+            : "Audio preview not available for this song."}
         </p>
       )}
 

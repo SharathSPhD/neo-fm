@@ -138,7 +138,7 @@ function Hero() {
             Start free
           </Link>
           <Link
-            href="/songs/new"
+            href="/templates"
             className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
           >
             See the templates
@@ -275,7 +275,7 @@ function StyleGallery() {
             Eight starting points
           </h2>
           <Link
-            href="/songs/new"
+            href="/templates"
             className="text-sm text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             Open template gallery →

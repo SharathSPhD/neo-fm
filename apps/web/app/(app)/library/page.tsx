@@ -131,6 +131,14 @@ export default async function LibraryPage({
   if (q) countQuery = countQuery.ilike("song_documents.title" as never, `%${q}%`);
   const { count: totalCount } = await countQuery;
 
+  // Unfiltered count, used purely to distinguish "library is empty" from
+  // "filters returned no rows". Without this, toggling Favorites-only with
+  // zero favorites surfaces the misleading "No songs yet" empty state.
+  const { count: libraryTotalCount } = await supabase
+    .from("jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userData.user.id);
+
   let rowsQuery = supabase
     .from("jobs")
     .select(
@@ -235,6 +243,7 @@ export default async function LibraryPage({
   }
 
   const total = totalCount ?? 0;
+  const libraryTotal = libraryTotalCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
@@ -244,9 +253,11 @@ export default async function LibraryPage({
         <div className="flex flex-col gap-1.5">
           <h1 className="text-3xl font-medium tracking-tight">Library</h1>
           <p className="text-sm text-foreground/60">
-            {total === 0
+            {libraryTotal === 0
               ? "No songs yet."
-              : `Showing ${songs.length} of ${total} song${total === 1 ? "" : "s"}.`}
+              : total === 0
+                ? "No matches."
+                : `Showing ${songs.length} of ${total} song${total === 1 ? "" : "s"}.`}
           </p>
         </div>
       </header>
@@ -260,7 +271,7 @@ export default async function LibraryPage({
           Couldn&apos;t load songs: {error.message}
         </p>
       ) : songs.length === 0 ? (
-        total === 0 ? (
+        libraryTotal === 0 ? (
           <EmptyState
             title="No songs yet"
             body="Pick a style preset, type a verse, hit Generate. Your first song will land here in about a minute."

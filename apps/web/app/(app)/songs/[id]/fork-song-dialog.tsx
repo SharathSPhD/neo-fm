@@ -9,7 +9,20 @@
  * centred card). All controls map 1:1 to `ForkSongBody` in
  * `lib/song/fork.ts`; the server applies them via `applyForkToDoc` so
  * the dialog is the only place we have to teach about new fork knobs.
+ *
+ * v1.4 live-bug closeout (Phase 3.1): voice + raga moved from
+ * free-text inputs to `<select>` dropdowns driven by VOICE_CATALOGUE /
+ * ragasForStyle. Tempo is a text input with `inputMode="numeric"` so
+ * the empty placeholder doesn't read like "30 is the minimum I must
+ * type". Key support is gated to `western` only -- matches the
+ * fork-applier which rejects `key_override` for non-western parents.
  */
+import {
+  VOICE_CATALOGUE,
+  type VoiceCatalogueEntry,
+  ragasForStyle,
+  type RagaCatalogueEntry,
+} from "@neo-fm/co-composer";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
@@ -36,6 +49,13 @@ export interface ForkSongDialogProps {
   initialTitle?: string;
   /** Optional initial raga override hint (defaults to inheriting the parent). */
   initialRaga?: { name: string; system: ForkRagaSystem };
+  /** Parent doc's tempo, key (Western only), voice_id, language --
+   * used to seed the corresponding dropdowns. All optional;
+   * unspecified ones default to "(inherit)". */
+  initialTempo?: number;
+  initialKey?: string;
+  initialVoiceId?: string;
+  language?: string;
 }
 
 const KIND_COPY: Record<
@@ -73,7 +93,11 @@ function endpoint(kind: Kind, songId: string): string {
   return `/api/songs/${songId}/${kind}`;
 }
 
-const WESTERN_STYLES = new Set(["western", "bollywood-ballad"]);
+// Only literal `western` supports `key_override`. The fork-applier
+// rejects key overrides for any other style with a 422. Until v1.4
+// `bollywood-ballad` was listed here too, but the applier disagreed,
+// so a user could pick a key and silently get a server error.
+const WESTERN_STYLES = new Set(["western"]);
 
 function ragaSystemsForStyle(style: string): readonly ForkRagaSystem[] {
   switch (style) {
@@ -103,6 +127,10 @@ export function ForkSongDialog({
   variant = "primary",
   initialTitle = "",
   initialRaga,
+  initialTempo,
+  initialKey,
+  initialVoiceId,
+  language,
 }: ForkSongDialogProps) {
   const router = useRouter();
   const copy = KIND_COPY[kind];
@@ -112,6 +140,11 @@ export function ForkSongDialog({
   const [error, setError] = useState<string | null>(null);
 
   const [distance, setDistance] = useState<number>(copy.distanceDefault);
+  // Tempo / key / voice are seeded blank (so the placeholder reads
+  // "(inherit, <initial>)" without committing the user to a value);
+  // only writes to the form set them to a non-empty string. The
+  // request body excludes them entirely when left blank, which the
+  // applier reads as "no override".
   const [tempoBpm, setTempoBpm] = useState<string>("");
   const [keyOverride, setKeyOverride] = useState<string>("");
   const [ragaName, setRagaName] = useState<string>(initialRaga?.name ?? "");
@@ -130,6 +163,40 @@ export function ForkSongDialog({
   );
   const supportsKey = WESTERN_STYLES.has(styleFamily);
   const supportsRaga = allowedRagaSystems.length > 0;
+
+  // Voice options: prefer voices for the parent doc's language at the
+  // top of the list ("Suggested for X"), then everything else under
+  // "All voices" -- same shape as the creation-canvas VoicePicker.
+  const { suggestedVoices, otherVoices } = useMemo(() => {
+    if (!language) {
+      return {
+        suggestedVoices: [] as readonly VoiceCatalogueEntry[],
+        otherVoices: VOICE_CATALOGUE,
+      };
+    }
+    const sug = VOICE_CATALOGUE.filter((v) => v.language === language);
+    const sugIds = new Set(sug.map((v) => v.voice_id));
+    const others = VOICE_CATALOGUE.filter((v) => !sugIds.has(v.voice_id));
+    return { suggestedVoices: sug, otherVoices: others };
+  }, [language]);
+
+  // Raga options come from the cross-style raga catalogue, filtered to
+  // the styles this preset accepts. When the dropdown is empty we hide
+  // the whole raga fieldset (consistent with supportsRaga gating).
+  const ragaOptions = useMemo<readonly RagaCatalogueEntry[]>(
+    () => ragasForStyle(styleFamily),
+    [styleFamily],
+  );
+
+  // Selecting a named raga from the dropdown autofills the canonical
+  // system so the user doesn't have to pick it manually. Free-text was
+  // already removed; this keeps the system <select> consistent with
+  // the chosen raga.
+  function selectRagaByName(name: string) {
+    setRagaName(name);
+    const match = ragaOptions.find((r) => r.name === name);
+    if (match) setRagaSystem(match.system);
+  }
 
   function reset() {
     setDistance(copy.distanceDefault);
@@ -293,13 +360,22 @@ export function ForkSongDialog({
                   Tempo (BPM)
                 </span>
                 <input
-                  type="number"
-                  min={30}
-                  max={240}
+                  // text + inputMode="numeric" keeps the mobile numeric
+                  // keypad without rendering the default "30" you get
+                  // when type="number" + min={30} + empty value.
+                  type="text"
                   inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={3}
                   value={tempoBpm}
-                  onChange={(e) => setTempoBpm(e.target.value)}
-                  placeholder="(inherit)"
+                  onChange={(e) =>
+                    setTempoBpm(e.target.value.replace(/[^0-9]/g, ""))
+                  }
+                  placeholder={
+                    initialTempo
+                      ? `(inherit ${initialTempo})`
+                      : "(inherit)"
+                  }
                   className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
                 />
               </label>
@@ -314,7 +390,9 @@ export function ForkSongDialog({
                     maxLength={8}
                     value={keyOverride}
                     onChange={(e) => setKeyOverride(e.target.value)}
-                    placeholder="(inherit, e.g. F#m)"
+                    placeholder={
+                      initialKey ? `(inherit ${initialKey})` : "(inherit, e.g. F#m)"
+                    }
                     className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
                   />
                 </label>
@@ -336,20 +414,28 @@ export function ForkSongDialog({
                   Raga
                 </legend>
                 <div className="grid grid-cols-3 gap-2 text-xs">
-                  <input
-                    type="text"
-                    maxLength={64}
+                  <select
                     value={ragaName}
-                    onChange={(e) => setRagaName(e.target.value)}
-                    placeholder="raga name"
-                    className="col-span-2 rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
-                  />
+                    onChange={(e) => selectRagaByName(e.target.value)}
+                    className="col-span-2 rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
+                    data-testid="fork-raga-name"
+                    aria-label="Raga"
+                  >
+                    <option value="">(inherit)</option>
+                    {ragaOptions.map((r) => (
+                      <option key={r.name} value={r.name}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
                   <select
                     value={ragaSystem}
                     onChange={(e) =>
                       setRagaSystem(e.target.value as ForkRagaSystem | "")
                     }
                     className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
+                    data-testid="fork-raga-system"
+                    aria-label="Raga system"
                   >
                     <option value="">(system)</option>
                     {FORK_RAGA_SYSTEM_VALUES.filter((s) =>
@@ -368,14 +454,35 @@ export function ForkSongDialog({
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
                 Voice
               </span>
-              <input
-                type="text"
-                maxLength={64}
+              <select
                 value={voiceId}
                 onChange={(e) => setVoiceId(e.target.value)}
-                placeholder="(inherit, e.g. kn-female-warm-01)"
-                className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
-              />
+                className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
+                data-testid="fork-voice"
+                aria-label="Voice"
+              >
+                <option value="">
+                  {initialVoiceId ? `(inherit ${initialVoiceId})` : "(inherit)"}
+                </option>
+                {suggestedVoices.length > 0 ? (
+                  <optgroup
+                    label={`Suggested for ${(language ?? "").toUpperCase()}`}
+                  >
+                    {suggestedVoices.map((v) => (
+                      <option key={v.voice_id} value={v.voice_id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                <optgroup label="All voices">
+                  {otherVoices.map((v) => (
+                    <option key={v.voice_id} value={v.voice_id}>
+                      {v.label}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
             </label>
 
             {sections && sections.length > 0 ? (
