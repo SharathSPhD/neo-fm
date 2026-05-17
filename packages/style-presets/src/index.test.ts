@@ -5,11 +5,12 @@ import { SongDocumentSchema } from "@neo-fm/song-doc";
 import { findPreset, PRESETS } from "./index.js";
 
 describe("style presets", () => {
-  it("ships exactly nine curated presets", () => {
-    // v1.4 Sprint 14 adds the Sanskrit-shloka chant preset; the
-    // gallery grows from 8 -> 9 cards. The earlier "eight" assertion
-    // pinned the v1.3 gallery shape.
-    expect(PRESETS).toHaveLength(9);
+  it("ships exactly eleven curated presets", () => {
+    // v1.4 Sprint 15 adds bengali-rabindrasangeet and
+    // telugu-keerthana on top of Sprint 14's sanskrit-shloka; the
+    // gallery grows from 9 -> 11. The earlier "nine" assertion
+    // pinned the v1.4 Sprint 14 gallery shape.
+    expect(PRESETS).toHaveLength(11);
   });
 
   it("includes the Sanskrit shloka preset (Sprint 14)", () => {
@@ -21,6 +22,25 @@ describe("style presets", () => {
     expect(types).toContain("shloka_verse");
     expect(types).toContain("shloka_refrain");
     expect(types).toContain("phalashruti");
+  });
+
+  it("includes the Bengali Rabindrasangeet preset (Sprint 15)", () => {
+    const p = findPreset("bengali-rabindrasangeet");
+    expect(p).toBeDefined();
+    expect(p?.song_document.style_family).toBe("bengali-rabindrasangeet");
+    expect(p?.song_document.language).toBe("bn");
+    expect(
+      p?.song_document.sections.some((s) => s.voice_id === "indic_bn_female"),
+    ).toBe(true);
+  });
+
+  it("includes the Telugu keerthana preset (Sprint 15)", () => {
+    const p = findPreset("telugu-keerthana");
+    expect(p).toBeDefined();
+    expect(p?.song_document.style_family).toBe("telugu-keerthana");
+    expect(p?.song_document.language).toBe("te");
+    expect(p?.song_document.tala).toBe("adi");
+    expect(p?.song_document.raga?.system).toBe("carnatic");
   });
 
   it("every preset has a unique id", () => {

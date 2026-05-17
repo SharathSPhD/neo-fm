@@ -28,6 +28,7 @@ type RawJobRow = {
   created_at: string;
   finished_at: string | null;
   is_favorite: boolean | null;
+  published_visibility: "public" | "unlisted" | "private" | null;
   song_documents:
     | {
         id: string;
@@ -134,7 +135,7 @@ export default async function LibraryPage({
     .from("jobs")
     .select(
       `
-      id, status, error, created_at, finished_at, is_favorite,
+      id, status, error, created_at, finished_at, is_favorite, published_visibility,
       song_documents!inner ( id, language, style_family, title ),
       tracks ( url, duration_seconds, format, created_at ),
       cover_art ( url, is_current, created_at )
@@ -220,6 +221,7 @@ export default async function LibraryPage({
         audio_url: audioUrl,
         duration_seconds: latestTrack?.duration_seconds ?? null,
         cover_url: coverUrl,
+        visibility: row.published_visibility,
       };
     }),
   );

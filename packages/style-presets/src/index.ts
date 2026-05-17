@@ -377,6 +377,116 @@ export const SANSKRIT_SHLOKA = preset({
   },
 });
 
+export const BENGALI_RABINDRASANGEET = preset({
+  id: "bengali-rabindrasangeet",
+  title: "Bengali Rabindrasangeet",
+  subtitle: "Tagore song-form, raga-tinged lyric",
+  description:
+    "A Bengali Rabindrasangeet — Tagore's own song-form. Slow-to-moderate tempo, esraj + harmonium + tabla, sustained vowels. Voices route to IndicF5 for native-Bengali pronunciation. HeartMuLa baseline drives the orchestration.",
+  chips: ["Bengali", "Rabindrasangeet", "Lyric"],
+  lyric_source: {
+    title: "Amar shonar Bangla (opening line)",
+    author: "Rabindranath Tagore (1905)",
+    note: "Public domain. National anthem of Bangladesh; original Bengali Devanagari.",
+  },
+  song_document: {
+    language: "bn",
+    style_family: "bengali-rabindrasangeet",
+    tempo_bpm: 72,
+    target_duration_seconds: 90,
+    raga: {
+      name: "bilawal",
+      system: "hindustani",
+    },
+    orchestration: {
+      lead_vocal: "female",
+      instruments: ["esraj", "harmonium", "tabla", "tanpura"],
+      texture: "lead+rhythm+drone",
+    },
+    sections: [
+      {
+        id: "v1",
+        type: "mukhda",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        lyrics: "\u0986\u09ae\u09be\u09b0 \u09b8\u09cb\u09a8\u09be\u09b0 \u09ac\u09be\u0982\u09b2\u09be",
+        transliteration: "Amar shonar Bangla",
+        script: "bengali",
+        language: "bn",
+      },
+      {
+        id: "a1",
+        type: "antara",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        script: "bengali",
+        language: "bn",
+      },
+      {
+        id: "v2",
+        type: "mukhda",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        script: "bengali",
+        language: "bn",
+      },
+    ],
+    metadata: { genre: "rabindrasangeet" },
+  },
+});
+
+export const TELUGU_KEERTHANA = preset({
+  id: "telugu-keerthana",
+  title: "Telugu keerthana",
+  subtitle: "Carnatic devotional, raga Mohanam",
+  description:
+    "A Telugu Carnatic keerthana set to raga Mohanam (pentatonic) and Adi tala. Mridangam + violin + tanpura; voice routes through IndicF5 for native-Telugu prosody. MusicGen+Carnatic LoRA drives the orchestration.",
+  chips: ["Telugu", "Carnatic", "Keerthana"],
+  song_document: {
+    language: "te",
+    style_family: "telugu-keerthana",
+    tempo_bpm: 82,
+    target_duration_seconds: 90,
+    tala: "adi",
+    raga: {
+      name: "mohanam",
+      system: "carnatic",
+    },
+    orchestration: {
+      lead_vocal: "male",
+      instruments: ["mridangam", "violin", "tanpura"],
+      texture: "drone+lead+percussion",
+    },
+    sections: [
+      {
+        id: "p1",
+        type: "pallavi",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+      {
+        id: "a1",
+        type: "anupallavi",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+      {
+        id: "c1",
+        type: "charanam",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+    ],
+    metadata: { genre: "keerthana" },
+  },
+});
+
 export const WESTERN_POP = preset({
   id: "western-pop",
   title: "Western pop",
@@ -413,6 +523,8 @@ export const PRESETS: readonly StylePreset[] = [
   KANNADA_BHAVAGEETE,
   KABIR_DOHA,
   SANSKRIT_SHLOKA,
+  BENGALI_RABINDRASANGEET,
+  TELUGU_KEERTHANA,
   TAGORE_SET,
   BOLLYWOOD_BALLAD,
   TAMIL_FOLK,

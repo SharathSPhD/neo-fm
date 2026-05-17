@@ -20,6 +20,23 @@ export type LibrarySong = {
   audio_url: string | null;
   duration_seconds: number | null;
   is_favorite: boolean;
+  visibility?: "public" | "unlisted" | "private" | null;
+};
+
+type BatchOutcome =
+  | "published"
+  | "already_public"
+  | "quota_hit"
+  | "not_found"
+  | "forbidden"
+  | "not_completed";
+
+type BatchRow = {
+  job_id: string;
+  public_id: string | null;
+  visibility: "public" | "unlisted" | "private" | null;
+  published_at: string | null;
+  outcome: BatchOutcome;
 };
 
 export function SongList({
@@ -36,6 +53,12 @@ export function SongList({
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(
     null,
   );
+  // v1.4 Sprint 15: multi-select + batch-publish state. Selection is
+  // local (no URL state) because the action is single-shot; outcomes
+  // are surfaced inline below the toolbar.
+  const [selected, setSelected] = useState<Set<string>>(() => new Set());
+  const [batchPending, setBatchPending] = useState(false);
+  const [batchOutcomes, setBatchOutcomes] = useState<BatchRow[] | null>(null);
 
   useEffect(() => {
     setSongs(initialSongs);
@@ -64,6 +87,59 @@ export function SongList({
       startTransition(() => router.refresh());
     }
     setBusyId(null);
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+    setBatchOutcomes(null);
+  }
+
+  async function publishSelected() {
+    if (selected.size === 0 || batchPending) return;
+    setBatchPending(true);
+    setBatchOutcomes(null);
+    try {
+      const res = await fetch("/api/songs/publish-batch", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          job_ids: Array.from(selected),
+          visibility: "public",
+        }),
+      });
+      if (!res.ok) {
+        setBatchOutcomes([]);
+        return;
+      }
+      const payload = (await res.json()) as {
+        outcomes: BatchRow[];
+        summary: Record<BatchOutcome, number>;
+      };
+      setBatchOutcomes(payload.outcomes);
+      const publishedIds = new Set(
+        payload.outcomes
+          .filter((r) => r.outcome === "published" || r.outcome === "already_public")
+          .map((r) => r.job_id),
+      );
+      if (publishedIds.size > 0) {
+        setSongs((prev) =>
+          prev.map((s) =>
+            publishedIds.has(s.id) ? { ...s, visibility: "public" } : s,
+          ),
+        );
+      }
+    } finally {
+      setBatchPending(false);
+    }
   }
 
   async function saveRename(id: string, title: string) {
@@ -218,13 +294,45 @@ export function SongList({
     );
   }
 
+  const eligibleForBatch = songs.filter(
+    (s) => s.status === "completed" && s.visibility !== "public",
+  );
+
   return (
-    <ul className="flex flex-col gap-3">
+    <>
+      <BulkPublishBar
+        selectedCount={selected.size}
+        eligibleCount={eligibleForBatch.length}
+        pending={batchPending}
+        outcomes={batchOutcomes}
+        onPublish={() => void publishSelected()}
+        onClear={clearSelection}
+      />
+      <ul className="flex flex-col gap-3">
       {songs.map((s) => (
         <li
           key={s.id}
           className="flex flex-wrap items-center gap-3 rounded-md border border-muted/30 bg-muted/10 px-4 py-3"
         >
+          {s.status === "completed" && s.visibility !== "public" ? (
+            <input
+              type="checkbox"
+              aria-label={`Select ${s.title ?? s.id} for batch publish`}
+              checked={selected.has(s.id)}
+              onChange={() => toggleSelected(s.id)}
+              className="size-4 cursor-pointer accent-accent"
+            />
+          ) : (
+            <span
+              aria-hidden="true"
+              className="inline-block size-4"
+              title={
+                s.status !== "completed"
+                  ? "Only completed songs can be published"
+                  : "Already public"
+              }
+            />
+          )}
           <button
             type="button"
             onClick={() => toggleFavorite(s.id, s.is_favorite)}
@@ -320,7 +428,106 @@ export function SongList({
           />
         </li>
       ))}
-    </ul>
+      </ul>
+    </>
+  );
+}
+
+function BulkPublishBar({
+  selectedCount,
+  eligibleCount,
+  pending,
+  outcomes,
+  onPublish,
+  onClear,
+}: {
+  selectedCount: number;
+  eligibleCount: number;
+  pending: boolean;
+  outcomes: BatchRow[] | null;
+  onPublish: () => void;
+  onClear: () => void;
+}) {
+  if (eligibleCount === 0 && !outcomes) return null;
+  if (selectedCount === 0 && !outcomes) {
+    return (
+      <section className="mb-3 rounded-md border border-dashed border-muted/30 px-4 py-2 text-xs text-foreground/55">
+        Select up to 100 completed songs to publish in one batch (free tier
+        caps at 5 public songs).
+      </section>
+    );
+  }
+  const summary = outcomes
+    ? outcomes.reduce<Record<BatchOutcome, number>>(
+        (acc, row) => {
+          acc[row.outcome] = (acc[row.outcome] ?? 0) + 1;
+          return acc;
+        },
+        {
+          published: 0,
+          already_public: 0,
+          quota_hit: 0,
+          not_found: 0,
+          forbidden: 0,
+          not_completed: 0,
+        },
+      )
+    : null;
+  return (
+    <section
+      role="region"
+      aria-label="Bulk publish toolbar"
+      className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent/30 bg-accent/5 px-4 py-3"
+    >
+      <div className="text-sm text-foreground/80">
+        {selectedCount > 0 ? (
+          <span>
+            <strong>{selectedCount}</strong> song
+            {selectedCount === 1 ? "" : "s"} selected
+          </span>
+        ) : (
+          <span className="text-foreground/55">Selection cleared</span>
+        )}
+        {summary ? (
+          <span className="ml-3 text-xs text-foreground/65">
+            {summary.published > 0
+              ? `published: ${summary.published} · `
+              : ""}
+            {summary.already_public > 0
+              ? `already public: ${summary.already_public} · `
+              : ""}
+            {summary.quota_hit > 0
+              ? `quota hit: ${summary.quota_hit} · `
+              : ""}
+            {summary.forbidden > 0
+              ? `forbidden: ${summary.forbidden} · `
+              : ""}
+            {summary.not_completed > 0
+              ? `not completed: ${summary.not_completed} · `
+              : ""}
+            {summary.not_found > 0 ? `not found: ${summary.not_found}` : ""}
+          </span>
+        ) : null}
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPublish}
+          disabled={pending || selectedCount === 0}
+          className="rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 text-sm text-accent transition hover:bg-accent/25 disabled:opacity-40"
+        >
+          {pending ? "Publishing…" : "Publish selected as public"}
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={pending}
+          className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/60 hover:border-accent/40 hover:text-foreground disabled:opacity-40"
+        >
+          Clear
+        </button>
+      </div>
+    </section>
   );
 }
 

@@ -1062,6 +1062,16 @@ export type Database = {
           visibility: Database["public"]["Enums"]["song_visibility_enum"]
         }[]
       }
+      publish_song_batch: {
+        Args: { p_job_ids: string[]; p_visibility: string }
+        Returns: {
+          job_id: string
+          outcome: string
+          public_id: string | null
+          published_at: string | null
+          visibility: Database["public"]["Enums"]["song_visibility_enum"] | null
+        }[]
+      }
       reconciler_recover_job: {
         Args: { p_job_id: string }
         Returns: {

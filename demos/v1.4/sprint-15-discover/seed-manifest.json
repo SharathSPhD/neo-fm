@@ -1,7 +1,116 @@
 {
   "apply": false,
   "reset": false,
-  "generated_at": "2026-05-17T12:15:18.857Z",
-  "preset_count": 0,
-  "presets": []
+  "generated_at": "2026-05-17T15:42:19.604Z",
+  "preset_count": 12,
+  "presets": [
+    {
+      "seed_id": 1,
+      "preset_id": "carnatic-kriti",
+      "title": "Kalyani Kriti — Saraswati Vandana",
+      "language": "hi",
+      "style_family": "carnatic",
+      "voice_id": "indic_hi_female_lyrical",
+      "music_engine": "musicgen+carnatic-lora"
+    },
+    {
+      "seed_id": 2,
+      "preset_id": "carnatic-kriti-kn",
+      "title": "Mohanam Kriti — Bhavayami",
+      "language": "kn",
+      "style_family": "carnatic",
+      "voice_id": "indic_kn_female_bhajan",
+      "music_engine": "musicgen+carnatic-lora"
+    },
+    {
+      "seed_id": 3,
+      "preset_id": "hindustani-khayal-sketch",
+      "title": "Yaman Khayal — Late evening",
+      "language": "hi",
+      "style_family": "hindustani",
+      "voice_id": "indic_hi_male_broadcast",
+      "music_engine": "musicgen+hindustani-lora"
+    },
+    {
+      "seed_id": 4,
+      "preset_id": "kannada-bhavageete",
+      "title": "Bhavageete — Malenaada Maleya Sanje",
+      "language": "kn",
+      "style_family": "kannada-light-classical",
+      "voice_id": "indic_kn_male_warm",
+      "music_engine": "heartmula+bhavageete-lora"
+    },
+    {
+      "seed_id": 5,
+      "preset_id": "tamil-folk",
+      "title": "Janapada Parai — Parai vaaikku",
+      "language": "ta",
+      "style_family": "tamil-folk",
+      "voice_id": "indic_ta_male_nadaswaram",
+      "music_engine": "heartmula+tamil-folk-lora"
+    },
+    {
+      "seed_id": 6,
+      "preset_id": "kabir-doha",
+      "title": "Kabir doha — Pothi padhi padhi",
+      "language": "hi",
+      "style_family": "hindustani",
+      "voice_id": "chant_devotional",
+      "music_engine": "heartmula"
+    },
+    {
+      "seed_id": 7,
+      "preset_id": "tagore-set",
+      "title": "Tagore — Where the mind is without fear",
+      "language": "en",
+      "style_family": "western",
+      "voice_id": "indic_bn_male_rabindra",
+      "music_engine": "heartmula"
+    },
+    {
+      "seed_id": 8,
+      "preset_id": "bollywood-ballad",
+      "title": "Bollywood ballad — Tujhse naraz",
+      "language": "hi",
+      "style_family": "western",
+      "voice_id": "indic_hi_female_lyrical",
+      "music_engine": "heartmula"
+    },
+    {
+      "seed_id": 9,
+      "preset_id": "western-pop",
+      "title": "Western pop — Heyday",
+      "language": "en",
+      "style_family": "western",
+      "voice_id": "en_in_female_rj",
+      "music_engine": "heartmula"
+    },
+    {
+      "seed_id": 10,
+      "preset_id": "sanskrit-shloka",
+      "title": "Sanskrit shloka — Dvadashakshara",
+      "language": "sa",
+      "style_family": "sanskrit-shloka",
+      "voice_id": "chant_sustained",
+      "music_engine": "heartmula+chant-style-lora"
+    },
+    {
+      "seed_id": 11,
+      "preset_id": "bengali-rabindrasangeet",
+      "title": "Rabindrasangeet — Amar shonar Bangla",
+      "language": "bn",
+      "style_family": "bengali-rabindrasangeet",
+      "voice_id": "indic_bn_female",
+      "music_engine": "heartmula"
+    },
+    {
+      "seed_id": 12,
+      "preset_id": "telugu-keerthana",
+      "title": "Telugu keerthana — Mohanam",
+      "language": "te",
+      "style_family": "telugu-keerthana",
+      "voice_id": "indic_te_male",
+      "music_engine": "musicgen+carnatic-lora"
+    }
+  ]
 }

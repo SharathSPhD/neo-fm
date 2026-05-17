@@ -21,6 +21,10 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 24;
 
+// v1.4 Sprint 15: filter chips now cover every style_family the
+// Zod `StyleFamilySchema` recognises (sanskrit-shloka,
+// bengali-rabindrasangeet, telugu-keerthana joined the family in
+// v1.4 Sprint 2; the chips list lagged until Sprint 15).
 const STYLE_OPTIONS: { value: string; label: string }[] = [
   { value: "", label: "All styles" },
   { value: "carnatic", label: "Carnatic" },
@@ -29,6 +33,9 @@ const STYLE_OPTIONS: { value: string; label: string }[] = [
   { value: "kannada-light-classical", label: "Kannada bhavageete" },
   { value: "tamil-folk", label: "Tamil folk" },
   { value: "bollywood-ballad", label: "Bollywood ballad" },
+  { value: "sanskrit-shloka", label: "Sanskrit shloka" },
+  { value: "bengali-rabindrasangeet", label: "Bengali Rabindrasangeet" },
+  { value: "telugu-keerthana", label: "Telugu keerthana" },
   { value: "western", label: "Western" },
 ];
 
