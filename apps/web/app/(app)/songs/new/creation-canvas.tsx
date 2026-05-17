@@ -17,6 +17,7 @@ import {
 import { LibraryPicker } from "./library-picker";
 import { PresetGallery } from "./preset-gallery";
 import { LYRIC_MAX_CHARS, SectionEditor } from "./section-editor";
+import { VoicePicker } from "./voice-picker";
 
 type StyleFamily =
   | "western"
@@ -109,6 +110,11 @@ export function CreationCanvas() {
   const [advanced, setAdvanced] = useState<AdvancedState>(EMPTY_ADVANCED_STATE);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [savePending, setSavePending] = useState(false);
+  // v1.4 Sprint 5: selected voice catalogue id. Empty string = "Auto"
+  // (let the vocal-synth router pick by language). The picker shows
+  // a "Suggested for <language>" group + a global list of all 16
+  // personas, plus a 10s preview play button per row.
+  const [voiceId, setVoiceId] = useState<string>("");
 
   // Ref to the form root so that picking a preset can scroll the page to
   // the form selectors and pull keyboard focus onto the title input. The
@@ -202,15 +208,29 @@ export function CreationCanvas() {
   // every state change so the preview can't drift from the document
   // we actually POST. `useMemo` keeps the JSON.stringify cheap-ish.
   const previewJson = useMemo(() => {
-    const doc = buildSongDocument(form, activePreset, sections, title, advanced);
+    const doc = buildSongDocument(
+      form,
+      activePreset,
+      sections,
+      title,
+      advanced,
+      voiceId,
+    );
     return JSON.stringify(doc, null, 2);
-  }, [form, activePreset, sections, title, advanced]);
+  }, [form, activePreset, sections, title, advanced, voiceId]);
 
   async function savePreset(defaultTitle: string) {
     setSaveStatus(null);
     setSavePending(true);
     try {
-      const doc = buildSongDocument(form, activePreset, sections, title, advanced);
+      const doc = buildSongDocument(
+        form,
+        activePreset,
+        sections,
+        title,
+        advanced,
+        voiceId,
+      );
       const res = await fetch("/api/user-presets", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -275,6 +295,7 @@ export function CreationCanvas() {
       sections,
       title,
       advanced,
+      voiceId,
     );
 
     // Validate session client-side first so we don't burn a 401 round-trip.
@@ -386,6 +407,13 @@ export function CreationCanvas() {
             ))}
           </select>
         </Field>
+
+        <VoicePicker
+          value={voiceId}
+          onChange={setVoiceId}
+          language={form.language}
+          previewBaseUrl={getVoicePreviewBaseUrl()}
+        />
 
         <AdvancedDisclosure
           styleFamily={form.style_family}
@@ -577,6 +605,7 @@ export function buildSongDocument(
   editedSections: Section[],
   title: string,
   advanced: AdvancedState = EMPTY_ADVANCED_STATE,
+  voiceId: string = "",
 ): Record<string, unknown> {
   const trimmedTitle = title.trim();
   const titleField =
@@ -612,7 +641,19 @@ export function buildSongDocument(
   // Apply advanced overrides. Every field is "if set, otherwise leave
   // the preset / co-composer to pick". Empty inputs from the Advanced
   // disclosure stay empty so we don't clobber a preset's good defaults.
-  return applyAdvancedOverrides(doc, advanced, form.style_family);
+  const withAdvanced = applyAdvancedOverrides(doc, advanced, form.style_family);
+  // v1.4 Sprint 5: stamp the voice catalogue id last. Empty string
+  // means "use language-default routing" and we *omit* the field so
+  // the Zod schema doesn't see an empty string (which fails the
+  // ``min(1)`` rule).
+  if (voiceId) {
+    withAdvanced.voice_id = voiceId;
+  } else {
+    // If a preset carried a voice_id and the user cleared it, make
+    // sure we don't accidentally smuggle the preset's value through.
+    delete withAdvanced.voice_id;
+  }
+  return withAdvanced;
 }
 
 const WESTERN_STYLES_FOR_KEY = new Set(["western", "bollywood-ballad"]);
@@ -701,6 +742,21 @@ export function applyAdvancedOverrides(
   }
 
   return doc;
+}
+
+/**
+ * v1.4 Sprint 5: compute the public Storage URL prefix for the
+ * `voice-samples` bucket. We do this client-side because the previews
+ * are public, the URL is stable, and we want to avoid a server
+ * round-trip per voice row. Falls back to a relative path so the
+ * unit/E2E tests can serve the WAVs from a local fixture.
+ */
+function getVoicePreviewBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "/voice-samples";
+  // Supabase public objects live at
+  // <base>/storage/v1/object/public/<bucket>/<path>.
+  return `${url.replace(/\/$/, "")}/storage/v1/object/public/voice-samples`;
 }
 
 function Field({

@@ -39,6 +39,7 @@ from .model import (
 )
 from .parler import ParlerTTSModel
 from .preprocess import preprocess_section
+from .voice_catalog import get_voice
 
 BackendKey = Literal["svara", "parler", "fake"]
 
@@ -57,6 +58,10 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
 
     Rules (first match wins):
 
+      0. (v1.4 Sprint 5) Section carries a ``voice_id`` resolved in the
+         catalogue -> use that entry's backend. Unknown ids fall
+         through to the language-based decision so a stale id never
+         breaks a render.
       1. Instrumental / empty section -> `fake` (cheap silence).
       2. Latin-script text in any non-English language -> `parler`
          (Parler's voice descriptors carry pronunciation hints
@@ -65,6 +70,21 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
       4. Otherwise (Devanagari / Kannada / Tamil / Telugu / Bengali
          in their native scripts) -> `svara`.
     """
+    if section.voice_id:
+        entry = get_voice(section.voice_id)
+        if entry is not None:
+            # Today the catalogue only ships `parler` entries; the
+            # narrowing here keeps the BackendKey contract intact and
+            # leaves room for `svara` once Sprint 5b lands singing
+            # personas on Svara. IndicF5 (Sprint 12) and NeMo
+            # (Sprint 13) will add their own arms.
+            if entry.backend == "parler":
+                return "parler", f"voice_id:{entry.voice_id}"
+            if entry.backend == "svara":
+                return "svara", f"voice_id:{entry.voice_id}"
+            # Future-only backends fall back to parler with a note
+            # so the operator can see what the catalogue *wanted*.
+            return "parler", f"voice_id:{entry.voice_id}:fallback_to_parler"
     if section.type == "instrumental" or not (section.lyrics or section.transliteration):
         return "fake", "no-text"
     text = section.transliteration or section.lyrics or ""

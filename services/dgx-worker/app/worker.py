@@ -155,12 +155,18 @@ def build_vocal_request(
     The vocal-synth service handles missing transliteration by
     falling back to lyrics when present.
     """
+    # v1.4 Sprint 5: forward the SongDocument-level `voice_id` so the
+    # vocal-synth router can swap in the catalogue prompt. Older
+    # documents that pre-date the catalogue leave it `None`, which
+    # falls back to the language-based routing.
+    document_voice_id = getattr(song_document, "voice_id", None)
     return {
         "job_id": str(message.job_id),
         "trace_id": message.trace_id,
         "language": language,
         "style_family": song_document.style_family,
         "voice_timbre": voice_timbre,
+        "voice_id": document_voice_id,
         "sample_rate": 48000,
         "target_duration_seconds": song_document.target_duration_seconds,
         "sections": [
@@ -186,6 +192,9 @@ def build_vocal_request(
                     if isinstance(song_document.raga, dict)
                     else None
                 ),
+                # v1.4 Sprint 5: per-section override falls back to the
+                # request-level value in `_coerce`.
+                "voice_id": getattr(s, "voice_id", None),
             }
             for s in song_document.sections
         ],

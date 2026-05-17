@@ -203,4 +203,34 @@ describe("buildSongDocument", () => {
     );
     expect(doc.raga).toEqual({ name: "kalyani", system: "carnatic" });
   });
+
+  it("stamps voice_id when provided, omits it when empty", () => {
+    const withVoice = buildSongDocument(
+      {
+        style_family: "kannada-light-classical",
+        language: "kn",
+        target_duration_seconds: 90,
+      },
+      PRESET,
+      [{ id: "s1", type: "pallavi", target_seconds: 90 }],
+      "",
+      EMPTY_ADVANCED_STATE,
+      "indic_kn_female_bhajan",
+    );
+    expect(withVoice.voice_id).toBe("indic_kn_female_bhajan");
+
+    const withoutVoice = buildSongDocument(
+      {
+        style_family: "kannada-light-classical",
+        language: "kn",
+        target_duration_seconds: 90,
+      },
+      PRESET,
+      [{ id: "s1", type: "pallavi", target_seconds: 90 }],
+      "",
+      EMPTY_ADVANCED_STATE,
+      "",
+    );
+    expect(withoutVoice.voice_id).toBeUndefined();
+  });
 });

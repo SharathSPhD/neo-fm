@@ -276,13 +276,17 @@ class VocalizeRequestSection(BaseModel):
     target_seconds: Annotated[int, Field(ge=1, le=360)]
     tempo_bpm: int | None = None
     raga_name: str | None = None
+    # v1.4 Sprint 5: per-section override of the request-level voice_id.
+    # Used by the SongDocument when a user picks different voices for
+    # different sections (rare today, but the schema reserves room).
+    voice_id: str | None = None
 
 
 class VocalizeRequest(BaseModel):
     job_id: str
     attempt_id: str | None = None
     trace_id: str | None = None
-    language: Literal["en", "hi", "kn", "ta", "te", "bn"]
+    language: Literal["en", "hi", "kn", "ta", "te", "bn", "sa"]
     style_family: Literal[
         "western",
         "carnatic",
@@ -290,8 +294,15 @@ class VocalizeRequest(BaseModel):
         "kannada-folk",
         "kannada-light-classical",
         "tamil-folk",
+        "bollywood-ballad",
+        "sanskrit-shloka",
+        "bengali-rabindrasangeet",
+        "telugu-keerthana",
     ]
     voice_timbre: Literal["male", "female", "androgynous"] = "androgynous"
+    # v1.4 Sprint 5: opaque voice-catalogue id. The worker forwards
+    # `SongDocument.voice_id` here unless a section overrides it.
+    voice_id: str | None = None
     sample_rate: int = 48000
     target_duration_seconds: Annotated[int, Field(ge=1, le=600)]
     sections: list[VocalizeRequestSection] = Field(min_length=1)
@@ -339,6 +350,9 @@ def _coerce(req: VocalizeRequest) -> VocalRequest:
             tempo_bpm=s.tempo_bpm,
             raga_name=s.raga_name,
             voice_timbre=req.voice_timbre,
+            # v1.4 Sprint 5: per-section override > request-level
+            # default. None on both ends keeps the legacy routing.
+            voice_id=s.voice_id or req.voice_id,
         )
         for s in req.sections
     ]

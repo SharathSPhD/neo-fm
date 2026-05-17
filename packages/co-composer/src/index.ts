@@ -41,6 +41,14 @@ export {
 // when the user opts into structured overrides.
 export * from "./raga-catalogue.js";
 
+// v1.4 Sprint 5: 16-persona voice catalogue mirrored from
+// `services/vocal-synth/app/voice_catalog.json`. Consumed by the
+// voice picker on the creation canvas. Keep this re-export below
+// `raga-catalogue` so downstream barrel-imports don't reorder
+// alphabetically (the lint rule is `simple-import-sort` insertion-
+// order tolerant, but humans aren't).
+export * from "./voice-catalogue.js";
+
 export function getCoComposer(style: StyleFamily): CoComposer {
   switch (style) {
     case "western":
