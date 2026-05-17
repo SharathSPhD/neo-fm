@@ -3,6 +3,27 @@
 import type { Language } from "@neo-fm/song-doc";
 import { useEffect, useMemo, useState } from "react";
 
+// v1.4 Sprint 6: a single source of truth for "<Language name> · <Script
+// name>" labels. The old code hand-rolled three branches and silently
+// fell back to "English · Latin script" for any unknown language — which
+// landed Tamil / Bengali / Telugu / Sanskrit users on a misleading label.
+// Centralising this here keeps the picker honest as new languages ship.
+const LANGUAGE_LABELS: Record<Language, string> = {
+  en: "English · Latin script",
+  hi: "Hindi · Devanagari",
+  kn: "Kannada · Kannada script",
+  ta: "Tamil · Tamil script",
+  bn: "Bengali · Bengali script",
+  te: "Telugu · Telugu script",
+  sa: "Sanskrit · Devanagari",
+};
+
+function languageLabel(language: Language): string {
+  // Exhaustive: typecheck enforces every Language key. The fallback is a
+  // defensive belt-and-braces in case the union grows ahead of this map.
+  return LANGUAGE_LABELS[language] ?? language;
+}
+
 /**
  * M2 library picker side panel.
  *
@@ -127,11 +148,7 @@ export function LibraryPicker({
         <div className="flex flex-col">
           <h2 className="text-base font-medium">Public-domain lyric library</h2>
           <p className="text-[11px] text-foreground/50">
-            {language === "hi"
-              ? "Hindi · Devanagari"
-              : language === "kn"
-                ? "Kannada · Kannada script"
-                : "English · Latin script"}
+            {languageLabel(language)}
             {" · "}
             All entries verified PD in India & US (see source citation).
           </p>

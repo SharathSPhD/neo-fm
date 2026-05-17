@@ -64,8 +64,10 @@ REQUIRED_FIELDS = (
 )
 
 # Allowed by the Section schema in @neo-fm/song-doc. Keep in sync.
-ALLOWED_SCRIPTS = {"latin", "devanagari", "kannada", "tamil", "telugu"}
-ALLOWED_LANGUAGES = {"en", "hi", "kn", "ta", "te"}
+# v1.4 Sprint 6: added `bengali` (Tagore corpus) plus `bn` and `sa`. Sanskrit
+# is written in Devanagari here — there is no separate `sanskrit` script.
+ALLOWED_SCRIPTS = {"latin", "devanagari", "kannada", "tamil", "telugu", "bengali"}
+ALLOWED_LANGUAGES = {"en", "hi", "kn", "ta", "te", "bn", "sa"}
 
 
 @dataclass

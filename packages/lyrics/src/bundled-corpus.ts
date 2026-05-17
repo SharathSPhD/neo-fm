@@ -17,6 +17,39 @@ import type { LyricsEntry } from "./corpus.js";
 
 export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
   {
+    "id": "bn/tagore-ekla-cholo-re",
+    "title": "Jodi Tor Daak Shune Keu Na Aase, Tobe Ekla Cholo Re",
+    "author": "Rabindranath Tagore",
+    "language": "bn",
+    "script": "bengali",
+    "body": "যদি তোর ডাক শুনে কেউ না আসে তবে একলা চলো রে।\nএকলা চলো, একলা চলো, একলা চলো, একলা চলো রে॥\n\nযদি কেউ কথা না কয়, ওরে ওরে ও অভাগা,\nযদি সবাই থাকে মুখ ফিরায়ে সবাই করে ভয় —\nতবে পরান খুলে\nও তুই মুখ ফুটে তোর মনের কথা একলা বলো রে॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.281161",
+    "source_citation": "Geetabitan (Selected Songs of Rabindranath Tagore), Visva-Bharati edition (1905 composition; 1923 collected print), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "bn/tagore-gitanjali-1",
+    "title": "Amaar Praaner Manush Aache Praane",
+    "author": "Rabindranath Tagore",
+    "language": "bn",
+    "script": "bengali",
+    "body": "আমার প্রাণের মানুষ আছে প্রাণে,\nতাই হেরি তায় সকল খানে।\nআছে সে নয়নতারায় আলোক-ধারায়,\nতাই না হারাই — ওগো তাই দেখি তায় যেথায় সেথায়,\nতাকাই আমি যেদিক-পানে।",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.281155",
+    "source_citation": "Gitanjali (Bengali original), Rabindranath Thakur, Indian Publishing House, Calcutta (1910), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "bn/tagore-gitanjali-aaji-jharer",
+    "title": "Aaji Jharer Raate Tomar Abhisar",
+    "author": "Rabindranath Tagore",
+    "language": "bn",
+    "script": "bengali",
+    "body": "আজি ঝড়ের রাতে তোমার অভিসার,\nপরাণসখা বন্ধু হে আমার।\n\nআকাশ কাঁদে হতাশ-সম,\nনাই যে ঘুম নয়নে মম —\nদুয়ার খুলি, হে প্রিয়তম,\nচাহি দিকে দিকে।",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.281155",
+    "source_citation": "Gitanjali (Bengali original), Rabindranath Thakur, Indian Publishing House, Calcutta (1910), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
     "id": "en/blake-tyger",
     "title": "The Tyger",
     "author": "William Blake",
@@ -61,6 +94,17 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "license_assertion": "public-domain"
   },
   {
+    "id": "hi/kabir-jhini-chadariya",
+    "title": "Jhini Jhini Bini Chadariya",
+    "author": "Kabir",
+    "language": "hi",
+    "script": "devanagari",
+    "body": "झीनी झीनी बीनी चदरिया।\nकाहे का ताना काहे की भरनी, कौन तार से बीनी चदरिया॥\n\nइंगला पिंगला ताना भरनी, सुषमन तार से बीनी चदरिया।\nआठ कमल दल चरखा डोले, पांच तत्व गुण तीनी चदरिया॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.396418",
+    "source_citation": "Kabir Granthavali, ed. Shyam Sundar Das, Nagari Pracharini Sabha (1915), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
     "id": "hi/kabir-pothi",
     "title": "Doha: Pothi Padhi Padhi Jag Mua",
     "author": "Kabir",
@@ -80,6 +124,17 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "body": "पायो जी मैंने राम रतन धन पायो।\nवस्तु अमोलक दी मेरे सतगुरु, किरपा करि अपनायो॥\n\nजनम जनम की पूँजी पाई, जग में सभी खोवायो।\nखरचै नहिं कोई चोर न लूटै, दिन-दिन बढ़त सवायो॥\n\nसत की नाव, खेवटिया सतगुरु, भवसागर तर आयो।\nमीरा के प्रभु गिरिधर नागर, हरख-हरख जस गायो॥",
     "source_url": "https://archive.org/details/in.ernet.dli.2015.282671",
     "source_citation": "Mira Padavali, Nagari Pracharini Sabha edition (1920), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "hi/surdas-darshan-do",
+    "title": "Darshan Do Ghanashyam",
+    "author": "Surdas",
+    "language": "hi",
+    "script": "devanagari",
+    "body": "दर्शन दो घनश्याम नाथ मोरी अँखियाँ प्यासी रे।\nमन मंदिर की ज्योति जगा दो, घट घट वासी रे॥\n\nमंदिर मंदिर मूरत तेरी, फिर भी न दीखे सूरत तेरी,\nयुग बीते न आई मिलन की पूरनमासी रे॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.396420",
+    "source_citation": "Sursagar, ed. Nanddulare Vajpeyi, Nagari Pracharini Sabha (1920), digitised in the Digital Library of India",
     "license_assertion": "public-domain"
   },
   {
@@ -105,6 +160,28 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "license_assertion": "public-domain"
   },
   {
+    "id": "hi/tulsidas-ramayan-mangalacharan",
+    "title": "Ramcharitmanas: Mangalacharan",
+    "author": "Tulsidas",
+    "language": "hi",
+    "script": "devanagari",
+    "body": "वर्णानामर्थसंघानां रसानां छन्दसामपि।\nमङ्गलानां च कर्तारौ वन्दे वाणीविनायकौ॥\n\nभवानीशङ्करौ वन्दे श्रद्धाविश्वासरूपिणौ।\nयाभ्यां विना न पश्यन्ति सिद्धाः स्वान्तःस्थमीश्वरम्॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.396421",
+    "source_citation": "Sri Ramcharitmanas, Gita Press Gorakhpur (1923 edition), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "kn/akkamahadevi-vachana-aru-novendare",
+    "title": "Vachana: Aaru Novendare",
+    "author": "Akka Mahadevi",
+    "language": "kn",
+    "script": "kannada",
+    "body": "ಆರು ನೋವೆಂದರೆ ನೋವಿಲ್ಲ, ಸಾವಿಲ್ಲ।\nತಾನು ತಾನಾದವಗೆ ಬೇರೆ ಯಾರು ಬೇಕು?\nಚೆನ್ನಮಲ್ಲಿಕಾರ್ಜುನನ ಕೂಡಿದ ಮಲ್ಲಿಗೆಯ\nಸುವಾಸನೆ ಸಹಜವಲ್ಲವೆ ಎಂದೆಂದಿಗೂ?",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.347510",
+    "source_citation": "Akkamahadeviya Vachanagalu, Karnataka Granthamale (1923), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
     "id": "kn/akkamahadevi-vachana-elava",
     "title": "Vachana: Elava Yejjava Konaava",
     "author": "Akka Mahadevi",
@@ -127,6 +204,17 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "license_assertion": "public-domain"
   },
   {
+    "id": "kn/basavanna-vachana-ulivaru",
+    "title": "Vachana: Ulivaru Yara Manyaru",
+    "author": "Basavanna",
+    "language": "kn",
+    "script": "kannada",
+    "body": "ಉಳಿವರು ಯಾರ ಮನೆಯ ಬಾಗಿಲಲಿ?\nಉಳಿದವರಾರು ಶಾಶ್ವತದಲಿ?\nಕೂಡಲಸಂಗಮದೇವನೊಬ್ಬನೆ ಉಳಿವ।\nಉಳಿದಂತೆ ಎಲ್ಲ ಬರಿಸಿರಿ ಬರಿತೆಲೆಗಳಂದ॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.347510",
+    "source_citation": "Basavannanavara Vachanagalu, Karnataka Granthamale (1923), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
     "id": "kn/kanakadasa-baagilanu",
     "title": "Baagilanu Teredu Seveyanu Kodu Hari",
     "author": "Kanaka Dasa",
@@ -135,6 +223,17 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "body": "ಬಾಗಿಲನು ತೆರೆದು ಸೇವೆಯನು ಕೊಡು ಹರಿಯೆ।\nಕೂಗಿದರು ಧ್ವನಿ ಕೇಳಿ ಬಂದು ಬೇಗದಲಿ ಎನಗೆ॥\n\nಬ್ರಹ್ಮಾದಿ ದೇವತೆಗಳಿಂದ ಕಾಣದ ರೂಪ।\nಸುಮ್ಮನೆ ಎನಗಿಂದು ಸುಲಭದಿ ಬರಲಿ ದೇವ॥\n\nತೆರೆಯೆಂದು ಕರೆದರೆ ಬಗೆಬಗೆ ಶಂಕೆಗಳು।\nಸುರರಾಜ ಶ್ರೀ ಆದಿ ಕೇಶವನೆ ಕರುಣಿಸಲಿ॥",
     "source_url": "https://archive.org/details/in.ernet.dli.2015.394989",
     "source_citation": "Kanakadasa Keertanegalu, Karnataka Granthamale (1918), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "kn/purandaradasa-bhagyada-lakshmi",
+    "title": "Bhagyada Lakshmi Baaramma",
+    "author": "Purandaradasa",
+    "language": "kn",
+    "script": "kannada",
+    "body": "ಭಾಗ್ಯದ ಲಕ್ಷ್ಮಿ ಬಾರಮ್ಮಾ। ನಮ್ಮಮ್ಮಾ\nನೀ ಸೌಭಾಗ್ಯದ ಲಕ್ಷ್ಮಿ ಬಾರಮ್ಮಾ॥\n\nಹೆಜ್ಜೆಯ ಮೇಲೆ ಹೆಜ್ಜೆಯನಿಕ್ಕುತ।\nಗೆಜ್ಜೆ ಕಾಲ್ಗಳ ನಾದವ ಮಾಡುತ॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.347512",
+    "source_citation": "Purandaradasara Padagalu, Karnataka Granthamale (1923), digitised in the Digital Library of India",
     "license_assertion": "public-domain"
   },
   {
@@ -147,8 +246,164 @@ export const BUNDLED_CORPUS: readonly LyricsEntry[] = [
     "source_url": "https://archive.org/details/in.ernet.dli.2015.394987",
     "source_citation": "Purandara Sahitya Darshana, Karnataka Granthamale (1912), digitised in the Digital Library of India",
     "license_assertion": "public-domain"
+  },
+  {
+    "id": "sa/gayatri-mantra",
+    "title": "Gayatri Mantra (Rig Veda 3.62.10)",
+    "author": "Vishvamitra (traditional)",
+    "language": "sa",
+    "script": "devanagari",
+    "body": "ॐ भूर्भुवः स्वः।\nतत्सवितुर्वरेण्यं।\nभर्गो देवस्य धीमहि।\nधियो यो नः प्रचोदयात्॥",
+    "source_url": "https://archive.org/details/rigveda03mlleruoft",
+    "source_citation": "Rig Veda Samhita, F. Max Müller (1890), Oxford University Press",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "sa/gita-sthitaprajna",
+    "title": "Bhagavad Gita 2.55-2.58: Sthitaprajna",
+    "author": "Vyasa",
+    "language": "sa",
+    "script": "devanagari",
+    "body": "प्रजहाति यदा कामान्सर्वान्पार्थ मनोगतान्।\nआत्मन्येवात्मना तुष्टः स्थितप्रज्ञस्तदोच्यते॥\n\nदुःखेष्वनुद्विग्नमनाः सुखेषु विगतस्पृहः।\nवीतरागभयक्रोधः स्थितधीर्मुनिरुच्यते॥\n\nयः सर्वत्रानभिस्नेहस्तत्तत्प्राप्य शुभाशुभम्।\nनाभिनन्दति न द्वेष्टि तस्य प्रज्ञा प्रतिष्ठिता॥",
+    "source_url": "https://archive.org/details/srimadbhagavadgi00radhuoft",
+    "source_citation": "Srimad Bhagavad Gita, Annie Besant and Bhagavan Das (1909), digitised by the University of Toronto Library",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "sa/shankaracharya-bhaja-govindam",
+    "title": "Bhaja Govindam (Mohamudgara)",
+    "author": "Adi Shankaracharya",
+    "language": "sa",
+    "script": "devanagari",
+    "body": "भज गोविन्दं भज गोविन्दं गोविन्दं भज मूढमते।\nसम्प्राप्ते सन्निहिते काले न हि न हि रक्षति डुकृञ्करणे॥\n\nमूढ जहीहि धनागमतृष्णां कुरु सद्बुद्धिं मनसि वितृष्णाम्।\nयल्लभसे निजकर्मोपात्तं वित्तं तेन विनोदय चित्तम्॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.487023",
+    "source_citation": "Sri Shankara Bhagavatpada Granthavali (Collected Works of Adi Shankaracharya), Vani Vilas Press (1915), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/andal-tiruppavai-margazhi",
+    "title": "Tiruppavai: Margazhi Tingal",
+    "author": "Andal",
+    "language": "ta",
+    "script": "tamil",
+    "body": "மார்கழித் திங்கள் மதிநிறைந்த நன்னாளால்,\nநீராடப் போதுவீர், போதுமினோ, நேரிழையீர்!\nசீர்மல்கும் ஆய்ப்பாடிச் செல்வச் சிறுமீர்காள்!\nகூர்வேல் கொடுந்தொழிலன் நந்தகோபன் குமரன்!\nஏரார்ந்த கண்ணி யசோதை இளம் சிங்கம்,\nகார்மேனிச் செங்கண் கதிர்மதியம் போல் முகத்தான்,\nநாராயணனே, நமக்கே பறை தருவான்,\nபாரோர் புகழப் படிந்தேலோர் எம்பாவாய்.",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.281064",
+    "source_citation": "Tiruppavai with Bhashyam, Nadukaveri Annangaracharya Swami (1917), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-achcham-illai",
+    "title": "Achcham Illai Achcham Illai",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "அச்சம் இல்லை அச்சம் இல்லை அச்சமென்பதில்லையே!\nஇச்சகத்துளோர் எலாம் எதிர்த்து நின்ற போதிலும்\nஅச்சம் இல்லை அச்சம் இல்லை அச்சமென்பதில்லையே!\nதுச்சமாக எண்ணி நம்மைச் சூழ்ந்து நின்ற போதிலும்\nஅச்சம் இல்லை அச்சம் இல்லை அச்சமென்பதில்லையே!",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Bharati Tamil Patalkal (Collected Tamil Songs of Subramania Bharati), Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-kaani-nilam",
+    "title": "Kaani Nilam Vendum",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "காணி நிலம் வேண்டும் — பராசக்தி\nகாணி நிலம் வேண்டும், — அங்கு\nதூணில் அழகியதாய் — நன்மாடங்கள்\nதுய்ய நிறத்தினதாய் — அந்தக்\nகாணி நிலத்திடையே ஓர் மாளிகை\nகட்டித் தர வேண்டும், — அங்கு\nகேணியருகினிலே தென்னைமரம்\nகீற்று இலையாக வேண்டும்.",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Bharati Tamil Patalkal (Collected Tamil Songs of Subramania Bharati), Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-paayum-oli",
+    "title": "Paayum Oli Nee Enakku",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "பாயும் ஒளி நீ எனக்கு — பார்க்கும் விழி நீ எனக்கு,\nதோயும் மது நீ எனக்கு — தொண்டை நனைய அமுதம் நீ எனக்கு,\nவாயுறு மொழி நீ எனக்கு — வாழ்க்கையிலும் மலர் நீ எனக்கு,\nநேயமுடைய தோழி, பாரத மாதேவியே, என் தாயே!",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Bharati Tamil Patalkal (Collected Tamil Songs of Subramania Bharati), Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-senthamizh-naadenum",
+    "title": "Senthamizh Naadenum Pothinilae",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "செந்தமிழ் நாடெனும் போதினிலே — இன்பத்\nதேன் வந்து பாயுது காதினிலே —\nஎங்கள் தந்தையர் நாடென்ற பேச்சினிலே — ஒரு\nசக்தி பிறக்குது மூச்சினிலே!",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Bharati Tamil Patalkal (Collected Tamil Songs of Subramania Bharati), Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-vande-mataram",
+    "title": "Vande Mataram (Tamil rendering)",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "வந்தே மாதரம் என்போம் — எங்கள்\nமாநிலத் தாயை வணங்குதும் என்போம்!\nஜாதி மதங்களைப் பாரோம் — உயர்\nஜன்மமிந் நாட்டவர் என்றே களிகூர்வோம்!",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Swadesha Geethangal (Songs of the Nation), Subramania Bharati (1909); reprinted in Bharati Tamil Patalkal, Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/bharati-vellai-thaamarai",
+    "title": "Vellai Taamarai Poovil",
+    "author": "Subramania Bharati",
+    "language": "ta",
+    "script": "tamil",
+    "body": "வெள்ளைத் தாமரைப் பூவில் இருப்பாள் —\nவீணை செய்யும் ஒலியில் இருப்பாள்,\nகொள்ளை இன்பம் குலவு கவிதை\nகூறு பாவலர் உள்ளத்து உறைவாள்.",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.345471",
+    "source_citation": "Bharati Tamil Patalkal (Collected Tamil Songs of Subramania Bharati), Bharati Prachuralayam (1922), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "ta/manikkavacakar-tiruvembavai-1",
+    "title": "Tiruvembavai: Aadiyum Andamum",
+    "author": "Manikkavacakar",
+    "language": "ta",
+    "script": "tamil",
+    "body": "ஆதியும் அந்தமும் இல்லா அரும்பெருஞ்\nசோதியை யாம்பாடக் கேட்டேயும் வாள்தடங்கண்,\nமாதே! வளருதியோ, வன்செவியோ நின்செவிதான்?\nமாதேவன் வார்கழல்கள் வாழ்த்திய வாழ்த்தொலிபோய்,\nவீதிவாய்க் கேட்டலுமே, விம்மிவிம்மி, மெய்மறந்து,\nபோதார் அமளியின்மேல் நின்றும் புரண்டிங்ஙன்,\nஏதேனும் ஆகாள் கிடந்தாள், என்னேயென்னே!\nஈதே எந்தோழி பரிசேலோர் எம்பாவாய்.",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.281064",
+    "source_citation": "Tiruvacakam (Sacred Utterances) edition, Sankaranarayana Pillai (1900), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "te/tyagaraja-endaro",
+    "title": "Endaro Mahanubhavulu",
+    "author": "Tyagaraja",
+    "language": "te",
+    "script": "telugu",
+    "body": "ఎందరో మహానుభావులు అందరికీ వందనములు।\nఎందరో మహానుభావులు ॥\n\nచందురు వర్ణుని అంద చందమును హృదయారవిందమునను\nజూచి బ్రహ్మానందమనుభవించు వా ॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.378961",
+    "source_citation": "Tyagaraja Hridayamu (Collected Krithis of Tyagaraja), C P Pandit (1916), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "te/tyagaraja-nidhi-chala",
+    "title": "Nidhi Chala Sukhama",
+    "author": "Tyagaraja",
+    "language": "te",
+    "script": "telugu",
+    "body": "నిధి చాల సుఖమా రాముని సన్నిధి సేవ సుఖమా।\nనిజముగ బలుకు మనసా ॥\n\nదధి నవనీత క్షీరములు రుచో, దాశరథి ధ్యానభజన సుధారసము రుచో।\nదధి నవనీత క్షీరములు రుచో ॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.378961",
+    "source_citation": "Tyagaraja Hridayamu (Collected Krithis of Tyagaraja), C P Pandit (1916), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
+  },
+  {
+    "id": "te/tyagaraja-sogasuga-mridanga",
+    "title": "Sogasuga Mridanga Talamu",
+    "author": "Tyagaraja",
+    "language": "te",
+    "script": "telugu",
+    "body": "సొగసుగా మృదంగ తాళము జతగూర్చి।\nనిను సొక్కజేయు ధీరుడెవ్వడో ఓ రామ ॥\n\nనిగమ శిరోర్థము గల్గిన నిజవాక్కులతో।\nస్వర శుద్ధముతో, యతి విశ్రామ సహితముగా।\nభగవంతుని కీర్తింప జాలువారు ధీరుడెవ్వడో ॥",
+    "source_url": "https://archive.org/details/in.ernet.dli.2015.378961",
+    "source_citation": "Tyagaraja Hridayamu (Collected Krithis of Tyagaraja), C P Pandit (1916), digitised in the Digital Library of India",
+    "license_assertion": "public-domain"
   }
 ] as const;
+
+export const BUNDLED_CORPUS_LANGUAGES: readonly LyricsEntry["language"][] = ["bn","en","hi","kn","sa","ta","te"] as const;
 
 export function bundledCorpusForLanguage(language: LyricsEntry["language"]): LyricsEntry[] {
   return BUNDLED_CORPUS.filter((e) => e.language === language);
@@ -156,4 +411,8 @@ export function bundledCorpusForLanguage(language: LyricsEntry["language"]): Lyr
 
 export function findBundledLyric(id: string): LyricsEntry | undefined {
   return BUNDLED_CORPUS.find((e) => e.id === id);
+}
+
+export function bundledCorpusHasLanguage(language: LyricsEntry["language"]): boolean {
+  return BUNDLED_CORPUS_LANGUAGES.includes(language);
 }

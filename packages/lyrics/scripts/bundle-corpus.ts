@@ -27,13 +27,23 @@ const REPO_ROOT = resolve(HERE, "..", "..", "..");
 const CORPUS_ROOT = join(REPO_ROOT, "data", "public-lyrics");
 const OUT_PATH = resolve(HERE, "..", "src", "bundled-corpus.ts");
 
-const LANGUAGES = ["en", "hi", "kn"] as const;
+// v1.4 Sprint 6: bundler is now FS-driven. Whatever language directories
+// exist under `data/public-lyrics/` get walked. The Language union from
+// `@neo-fm/song-doc` is the source of truth for what's *valid*; we keep
+// it here as a stable list of currently-shipping languages so the emitted
+// TS still has a precise union (the corpus type narrows to known langs).
+const LANGUAGES = ["en", "hi", "kn", "ta", "bn", "te", "sa"] as const;
+type SupportedLanguage = (typeof LANGUAGES)[number];
+
+function isSupportedLanguage(value: string): value is SupportedLanguage {
+  return (LANGUAGES as readonly string[]).includes(value);
+}
 
 type BundledEntry = {
   id: string;
   title: string;
   author: string;
-  language: (typeof LANGUAGES)[number];
+  language: SupportedLanguage;
   script: string;
   body: string;
   source_url: string;
@@ -80,8 +90,29 @@ function readEntry(filePath: string, language: BundledEntry["language"]): Bundle
 
 function loadAll(): BundledEntry[] {
   const entries: BundledEntry[] = [];
-  for (const lang of LANGUAGES) {
+  // Walk every <language>/ directory under CORPUS_ROOT. Any directory whose
+  // name is not in LANGUAGES is a contract bug (frontmatter/dir mismatch
+  // would catch it too, but be explicit).
+  let dirNames: string[];
+  try {
+    dirNames = readdirSync(CORPUS_ROOT).sort();
+  } catch (err) {
+    throw new Error(
+      `bundle-corpus: cannot read ${CORPUS_ROOT}: ${
+        err instanceof Error ? err.message : String(err)
+      }`,
+    );
+  }
+  for (const lang of dirNames) {
     const dir = join(CORPUS_ROOT, lang);
+    if (!statSync(dir).isDirectory()) continue;
+    if (!isSupportedLanguage(lang)) {
+      throw new Error(
+        `bundle-corpus: unsupported language directory ${lang} under ${CORPUS_ROOT}. ` +
+          `Add it to LANGUAGES in scripts/bundle-corpus.ts and to the Language ` +
+          `union in @neo-fm/song-doc before adding content.`,
+      );
+    }
     const names = readdirSync(dir).sort();
     for (const name of names) {
       if (!name.endsWith(".md")) continue;
@@ -114,15 +145,29 @@ import type { LyricsEntry } from "./corpus.js";\n\n`;
 
   const body = `export const BUNDLED_CORPUS: readonly LyricsEntry[] = ${JSON.stringify(entries, null, 2)} as const;\n\n`;
 
+  // v1.4 Sprint 6: emit a deterministic, sorted list of languages that
+  // actually have entries on disk. Consumers (provider.ts, library API)
+  // use this as the FS-driven allow-list instead of hand-maintaining it.
+  const presentLanguages = Array.from(
+    new Set(entries.map((e) => e.language)),
+  ).sort();
+  const languagesLiteral = `export const BUNDLED_CORPUS_LANGUAGES: readonly LyricsEntry["language"][] = ${JSON.stringify(
+    presentLanguages,
+  )} as const;\n\n`;
+
   const helpers = `export function bundledCorpusForLanguage(language: LyricsEntry["language"]): LyricsEntry[] {
   return BUNDLED_CORPUS.filter((e) => e.language === language);
 }
 
 export function findBundledLyric(id: string): LyricsEntry | undefined {
   return BUNDLED_CORPUS.find((e) => e.id === id);
+}
+
+export function bundledCorpusHasLanguage(language: LyricsEntry["language"]): boolean {
+  return BUNDLED_CORPUS_LANGUAGES.includes(language);
 }\n`;
 
-  return header + body + helpers;
+  return header + body + languagesLiteral + helpers;
 }
 
 const entries = loadAll();
