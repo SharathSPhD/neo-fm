@@ -9,10 +9,15 @@ export type {
   LyricsProvider,
   LyricsRequest,
   PublicLyricsLibraryProviderOptions,
+  IndicBARTLyricProviderOptions,
+  IndicBARTLyricResponse,
+  FallbackLyricProviderOptions,
 } from "./provider.js";
 export {
   PublicLyricsLibraryProvider,
   PratyabhijnaProvider,
+  IndicBARTLyricProvider,
+  FallbackLyricProvider,
 } from "./provider.js";
 export { mapToSections } from "./section-mapper.js";
 export {

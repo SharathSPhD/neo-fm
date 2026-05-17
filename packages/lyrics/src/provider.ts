@@ -21,6 +21,7 @@ import {
   allocateSectionDurations,
   type Duration,
   type Language,
+  type Script,
   type SongDocument,
   type StyleFamily,
 } from "@neo-fm/song-doc";
@@ -41,6 +42,20 @@ export interface LyricsProvider {
   readonly id: string;
   generate(request: LyricsRequest): Promise<SongDocument>;
 }
+
+// v1.4 Sprint 7: the script we stamp onto sections emitted by the IndicBART
+// fallback. The trained model is multilingual Indic + English; a request's
+// language determines the writing system.
+const DEFAULT_SCRIPT_BY_LANGUAGE: Record<Language, Script> = {
+  en: "latin",
+  hi: "devanagari",
+  kn: "kannada",
+  ta: "tamil",
+  te: "telugu",
+  bn: "bengali",
+  // Sanskrit is canonically rendered in Devanagari; see ADR 0026.
+  sa: "devanagari",
+};
 
 export interface PublicLyricsLibraryProviderOptions {
   /** Filesystem path to `data/public-lyrics/`. Useful for tests. */
@@ -161,6 +176,173 @@ export class PublicLyricsLibraryProvider implements LyricsProvider {
   }
 }
 
+// ---------------------------------------------------------------------------
+// IndicBARTLyricProvider — v1.4 Sprint 7
+// ---------------------------------------------------------------------------
+
+/**
+ * Response shape returned by `POST /v1/generate-lyric` on the lyric-gen
+ * sidecar. Mirrors `GenerateLyricResponse` in
+ * `services/lyric-gen/app/serve.py`. Kept here as a typed contract so a
+ * malformed sidecar payload fails closer to the caller than a stack
+ * trace inside `SongDocumentSchema.parse`.
+ */
+export interface IndicBARTLyricResponse {
+  body: string;
+  sections: ReadonlyArray<{
+    section_id: string;
+    lyrics: string;
+    syllable_count_target: number;
+    syllable_count_actual: number;
+  }>;
+  model_version: string;
+  backend: "indicbart" | "fake";
+  decode_params: Record<string, unknown>;
+}
+
+export interface IndicBARTLyricProviderOptions {
+  /**
+   * Base URL of the `services/lyric-gen` FastAPI sidecar
+   * (e.g. `http://lyric-gen.internal:8080`). The provider POSTs to
+   * `${baseUrl}/v1/generate-lyric` with the HMAC headers the worker
+   * sets for every internal call (caller threads the headers in via
+   * `signRequest`).
+   */
+  baseUrl: string;
+  /**
+   * Caller-supplied HMAC signer. The provider stays out of secrets
+   * management — callers know what the per-environment `LYRIC_GEN_HMAC_SECRET`
+   * is. Receives the raw JSON body bytes; returns the headers to set.
+   */
+  signRequest: (body: Uint8Array) => Record<string, string>;
+  /**
+   * Optional fetch implementation. Defaults to `globalThis.fetch`. Tests
+   * inject a fake here to avoid network IO.
+   */
+  fetch?: typeof fetch;
+}
+
+const DEFAULT_TARGET_SYLLABLES_PER_SECTION = 16;
+
+/**
+ * Fallback lyric provider that asks the lyric-gen sidecar (Sprint 7) to
+ * generate a stanza when `PublicLyricsLibraryProvider` has no matching
+ * PD entry on disk. The Sprint 7 worker wires this in *behind a feature
+ * flag* (see Sprint 7 plan) so the curated PD corpus stays the default
+ * path until the IndicBART SFT MOS gate is met.
+ *
+ * The provider does not load the model itself; it only knows the HTTP
+ * shape. The model lives in `services/lyric-gen/`, lazy-loaded on the
+ * DGX Spark per the v1.4 compute rule.
+ */
+export class IndicBARTLyricProvider implements LyricsProvider {
+  readonly id = "indicbart";
+  private readonly opts: IndicBARTLyricProviderOptions;
+
+  constructor(options: IndicBARTLyricProviderOptions) {
+    this.opts = options;
+  }
+
+  async generate(request: LyricsRequest): Promise<SongDocument> {
+    const fetchImpl = this.opts.fetch ?? globalThis.fetch;
+    if (!fetchImpl) {
+      throw new Error(
+        "IndicBARTLyricProvider: no fetch implementation available; " +
+          "pass `options.fetch` in environments without a global fetch.",
+      );
+    }
+
+    const template = mapToSections({
+      // We want the structural template (which section types in what
+      // order), so feed it a single-stanza placeholder body. The actual
+      // lyrics come back from the sidecar and overwrite section.lyrics.
+      body: "placeholder",
+      style_family: request.style_family,
+      script: DEFAULT_SCRIPT_BY_LANGUAGE[request.language],
+    });
+
+    const sidecarSections = template.map((s, i) => ({
+      section_id: s.id || `${s.type}-${i + 1}`,
+      section_type: s.type,
+      target_syllables: DEFAULT_TARGET_SYLLABLES_PER_SECTION,
+    }));
+
+    const body = JSON.stringify({
+      job_id: `lyric-gen-${Date.now()}`,
+      language: request.language,
+      style_family: request.style_family,
+      mood: null,
+      prompt:
+        request.prompt ??
+        request.reference_lyrics ??
+        `a verse in ${request.style_family} (${request.language})`,
+      raga_name: null,
+      seed: null,
+      sections: sidecarSections,
+    });
+    const bodyBytes = new TextEncoder().encode(body);
+    const headers = {
+      "content-type": "application/json",
+      ...this.opts.signRequest(bodyBytes),
+    };
+
+    const url = new URL("/v1/generate-lyric", this.opts.baseUrl).toString();
+    const res = await fetchImpl(url, {
+      method: "POST",
+      headers,
+      body,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `IndicBARTLyricProvider: sidecar returned HTTP ${res.status}: ${
+          text || "(no body)"
+        }`,
+      );
+    }
+    const payload = (await res.json()) as IndicBARTLyricResponse;
+
+    // Map back into typed sections, keeping the structural type from the
+    // template (the sidecar's `section_type` is informational).
+    const filledSections = template.map((s, i) => {
+      const stanza =
+        payload.sections.find(
+          (p) => p.section_id === (s.id || `${s.type}-${i + 1}`),
+        )?.lyrics ?? "";
+      // Leaderless sections (intro/outro) stay leaderless even if the
+      // sidecar accidentally returned bytes for them.
+      const isLeaderless = s.type === "intro" || s.type === "outro";
+      return {
+        ...s,
+        ...(isLeaderless || !stanza
+          ? {}
+          : {
+              lyrics: stanza,
+              script: DEFAULT_SCRIPT_BY_LANGUAGE[request.language],
+            }),
+      };
+    });
+
+    const scaffold = {
+      language: request.language,
+      style_family: request.style_family,
+      target_duration_seconds: request.target_duration_seconds,
+      sections: filledSections,
+      metadata: {
+        neo_fm_lyrics_provider: {
+          provider_id: this.id,
+          sidecar_model_version: payload.model_version,
+          sidecar_backend: payload.backend,
+          decode_params: payload.decode_params,
+        },
+      },
+    };
+
+    const allocated = allocateSectionDurations(scaffold);
+    return SongDocumentSchema.parse(allocated);
+  }
+}
+
 /**
  * Pratyabhijna integration lands in Phase 10. Calling this earlier is a
  * deliberate runtime error so we never ship a silently-mocked creative
@@ -172,5 +354,57 @@ export class PratyabhijnaProvider implements LyricsProvider {
   readonly id = "pratyabhijna";
   async generate(_request: LyricsRequest): Promise<SongDocument> {
     throw new NotYetIntegratedError("PratyabhijnaProvider", 10);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// FallbackLyricProvider — wires (public-library OR IndicBART) under a feature flag
+// ---------------------------------------------------------------------------
+
+export interface FallbackLyricProviderOptions {
+  primary: LyricsProvider;
+  fallback: LyricsProvider;
+  /**
+   * If false, `generate` short-circuits to `primary` only. Used by the
+   * worker's `LYRIC_GEN_FALLBACK_ENABLED` feature flag so we can ship
+   * Sprint 6's PD corpus first and turn on the IndicBART path post-eval.
+   */
+  enabled?: boolean;
+}
+
+/**
+ * Tries the primary provider first; if it throws (the typical case being
+ * the public-library provider rejecting an unsupported style/language
+ * pair), falls through to `fallback`. The full error from the primary
+ * is preserved on the fallback's metadata so debugging "why did this
+ * route via IndicBART?" stays one log scrape.
+ */
+export class FallbackLyricProvider implements LyricsProvider {
+  readonly id = "fallback";
+  private readonly opts: FallbackLyricProviderOptions;
+
+  constructor(options: FallbackLyricProviderOptions) {
+    this.opts = options;
+  }
+
+  async generate(request: LyricsRequest): Promise<SongDocument> {
+    try {
+      return await this.opts.primary.generate(request);
+    } catch (primaryError) {
+      if (this.opts.enabled === false) {
+        throw primaryError;
+      }
+      const doc = await this.opts.fallback.generate(request);
+      const md = (doc.metadata ?? {}) as Record<string, unknown>;
+      const ns = (md.neo_fm_lyrics_provider ?? {}) as Record<string, unknown>;
+      ns.fell_back_from = this.opts.primary.id;
+      ns.fell_back_reason =
+        primaryError instanceof Error
+          ? primaryError.message
+          : String(primaryError);
+      md.neo_fm_lyrics_provider = ns;
+      doc.metadata = md;
+      return doc;
+    }
   }
 }
