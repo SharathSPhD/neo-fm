@@ -122,7 +122,7 @@ def test_validate_rejects_clip_longer_than_60s(tmp_path: Path) -> None:
 """.strip(),
         encoding="utf-8",
     )
-    with pytest.raises(ValueError, match="longer than 60s"):
+    with pytest.raises(ValueError, match="longer than 60"):
         curate_bhavageete.run_dry(p, tmp_path / "out")
 
 

@@ -1,30 +1,29 @@
-"""Curate a bhavageete vocal+accompaniment corpus for v1.4 Sprint 8.
+"""Curate a Tamil-folk vocal+accompaniment corpus for v1.4 Sprint 9.
 
-This is the Kannada-light-classical specialisation of the shared
-pipeline in `_corpus_pipeline.py`. Only the style-specific knobs live
-here; everything else (manifest schema, license validation, summary
-emission, deterministic 90/10 split) is shared with the Tamil-folk
-pipeline (`curate_tamil_folk.py`, Sprint 9) and the Sanskrit-shloka
-pipeline (Sprint 14).
+Tamil-folk specialisation of the shared pipeline in
+`_corpus_pipeline.py`. Same recipe as bhavageete, different language
+(`ta`) and source landscape:
 
-Source landscape — bhavageete:
-  - All India Radio Bengaluru — Indian Copyright Act §52(1)(zb)
-    fair-use; Internet Archive cleared subsets of Bendre / KSN / GSS /
-    Pu Ti Na pre-1972 broadcasts (death-year PD).
-  - Saraga Kannada (CompMusic, CC-BY-NC-SA — research-OK).
-  - Dunya Carnatic concert clips filtered for Kannada language.
-  - Sangeetha Samrajyam YouTube CC commons via `yt-dlp`.
+  - **Tamil Nadu folk festival recordings** — district-level Pongal /
+    Vaikasi Visakam / village deity festivals released CC-BY by the
+    Tamil Nadu Folklore Foundation and similar archives.
+  - **Saraga Tamil-folk** subset (CompMusic, CC-BY-NC-SA — if/when
+    available; check `data/tamil-folk-sources.yaml` for current
+    inclusions).
+  - **YouTube CC commons** filtered via `yt-dlp --match-filter
+    "license=cc-by"` for parai-driven janapada repertoire.
+  - **British Library Sounds** Tamil folk recordings — older
+    fieldwork releases under CC-BY-NC-SA.
 
-CLI:
+The target style is anhemitonic-pentatonic Tamil janapada with
+parai / thavil / nadaswaram instrumentation. Bhavageete-style soft
+harmonium-and-tabla beds are *not* in this corpus — caption-stage
+reviewers reject them so the LoRA doesn't blur back into light pop.
 
-    python curate_bhavageete.py \
-        --manifest ../../../data/bhavageete-sources.yaml \
-        --out ./corpus/bhavageete-v1 \
-        --stage validate         # CI default
+CLI mirrors curate_bhavageete (same `--stage` set, same `--dry-run`).
 
 References:
-- ADR 0028 (v1.4 Sprint 8): bhavageete LoRA on HeartMuLa.
-- Research-3 §Stage D for the LoRA recipe (rank 32 on GB10).
+- ADR 0029 (v1.4 Sprint 9): Tamil-folk LoRA on HeartMuLa.
 - AGENTS.md "Compute rule (v1.4+)": GPU work runs on DGX Spark.
 """
 
@@ -44,20 +43,20 @@ from _corpus_pipeline import (
     validate_manifest,
 )
 
-LOG = logging.getLogger("curate_bhavageete")
+LOG = logging.getLogger("curate_tamil_folk")
 
-# Bhavageete is Kannada light-classical; the corpus is Kannada-only.
-EXPECTED_LANGUAGE = "kn"
+EXPECTED_LANGUAGE = "ta"
 
-# Licenses the bhavageete pipeline accepts. AIR archives use fair-use
-# §52; Saraga uses CC-BY-NC-SA; YouTube CC commons use plain CC-BY.
+# Tamil-folk leans on CC-BY festival recordings + Saraga + BL Sounds.
+# AIR fair-use clips are far less common here (Tamil-folk wasn't the
+# AIR Bengaluru focus); we still allow fair-use-§52 in case the
+# operator imports a few All India Radio Chennai pre-1972 broadcasts.
 ALLOWED_LICENSES: frozenset[str] = frozenset(
-    {"pd-india", "pd-us", "cc-by", "cc-by-nc-sa", "fair-use-§52"}
+    {"pd-india", "pd-us", "cc-by", "cc-by-sa", "cc-by-nc-sa", "fair-use-§52"}
 )
 
 
 def run_dry(manifest_path: Path, out_dir: Path) -> dict[str, Any]:
-    """Validate manifest + emit summary without touching audio."""
     clips: list[SourceClip] = load_manifest(manifest_path)
     validate_manifest(
         clips,
@@ -68,23 +67,17 @@ def run_dry(manifest_path: Path, out_dir: Path) -> dict[str, Any]:
 
 
 def run_full(manifest_path: Path, out_dir: Path, *, stage: str) -> dict[str, Any]:  # pragma: no cover
-    """Operator path; lazy-imports yt-dlp, pyloudnorm, WhisperX, etc.
-
-    Not exercised in CI (no GPU, no audio deps). Each stage writes its
-    artefacts next to summary.json so the trainer can pick up partial
-    state and the operator can resume after a manual review break.
-    """
     if stage in ("all", "validate"):
         return run_dry(manifest_path, out_dir)
     raise NotImplementedError(
-        f"Stage {stage!r} is operator-driven on DGX. See docs/DECISIONS/0028 "
+        f"Stage {stage!r} is operator-driven on DGX. See docs/DECISIONS/0029 "
         f"for the runbook. Use --dry-run to validate the manifest in CI."
     )
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Curate bhavageete corpus for v1.4 Sprint 8."
+        description="Curate Tamil-folk corpus for v1.4 Sprint 9."
     )
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
