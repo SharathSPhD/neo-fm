@@ -36,6 +36,11 @@ export {
   WesternCoComposer,
 };
 
+// v1.4 Sprint 4: raga / tala / instrument catalogue surfaced by the
+// creation canvas's Advanced disclosure and consumed by the worker
+// when the user opts into structured overrides.
+export * from "./raga-catalogue.js";
+
 export function getCoComposer(style: StyleFamily): CoComposer {
   switch (style) {
     case "western":

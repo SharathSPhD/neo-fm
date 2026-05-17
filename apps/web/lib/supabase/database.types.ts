@@ -744,6 +744,39 @@ export type Database = {
           },
         ]
       }
+      user_presets: {
+        Row: {
+          created_at: string
+          id: string
+          language: Database["public"]["Enums"]["language_enum"]
+          song_document: Json
+          style_family: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language: Database["public"]["Enums"]["language_enum"]
+          song_document: Json
+          style_family: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: Database["public"]["Enums"]["language_enum"]
+          song_document?: Json
+          style_family?: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -997,6 +1030,7 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status_enum"]
         }[]
       }
+      delete_user_preset: { Args: { p_preset_id: string }; Returns: undefined }
       enqueue_cover_art_job: {
         Args: {
           p_attempt_id?: string
@@ -1067,6 +1101,13 @@ export type Database = {
       report_song: {
         Args: { p_job_id: string; p_reason: string }
         Returns: {
+          id: string
+        }[]
+      }
+      save_user_preset: {
+        Args: { p_song_document: Json; p_title: string }
+        Returns: {
+          created_at: string
           id: string
         }[]
       }
