@@ -249,7 +249,17 @@ class MusicModel(Protocol):
 
 
 class HeartMuLaModel:
-    """Real HeartMuLa pipeline; imports heartlib lazily on `load()`."""
+    """Real HeartMuLa pipeline; imports heartlib lazily on `load()`.
+
+    v1.4 Sprint 8: the constructor accepts an optional dict of LoRA
+    adapters keyed by style_family (e.g. `{'kannada-light-classical':
+    Path('/mnt/models/lora/bhavageete-v1')}`). When `generate()` runs
+    with a request whose `style_family` matches a known adapter, the
+    adapter is attached on top of the base HeartMuLa pipeline for that
+    call and detached afterwards so a follow-up request in a different
+    style isn't biased. We attach via `peft.PeftModel.from_pretrained`
+    in `_attach_adapter`, mirroring the Sprint 7 IndicBART path.
+    """
 
     def __init__(
         self,
@@ -264,6 +274,7 @@ class HeartMuLaModel:
         topk: int = 50,
         temperature: float = 1.0,
         cfg_scale: float = 1.5,
+        style_adapters: dict[str, Path] | None = None,
     ) -> None:
         self.ckpt_dir = ckpt_dir
         self.version = version
@@ -278,6 +289,13 @@ class HeartMuLaModel:
         self._pipe: Any = None
         self.model_loaded: bool = False
         self.model_version: str | None = None
+        # adapter registry: style_family -> on-disk path. The actual
+        # PEFT load happens lazily inside `_attach_adapter` so a missing
+        # adapter directory only errors when that style is requested.
+        self._style_adapters: dict[str, Path] = dict(style_adapters or {})
+        # cache of loaded adapter names so we don't re-load on every
+        # request — `peft` keeps adapters resident once registered.
+        self._loaded_adapter_names: set[str] = set()
 
     def load(self) -> None:
         """Eager-load weights into GPU memory (TRIZ C2: first user
@@ -313,7 +331,97 @@ class HeartMuLaModel:
         )
         self.model_loaded = True
         self.model_version = f"heartmula-oss-{self.version}-happy-new-year"
-        LOG.info("HeartMuLa loaded")
+        LOG.info(
+            "HeartMuLa loaded",
+            extra={
+                "extra_fields": {
+                    "style_adapters": sorted(self._style_adapters.keys()),
+                }
+            },
+        )
+
+    def has_adapter_for(self, style_family: str) -> bool:
+        """True if a LoRA adapter is registered for this style."""
+        return style_family in self._style_adapters
+
+    def adapter_name_for(self, style_family: str) -> str:
+        """Stable adapter name used by PEFT; e.g.
+        `kannada-light-classical` -> `bhavageete_v1` (or just the style)
+        — the path's directory name is the canonical identifier."""
+        path = self._style_adapters[style_family]
+        return path.name or style_family
+
+    def _attach_adapter(self, style_family: str) -> str | None:
+        """Attach the LoRA adapter for `style_family` if registered.
+
+        Returns the active adapter name, or `None` if no adapter is
+        registered for the style. The base HeartMuLa weights are
+        untouched; PEFT wraps the inner causal LM (the `mula` half of
+        the pipeline) with an adapter that activates only when its
+        name is set.
+
+        We import `peft` lazily so the CI/dev path that uses
+        `FakeMusicModel` never has to pull torch.
+        """
+        path = self._style_adapters.get(style_family)
+        if path is None:
+            return None
+        if not path.exists():
+            raise RuntimeError(
+                f"LoRA adapter directory for style_family={style_family!r} "
+                f"does not exist on disk: {path}. Run "
+                f"`scripts/download-heartmula-adapters.py` or `train_*_lora.py "
+                f"--push-to-hub` and pull the adapter."
+            )
+
+        adapter_name = self.adapter_name_for(style_family)
+        # The pipeline exposes its trainable LM under `.mula`; mirror the
+        # heartlib structure. If a future heartlib release moves this, we
+        # raise a clearer error than `AttributeError`.
+        if not hasattr(self._pipe, "mula"):
+            raise RuntimeError(
+                "HeartMuLa pipeline has no `.mula` attribute; cannot "
+                "attach a LoRA adapter. heartlib upgrade may have moved "
+                "the inner LM."
+            )
+        inner = self._pipe.mula
+        if adapter_name not in self._loaded_adapter_names:
+            if hasattr(inner, "load_adapter"):
+                # Mula is already a PeftModel — just add this adapter to
+                # its registry. This is the path heartlib + peft give us
+                # when the base model was wrapped at startup.
+                inner.load_adapter(str(path), adapter_name=adapter_name)
+            else:
+                # First time we're wrapping mula with peft. Lazy-import
+                # so CI/dev (which uses FakeMusicModel) never has to
+                # pull `peft`.
+                from peft import PeftModel  # type: ignore[import-not-found]
+
+                self._pipe.mula = PeftModel.from_pretrained(
+                    inner, str(path), adapter_name=adapter_name
+                )
+            self._loaded_adapter_names.add(adapter_name)
+        # Activate this adapter for the forthcoming generate() call.
+        if hasattr(self._pipe.mula, "set_adapter"):
+            self._pipe.mula.set_adapter(adapter_name)
+        return adapter_name
+
+    def _detach_adapter(self) -> None:
+        """Disable any active LoRA adapter so the next request — which
+        might be a different style — sees the unbiased base model.
+
+        We call `disable_adapter()` if available; PEFT's
+        `disable_adapter` is a context manager *and* a method on
+        recent versions, so we try the method form first.
+        """
+        if self._pipe is None or not hasattr(self._pipe, "mula"):
+            return
+        inner = self._pipe.mula
+        if hasattr(inner, "disable_adapters"):
+            try:
+                inner.disable_adapters()
+            except Exception:  # pragma: no cover - depends on peft version
+                LOG.warning("failed to disable LoRA adapter")
 
     def generate(self, req: GenerationRequest) -> bytes:
         if not self.model_loaded or self._pipe is None:
@@ -325,28 +433,37 @@ class HeartMuLaModel:
         tags_text = build_tags_block(req)
         max_ms = req.target_duration_seconds * 1000
 
-        # heartlib takes file paths for lyrics/tags and writes the
-        # rendered audio to disk. Stage in a tempdir so two concurrent
-        # requests can't collide.
-        with tempfile.TemporaryDirectory(prefix="heartmula-") as workdir:
-            wd = Path(workdir)
-            lyrics_path = wd / "lyrics.txt"
-            tags_path = wd / "tags.txt"
-            out_path = wd / f"output.{req.output_format}"
-            lyrics_path.write_text(lyrics_text, encoding="utf-8")
-            tags_path.write_text(tags_text, encoding="utf-8")
+        # v1.4 Sprint 8: attach the per-style LoRA if registered. The
+        # adapter activates only for this request — we detach in the
+        # `finally` so concurrent calls in different styles can't bleed
+        # into each other.
+        active_adapter = self._attach_adapter(req.style_family)
+        try:
+            # heartlib takes file paths for lyrics/tags and writes the
+            # rendered audio to disk. Stage in a tempdir so two concurrent
+            # requests can't collide.
+            with tempfile.TemporaryDirectory(prefix="heartmula-") as workdir:
+                wd = Path(workdir)
+                lyrics_path = wd / "lyrics.txt"
+                tags_path = wd / "tags.txt"
+                out_path = wd / f"output.{req.output_format}"
+                lyrics_path.write_text(lyrics_text, encoding="utf-8")
+                tags_path.write_text(tags_text, encoding="utf-8")
 
-            with torch.no_grad():
-                self._pipe(
-                    {"lyrics": str(lyrics_path), "tags": str(tags_path)},
-                    max_audio_length_ms=max_ms,
-                    save_path=str(out_path),
-                    topk=self._topk,
-                    temperature=self._temperature,
-                    cfg_scale=self._cfg_scale,
-                )
+                with torch.no_grad():
+                    self._pipe(
+                        {"lyrics": str(lyrics_path), "tags": str(tags_path)},
+                        max_audio_length_ms=max_ms,
+                        save_path=str(out_path),
+                        topk=self._topk,
+                        temperature=self._temperature,
+                        cfg_scale=self._cfg_scale,
+                    )
 
-            audio = out_path.read_bytes()
+                audio = out_path.read_bytes()
+        finally:
+            if active_adapter is not None:
+                self._detach_adapter()
 
         # heartlib may write either wav or mp3 depending on the path
         # extension. If the client wanted wav but we ended up with
@@ -426,6 +543,37 @@ def _transcode_to_wav(blob: bytes, *, sample_rate: int) -> bytes:
 # --- Module-level singleton + test seam -----------------------------------
 
 
+# v1.4 Sprint 8: per-style LoRA adapter discovery from env. The mapping
+# from `style_family` to env-var follows the pattern
+# `HEARTMULA_LORA_<STYLE>` with `-` -> `_` capitalised, e.g.
+# `HEARTMULA_LORA_KANNADA_LIGHT_CLASSICAL=/mnt/models/lora/bhavageete-v1`.
+# Unknown styles are ignored — the env-var is the source of truth, but
+# only style_families we know about (the SongDocument enum) can ever be
+# requested at runtime, so this is a no-op in practice.
+_STYLE_ADAPTER_ENV: dict[str, str] = {
+    "western": "HEARTMULA_LORA_WESTERN",
+    "carnatic": "HEARTMULA_LORA_CARNATIC",
+    "hindustani": "HEARTMULA_LORA_HINDUSTANI",
+    "kannada-folk": "HEARTMULA_LORA_KANNADA_FOLK",
+    "kannada-light-classical": "HEARTMULA_LORA_KANNADA_LIGHT_CLASSICAL",
+    "tamil-folk": "HEARTMULA_LORA_TAMIL_FOLK",
+    "bollywood-ballad": "HEARTMULA_LORA_BOLLYWOOD_BALLAD",
+    "sanskrit-shloka": "HEARTMULA_LORA_SANSKRIT_SHLOKA",
+    "bengali-rabindrasangeet": "HEARTMULA_LORA_BENGALI_RABINDRASANGEET",
+    "telugu-keerthana": "HEARTMULA_LORA_TELUGU_KEERTHANA",
+}
+
+
+def _style_adapters_from_env() -> dict[str, Path]:
+    out: dict[str, Path] = {}
+    for style, env_var in _STYLE_ADAPTER_ENV.items():
+        value = os.environ.get(env_var)
+        if not value:
+            continue
+        out[style] = Path(value)
+    return out
+
+
 _active_model: MusicModel | None = None
 
 
@@ -487,6 +635,7 @@ def initialise_from_env() -> MusicModel:
         topk=int(os.environ.get("HEARTMULA_TOPK", "50")),
         temperature=float(os.environ.get("HEARTMULA_TEMPERATURE", "1.0")),
         cfg_scale=float(os.environ.get("HEARTMULA_CFG_SCALE", "1.5")),
+        style_adapters=_style_adapters_from_env(),
     )
     if os.environ.get("HEARTMULA_DEFER_LOAD") != "1":
         real.load()

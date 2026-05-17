@@ -12,6 +12,9 @@ dependencies = [
   "uvicorn[standard]>=0.32",
   "pydantic>=2.9.0",
   "prometheus_client>=0.20",
+  # PyYAML is needed by scripts/curate_bhavageete.py (validate stage,
+  # which runs in CI). Also a transitive dep of uvicorn[standard].
+  "pyyaml>=6.0",
 ]
 
 [project.optional-dependencies]
@@ -28,6 +31,19 @@ audio = [
 # stack up).
 hub = [
   "huggingface_hub>=0.25",
+]
+# v1.4 Sprint 8 LoRA training. DGX-only — pulls torch + peft +
+# audiocraft-trainer adjacent deps. Curation deps (pyyaml,
+# pyloudnorm, whisperx, silero-vad) need to be added per-stage if
+# you want to run the heavy stages on DGX. CI only exercises the
+# scaffold (run with `--dry-run`).
+training = [
+  "torch>=2.4",
+  "transformers>=4.45",
+  "peft>=0.13",
+  "datasets>=3.0",
+  "accelerate>=1.0",
+  "trackio>=0.0.5",
 ]
 
 [build-system]
