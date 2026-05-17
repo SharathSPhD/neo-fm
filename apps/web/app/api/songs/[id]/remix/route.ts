@@ -5,9 +5,11 @@
  *
  *   - Reuses the same lyrics, sections, style_family, language, and target
  *     duration as the parent.
- *   - Mutates exactly one creative knob so the remix sounds different:
- *     tempo BPM is perturbed by ±15 (clamped to the doc schema range).
- *   - Has its title suffixed with " (remix)".
+ *   - Applies the v1.4 Sprint 3 `ForkSongBody` overrides
+ *     (distance / tempo_bpm / key_override / raga_override / voice_id /
+ *     section_ids / title). Empty body is accepted and falls back to
+ *     the v1.3 behaviour: a ±15 BPM tempo jitter and a " (remix)" title
+ *     suffix.
  *   - Records the parent job id in `jobs.remixed_from` for lineage.
  *
  * The parent doesn't need to belong to the caller as long as it is
@@ -25,7 +27,13 @@
 import { SongDocumentSchema } from "@neo-fm/song-doc";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
+import {
+  applyForkToDoc,
+  type ParentDocLike,
+} from "@/lib/song/fork-applier";
+import { DEFAULT_REMIX_DISTANCE, ForkSongBodySchema } from "@/lib/song/fork";
 import { requireUser } from "@/lib/supabase/auth";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
@@ -42,22 +50,45 @@ type ParentJobRow = {
   song_documents: {
     id: string;
     title: string | null;
-    language: "en" | "hi" | "kn";
-    style_family: "western" | "carnatic" | "hindustani" | "kannada-folk";
-    document_json: Record<string, unknown> & {
-      target_duration_seconds?: number;
-      tempo_bpm?: number;
-      title?: string;
-    };
+    language: string;
+    style_family: string;
+    document_json: ParentDocLike;
   } | null;
 };
 
+async function readBody(req: Request): Promise<unknown> {
+  const text = await req.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new SyntaxError("remix body must be valid JSON");
+  }
+}
+
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { id: string } },
 ) {
   if (!UUID_RE.test(params.id)) {
     return NextResponse.json({ error: "invalid_id" }, { status: 400 });
+  }
+
+  let body: z.infer<typeof ForkSongBodySchema>;
+  try {
+    const raw = await readBody(req);
+    body = ForkSongBodySchema.parse(raw);
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+    }
+    if (err instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "invalid_body", details: err.flatten() },
+        { status: 422 },
+      );
+    }
+    throw err;
   }
 
   const authed = await requireUser();
@@ -87,40 +118,28 @@ export async function POST(
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
   const parentDoc = parentRow.song_documents;
-
-  // Clone + mutate the song doc. We do a JSON deep-clone via stringify
-  // because the doc is a Json/plain-object tree.
-  const cloned = JSON.parse(JSON.stringify(parentDoc.document_json)) as Record<
-    string,
-    unknown
-  > & {
-    title?: string;
-    tempo_bpm?: number;
-    target_duration_seconds?: number;
+  const baseTitle = (parentDoc.document_json.title ?? parentDoc.title ?? "Untitled").trim();
+  const baseDoc: ParentDocLike = {
+    ...parentDoc.document_json,
+    style_family: parentDoc.style_family,
+    title: baseTitle,
   };
 
-  // Title suffix; cap at the schema's 120-char limit. We accept titles
-  // either embedded inside document_json (older shape) or stored on the
-  // song_documents row (canonical).
-  const baseTitle = (cloned.title ?? parentDoc.title ?? "Untitled").trim();
-  cloned.title = (baseTitle.endsWith("(remix)")
-    ? baseTitle
-    : `${baseTitle} (remix)`
-  ).slice(0, 120);
-
-  // Tempo perturbation. The song-doc schema clamps tempo_bpm to 30..240,
-  // so we clamp the result there too. A ±15 BPM jitter is audible but
-  // keeps the remix recognisable. We don't perturb if the parent doesn't
-  // have a tempo (some doc shapes leave it implicit).
-  if (typeof cloned.tempo_bpm === "number") {
-    const delta = Math.floor(Math.random() * 31) - 15; // -15..+15
-    const next = cloned.tempo_bpm + (delta === 0 ? 5 : delta);
-    cloned.tempo_bpm = Math.max(30, Math.min(240, next));
+  const applied = applyForkToDoc(baseDoc, body, {
+    kind: "remix",
+    appendRemixSuffix: true,
+    defaultDistance: DEFAULT_REMIX_DISTANCE,
+  });
+  if (!applied.ok) {
+    return NextResponse.json(
+      { error: applied.error, message: applied.message },
+      { status: 422 },
+    );
   }
 
   // Validate the mutated doc through the shared zod schema so an upstream
   // worker never sees a corrupted document. Reject cleanly otherwise.
-  const docCheck = SongDocumentSchema.safeParse(cloned);
+  const docCheck = SongDocumentSchema.safeParse(applied.doc);
   if (!docCheck.success) {
     return NextResponse.json(
       {
@@ -139,13 +158,13 @@ export async function POST(
     "create_song_job",
     {
       p_song_document: validatedDoc as unknown as Json,
-      p_language: parentDoc.language,
-      p_style_family: parentDoc.style_family,
+      p_language: parentDoc.language as never,
+      p_style_family: parentDoc.style_family as never,
       p_target_duration_seconds: validatedDoc.target_duration_seconds,
       p_priority: 0,
       p_attempt_id: attempt_id,
       p_trace_id: trace_id,
-    },
+    } as never,
   );
 
   if (rpcErr) {
@@ -195,8 +214,6 @@ export async function POST(
 
   const lineageStamped = !lineageErr && (lineageRows?.length ?? 0) > 0;
   if (!lineageStamped) {
-    // The remix succeeded; we just couldn't tag it. Return the job
-    // anyway so the user isn't blocked.
     return NextResponse.json(
       {
         job_id: row.job_id,
@@ -204,6 +221,7 @@ export async function POST(
         status: row.status,
         remixed_from: null,
         warning: "lineage_stamp_failed",
+        distance: body.distance ?? DEFAULT_REMIX_DISTANCE,
       },
       { status: 202 },
     );
@@ -215,6 +233,7 @@ export async function POST(
       song_id: row.song_id,
       status: row.status,
       remixed_from: parentRow.id,
+      distance: body.distance ?? DEFAULT_REMIX_DISTANCE,
     },
     { status: 202 },
   );

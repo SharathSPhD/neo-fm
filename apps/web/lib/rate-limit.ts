@@ -81,9 +81,11 @@ export function pickRule(pathname: string): RateLimitRule {
   if (/^\/api\/waitlist\/?$/.test(pathname)) {
     return { bucket: "anon:waitlist", limit: 10 };
   }
-  // Cover art / variation / stems are tier-gated; the request is
-  // server-side expensive (HF + storage). Keep tight.
-  if (/^\/api\/songs\/[^/]+\/(cover-art|variation)\/?$/.test(pathname)) {
+  // Cover art / variation / remix / stems are tier-gated; the request
+  // is server-side expensive (HF + storage). Keep tight. v1.4 Sprint 3:
+  // remix peers with variation in the same bucket so a user can't
+  // round-trip "remix-from-public" to amplify their effective limit.
+  if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
   }
   // Public share-surface reads.
