@@ -21,15 +21,29 @@ interface FaqEntry {
 
 const FAQ: readonly FaqEntry[] = [
   {
-    q: "How does neo-fm generate music?",
+    q: "Why do neo-fm's Indic vocals sound different from the other AI music tools?",
     a: (
       <p>
-        Your song goes through a composition-aware pipeline. A co-composer
+        Because we don&apos;t let an English-trained tokeniser guess at
+        Devanagari, Kannada, or Tamil text. Before the singer touches a
+        line, we run rule-packed grapheme-to-phoneme: word-final schwas
+        drop where Hindi speakers actually drop them, anusvara assimilates
+        to the right nasal for the following consonant, geminated
+        consonants stay distinct, aspirated stops stay aspirated. The
+        vocal model receives a phoneme stream, not a grapheme guess.
+      </p>
+    ),
+  },
+  {
+    q: "How does the full pipeline work?",
+    a: (
+      <p>
+        Your line goes through a composition-aware pipeline. A co-composer
         elaborates your section list (raga, tala, orchestration) into a
-        full arrangement, our music engine renders the instrumental, an
-        Indic-aware vocal layer sings the lyrics in the right script, and
-        a mixer aligns and masters the final track. The whole loop
-        usually takes 60–90 seconds.
+        full arrangement and emits phonemes for any Indic lyrics. Our
+        music engine renders the instrumental, the vocal layer sings the
+        phoneme stream in the right script, and a mixer aligns and masters
+        the final track. The whole loop usually takes 60&ndash;90 seconds.
       </p>
     ),
   },
@@ -49,10 +63,14 @@ const FAQ: readonly FaqEntry[] = [
     q: "What languages can I sing in?",
     a: (
       <p>
-        Hindi, Kannada, Tamil, and English today. Hinglish (Hindi in Latin
-        script) is treated as a first-class case and gets phoneme-hinted
-        before synthesis. Sanskrit shlokas in Devanagari work too — they
-        share the Hindi pipeline.
+        Hindi, Kannada, Tamil, and English today. Hindi and Kannada ship
+        with deep rule packs (schwa-deletion, nasal assimilation,
+        gemination). Tamil ships canonicalisation today and deeper
+        phonology in the next release. Hinglish (Hindi written in Latin
+        script) is treated as a first-class case and is routed through
+        the Hindi rule pack so it sings the way you&apos;d say it.
+        Sanskrit shlokas in Devanagari work too &mdash; they share the
+        Hindi pipeline.
       </p>
     ),
   },
