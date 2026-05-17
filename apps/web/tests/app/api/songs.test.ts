@@ -309,4 +309,161 @@ describe("POST /api/songs", () => {
     expect(tags.some((t) => t.startsWith("genre:"))).toBe(true);
     expect(tags).toContain("style:kannada-folk");
   });
+
+  // -------- v1.4 live-bug closeout: delegated style families ----------
+  //
+  // Before the fix, `getCoComposer` routed these four styles to a
+  // fallback composer (Carnatic / Hindustani / Western) whose
+  // `elaborate()` rejected on `doc.style_family !== "<native>"`. Every
+  // queue POST for these styles returned 400 from /api/songs with
+  // `error: "co_composer_rejected"`. These tests pin the contract:
+  // delegated styles flow through, persist the user-facing family on
+  // tags + the SongDocument, and the route returns 202.
+
+  it("happy path sanskrit-shloka: routes through CarnaticCoComposer, keeps shloka style on tags", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "sa",
+          style_family: "sanskrit-shloka",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "v1", type: "shloka_verse", target_seconds: 30 },
+            { id: "r1", type: "shloka_refrain", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        style_family: string;
+        raga?: { name: string; system: string };
+        sections: Array<{ tags?: string[] }>;
+      };
+    };
+    // Style family persists as the user-facing value, not "carnatic".
+    expect(persisted.p_song_document.style_family).toBe("sanskrit-shloka");
+    // Composer set a default carnatic raga (Mayamalavagoula or Mohanam) --
+    // the schema's STYLE_RAGA_ALLOWLIST permits raga.system="carnatic"
+    // for sanskrit-shloka, so the elaborated doc passes re-validation.
+    expect(persisted.p_song_document.raga?.system).toBe("carnatic");
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags).toContain("style:sanskrit-shloka");
+    expect(tags.some((t) => t.startsWith("raga:"))).toBe(true);
+    expect(tags.some((t) => t.startsWith("tala:"))).toBe(true);
+  });
+
+  it("happy path telugu-keerthana: routes through CarnaticCoComposer with kriti shape", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "te",
+          style_family: "telugu-keerthana",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "p1", type: "pallavi", target_seconds: 30 },
+            { id: "a1", type: "anupallavi", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        style_family: string;
+        raga?: { name: string; system: string };
+        sections: Array<{ tags?: string[]; type: string }>;
+      };
+    };
+    expect(persisted.p_song_document.style_family).toBe("telugu-keerthana");
+    expect(persisted.p_song_document.raga?.system).toBe("carnatic");
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags).toContain("style:telugu-keerthana");
+    expect(tags).toContain("section:pallavi");
+  });
+
+  it("happy path bengali-rabindrasangeet: routes through HindustaniCoComposer with hindustani raga", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "bn",
+          style_family: "bengali-rabindrasangeet",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "m1", type: "mukhda", target_seconds: 30 },
+            { id: "a1", type: "antara", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        style_family: string;
+        raga?: { name: string; system: string };
+        sections: Array<{ tags?: string[] }>;
+      };
+    };
+    expect(persisted.p_song_document.style_family).toBe("bengali-rabindrasangeet");
+    expect(persisted.p_song_document.raga?.system).toBe("hindustani");
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags).toContain("style:bengali-rabindrasangeet");
+  });
+
+  it("happy path bollywood-ballad: routes through WesternCoComposer, keeps ballad style on tags", async () => {
+    const user_client = makeUserClient();
+    vi.mocked(requireUser).mockResolvedValueOnce({
+      user: { id: USER_ID } as never,
+      supabase: user_client as never,
+    });
+
+    const res = await POST(
+      req({
+        song_document: {
+          language: "hi",
+          style_family: "bollywood-ballad",
+          target_duration_seconds: 60,
+          sections: [
+            { id: "v1", type: "verse", target_seconds: 30 },
+            { id: "c1", type: "chorus", target_seconds: 30 },
+          ],
+        },
+      }),
+    );
+    expect(res.status).toBe(202);
+
+    const persisted = user_client.__state.rpc_calls[0]!.args as {
+      p_song_document: {
+        style_family: string;
+        sections: Array<{ tags?: string[] }>;
+      };
+    };
+    expect(persisted.p_song_document.style_family).toBe("bollywood-ballad");
+    const tags = persisted.p_song_document.sections[0]?.tags ?? [];
+    expect(tags).toContain("style:bollywood-ballad");
+    // Western composer also adds progression / section tags.
+    expect(tags.some((t) => t.startsWith("progression:"))).toBe(true);
+  });
 });

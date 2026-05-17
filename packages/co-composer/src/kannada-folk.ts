@@ -33,6 +33,7 @@ import type {
   Orchestration,
   Section,
   SongDocument,
+  StyleFamily,
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
@@ -123,9 +124,12 @@ function elaborateSection(
 
 export class KannadaFolkCoComposer implements CoComposer {
   readonly style_family = "kannada-folk" as const;
+  readonly acceptedStyleFamilies: ReadonlySet<StyleFamily> = new Set([
+    "kannada-folk",
+  ]);
 
   async elaborate(doc: SongDocument): Promise<SongDocument> {
-    if (doc.style_family !== "kannada-folk") {
+    if (!this.acceptedStyleFamilies.has(doc.style_family)) {
       throw new Error(
         `KannadaFolkCoComposer received style_family=${doc.style_family}; use getCoComposer(doc.style_family) instead`,
       );

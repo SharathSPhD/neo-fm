@@ -23,6 +23,7 @@ import type {
   Orchestration,
   Section,
   SongDocument,
+  StyleFamily,
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
@@ -170,9 +171,16 @@ function elaborateSection(
 
 export class HindustaniCoComposer implements CoComposer {
   readonly style_family = "hindustani" as const;
+  // v1.4: also accepts bengali-rabindrasangeet (Tagore songs catalogued
+  // under Hindustani ragas). Composer sets `raga.system: "hindustani"`
+  // which the song-doc schema's STYLE_RAGA_ALLOWLIST permits for both.
+  readonly acceptedStyleFamilies: ReadonlySet<StyleFamily> = new Set([
+    "hindustani",
+    "bengali-rabindrasangeet",
+  ]);
 
   async elaborate(doc: SongDocument): Promise<SongDocument> {
-    if (doc.style_family !== "hindustani") {
+    if (!this.acceptedStyleFamilies.has(doc.style_family)) {
       throw new Error(
         `HindustaniCoComposer received style_family=${doc.style_family}; use getCoComposer(doc.style_family) instead`,
       );
