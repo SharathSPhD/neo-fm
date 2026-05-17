@@ -333,6 +333,10 @@ class GenerateRequestSection(BaseModel):
     script: (
         Literal["devanagari", "tamil", "kannada", "telugu", "bengali", "latin"] | None
     ) = None
+    # v1.4 Sprint 2: keep the section type as a free-form string so we
+    # don't have to redeploy every time the schema gains a new Indic
+    # section header. The _SECTION_HEADERS map in app/model.py owns the
+    # routing to structural-contrast tags.
     transliteration: str | None = None
     swara_sequence: str | None = None
     phonemes: list[str] | None = None
@@ -352,7 +356,11 @@ class _RagaSpec(BaseModel):
     """
 
     name: str
-    system: Literal["carnatic", "hindustani"]
+    # v1.4 Sprint 2: widened to allow `light-classical` (bhavageete
+    # borrowing from Carnatic raga) and `folk` (modal-scale tag for
+    # parai / janapada). Mirrors the Zod widening in
+    # `packages/song-doc/src/index.ts`.
+    system: Literal["carnatic", "hindustani", "light-classical", "folk"]
     arohana: list[str] | None = None
     avarohana: list[str] | None = None
     nyas: list[str] | None = None
@@ -380,8 +388,26 @@ class GenerateRequest(BaseModel):
     # We accept None for backwards-compat with the Phase 1 fixtures that
     # predated the contract widening; new payloads from the dgx-worker
     # always include it (see `build_inference_request` in worker.py).
-    language: Literal["en", "hi", "kn"] | None = None
-    style_family: Literal["western", "carnatic", "hindustani", "kannada-folk"]
+    # v1.4 Sprint 2: language and style_family Literals widen to cover the
+    # new Indic presets (bn/te/sa) and the new style families. Zod
+    # source-of-truth lives in `packages/song-doc/src/index.ts`.
+    language: Literal["en", "hi", "kn", "ta", "bn", "te", "sa"] | None = None
+    style_family: Literal[
+        "western",
+        "carnatic",
+        "hindustani",
+        "kannada-folk",
+        "kannada-light-classical",
+        "tamil-folk",
+        "bollywood-ballad",
+        "sanskrit-shloka",
+        "bengali-rabindrasangeet",
+        "telugu-keerthana",
+    ]
+    # v1.4 Sprint 2: opaque voice catalog ID (Sprint 5 will own the
+    # routing). Music-inference does not need to validate the value
+    # against the catalog -- the dgx-worker hands it through.
+    voice_id: str | None = Field(default=None, max_length=64)
     tempo_bpm: int | None = Field(default=None, ge=30, le=240)
     time_signature: str | None = None
     tala: str | None = None

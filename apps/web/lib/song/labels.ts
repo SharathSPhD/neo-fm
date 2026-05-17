@@ -17,6 +17,15 @@ export function prettyStyle(style: string): string {
       return "Kannada light-classical";
     case "tamil-folk":
       return "Tamil folk";
+    // v1.4 Sprint 2 / Sprint 3 additions.
+    case "bollywood-ballad":
+      return "Bollywood ballad";
+    case "sanskrit-shloka":
+      return "Sanskrit shloka";
+    case "bengali-rabindrasangeet":
+      return "Bengali Rabindra Sangeet";
+    case "telugu-keerthana":
+      return "Telugu keerthana";
     case "western":
       return "Western";
     default:
@@ -34,6 +43,13 @@ export function prettyLanguage(lang: string): string {
       return "Kannada";
     case "ta":
       return "Tamil";
+    // v1.4 Sprint 2 / Sprint 3 additions.
+    case "bn":
+      return "Bengali";
+    case "te":
+      return "Telugu";
+    case "sa":
+      return "Sanskrit";
     default:
       return lang;
   }

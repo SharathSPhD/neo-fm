@@ -69,6 +69,7 @@ export type Database = {
       cover_art_attempts: {
         Row: {
           attempt_id: string
+          backend: string | null
           created_at: string
           error: string | null
           id: string
@@ -82,6 +83,7 @@ export type Database = {
         }
         Insert: {
           attempt_id: string
+          backend?: string | null
           created_at?: string
           error?: string | null
           id?: string
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           attempt_id?: string
+          backend?: string | null
           created_at?: string
           error?: string | null
           id?: string
@@ -741,6 +744,39 @@ export type Database = {
           },
         ]
       }
+      user_presets: {
+        Row: {
+          created_at: string
+          id: string
+          language: Database["public"]["Enums"]["language_enum"]
+          song_document: Json
+          style_family: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language: Database["public"]["Enums"]["language_enum"]
+          song_document: Json
+          style_family: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: Database["public"]["Enums"]["language_enum"]
+          song_document?: Json
+          style_family?: Database["public"]["Enums"]["style_family_enum"]
+          target_duration_seconds?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -994,6 +1030,7 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status_enum"]
         }[]
       }
+      delete_user_preset: { Args: { p_preset_id: string }; Returns: undefined }
       enqueue_cover_art_job: {
         Args: {
           p_attempt_id?: string
@@ -1025,12 +1062,44 @@ export type Database = {
           visibility: Database["public"]["Enums"]["song_visibility_enum"]
         }[]
       }
+      publish_song_batch: {
+        Args: { p_job_ids: string[]; p_visibility: string }
+        Returns: {
+          job_id: string
+          outcome: string
+          public_id: string | null
+          published_at: string | null
+          visibility: Database["public"]["Enums"]["song_visibility_enum"] | null
+        }[]
+      }
+      record_preference_pair: {
+        Args: {
+          p_job_id: string
+          p_winner_track_id: string
+          p_loser_track_id: string
+          p_vote_source?: string
+        }
+        Returns: string
+      }
       reconciler_recover_job: {
         Args: { p_job_id: string }
         Returns: {
           attempt_id: string
           job_id: string
           status: Database["public"]["Enums"]["job_status_enum"]
+        }[]
+      }
+      record_cover_art_template: {
+        Args: {
+          p_attempt_id: string
+          p_prompt: string
+          p_song_id: string
+          p_storage_path: string
+          p_trace_id?: string
+        }
+        Returns: {
+          attempt_id: string
+          cover_art_id: string
         }[]
       }
       recover_song_job: {
@@ -1051,6 +1120,13 @@ export type Database = {
       report_song: {
         Args: { p_job_id: string; p_reason: string }
         Returns: {
+          id: string
+        }[]
+      }
+      save_user_preset: {
+        Args: { p_song_document: Json; p_title: string }
+        Returns: {
+          created_at: string
           id: string
         }[]
       }
@@ -1097,7 +1173,7 @@ export type Database = {
     }
     Enums: {
       job_status_enum: "queued" | "processing" | "completed" | "failed"
-      language_enum: "en" | "hi" | "kn" | "ta"
+      language_enum: "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa"
       song_visibility_enum: "private" | "unlisted" | "public"
       style_family_enum:
         | "western"
@@ -1106,6 +1182,10 @@ export type Database = {
         | "kannada-folk"
         | "kannada-light-classical"
         | "tamil-folk"
+        | "bollywood-ballad"
+        | "sanskrit-shloka"
+        | "bengali-rabindrasangeet"
+        | "telugu-keerthana"
       tier_enum: "free" | "creator" | "pro"
       track_format_enum: "wav" | "mp3" | "flac"
     }
@@ -1236,7 +1316,7 @@ export const Constants = {
   public: {
     Enums: {
       job_status_enum: ["queued", "processing", "completed", "failed"],
-      language_enum: ["en", "hi", "kn", "ta"],
+      language_enum: ["en", "hi", "kn", "ta", "bn", "te", "sa"],
       song_visibility_enum: ["private", "unlisted", "public"],
       style_family_enum: [
         "western",
@@ -1245,6 +1325,10 @@ export const Constants = {
         "kannada-folk",
         "kannada-light-classical",
         "tamil-folk",
+        "bollywood-ballad",
+        "sanskrit-shloka",
+        "bengali-rabindrasangeet",
+        "telugu-keerthana",
       ],
       tier_enum: ["free", "creator", "pro"],
       track_format_enum: ["wav", "mp3", "flac"],

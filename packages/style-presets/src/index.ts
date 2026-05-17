@@ -315,6 +315,178 @@ export const TAMIL_FOLK = preset({
   },
 });
 
+export const SANSKRIT_SHLOKA = preset({
+  id: "sanskrit-shloka",
+  title: "Sanskrit shloka",
+  subtitle: "Vedic chant, slow sustained vowels",
+  description:
+    "A Vedic devotional shloka chanted on a tanpura drone bed. Slow tempo, sustained-vowel udatta emphasis, anudatta/svarita prosody — Sprint 14's chant-style LoRA shapes the pitch and the always-on envelope pass shapes the duration. Section types are pulled from the Vedic shloka tradition (shloka_verse, shloka_refrain, phalashruti).",
+  chips: ["Sanskrit", "Vedic chant", "Devotional"],
+  lyric_source: {
+    title: "Om namo bhagavate vasudevaya (Dvadashakshara)",
+    author: "Vedic tradition (anonymous)",
+    note: "Public domain. Canonical Devanagari from the Sanskrit Documents Archive.",
+  },
+  song_document: {
+    language: "sa",
+    style_family: "sanskrit-shloka",
+    tempo_bpm: 60,
+    target_duration_seconds: 90,
+    raga: {
+      name: "bhairavi",
+      system: "carnatic",
+    },
+    orchestration: {
+      lead_vocal: "male",
+      instruments: ["tanpura", "harmonium"],
+      texture: "drone+lead",
+    },
+    sections: [
+      {
+        id: "v1",
+        type: "shloka_verse",
+        target_seconds: 30,
+        voice_id: "chant_sustained",
+        lyrics: "\u0950 \u0928\u092e\u094b \u092d\u0917\u0935\u0924\u0947 \u0935\u093e\u0938\u0941\u0926\u0947\u0935\u093e\u092f",
+        transliteration: "om namo bhagavate vasudevaya",
+        script: "devanagari",
+        language: "sa",
+      },
+      {
+        id: "r1",
+        type: "shloka_refrain",
+        target_seconds: 30,
+        voice_id: "chant_sustained",
+        lyrics: "\u0950 \u0928\u092e\u094b \u092d\u0917\u0935\u0924\u0947",
+        transliteration: "om namo bhagavate",
+        script: "devanagari",
+        language: "sa",
+      },
+      {
+        id: "p1",
+        type: "phalashruti",
+        target_seconds: 30,
+        voice_id: "chant_devotional",
+        lyrics: "\u0907\u0924\u093f \u0938\u0902\u092a\u0942\u0930\u094d\u0923\u092e\u094d",
+        transliteration: "iti sampurnam",
+        script: "devanagari",
+        language: "sa",
+      },
+    ],
+    metadata: { genre: "shloka" },
+  },
+});
+
+export const BENGALI_RABINDRASANGEET = preset({
+  id: "bengali-rabindrasangeet",
+  title: "Bengali Rabindrasangeet",
+  subtitle: "Tagore song-form, raga-tinged lyric",
+  description:
+    "A Bengali Rabindrasangeet — Tagore's own song-form. Slow-to-moderate tempo, esraj + harmonium + tabla, sustained vowels. Voices route to IndicF5 for native-Bengali pronunciation. HeartMuLa baseline drives the orchestration.",
+  chips: ["Bengali", "Rabindrasangeet", "Lyric"],
+  lyric_source: {
+    title: "Amar shonar Bangla (opening line)",
+    author: "Rabindranath Tagore (1905)",
+    note: "Public domain. National anthem of Bangladesh; original Bengali Devanagari.",
+  },
+  song_document: {
+    language: "bn",
+    style_family: "bengali-rabindrasangeet",
+    tempo_bpm: 72,
+    target_duration_seconds: 90,
+    raga: {
+      name: "bilawal",
+      system: "hindustani",
+    },
+    orchestration: {
+      lead_vocal: "female",
+      instruments: ["esraj", "harmonium", "tabla", "tanpura"],
+      texture: "lead+rhythm+drone",
+    },
+    sections: [
+      {
+        id: "v1",
+        type: "mukhda",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        lyrics: "\u0986\u09ae\u09be\u09b0 \u09b8\u09cb\u09a8\u09be\u09b0 \u09ac\u09be\u0982\u09b2\u09be",
+        transliteration: "Amar shonar Bangla",
+        script: "bengali",
+        language: "bn",
+      },
+      {
+        id: "a1",
+        type: "antara",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        script: "bengali",
+        language: "bn",
+      },
+      {
+        id: "v2",
+        type: "mukhda",
+        target_seconds: 30,
+        voice_id: "indic_bn_female",
+        script: "bengali",
+        language: "bn",
+      },
+    ],
+    metadata: { genre: "rabindrasangeet" },
+  },
+});
+
+export const TELUGU_KEERTHANA = preset({
+  id: "telugu-keerthana",
+  title: "Telugu keerthana",
+  subtitle: "Carnatic devotional, raga Mohanam",
+  description:
+    "A Telugu Carnatic keerthana set to raga Mohanam (pentatonic) and Adi tala. Mridangam + violin + tanpura; voice routes through IndicF5 for native-Telugu prosody. MusicGen+Carnatic LoRA drives the orchestration.",
+  chips: ["Telugu", "Carnatic", "Keerthana"],
+  song_document: {
+    language: "te",
+    style_family: "telugu-keerthana",
+    tempo_bpm: 82,
+    target_duration_seconds: 90,
+    tala: "adi",
+    raga: {
+      name: "mohanam",
+      system: "carnatic",
+    },
+    orchestration: {
+      lead_vocal: "male",
+      instruments: ["mridangam", "violin", "tanpura"],
+      texture: "drone+lead+percussion",
+    },
+    sections: [
+      {
+        id: "p1",
+        type: "pallavi",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+      {
+        id: "a1",
+        type: "anupallavi",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+      {
+        id: "c1",
+        type: "charanam",
+        target_seconds: 30,
+        voice_id: "indic_te_male",
+        script: "telugu",
+        language: "te",
+      },
+    ],
+    metadata: { genre: "keerthana" },
+  },
+});
+
 export const WESTERN_POP = preset({
   id: "western-pop",
   title: "Western pop",
@@ -350,6 +522,9 @@ export const PRESETS: readonly StylePreset[] = [
   HINDUSTANI_KHAYAL_SKETCH,
   KANNADA_BHAVAGEETE,
   KABIR_DOHA,
+  SANSKRIT_SHLOKA,
+  BENGALI_RABINDRASANGEET,
+  TELUGU_KEERTHANA,
   TAGORE_SET,
   BOLLYWOOD_BALLAD,
   TAMIL_FOLK,

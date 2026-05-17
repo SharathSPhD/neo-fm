@@ -22,6 +22,13 @@ StyleFamily = Literal[
     # families so they stop being mis-routed through kannada-folk.
     "kannada-light-classical",
     "tamil-folk",
+    # v1.4 Sprint 2: schema widening. Until the dedicated worker
+    # paths land (Sprint 8/14/15) the worker treats these as data
+    # forwarded to vocal-synth + music-inference unchanged.
+    "bollywood-ballad",
+    "sanskrit-shloka",
+    "bengali-rabindrasangeet",
+    "telugu-keerthana",
 ]
 TargetDuration = Literal[30, 60, 90, 180]
 Tier = Literal["free", "creator", "pro"]
@@ -43,6 +50,11 @@ class QueueMessage(BaseModel):
     attempt_id: UUID
     attempt_number: int = Field(default=1, ge=1)
     trace_id: str = Field(min_length=1)
+    # v1.4 Sprint 16: optional candidate generation. When >1, the
+    # worker renders that many alternates and lets the RLHF reranker
+    # pick which becomes `is_current=true`. Default of 1 preserves
+    # legacy single-candidate behaviour.
+    top_n_candidates: int = Field(default=1, ge=1, le=8)
 
 
 class SongDocumentSection(BaseModel):
@@ -59,6 +71,10 @@ class SongDocumentSection(BaseModel):
     swara_sequence: str | None = None
     phonemes: list[str] | None = None
     tags: list[str] | None = None
+    # v1.4 Sprint 5: per-section override of the document-level
+    # voice_id. The worker forwards both fields and lets the
+    # vocal-synth router decide.
+    voice_id: str | None = None
 
 
 class SongDocument(BaseModel):
@@ -78,3 +94,10 @@ class SongDocument(BaseModel):
     orchestration: dict[str, object] | None = None
     raga: dict[str, object] | None = None
     metadata: dict[str, object] | None = None
+    # v1.4 Sprint 5: opaque voice-catalogue id. Picked by the user in
+    # the creation canvas; forwarded by the worker to vocal-synth.
+    voice_id: str | None = None
+    # v1.4 Sprint 2: background-mix knobs (density/dynamics/...).
+    # Worker doesn't act on them yet -- they ride along for mixer
+    # consumption in Sprint 11.
+    background_mix: dict[str, object] | None = None

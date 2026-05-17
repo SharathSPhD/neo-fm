@@ -9,9 +9,12 @@
  * running the Python verifier.
  *
  * What this test guarantees:
- *   - Every loadable entry across en/hi/kn is license_assertion=public-domain.
- *   - There are at least 12 entries total and 4 per language (ADR 0006 §
- *     "Consequences").
+ *   - Every loadable entry across all bundled languages is
+ *     license_assertion=public-domain.
+ *   - There are at least 12 entries total (ADR 0006 § "Consequences"),
+ *     at least 4 each for the en/hi/kn seed languages, and at least one
+ *     entry per newly-shipping v1.4 language (ta/bn/te/sa) so the FS-
+ *     driven allow-list in `provider.ts` has something to land on.
  *   - Every entry has a non-empty body, a recognised script, and a citation.
  */
 
@@ -31,6 +34,24 @@ describe("ADR 0006 — data/public-lyrics corpus invariants", () => {
     it(`has at least 4 PD entries for language=${lang}`, () => {
       const entries = loadCorpus(lang, { rootDir: CORPUS });
       expect(entries.length).toBeGreaterThanOrEqual(4);
+      for (const e of entries) {
+        expect(e.license_assertion).toBe("public-domain");
+        expect(e.body.length).toBeGreaterThan(0);
+        expect(e.source_url).toMatch(/^https?:\/\//);
+        expect(e.source_citation.length).toBeGreaterThan(0);
+        expect(e.script.length).toBeGreaterThan(0);
+      }
+    });
+  }
+
+  // v1.4 Sprint 6: light invariants for newly-shipping languages. The
+  // corpus is intentionally smaller than the seed languages — the goal is
+  // "at least one verified-PD entry so the picker has something to show",
+  // not "match en/hi/kn breadth". Sprints 8/9/14 keep extending these.
+  for (const lang of ["ta", "bn", "te", "sa"] as const) {
+    it(`has at least 1 PD entry for v1.4 language=${lang}`, () => {
+      const entries = loadCorpus(lang, { rootDir: CORPUS });
+      expect(entries.length).toBeGreaterThanOrEqual(1);
       for (const e of entries) {
         expect(e.license_assertion).toBe("public-domain");
         expect(e.body.length).toBeGreaterThan(0);

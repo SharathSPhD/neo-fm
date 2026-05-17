@@ -72,6 +72,13 @@ vocal_failures_total = Counter(
     registry=REGISTRY,
 )
 
+stem_failures_total = Counter(
+    "neofm_worker_stem_failures_total",
+    "Per-preset stems-synth call failures (soft errors; insert is dropped).",
+    ["preset"],
+    registry=REGISTRY,
+)
+
 governor_paused = Gauge(
     "neofm_worker_governor_paused",
     "1 when the governor has paused new pgmq.read calls.",

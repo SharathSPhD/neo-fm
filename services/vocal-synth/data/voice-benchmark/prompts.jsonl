@@ -1,0 +1,16 @@
+{"prompt_id": "hi-01", "text": "namaste, ek nayi shaam aayi", "language": "hi", "script": "latin", "voice_id": "indic_hi_male_broadcast"}
+{"prompt_id": "hi-02", "text": "गाँव के पास नदी है, जो हमेशा बहती है", "language": "hi", "script": "devanagari", "voice_id": "indic_hi_female_lyrical"}
+{"prompt_id": "hi-03", "text": "साँसें थम जाएँ, फिर भी हम चलते जाएँ", "language": "hi", "script": "devanagari", "voice_id": "indic_hi_male_broadcast"}
+{"prompt_id": "hi-04", "text": "rang barse bheege chunar wali", "language": "hi", "script": "latin", "voice_id": "indic_hi_female_lyrical"}
+{"prompt_id": "ta-01", "text": "காற்று வீசும் இரவில் நிலா சிரிக்கிறது", "language": "ta", "script": "tamil", "voice_id": "indic_ta_female_devotional"}
+{"prompt_id": "ta-02", "text": "kadalil alaigal pol nam manam paayudhu", "language": "ta", "script": "latin", "voice_id": "indic_ta_male_nadaswaram"}
+{"prompt_id": "ta-03", "text": "தாயே சக்தி நீ காப்பாய்", "language": "ta", "script": "tamil", "voice_id": "indic_ta_female_devotional"}
+{"prompt_id": "ta-04", "text": "kannamma kannamma vaazhga vaazhga", "language": "ta", "script": "latin", "voice_id": "indic_ta_male_nadaswaram"}
+{"prompt_id": "bn-01", "text": "এ পথ যদি না শেষ হয়", "language": "bn", "script": "bengali", "voice_id": "indic_bn_male_rabindra"}
+{"prompt_id": "bn-02", "text": "ami tomar premete hobo sobaikar paranosheshe", "language": "bn", "script": "latin", "voice_id": "indic_bn_female"}
+{"prompt_id": "bn-03", "text": "আকাশ ভরা সূর্য তারা, বিশ্ব ভরা প্রাণ", "language": "bn", "script": "bengali", "voice_id": "indic_bn_male_rabindra"}
+{"prompt_id": "bn-04", "text": "phool phutechhe boner pothe", "language": "bn", "script": "latin", "voice_id": "indic_bn_female"}
+{"prompt_id": "te-01", "text": "andam neevu, ananda nadi neevu", "language": "te", "script": "latin", "voice_id": "indic_te_female"}
+{"prompt_id": "te-02", "text": "నీ నవ్వులో నాదే వేయి ఉదయాలు", "language": "te", "script": "telugu", "voice_id": "indic_te_male"}
+{"prompt_id": "te-03", "text": "మనసు పాడేది నీ పేరే ప్రియా", "language": "te", "script": "telugu", "voice_id": "indic_te_female"}
+{"prompt_id": "te-04", "text": "evaru nuvvu evaru nenu", "language": "te", "script": "latin", "voice_id": "indic_te_male"}

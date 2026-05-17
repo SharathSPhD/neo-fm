@@ -165,6 +165,101 @@ describe("SongDocumentSchema", () => {
     expect(() => SongTitleSchema.parse("")).toThrow();
     expect(() => SongTitleSchema.parse("   ")).toThrow();
   });
+
+  // ---- v1.4 Sprint 2 widening ------------------------------------------
+
+  it("accepts kannada-light-classical paired with a carnatic-system raga", () => {
+    const ok = {
+      language: "kn" as const,
+      style_family: "kannada-light-classical" as const,
+      target_duration_seconds: 30 as const,
+      sections: [
+        { id: "p1", type: "pallavi" as const, target_seconds: 30 },
+      ],
+      raga: { name: "mohanam", system: "carnatic" as const },
+    };
+    expect(() => SongDocumentSchema.parse(ok)).not.toThrow();
+  });
+
+  it("accepts kannada-light-classical paired with a light-classical raga", () => {
+    const ok = {
+      language: "kn" as const,
+      style_family: "kannada-light-classical" as const,
+      target_duration_seconds: 30 as const,
+      sections: [
+        { id: "p1", type: "pallavi" as const, target_seconds: 30 },
+      ],
+      raga: { name: "kapi", system: "light-classical" as const },
+    };
+    expect(() => SongDocumentSchema.parse(ok)).not.toThrow();
+  });
+
+  it("rejects western paired with any raga (raga is meaningless for western)", () => {
+    const bad = {
+      language: "en" as const,
+      style_family: "western" as const,
+      target_duration_seconds: 30 as const,
+      sections: [{ id: "v", type: "verse" as const, target_seconds: 30 }],
+      raga: { name: "yaman", system: "hindustani" as const },
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow(/not permitted/);
+  });
+
+  it("accepts a Sanskrit shloka doc with the new section types", () => {
+    const ok = {
+      language: "sa" as const,
+      style_family: "sanskrit-shloka" as const,
+      target_duration_seconds: 90 as const,
+      sections: [
+        { id: "v1", type: "shloka_verse" as const, target_seconds: 30 },
+        { id: "r1", type: "shloka_refrain" as const, target_seconds: 30 },
+        { id: "ph", type: "phalashruti" as const, target_seconds: 30 },
+      ],
+      raga: { name: "saveri", system: "carnatic" as const },
+    };
+    expect(() => SongDocumentSchema.parse(ok)).not.toThrow();
+  });
+
+  it("accepts a Bengali rabindrasangeet doc", () => {
+    const ok = {
+      language: "bn" as const,
+      style_family: "bengali-rabindrasangeet" as const,
+      target_duration_seconds: 30 as const,
+      sections: [{ id: "s1", type: "mukhda" as const, target_seconds: 30 }],
+      raga: { name: "yaman", system: "hindustani" as const },
+    };
+    expect(() => SongDocumentSchema.parse(ok)).not.toThrow();
+  });
+
+  it("accepts an optional voice_id and background_mix block", () => {
+    const ok = {
+      language: "kn" as const,
+      style_family: "kannada-light-classical" as const,
+      target_duration_seconds: 30 as const,
+      sections: [{ id: "p1", type: "pallavi" as const, target_seconds: 30 }],
+      voice_id: "kn-female-warm-01",
+      background_mix: {
+        accompaniment_density: "balanced" as const,
+        dynamics: "calm" as const,
+        brightness: "bright" as const,
+        reverb: "hall" as const,
+      },
+    };
+    const parsed = SongDocumentSchema.parse(ok);
+    expect(parsed.voice_id).toBe("kn-female-warm-01");
+    expect(parsed.background_mix?.reverb).toBe("hall");
+  });
+
+  it("rejects an out-of-range background_mix value", () => {
+    const bad = {
+      language: "kn" as const,
+      style_family: "kannada-light-classical" as const,
+      target_duration_seconds: 30 as const,
+      sections: [{ id: "p1", type: "pallavi" as const, target_seconds: 30 }],
+      background_mix: { reverb: "swimming-pool" },
+    };
+    expect(() => SongDocumentSchema.parse(bad)).toThrow();
+  });
 });
 
 describe("allocateSectionDurations", () => {

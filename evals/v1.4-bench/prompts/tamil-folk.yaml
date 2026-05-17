@@ -1,0 +1,64 @@
+# Tamil folk (janapadar / parai / villu paatu) prompts. Engine target
+# is heartmula+tamil-folk-lora; expected_voice is the Tamil
+# nadaswaram-style persona from voice_catalog.json.
+prompts:
+  - id: tamil-folk-001
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "parai vaaikku kondatum"
+    expected: { raga: gambhiranattai, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-002
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "kummi adi penne kummi adi"
+    expected: { raga: shankarabharanam, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-003
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "kanniyamma kanniyamma"
+    expected: { raga: bilahari, tala: chapu, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-004
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "thoppi karuppu sami"
+    expected: { raga: madhyamavati, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-005
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "vaaraan vaaraan vaaraan"
+    expected: { raga: sahana, tala: chapu, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-006
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "naadu kandalum"
+    expected: { raga: kapi, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-007
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "chinna pulla nee"
+    expected: { raga: sindhubhairavi, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-008
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "ootha kuduthaaru"
+    expected: { raga: ananda_bhairavi, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-009
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "kummi adi kummi adi"
+    expected: { raga: hindolam, tala: adi, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60
+  - id: tamil-folk-010
+    style: tamil-folk
+    language: ta
+    lyrics_seed: "vetri kodi katti"
+    expected: { raga: bahudari, tala: misra_chapu, voice_persona: indic_ta_male_nadaswaram }
+    duration_seconds: 60

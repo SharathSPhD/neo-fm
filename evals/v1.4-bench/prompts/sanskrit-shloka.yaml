@@ -1,0 +1,64 @@
+# Sanskrit shloka / dvadashakshara prompts. Engine target is
+# heartmula + chant style LoRA (Sprint 14); voice catalogue routes to
+# the chant_sustained / chant_devotional personas.
+prompts:
+  - id: sanskrit-shloka-001
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "om namo bhagavate vasudevaya"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60
+  - id: sanskrit-shloka-002
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "shantakaram bhujagashayanam"
+    expected: { raga: null, tala: null, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: sanskrit-shloka-003
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "asato ma sad gamaya"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60
+  - id: sanskrit-shloka-004
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "twameva mata cha pita twameva"
+    expected: { raga: null, tala: null, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: sanskrit-shloka-005
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "yada yada hi dharmasya"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60
+  - id: sanskrit-shloka-006
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "vakratunda mahakaya"
+    expected: { raga: null, tala: null, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: sanskrit-shloka-007
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "om bhur bhuvah swaha"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60
+  - id: sanskrit-shloka-008
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "saha navavatu saha nau bhunaktu"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60
+  - id: sanskrit-shloka-009
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "sarve bhavantu sukhinah"
+    expected: { raga: null, tala: null, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: sanskrit-shloka-010
+    style: sanskrit-shloka
+    language: sa
+    lyrics_seed: "guru brahma guru vishnu"
+    expected: { raga: null, tala: null, voice_persona: chant_sustained }
+    duration_seconds: 60

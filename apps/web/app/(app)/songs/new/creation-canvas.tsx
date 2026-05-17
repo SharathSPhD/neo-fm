@@ -8,9 +8,16 @@ import { useMemo, useRef, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
+import {
+  AdvancedDisclosure,
+  EMPTY_ADVANCED_STATE,
+  parseSectionTagsRaw,
+  type AdvancedState,
+} from "./advanced-disclosure";
 import { LibraryPicker } from "./library-picker";
 import { PresetGallery } from "./preset-gallery";
 import { LYRIC_MAX_CHARS, SectionEditor } from "./section-editor";
+import { VoicePicker } from "./voice-picker";
 
 type StyleFamily =
   | "western"
@@ -18,8 +25,16 @@ type StyleFamily =
   | "hindustani"
   | "kannada-folk"
   | "kannada-light-classical"
-  | "tamil-folk";
-type Language = "en" | "hi" | "kn" | "ta";
+  | "tamil-folk"
+  // v1.4 Sprint 2 widening; available to advanced users even though the
+  // dedicated co-composers don't ship until Sprint 14/15. Until then
+  // the canvas routes them through the closest existing co-composer
+  // (see `packages/co-composer/src/index.ts`).
+  | "bollywood-ballad"
+  | "sanskrit-shloka"
+  | "bengali-rabindrasangeet"
+  | "telugu-keerthana";
+type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 
 const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
   { value: "carnatic", label: "Carnatic" },
@@ -27,6 +42,10 @@ const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
   { value: "kannada-light-classical", label: "Kannada light-classical" },
   { value: "kannada-folk", label: "Kannada folk" },
   { value: "tamil-folk", label: "Tamil folk" },
+  { value: "bollywood-ballad", label: "Bollywood ballad" },
+  { value: "bengali-rabindrasangeet", label: "Bengali Rabindrasangeet" },
+  { value: "telugu-keerthana", label: "Telugu keerthana" },
+  { value: "sanskrit-shloka", label: "Sanskrit shloka" },
   { value: "western", label: "Western" },
 ];
 
@@ -34,6 +53,9 @@ const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
   { value: "hi", label: "Hindi" },
   { value: "kn", label: "Kannada" },
   { value: "ta", label: "Tamil" },
+  { value: "bn", label: "Bengali" },
+  { value: "te", label: "Telugu" },
+  { value: "sa", label: "Sanskrit" },
   { value: "en", label: "English" },
 ];
 
@@ -63,6 +85,13 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
   "kannada-light-classical": "pallavi",
   "tamil-folk": "folk_refrain",
   western: "verse",
+  // v1.4 Sprint 2: bollywood-ballad follows the Western verse/chorus
+  // shape; rabindrasangeet uses the Hindustani mukhda; keerthana uses
+  // the Carnatic pallavi; shloka uses the dedicated shloka_verse type.
+  "bollywood-ballad": "verse",
+  "bengali-rabindrasangeet": "mukhda",
+  "telugu-keerthana": "pallavi",
+  "sanskrit-shloka": "shloka_verse",
 };
 
 export function CreationCanvas() {
@@ -75,6 +104,17 @@ export function CreationCanvas() {
   const [activePreset, setActivePreset] = useState<StylePreset | null>(null);
   const [sections, setSections] = useState<Section[]>(() => initialSections(DEFAULT_FORM));
   const [libraryOpenFor, setLibraryOpenFor] = useState<number | null>(null);
+  // v1.4 Sprint 4: advanced disclosure state. Defaults are "inherit"
+  // everywhere so the simple-form path still produces the same document
+  // it did in v1.3.
+  const [advanced, setAdvanced] = useState<AdvancedState>(EMPTY_ADVANCED_STATE);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [savePending, setSavePending] = useState(false);
+  // v1.4 Sprint 5: selected voice catalogue id. Empty string = "Auto"
+  // (let the vocal-synth router pick by language). The picker shows
+  // a "Suggested for <language>" group + a global list of all 16
+  // personas, plus a 10s preview play button per row.
+  const [voiceId, setVoiceId] = useState<string>("");
 
   // Ref to the form root so that picking a preset can scroll the page to
   // the form selectors and pull keyboard focus onto the title input. The
@@ -164,6 +204,79 @@ export function CreationCanvas() {
     setSections((prev) => prev.map((s, i) => (i === idx ? next : s)));
   }
 
+  // Live preview of the SongDocument the API will see. We rebuild on
+  // every state change so the preview can't drift from the document
+  // we actually POST. `useMemo` keeps the JSON.stringify cheap-ish.
+  const previewJson = useMemo(() => {
+    const doc = buildSongDocument(
+      form,
+      activePreset,
+      sections,
+      title,
+      advanced,
+      voiceId,
+    );
+    return JSON.stringify(doc, null, 2);
+  }, [form, activePreset, sections, title, advanced, voiceId]);
+
+  async function savePreset(defaultTitle: string) {
+    setSaveStatus(null);
+    setSavePending(true);
+    try {
+      const doc = buildSongDocument(
+        form,
+        activePreset,
+        sections,
+        title,
+        advanced,
+        voiceId,
+      );
+      const res = await fetch("/api/user-presets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          title: (title.trim() || defaultTitle).slice(0, SONG_TITLE_MAX_CHARS),
+          song_document: doc,
+        }),
+      });
+      if (res.status === 401) {
+        setSaveStatus("Sign in to save personal presets.");
+        return;
+      }
+      if (res.status === 409) {
+        setSaveStatus("You've hit the 20-preset cap. Delete one to save more.");
+        return;
+      }
+      if (res.status === 422) {
+        const body = (await res.json().catch(() => null)) as
+          | { details?: { fieldErrors?: Record<string, string[]> } }
+          | null;
+        const firstField = body?.details?.fieldErrors
+          ? Object.keys(body.details.fieldErrors)[0]
+          : null;
+        setSaveStatus(
+          firstField
+            ? `Preset rejected (${firstField} invalid).`
+            : "Preset rejected (validation failed).",
+        );
+        return;
+      }
+      if (!res.ok) {
+        const t = await res.text();
+        setSaveStatus(`Save failed: ${res.status} ${t.slice(0, 120)}`);
+        return;
+      }
+      const body = (await res.json().catch(() => null)) as
+        | { title?: string }
+        | null;
+      setSaveStatus(`Saved as "${body?.title ?? "preset"}".`);
+    } catch (e) {
+      setSaveStatus(`Save failed: ${(e as Error).message}`);
+    } finally {
+      setSavePending(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -176,7 +289,14 @@ export function CreationCanvas() {
       return;
     }
 
-    const song_document = buildSongDocument(form, activePreset, sections, title);
+    const song_document = buildSongDocument(
+      form,
+      activePreset,
+      sections,
+      title,
+      advanced,
+      voiceId,
+    );
 
     // Validate session client-side first so we don't burn a 401 round-trip.
     const supabase = createBrowserSupabase();
@@ -287,6 +407,23 @@ export function CreationCanvas() {
             ))}
           </select>
         </Field>
+
+        <VoicePicker
+          value={voiceId}
+          onChange={setVoiceId}
+          language={form.language}
+          previewBaseUrl={getVoicePreviewBaseUrl()}
+        />
+
+        <AdvancedDisclosure
+          styleFamily={form.style_family}
+          value={advanced}
+          onChange={setAdvanced}
+          previewJson={previewJson}
+          onSaveAsPreset={savePreset}
+          saveDisabled={savePending}
+          saveStatus={saveStatus}
+        />
 
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -405,6 +542,14 @@ function syncSectionsToStyle(prev: Section[], style: StyleFamily): Section[] {
       "outro",
     ],
     "tamil-folk": ["folk_refrain", "folk_stanza", "intro", "outro"],
+    // v1.4 Sprint 2 additions: bollywood follows Western contour;
+    // rabindrasangeet uses the Hindustani mukhda/antara/saranam frame;
+    // keerthana uses Carnatic pallavi/anupallavi/charanam; shloka uses
+    // the dedicated shloka_verse / shloka_refrain / phalashruti shape.
+    "bollywood-ballad": ["intro", "verse", "chorus", "bridge", "outro"],
+    "bengali-rabindrasangeet": ["mukhda", "antara", "saranam", "alaap"],
+    "telugu-keerthana": ["pallavi", "anupallavi", "charanam"],
+    "sanskrit-shloka": ["shloka_verse", "shloka_refrain", "phalashruti"],
   };
   return prev.map((s) => {
     if (allowedFor[style].includes(s.type)) return s;
@@ -447,12 +592,20 @@ function rescaleSections(
  *
  * Without a preset, we build a minimal document from the form +
  * edited sections.
+ *
+ * v1.4 Sprint 4: also overlays the Advanced disclosure values --
+ * tempo_bpm, key (Western only, into metadata.key), raga.{name,system},
+ * tala, orchestration.{lead_vocal,instruments,texture},
+ * background_mix.{accompaniment_density,dynamics}, and parsed
+ * section-level tags appended onto every section.
  */
-function buildSongDocument(
+export function buildSongDocument(
   form: FormState,
   preset: StylePreset | null,
   editedSections: Section[],
   title: string,
+  advanced: AdvancedState = EMPTY_ADVANCED_STATE,
+  voiceId: string = "",
 ): Record<string, unknown> {
   const trimmedTitle = title.trim();
   const titleField =
@@ -460,11 +613,12 @@ function buildSongDocument(
       ? { title: trimmedTitle.slice(0, SONG_TITLE_MAX_CHARS) }
       : {};
 
+  let doc: Record<string, unknown>;
   if (preset) {
     const base = preset.song_document;
     const styleChanged = base.style_family !== form.style_family;
     const folkStyle = form.style_family === "kannada-folk";
-    return {
+    doc = {
       ...base,
       ...(styleChanged ? { raga: undefined } : {}),
       ...(folkStyle ? { raga: undefined } : {}),
@@ -474,15 +628,135 @@ function buildSongDocument(
       target_duration_seconds: form.target_duration_seconds,
       sections: editedSections,
     };
+  } else {
+    doc = {
+      ...titleField,
+      style_family: form.style_family,
+      language: form.language,
+      target_duration_seconds: form.target_duration_seconds,
+      sections: editedSections,
+    };
   }
 
-  return {
-    ...titleField,
-    style_family: form.style_family,
-    language: form.language,
-    target_duration_seconds: form.target_duration_seconds,
-    sections: editedSections,
-  };
+  // Apply advanced overrides. Every field is "if set, otherwise leave
+  // the preset / co-composer to pick". Empty inputs from the Advanced
+  // disclosure stay empty so we don't clobber a preset's good defaults.
+  const withAdvanced = applyAdvancedOverrides(doc, advanced, form.style_family);
+  // v1.4 Sprint 5: stamp the voice catalogue id last. Empty string
+  // means "use language-default routing" and we *omit* the field so
+  // the Zod schema doesn't see an empty string (which fails the
+  // ``min(1)`` rule).
+  if (voiceId) {
+    withAdvanced.voice_id = voiceId;
+  } else {
+    // If a preset carried a voice_id and the user cleared it, make
+    // sure we don't accidentally smuggle the preset's value through.
+    delete withAdvanced.voice_id;
+  }
+  return withAdvanced;
+}
+
+const WESTERN_STYLES_FOR_KEY = new Set(["western", "bollywood-ballad"]);
+
+/**
+ * Pure helper exported for unit tests. Folds the Advanced disclosure
+ * state into a partial SongDocument. Always returns a new object;
+ * never mutates the input.
+ */
+export function applyAdvancedOverrides(
+  baseDoc: Record<string, unknown>,
+  advanced: AdvancedState,
+  style: string,
+): Record<string, unknown> {
+  const doc: Record<string, unknown> = { ...baseDoc };
+
+  // Tempo: numeric, clamped to the schema bounds (30-240). Anything
+  // outside the range falls back to inherit so the doc validates.
+  if (
+    advanced.tempoBpm !== "" &&
+    Number.isFinite(advanced.tempoBpm) &&
+    advanced.tempoBpm >= 30 &&
+    advanced.tempoBpm <= 240
+  ) {
+    doc.tempo_bpm = advanced.tempoBpm;
+  }
+
+  // Key: Western-only. Land in `metadata.key` (mirrors how `fork-applier`
+  // stores it) so the worker can read it through one consistent path.
+  if (advanced.key.trim() !== "" && WESTERN_STYLES_FOR_KEY.has(style)) {
+    const metadata = (doc.metadata as Record<string, unknown> | undefined) ?? {};
+    doc.metadata = { ...metadata, key: advanced.key.trim() };
+  }
+
+  // Raga: requires both name + system to be set.
+  if (advanced.ragaName.trim() !== "" && advanced.ragaSystem !== "") {
+    doc.raga = {
+      name: advanced.ragaName.trim().toLowerCase(),
+      system: advanced.ragaSystem,
+    };
+  }
+
+  // Tala.
+  if (advanced.tala.trim() !== "") {
+    doc.tala = advanced.tala.trim();
+  }
+
+  // Orchestration.
+  const orchestrationOverrides: Record<string, unknown> = {};
+  if (advanced.leadVocal !== "") {
+    orchestrationOverrides.lead_vocal = advanced.leadVocal;
+  }
+  if (advanced.instruments.length > 0) {
+    orchestrationOverrides.instruments = advanced.instruments;
+  }
+  if (advanced.texture.trim() !== "") {
+    orchestrationOverrides.texture = advanced.texture.trim();
+  }
+  if (Object.keys(orchestrationOverrides).length > 0) {
+    const base = (doc.orchestration as Record<string, unknown> | undefined) ?? {};
+    doc.orchestration = { ...base, ...orchestrationOverrides };
+  }
+
+  // Background mix.
+  const mixOverrides: Record<string, unknown> = {};
+  if (advanced.density !== "") {
+    mixOverrides.accompaniment_density = advanced.density;
+  }
+  if (advanced.dynamics !== "") {
+    mixOverrides.dynamics = advanced.dynamics;
+  }
+  if (Object.keys(mixOverrides).length > 0) {
+    const base = (doc.background_mix as Record<string, unknown> | undefined) ?? {};
+    doc.background_mix = { ...base, ...mixOverrides };
+  }
+
+  // Section tags: append parsed `key:value` lines to every section's
+  // tag bag. tag-merge runs server-side to dedupe and resolve
+  // single-valued family conflicts.
+  const parsedTags = parseSectionTagsRaw(advanced.sectionTagsRaw);
+  if (parsedTags.length > 0 && Array.isArray(doc.sections)) {
+    doc.sections = (doc.sections as Section[]).map((s) => ({
+      ...s,
+      tags: [...(s.tags ?? []), ...parsedTags],
+    }));
+  }
+
+  return doc;
+}
+
+/**
+ * v1.4 Sprint 5: compute the public Storage URL prefix for the
+ * `voice-samples` bucket. We do this client-side because the previews
+ * are public, the URL is stable, and we want to avoid a server
+ * round-trip per voice row. Falls back to a relative path so the
+ * unit/E2E tests can serve the WAVs from a local fixture.
+ */
+function getVoicePreviewBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "/voice-samples";
+  // Supabase public objects live at
+  // <base>/storage/v1/object/public/<bucket>/<path>.
+  return `${url.replace(/\/$/, "")}/storage/v1/object/public/voice-samples`;
 }
 
 function Field({

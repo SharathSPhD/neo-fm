@@ -21,6 +21,7 @@ from typing import Literal
 import numpy as np
 
 from .model import VocalRequest, _write_wav_mono
+from .voice_catalog import get_voice
 
 
 _DEFAULT_VOICE_DESCRIPTOR = (
@@ -34,6 +35,7 @@ def voice_descriptor(
     voice_timbre: Literal["male", "female", "androgynous"],
     style_family: str,
     raga_name: str | None,
+    voice_prompt: str | None = None,
 ) -> str:
     """Build a Parler voice descriptor string.
 
@@ -41,7 +43,44 @@ def voice_descriptor(
     voice description influences pitch register, breathiness, and
     pacing. We tailor it to the song style so a Carnatic kriti gets
     a different vibe from a Bollywood ballad.
+
+    (v1.4 Sprint 5) When the caller supplies an explicit
+    ``voice_prompt`` (resolved from the catalogue in ``routing.py``),
+    we *prefer* it as the base voice description and only append the
+    style/raga adornment. That way each persona keeps its identity
+    across styles, but a "warm Kannada male" still ornaments
+    differently when sung in a Carnatic vs Bhavageete context.
     """
+    if voice_prompt:
+        # The catalogue already encodes timbre/register/persona, so
+        # don't double up with `timbre_phrase`. We *do* keep the
+        # style and raga adornment because the catalogue entry is
+        # style-agnostic on purpose.
+        if style_family == "carnatic":
+            adornment = ", ornamented gamakas, devotional"
+        elif style_family == "hindustani":
+            adornment = ", legato sustains, meditative"
+        elif style_family == "kannada-folk":
+            adornment = ", rural folk character, lively"
+        elif style_family == "kannada-light-classical":
+            adornment = ", gentle melismas, lyric phrasing, sugama-sangeetha"
+        elif style_family == "tamil-folk":
+            adornment = ", percussive call-and-response, parai energy"
+        elif style_family == "bollywood-ballad":
+            adornment = ", cinematic ballad phrasing, lush"
+        elif style_family == "sanskrit-shloka":
+            adornment = ", slow sustained chant, meditative"
+        elif style_family == "bengali-rabindrasangeet":
+            adornment = ", deliberate vibrato, Rabindrasangeet phrasing"
+        elif style_family == "telugu-keerthana":
+            adornment = ", devotional Carnatic keerthana phrasing"
+        else:
+            adornment = ", contemporary pop polish"
+        raga_phrase = f", performing in raga {raga_name}" if raga_name else ""
+        prompt = voice_prompt.strip()
+        if prompt.endswith("."):
+            prompt = prompt[:-1]
+        return f"{prompt}{adornment}{raga_phrase}, clear diction, natural breath."
     timbre_phrase = {
         "male": "A male vocalist with warm chest tone",
         "female": "A female vocalist with bright, expressive timbre",
@@ -58,6 +97,14 @@ def voice_descriptor(
         adornment = ", gentle melismas, lyric phrasing, sugama-sangeetha"
     elif style_family == "tamil-folk":
         adornment = ", percussive call-and-response, parai energy"
+    elif style_family == "bollywood-ballad":
+        adornment = ", cinematic ballad phrasing, lush"
+    elif style_family == "sanskrit-shloka":
+        adornment = ", slow sustained chant, meditative"
+    elif style_family == "bengali-rabindrasangeet":
+        adornment = ", deliberate vibrato, Rabindrasangeet phrasing"
+    elif style_family == "telugu-keerthana":
+        adornment = ", devotional Carnatic keerthana phrasing"
     else:
         adornment = ", contemporary pop polish"
     raga_phrase = f", performing in raga {raga_name}" if raga_name else ""
@@ -146,10 +193,16 @@ class ParlerTTSModel:
                     )
                     continue
                 text = sec.transliteration or sec.lyrics or ""
+                # v1.4 Sprint 5: when a section carries a catalogue
+                # voice_id, look up the prompt and feed it to the
+                # descriptor builder. Unknown ids fall through to
+                # the legacy timbre/style descriptor.
+                voice_entry = get_voice(sec.voice_id)
                 description = voice_descriptor(
                     voice_timbre=req.voice_timbre,
                     style_family=req.style_family,
                     raga_name=sec.raga_name,
+                    voice_prompt=voice_entry.prompt if voice_entry else None,
                 )
                 desc_inputs = self._description_tokenizer(  # type: ignore[union-attr]
                     description,

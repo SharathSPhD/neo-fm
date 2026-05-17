@@ -1,0 +1,63 @@
+# Bollywood-style ballad prompts. Engine target is the default
+# heartmula backbone (no LoRA). Voices span Hindi catalogue.
+prompts:
+  - id: bollywood-001
+    style: bollywood
+    language: hi
+    lyrics_seed: "tujhse naraz nahi zindagi"
+    expected: { raga: kalyani, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: bollywood-002
+    style: bollywood
+    language: hi
+    lyrics_seed: "lag jaa gale ke phir"
+    expected: { raga: pahadi, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: bollywood-003
+    style: bollywood
+    language: hi
+    lyrics_seed: "ye dil na hota bechara"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: bollywood-004
+    style: bollywood
+    language: hi
+    lyrics_seed: "pehla nasha pehla khumar"
+    expected: { raga: shankara, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: bollywood-005
+    style: bollywood
+    language: hi
+    lyrics_seed: "ek pyar ka nagma hai"
+    expected: { raga: kafi, tala: dadra, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: bollywood-006
+    style: bollywood
+    language: hi
+    lyrics_seed: "kuch toh log kahenge"
+    expected: { raga: yaman, tala: kaharva, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: bollywood-007
+    style: bollywood
+    language: hi
+    lyrics_seed: "tere bina zindagi se"
+    expected: { raga: jhinjhoti, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: bollywood-008
+    style: bollywood
+    language: hi
+    lyrics_seed: "mere sapno ki rani"
+    expected: { raga: kalyani, tala: kaharva, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: bollywood-009
+    style: bollywood
+    language: hi
+    lyrics_seed: "chura liya hai tumne"
+    expected: { raga: shivranjani, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: bollywood-010
+    style: bollywood
+    language: hi
+    lyrics_seed: "rim jhim gire saawan"
+    expected: { raga: malhar, tala: kaharva, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60

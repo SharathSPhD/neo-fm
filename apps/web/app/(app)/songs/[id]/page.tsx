@@ -250,8 +250,22 @@ export default async function SongDetailPage({
           />
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
-              <VariationButton songId={data.id} />
-              <RemixButton songId={data.id} />
+              <VariationButton
+                songId={data.id}
+                styleFamily={doc?.style_family ?? "western"}
+                sections={doc?.sections?.map((s) => ({
+                  id: s.id,
+                  type: s.type,
+                }))}
+              />
+              <RemixButton
+                songId={data.id}
+                styleFamily={doc?.style_family ?? "western"}
+                sections={doc?.sections?.map((s) => ({
+                  id: s.id,
+                  type: s.type,
+                }))}
+              />
             </div>
           ) : null}
           <code className="font-mono text-[11px] text-foreground/50">

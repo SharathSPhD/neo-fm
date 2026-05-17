@@ -1,0 +1,62 @@
+[project]
+name = "neo-fm-lyric-gen"
+version = "0.1.0"
+description = "Indic lyric generation sidecar (IndicBART SFT) for neo-fm. Internal HMAC API, never internet-facing. v1.4 Sprint 7."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9.0",
+  "prometheus_client>=0.20",
+  # PyYAML is needed by scripts/prepare_dataset.py to read corpus
+  # frontmatter; it's also a transitive dep of uvicorn[standard].
+  "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+# Only installed on the DGX where the real IndicBART pipeline runs.
+# CI / unit tests rely on the FakeLyricGenModel path and skip these.
+training = [
+  "torch>=2.4",
+  "transformers>=4.45",
+  "datasets>=3.0",
+  "huggingface_hub>=0.25",
+  "accelerate>=0.34",
+  "safetensors>=0.4",
+  "peft>=0.13",
+  "sentencepiece>=0.2",
+  "indic-nlp-library>=0.92",
+  "evaluate>=0.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.27",
+  "pytest>=8.3",
+  "ruff>=0.7",
+  "mypy>=1.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true

@@ -38,7 +38,7 @@ class VocalSection:
     id: str
     type: str  # verse, chorus, bridge, intro, outro, instrumental, ...
     lyrics: str | None
-    language: str  # en|hi|kn|ta|te|bn
+    language: str  # en|hi|kn|ta|te|bn|sa
     script: str | None  # devanagari|tamil|kannada|telugu|bengali|latin
     transliteration: str | None
     target_seconds: int
@@ -51,6 +51,12 @@ class VocalSection:
     # G2P rollout; the routing model treats missing == "fall back to
     # text-based preprocessing".
     phonemes: tuple[str, ...] | None = None
+    # v1.4 Sprint 5: opaque voice-catalogue id (see
+    # `app/voice_catalog.json`). When set, the router consults the
+    # catalogue and uses the entry's backend instead of running the
+    # language-based decision in `_pick_backend`. None = inherit
+    # routing-by-language as before.
+    voice_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +74,15 @@ class VocalRequest:
         "kannada-folk",
         "kannada-light-classical",
         "tamil-folk",
+        # v1.4 Sprint 2 widening — mirror of the Zod
+        # `StyleFamilySchema`. The router doesn't need to do anything
+        # different for these yet, but pydantic refuses to coerce
+        # values that aren't in the Literal so the contract must keep
+        # pace with the schema.
+        "bollywood-ballad",
+        "sanskrit-shloka",
+        "bengali-rabindrasangeet",
+        "telugu-keerthana",
     ]
     voice_timbre: Literal["male", "female", "androgynous"]
     sample_rate: int

@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "1.0.0",
+  "comment": "v1.4 Sprint 5 voice catalogue, extended in Sprints 12 and 13. 16 prompt-engineered personas; 8 indic_* entries point at IndicF5 (Sprint 12), 2 indic_kn_* entries point at custom NeMo Kannada (Sprint 13), the remaining 6 stay on Indic-Parler-TTS for English/Hindi/Sanskrit/cinematic personas. The catalogue grows by adding new personas — entries are append-only so saved SongDocuments referencing an older voice_id keep resolving. Preview WAVs live in the public `voice-samples` Supabase Storage bucket under `samples/<voice_id>.wav`; the operator regenerates them with `services/vocal-synth/scripts/render_voice_previews.py` when the prompt changes.",
+  "voices": [
+    {
+      "voice_id": "indic_hi_male_broadcast",
+      "language": "hi",
+      "gender": "male",
+      "persona": "broadcast-clear",
+      "label": "Hindi · Broadcast male",
+      "backend": "indicf5",
+      "prompt": "An adult Indian-Hindi male voice with broadcast clarity, mid-baritone register, neutral accent, even pacing, studio-quality dry recording.",
+      "preview_path": "samples/indic_hi_male_broadcast.wav"
+    },
+    {
+      "voice_id": "indic_hi_female_lyrical",
+      "language": "hi",
+      "gender": "female",
+      "persona": "lyrical-warm",
+      "label": "Hindi · Lyrical female",
+      "backend": "indicf5",
+      "prompt": "An adult Indian-Hindi female voice with a warm, lyrical timbre, light vibrato, slightly intimate microphone proximity, suited to ballads.",
+      "preview_path": "samples/indic_hi_female_lyrical.wav"
+    },
+    {
+      "voice_id": "indic_kn_male_warm",
+      "language": "kn",
+      "gender": "male",
+      "persona": "warm-storyteller",
+      "label": "Kannada · Warm storyteller",
+      "backend": "nemo",
+      "prompt": "An adult Kannada male voice with a warm storyteller cadence, soft consonants, mid register, room ambience suggesting an evening recital.",
+      "preview_path": "samples/indic_kn_male_warm.wav"
+    },
+    {
+      "voice_id": "indic_kn_female_bhajan",
+      "language": "kn",
+      "gender": "female",
+      "persona": "bhajan",
+      "label": "Kannada · Bhajan female",
+      "backend": "nemo",
+      "prompt": "An adult Kannada female voice trained in bhajan/bhavageete singing, sustained vowels, light upward melisma, mid-bright timbre.",
+      "preview_path": "samples/indic_kn_female_bhajan.wav"
+    },
+    {
+      "voice_id": "indic_ta_male_nadaswaram",
+      "language": "ta",
+      "gender": "male",
+      "persona": "classical-paired",
+      "label": "Tamil · Classical-paired male",
+      "backend": "indicf5",
+      "prompt": "An adult Tamil male voice that pairs well with nadaswaram and thavil, declamatory devotional style, full chest resonance, slightly nasal projection.",
+      "preview_path": "samples/indic_ta_male_nadaswaram.wav"
+    },
+    {
+      "voice_id": "indic_ta_female_devotional",
+      "language": "ta",
+      "gender": "female",
+      "persona": "bhakti",
+      "label": "Tamil · Bhakti female",
+      "backend": "indicf5",
+      "prompt": "An adult Tamil female voice for bhakti/devotional repertoire, clear diction, light reverb suggesting a temple hall, soft attack.",
+      "preview_path": "samples/indic_ta_female_devotional.wav"
+    },
+    {
+      "voice_id": "indic_te_male",
+      "language": "te",
+      "gender": "male",
+      "persona": "neutral",
+      "label": "Telugu · Neutral male",
+      "backend": "indicf5",
+      "prompt": "An adult Telugu male voice, neutral accent, even-tempered, studio-quality dry recording, mid register.",
+      "preview_path": "samples/indic_te_male.wav"
+    },
+    {
+      "voice_id": "indic_te_female",
+      "language": "te",
+      "gender": "female",
+      "persona": "neutral",
+      "label": "Telugu · Neutral female",
+      "backend": "indicf5",
+      "prompt": "An adult Telugu female voice, neutral accent, even-tempered, studio-quality dry recording, mid-bright register.",
+      "preview_path": "samples/indic_te_female.wav"
+    },
+    {
+      "voice_id": "indic_bn_male_rabindra",
+      "language": "bn",
+      "gender": "male",
+      "persona": "rabindrasangeet",
+      "label": "Bengali · Rabindrasangeet male",
+      "backend": "indicf5",
+      "prompt": "An adult Bengali male voice in the Rabindrasangeet tradition, deliberate vibrato, sustained vowels, light tanpura-room ambience.",
+      "preview_path": "samples/indic_bn_male_rabindra.wav"
+    },
+    {
+      "voice_id": "indic_bn_female",
+      "language": "bn",
+      "gender": "female",
+      "persona": "neutral",
+      "label": "Bengali · Neutral female",
+      "backend": "indicf5",
+      "prompt": "An adult Bengali female voice, neutral accent, even pacing, studio-quality dry recording.",
+      "preview_path": "samples/indic_bn_female.wav"
+    },
+    {
+      "voice_id": "en_in_male_announcer",
+      "language": "en",
+      "gender": "male",
+      "persona": "indian-english-announcer",
+      "label": "English (IN) · Announcer male",
+      "backend": "parler",
+      "prompt": "An adult Indian-English male voice with announcer authority, mid-baritone, crisp consonants, slight upward inflection on phrase ends.",
+      "preview_path": "samples/en_in_male_announcer.wav"
+    },
+    {
+      "voice_id": "en_in_female_rj",
+      "language": "en",
+      "gender": "female",
+      "persona": "radio-jockey",
+      "label": "English (IN) · Radio jockey female",
+      "backend": "parler",
+      "prompt": "An adult Indian-English female radio-jockey voice, conversational warmth, slight smile audible in the timbre, mid-bright register.",
+      "preview_path": "samples/en_in_female_rj.wav"
+    },
+    {
+      "voice_id": "chant_sustained",
+      "language": "sa",
+      "gender": "androgynous",
+      "persona": "slow-sustained-chant",
+      "label": "Sanskrit · Sustained chant",
+      "backend": "parler",
+      "prompt": "An adult Sanskrit chant voice, slow and sustained, ambiguous gender, dry hall reverb suggesting a meditation space, long vowels.",
+      "preview_path": "samples/chant_sustained.wav"
+    },
+    {
+      "voice_id": "chant_devotional",
+      "language": "hi",
+      "gender": "androgynous",
+      "persona": "bright-devotional",
+      "label": "Devotional · Bright chant",
+      "backend": "parler",
+      "prompt": "An adult Hindi devotional chant voice, bright timbre, ambiguous gender, light bell harmonics in the room ambience, mid-fast pacing.",
+      "preview_path": "samples/chant_devotional.wav"
+    },
+    {
+      "voice_id": "cinematic_baritone",
+      "language": "en",
+      "gender": "male",
+      "persona": "warm-narrator",
+      "label": "Cinematic · Baritone narrator",
+      "backend": "parler",
+      "prompt": "An adult English male warm-narrator voice in a cinematic baritone, slow pacing, deep chest resonance, light room reverb, intimate microphone proximity.",
+      "preview_path": "samples/cinematic_baritone.wav"
+    },
+    {
+      "voice_id": "cinematic_alto",
+      "language": "en",
+      "gender": "female",
+      "persona": "airy-alto",
+      "label": "Cinematic · Airy alto",
+      "backend": "parler",
+      "prompt": "An adult English female airy-alto voice, breathy at the attack, mid register, light hall reverb, soulful expressive phrasing.",
+      "preview_path": "samples/cinematic_alto.wav"
+    }
+  ]
+}

@@ -46,6 +46,24 @@ const TEMPLATES: Record<StyleFamily, SectionType[]> = {
     "folk_refrain",
     "folk_stanza",
   ],
+  // v1.4 Sprint 2: new style families.
+  // - Bollywood ballad: Western verse-chorus-verse-chorus skeleton with
+  //   an intro/outro runway — the typical 4-section radio-pop shape.
+  // - Bengali rabindrasangeet: Tagore's songs follow a mukhda/antara
+  //   contour identical to Hindustani lyric form. Re-use that template.
+  // - Telugu keerthana: Tyagaraja-style keerthana mirrors the Carnatic
+  //   kriti structure (pallavi/anupallavi/charanam).
+  // - Sanskrit shloka: chant form lands on the dedicated shloka section
+  //   types (verse / refrain / phalashruti). Sprint 14 refines this.
+  "bollywood-ballad": ["intro", "verse", "chorus", "verse", "chorus", "outro"],
+  "bengali-rabindrasangeet": ["mukhda", "antara"],
+  "telugu-keerthana": ["pallavi", "anupallavi", "charanam"],
+  "sanskrit-shloka": [
+    "shloka_verse",
+    "shloka_refrain",
+    "shloka_verse",
+    "phalashruti",
+  ],
 };
 
 /** Section types whose body MUST be empty (no lyrics). */

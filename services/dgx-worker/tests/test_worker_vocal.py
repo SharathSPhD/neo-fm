@@ -201,6 +201,62 @@ async def test_worker_forwards_section_phonemes_to_vocal_synth() -> None:
 
 
 @pytest.mark.asyncio
+async def test_worker_forwards_document_voice_id_to_vocal_synth() -> None:
+    """v1.4 Sprint 5: the SongDocument-level `voice_id` (set from the
+    voice picker on the creation canvas) flows through to the
+    /v1/vocalize body so the router can swap in the catalogue prompt.
+    """
+    from app.models import SongDocument  # local import: heavy module
+
+    db = FakeWorkerDB()
+    msg = make_message()
+    job_id = str(msg["job_id"])
+    db.jobs[job_id] = FakeJob(
+        user_id=str(msg["user_id"]),
+        song_document_id=str(msg["song_document_id"]),
+    )
+    db.song_documents[str(msg["song_document_id"])] = SongDocument.model_validate(
+        {
+            "language": "kn",
+            "style_family": "kannada-light-classical",
+            "target_duration_seconds": 30,
+            "voice_id": "indic_kn_female_bhajan",
+            "sections": [
+                {
+                    "id": "verse",
+                    "type": "verse",
+                    "lyrics": "ಕನ್ನಡ ಭಾವಗೀತೆ",
+                    "script": "kannada",
+                    "target_seconds": 30,
+                },
+            ],
+        },
+    )
+    msg_id = db.enqueue(msg)
+
+    inference = FakeInferenceClient()
+    vocal = FakeVocalClient()
+    storage = FakeStorageClient()
+
+    outcome = await process_one(
+        settings=_settings_with_vocals("kn"),
+        db=db,  # type: ignore[arg-type]
+        inference=inference,  # type: ignore[arg-type]
+        storage=storage,  # type: ignore[arg-type]
+        queue_msg={"msg_id": msg_id, "message": msg},
+        vocal=vocal,  # type: ignore[arg-type]
+    )
+
+    assert outcome == JobOutcome.COMPLETED
+    assert len(vocal.calls) == 1
+    body = vocal.calls[0]["request"]
+    assert body["voice_id"] == "indic_kn_female_bhajan"
+    # Per-section override defaults to None when the document only
+    # carries a top-level voice_id.
+    assert body["sections"][0]["voice_id"] is None
+
+
+@pytest.mark.asyncio
 async def test_worker_skips_vocal_synth_when_no_languages_configured() -> None:
     db = FakeWorkerDB()
     msg = make_message()

@@ -1,0 +1,63 @@
+# Tagore translations / English Gitanjali prompts. Voice persona is
+# the English / Indian-English neutral catalogue; engine is heartmula.
+prompts:
+  - id: tagore-001
+    style: tagore
+    language: en
+    lyrics_seed: "where the mind is without fear"
+    expected: { raga: kafi, tala: kaharva, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-002
+    style: tagore
+    language: en
+    lyrics_seed: "when i bring to you coloured toys"
+    expected: { raga: pahadi, tala: kaharva, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-003
+    style: tagore
+    language: en
+    lyrics_seed: "the song that i came to sing"
+    expected: { raga: yaman, tala: dadra, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-004
+    style: tagore
+    language: en
+    lyrics_seed: "leave this chanting and singing"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: tagore-005
+    style: tagore
+    language: en
+    lyrics_seed: "give me strength to make my love"
+    expected: { raga: yaman, tala: kaharva, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-006
+    style: tagore
+    language: en
+    lyrics_seed: "i thought that my voyage had come"
+    expected: { raga: bhimpalasi, tala: dadra, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: tagore-007
+    style: tagore
+    language: en
+    lyrics_seed: "this is my prayer to thee my lord"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-008
+    style: tagore
+    language: en
+    lyrics_seed: "thou hast made me endless"
+    expected: { raga: yaman, tala: dadra, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: tagore-009
+    style: tagore
+    language: en
+    lyrics_seed: "the morning sea of silence"
+    expected: { raga: malkauns, tala: rupak, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: tagore-010
+    style: tagore
+    language: en
+    lyrics_seed: "light my light the world filling light"
+    expected: { raga: kalyani, tala: kaharva, voice_persona: en_in_female_rj }
+    duration_seconds: 60

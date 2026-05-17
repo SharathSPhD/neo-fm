@@ -1,0 +1,63 @@
+# Hindustani khayal/thumri prompts. Each row gives an opening phrase
+# (mukhda or sthayi) and the raga/tala the engine should hold.
+prompts:
+  - id: hindustani-001
+    style: hindustani
+    language: hi
+    lyrics_seed: "piya bavari kaheko"
+    expected: { raga: yaman, tala: teentaal, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: hindustani-002
+    style: hindustani
+    language: hi
+    lyrics_seed: "jamuna kinare mora gaon"
+    expected: { raga: bhairav, tala: ektaal, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: hindustani-003
+    style: hindustani
+    language: hi
+    lyrics_seed: "saj sundar gaajun"
+    expected: { raga: malkauns, tala: jhaptaal, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: hindustani-004
+    style: hindustani
+    language: hi
+    lyrics_seed: "albela sajan aayo re"
+    expected: { raga: ahir_bhairav, tala: teentaal, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: hindustani-005
+    style: hindustani
+    language: hi
+    lyrics_seed: "balama mose bole na"
+    expected: { raga: bhimpalasi, tala: teentaal, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: hindustani-006
+    style: hindustani
+    language: hi
+    lyrics_seed: "kaun gali gayo shyaam"
+    expected: { raga: kafi, tala: rupak, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: hindustani-007
+    style: hindustani
+    language: hi
+    lyrics_seed: "more piya bhaye"
+    expected: { raga: marwa, tala: teentaal, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: hindustani-008
+    style: hindustani
+    language: hi
+    lyrics_seed: "raina beeti jaaye"
+    expected: { raga: todi, tala: ektaal, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: hindustani-009
+    style: hindustani
+    language: hi
+    lyrics_seed: "saghan ghata barse"
+    expected: { raga: malhar, tala: teentaal, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: hindustani-010
+    style: hindustani
+    language: hi
+    lyrics_seed: "more saiyaan to hai pardes"
+    expected: { raga: desh, tala: jhaptaal, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60

@@ -5,11 +5,16 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 /**
  * Cover-art panel.
  *
- * v1.3 Sprint 3: generation now flows through the DGX cover-art worker.
- * The POST returns 202 + `{ attempt_id, status: "queued" }`; this client
- * polls the GET endpoint every 2.5s until the attempt reaches a terminal
- * state. While `queued` / `processing` we show "Cover art rendering…";
- * the previous current artefact stays visible until the new one lands.
+ * v1.4 Sprint 1: default flow is the **template tier**, a deterministic
+ * SVG rendered inline by `/api/songs/[id]/cover-art-template` (no queue,
+ * no GPU). The button delivers a cover in well under 1 s. A separate
+ * "Premium HD render" affordance reaches the diffusion tier behind
+ * pgmq when `NEXT_PUBLIC_COVER_ART_PREMIUM=1` (i.e. when the operator
+ * has wired the DGX cover-art-synth sidecar).
+ *
+ * Polling stays in place for the premium tier (the GET endpoint
+ * surfaces the queued/processing/completed status of the most recent
+ * attempt, regardless of tier).
  */
 type AttemptStatus =
   | "queued"
@@ -30,6 +35,14 @@ interface CoverArtResponse {
   } | null;
 }
 
+interface TemplateResponse {
+  attempt_id: string;
+  cover_art_id: string | null;
+  url: string | null;
+  backend: "template";
+  svg_size: number;
+}
+
 const TERMINAL: ReadonlySet<NonNullable<AttemptStatus>> = new Set([
   "completed",
   "failed",
@@ -42,7 +55,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
   const [url, setUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<AttemptStatus>(null);
   const [error, setError] = useState<string | null>(null);
-  const [disabled, setDisabled] = useState(false);
+  const [premiumDisabled, setPremiumDisabled] = useState(false);
   const [pending, startTransition] = useTransition();
   const pollHandle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastAttemptIdRef = useRef<string | null>(null);
@@ -92,19 +105,47 @@ export function CoverArtPanel({ songId }: { songId: string }) {
     };
   }, [applyState, fetchState, schedulePoll]);
 
-  function roll() {
+  function generateTemplate() {
+    setError(null);
+    startTransition(async () => {
+      const res = await fetch(`/api/songs/${songId}/cover-art-template`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(
+          data.details ?? data.error ?? "Couldn't render the template cover.",
+        );
+        return;
+      }
+      const data = (await res.json()) as TemplateResponse;
+      lastAttemptIdRef.current = data.attempt_id;
+      setStatus("completed");
+      if (data.url) setUrl(data.url);
+      // Belt-and-braces: re-read /cover-art so the panel reflects the
+      // freshly-flipped is_current row exactly as it appears server-side.
+      void (async () => {
+        const state = await fetchState();
+        applyState(state);
+      })();
+    });
+  }
+
+  function generatePremium() {
     setError(null);
     startTransition(async () => {
       const res = await fetch(`/api/songs/${songId}/cover-art`, {
         method: "POST",
       });
       if (res.status === 503) {
-        setDisabled(true);
+        setPremiumDisabled(true);
         return;
       }
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.details ?? data.error ?? "Couldn't enqueue cover art.");
+        setError(
+          data.details ?? data.error ?? "Couldn't enqueue cover art.",
+        );
         return;
       }
       const data = (await res.json()) as {
@@ -119,9 +160,13 @@ export function CoverArtPanel({ songId }: { songId: string }) {
   }
 
   const inFlight = status === "queued" || status === "processing";
+  // Premium tier is opt-in; only show it when the operator has flagged
+  // the DGX cover-art-synth pipeline as wired.
+  const premiumEnabled =
+    process.env.NEXT_PUBLIC_COVER_ART_PREMIUM === "1" && !premiumDisabled;
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-2" data-cover-art-panel>
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
         Cover art
       </h2>
@@ -137,6 +182,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
               src={url}
               alt="Cover art"
               className="h-full w-full rounded-md object-cover"
+              data-cover-art-image
             />
           ) : (
             <span>No cover art yet</span>
@@ -158,33 +204,35 @@ export function CoverArtPanel({ songId }: { songId: string }) {
           ) : null}
         </div>
         <div className="flex flex-col gap-2">
-          {disabled ? (
-            <p className="rounded-md border border-amber-400/30 bg-amber-400/5 px-3 py-2 text-xs text-amber-200">
-              Cover-art generation isn&apos;t wired on this environment yet.
-              The placeholder will show on share cards until the engine is
-              configured.
+          <button
+            type="button"
+            onClick={generateTemplate}
+            disabled={pending || inFlight}
+            className="self-start rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
+            data-cover-art-template
+          >
+            {pending && !inFlight
+              ? "Rendering…"
+              : url
+                ? "Re-roll cover art"
+                : "Generate cover art"}
+          </button>
+          {premiumEnabled ? (
+            <button
+              type="button"
+              onClick={generatePremium}
+              disabled={pending || inFlight}
+              className="self-start rounded-md border border-muted/30 px-4 py-2 text-xs font-medium text-foreground/80 transition hover:border-accent/60 disabled:opacity-50"
+              data-cover-art-premium
+            >
+              {inFlight ? "Premium queued…" : "Generate HD (premium)"}
+            </button>
+          ) : null}
+          {status && !inFlight && status !== "completed" ? (
+            <p className="text-xs text-foreground/60">
+              Last attempt: {status}
             </p>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={roll}
-                disabled={pending || inFlight}
-                className="self-start rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
-              >
-                {pending || inFlight
-                  ? "Rendering…"
-                  : url
-                    ? "Re-roll cover art"
-                    : "Generate cover art"}
-              </button>
-              {status && !inFlight && status !== "completed" ? (
-                <p className="text-xs text-foreground/60">
-                  Last attempt: {status}
-                </p>
-              ) : null}
-            </>
-          )}
+          ) : null}
           {error ? (
             <p role="alert" className="text-xs text-red-300">
               {error}

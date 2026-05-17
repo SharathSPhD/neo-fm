@@ -1,9 +1,11 @@
 """
-Stereo mixdown of instrumental + vocal stems.
+Stereo mixdown of instrumental + vocal + transition-stem inputs.
 
 The worker fetches:
-  - An instrumental WAV from music-inference (HeartMuLa).
+  - An instrumental WAV from music-inference (HeartMuLa or MusicGen).
   - Zero or more vocal WAVs from vocal-synth (one per language).
+  - Zero or more transition stems from stems-synth (v1.4 Sprint 11):
+    tabla tihais, parai breaks, tanpura drones, harmonium swells.
 
 `mix_to_stereo_48k` does the rest:
 
@@ -16,7 +18,11 @@ The worker fetches:
      a 30s track into 60s.
   4. Side-chain duck the instrumental against a smoothed envelope of
      the (summed) vocal so the lead sits clearly above the bed.
-  5. Sum, soft-knee compress, peak-limit, and write a stereo PCM-16
+  5. v1.4 Sprint 11: layer each transition stem on top of the mix at
+     its requested `insert_at_seconds`, with a `crossfade_seconds`
+     equal-power fade in/out so the seam between section and stem
+     doesn't click.
+  6. Sum, soft-knee compress, peak-limit, and write a stereo PCM-16
      WAV at 48 kHz.
 
 The mixer is intentionally pure numpy/soundfile so it can run in CI
@@ -27,6 +33,8 @@ parameters have sensible defaults but are tunable via the
 ADR 0010 (audio normalisation) gets revised in Sprint 5: the worker now
 delivers a stereo file when vocals are present, mono when not. Storage
 keeps the original `.wav` extension; downstream players cope.
+ADR 0031 (v1.4 Sprint 11) adds the stem-insert path; the mixer
+delivers stereo whenever either vocals OR stems are present.
 """
 
 from __future__ import annotations
@@ -37,6 +45,25 @@ from dataclasses import dataclass
 
 import numpy as np
 import soundfile as sf
+
+
+@dataclass(frozen=True)
+class StemInsert:
+    """A single transition stem rendered by stems-synth (v1.4 Sprint 11).
+
+    `audio` is the raw WAV bytes (any sample rate; the mixer
+    resamples). `insert_at_seconds` is where the stem should appear
+    in the final mix. `crossfade_seconds` controls how much of the
+    base mix is faded into / out of the stem region — equal-power so
+    the seam stays clickless. `gain` is per-stem linear gain (defaults
+    to 1.0; the stem-synth preset already carries a default that the
+    worker can multiply into this).
+    """
+    audio: bytes
+    insert_at_seconds: float
+    crossfade_seconds: float = 0.5
+    gain: float = 1.0
+    label: str = ""  # purely for logs
 
 
 @dataclass(frozen=True)
@@ -53,6 +80,9 @@ class MixSettings:
     duck_release_seconds: float = 0.20
     # Final soft limiter target peak (linear).
     peak_target: float = 0.95
+    # v1.4 Sprint 11: during a stem insert we duck the base mix
+    # *under* the stem so the percussion break has the foreground.
+    stem_duck_amount: float = 0.7
 
 
 def _decode_wav(buf: bytes) -> tuple[np.ndarray, int]:
@@ -154,12 +184,91 @@ def _encode_mono_wav(samples: np.ndarray, sr: int) -> bytes:
     return out.getvalue()
 
 
+def _equal_power_window(n: int, fade_n: int) -> np.ndarray:
+    """Build an equal-power envelope of length `n` with `fade_n`
+    samples ramping in at the start and `fade_n` samples ramping out
+    at the end.
+
+    Used by `_apply_stem_inserts` to fade the stem in/out so the
+    insert boundary is clickless. Equal-power means the sum of base+
+    stem energy stays roughly constant across the crossfade, instead
+    of dipping to half (which a linear fade would cause).
+    """
+    env = np.ones(n, dtype=np.float32)
+    fade_n = max(0, min(fade_n, n // 2))
+    if fade_n == 0:
+        return env
+    ramp = np.linspace(0.0, 1.0, fade_n, dtype=np.float32)
+    # equal-power: sin^2 + cos^2 = 1
+    env[:fade_n] = np.sin(0.5 * np.pi * ramp).astype(np.float32)
+    env[n - fade_n:] = np.cos(0.5 * np.pi * ramp).astype(np.float32)
+    return env
+
+
+def _apply_stem_inserts(
+    base: np.ndarray,
+    *,
+    stems: list[StemInsert],
+    sample_rate: int,
+    settings: MixSettings,
+    log_sink: list[dict[str, object]] | None = None,
+) -> np.ndarray:
+    """Layer `stems` on top of `base`, ducking the base under each
+    stem with an equal-power crossfade.
+
+    `base` may be shorter than the latest stem `insert_at_seconds +
+    stem_duration`; in that case we extend `base` with zeros so the
+    insert lands without truncation. Each stem mix step logs a tuple
+    of `{label, insert_at, duration, gain, peak}` for the worker's
+    structured log line (Sprint 11 contract: ≥1 stem insert log per
+    transition).
+    """
+    if not stems:
+        return base
+    log_sink = log_sink if log_sink is not None else []
+    out = base.astype(np.float32, copy=True)
+    for stem in stems:
+        s, s_sr = _decode_wav(stem.audio)
+        s = _resample(s, s_sr, sample_rate)
+        if s.size == 0:
+            continue
+        start = int(max(0.0, stem.insert_at_seconds) * sample_rate)
+        end = start + s.size
+        if end > out.size:
+            out = np.concatenate(
+                [out, np.zeros(end - out.size, dtype=np.float32)]
+            )
+        fade_n = int(max(0.0, stem.crossfade_seconds) * sample_rate)
+        env = _equal_power_window(s.size, fade_n)
+        stem_signal = (s * env * stem.gain).astype(np.float32)
+        # Duck the base under the stem region so the percussion
+        # break takes the foreground. The duck mirrors the envelope
+        # (equal-power), so we get a smooth crossfade *into* the
+        # stem rather than a hard mute.
+        if settings.stem_duck_amount > 0.0:
+            duck = (1.0 - settings.stem_duck_amount * env).astype(np.float32)
+            out[start:end] = out[start:end] * duck
+        out[start:end] = out[start:end] + stem_signal
+        log_sink.append(
+            {
+                "label": stem.label or "stem",
+                "insert_at_seconds": float(stem.insert_at_seconds),
+                "duration_seconds": float(s.size / sample_rate),
+                "gain": float(stem.gain),
+                "peak": float(np.max(np.abs(stem_signal))) if stem_signal.size else 0.0,
+            }
+        )
+    return out
+
+
 def mix_to_stereo_48k(
     *,
     instrumental_wav: bytes,
     vocal_wavs: list[bytes] | None = None,
+    stem_inserts: list[StemInsert] | None = None,
     target_duration_seconds: int | None = None,
     settings: MixSettings | None = None,
+    insert_log: list[dict[str, object]] | None = None,
 ) -> bytes:
     """Return a stereo 48 kHz PCM-16 WAV.
 
@@ -168,6 +277,11 @@ def mix_to_stereo_48k(
       the instrumental, resamples, peak-limits, and re-encodes stereo.
     - With vocals, vocals are summed (averaged), ducked against the
       instrumental, and the result is mixed.
+    - v1.4 Sprint 11: pass ``stem_inserts`` to layer transition stems
+      onto the mix with equal-power crossfades. Each insert ducks the
+      base mix under it via ``settings.stem_duck_amount``. The
+      ``insert_log`` argument, when provided, receives a per-stem dict
+      so the worker can log a `mixer_stem_insert` line.
     - Output is centred (mono replicated to L+R). Phase 6 will add a
       width parameter for instrument panning.
     """
@@ -176,11 +290,20 @@ def mix_to_stereo_48k(
 
     instr, instr_sr = _decode_wav(instrumental_wav)
     instr_48 = _resample(instr, instr_sr, sr_out)
+    stems_inserts = stem_inserts or []
 
     if not vocal_wavs:
         if target_duration_seconds is not None:
             instr_48 = _pad_or_trim(instr_48, target_duration_seconds * sr_out)
         instr_48 = instr_48 * settings.instrumental_gain
+        if stems_inserts:
+            instr_48 = _apply_stem_inserts(
+                instr_48,
+                stems=stems_inserts,
+                sample_rate=sr_out,
+                settings=settings,
+                log_sink=insert_log,
+            )
         instr_48 = _soft_compress(instr_48)
         instr_48 = _peak_limit(instr_48, settings.peak_target)
         return _encode_stereo_wav(instr_48, instr_48, sr_out)
@@ -193,10 +316,14 @@ def mix_to_stereo_48k(
         stems.append(s_48)
 
     # Time-align: target length is max(instrumental, longest vocal,
-    # target_duration_seconds * sr).
+    # target_duration_seconds * sr, latest stem insert end).
     candidate_n = [instr_48.size] + [s.size for s in stems]
     if target_duration_seconds is not None:
         candidate_n.append(int(target_duration_seconds * sr_out))
+    for ins in stems_inserts:
+        ins_s, ins_sr = _decode_wav(ins.audio)
+        ins_dur = ins_s.size / max(1, ins_sr) if ins_s.size else 0.0
+        candidate_n.append(int((ins.insert_at_seconds + ins_dur) * sr_out))
     target_n = max(candidate_n)
 
     instr_48 = _pad_or_trim(instr_48, target_n)
@@ -227,7 +354,22 @@ def mix_to_stereo_48k(
 
     instr_48 = instr_48 * settings.instrumental_gain
     mixed = (instr_48 + vocal_sum).astype(np.float32)
+    if stems_inserts:
+        mixed = _apply_stem_inserts(
+            mixed,
+            stems=stems_inserts,
+            sample_rate=sr_out,
+            settings=settings,
+            log_sink=insert_log,
+        )
     mixed = _soft_compress(mixed)
     mixed = _peak_limit(mixed, settings.peak_target)
     # Mono replicated to stereo for v1; Sprint 6+ adds panning.
     return _encode_stereo_wav(mixed, mixed, sr_out)
+
+
+__all__ = [
+    "MixSettings",
+    "StemInsert",
+    "mix_to_stereo_48k",
+]

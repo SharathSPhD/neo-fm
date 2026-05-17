@@ -48,6 +48,73 @@ def test_section_seconds_must_sum_to_total() -> None:
         SongDocument.model_validate(bad)
 
 
+# ---- v1.4 Sprint 2 widening -------------------------------------------
+
+
+def test_v14_kannada_light_classical_accepts_carnatic_raga() -> None:
+    ok = {
+        "language": "kn",
+        "style_family": "kannada-light-classical",
+        "target_duration_seconds": 30,
+        "sections": [
+            {"id": "p1", "type": "pallavi", "target_seconds": 30},
+        ],
+        "raga": {"name": "mohanam", "system": "carnatic"},
+    }
+    SongDocument.model_validate(ok)
+
+
+def test_v14_sanskrit_shloka_accepts_new_section_types() -> None:
+    ok = {
+        "language": "sa",
+        "style_family": "sanskrit-shloka",
+        "target_duration_seconds": 90,
+        "sections": [
+            {"id": "v1", "type": "shloka_verse", "target_seconds": 30},
+            {"id": "r1", "type": "shloka_refrain", "target_seconds": 30},
+            {"id": "ph", "type": "phalashruti", "target_seconds": 30},
+        ],
+        "raga": {"name": "saveri", "system": "carnatic"},
+    }
+    SongDocument.model_validate(ok)
+
+
+def test_v14_western_rejects_any_raga() -> None:
+    bad = {
+        "language": "en",
+        "style_family": "western",
+        "target_duration_seconds": 30,
+        "sections": [
+            {"id": "v", "type": "verse", "target_seconds": 30},
+        ],
+        "raga": {"name": "yaman", "system": "hindustani"},
+    }
+    with pytest.raises(ValidationError):
+        SongDocument.model_validate(bad)
+
+
+def test_v14_voice_id_and_background_mix_are_accepted() -> None:
+    ok = {
+        "language": "kn",
+        "style_family": "kannada-light-classical",
+        "target_duration_seconds": 30,
+        "sections": [
+            {"id": "p1", "type": "pallavi", "target_seconds": 30},
+        ],
+        "voice_id": "kn-female-warm-01",
+        "background_mix": {
+            "accompaniment_density": "balanced",
+            "dynamics": "calm",
+            "brightness": "bright",
+            "reverb": "hall",
+        },
+    }
+    doc = SongDocument.model_validate(ok)
+    assert doc.voice_id == "kn-female-warm-01"
+    assert doc.background_mix is not None
+    assert doc.background_mix.reverb == "hall"
+
+
 def test_allocate_fills_unset_seconds() -> None:
     raw: dict[str, object] = {
         "language": "en",

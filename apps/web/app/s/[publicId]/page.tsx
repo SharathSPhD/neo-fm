@@ -26,6 +26,7 @@ import {
 } from "@/lib/supabase/server";
 import { LikeButton } from "@/components/like-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
+import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
 import { PublicSongAudio } from "./public-song-audio";
 
@@ -291,7 +292,24 @@ export default async function PublicSongPage({
               initialCount={likeCount}
               signedIn={!!currentUserId}
             />
-            <RemixButton songId={data.id} variant="subtle" />
+            <VariationButton
+              songId={data.id}
+              styleFamily={doc?.style_family ?? "western"}
+              sections={doc?.sections?.map((s) => ({
+                id: s.id,
+                type: s.type,
+              }))}
+              variant="subtle"
+            />
+            <RemixButton
+              songId={data.id}
+              styleFamily={doc?.style_family ?? "western"}
+              sections={doc?.sections?.map((s) => ({
+                id: s.id,
+                type: s.type,
+              }))}
+              variant="subtle"
+            />
           </div>
         </section>
       ) : (

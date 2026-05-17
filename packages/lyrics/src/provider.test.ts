@@ -86,6 +86,66 @@ describe("PublicLyricsLibraryProvider", () => {
     ).rejects.toThrow(/is not paired with style_family=carnatic/);
   });
 
+  // v1.4 Sprint 6: new families that landed PD material this sprint.
+  it("emits a SongDocument for bengali-rabindrasangeet/bn", async () => {
+    const p = new PublicLyricsLibraryProvider({ rootDir: CORPUS });
+    const doc = await p.generate({
+      language: "bn",
+      style_family: "bengali-rabindrasangeet",
+      target_duration_seconds: 60,
+    });
+    expect(() => SongDocumentSchema.parse(doc)).not.toThrow();
+    expect(doc.sections[0]?.type).toBe("mukhda");
+    for (const s of doc.sections) {
+      expect(s.script).toBe("bengali");
+    }
+  });
+
+  it("emits a SongDocument for telugu-keerthana/te", async () => {
+    const p = new PublicLyricsLibraryProvider({ rootDir: CORPUS });
+    const doc = await p.generate({
+      language: "te",
+      style_family: "telugu-keerthana",
+      target_duration_seconds: 90,
+    });
+    expect(() => SongDocumentSchema.parse(doc)).not.toThrow();
+    expect(doc.sections[0]?.type).toBe("pallavi");
+  });
+
+  it("emits a SongDocument for sanskrit-shloka/sa", async () => {
+    const p = new PublicLyricsLibraryProvider({ rootDir: CORPUS });
+    const doc = await p.generate({
+      language: "sa",
+      style_family: "sanskrit-shloka",
+      target_duration_seconds: 60,
+    });
+    expect(() => SongDocumentSchema.parse(doc)).not.toThrow();
+    expect(doc.sections[0]?.type).toBe("shloka_verse");
+    for (const s of doc.sections) {
+      if (s.lyrics) expect(s.script).toBe("devanagari");
+    }
+  });
+
+  it("FS-driven allow-list: carnatic now accepts kn and sa once on disk", async () => {
+    // Both kn and sa are present in the corpus this sprint, so the
+    // allow-list (preference ∩ bundled languages) should let either through.
+    const p = new PublicLyricsLibraryProvider({ rootDir: CORPUS });
+    await expect(
+      p.generate({
+        language: "kn",
+        style_family: "carnatic",
+        target_duration_seconds: 60,
+      }),
+    ).resolves.toBeDefined();
+    await expect(
+      p.generate({
+        language: "sa",
+        style_family: "carnatic",
+        target_duration_seconds: 60,
+      }),
+    ).resolves.toBeDefined();
+  });
+
   it("attributes the source under metadata.neo_fm_lyrics_provider", async () => {
     const p = new PublicLyricsLibraryProvider({ rootDir: CORPUS });
     const doc = await p.generate({

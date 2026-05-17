@@ -30,6 +30,13 @@ from typing import Literal
 
 import numpy as np
 
+from .chant_style import (
+    ChantStyleSpec,
+    apply_chant_prosody,
+    load_chant_spec,
+    should_use_chant_style,
+)
+from .indicf5 import IndicF5Model
 from .model import (
     FakeVocalModel,
     SvaraTTSModel,
@@ -37,10 +44,12 @@ from .model import (
     VocalSection,
     _write_wav_mono,
 )
+from .nemo import NeMoTTSModel
 from .parler import ParlerTTSModel
 from .preprocess import preprocess_section
+from .voice_catalog import get_voice
 
-BackendKey = Literal["svara", "parler", "fake"]
+BackendKey = Literal["svara", "parler", "indicf5", "nemo", "fake"]
 
 
 @dataclass
@@ -50,6 +59,11 @@ class RouteDecision:
     section_id: str
     backend: BackendKey
     reason: str
+    # v1.4 Sprint 14: was the chant-style adapter activated for
+    # this section? ``None`` means "not asked"; ``False`` means
+    # asked + declined; ``True`` means the chant prosody pass
+    # ran. The eval harness inspects this to attribute chant MOS.
+    chant_style_applied: bool | None = None
 
 
 def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
@@ -57,6 +71,10 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
 
     Rules (first match wins):
 
+      0. (v1.4 Sprint 5) Section carries a ``voice_id`` resolved in the
+         catalogue -> use that entry's backend. Unknown ids fall
+         through to the language-based decision so a stale id never
+         breaks a render.
       1. Instrumental / empty section -> `fake` (cheap silence).
       2. Latin-script text in any non-English language -> `parler`
          (Parler's voice descriptors carry pronunciation hints
@@ -65,6 +83,22 @@ def _pick_backend(section: VocalSection) -> tuple[BackendKey, str]:
       4. Otherwise (Devanagari / Kannada / Tamil / Telugu / Bengali
          in their native scripts) -> `svara`.
     """
+    if section.voice_id:
+        entry = get_voice(section.voice_id)
+        if entry is not None:
+            # v1.4 Sprint 12: IndicF5 lands as a real third route.
+            # NeMo (Sprint 13) is still future; future-only backends
+            # fall back to parler so a catalogue entry tagged "nemo"
+            # before the model exists doesn't break a render.
+            if entry.backend == "parler":
+                return "parler", f"voice_id:{entry.voice_id}"
+            if entry.backend == "svara":
+                return "svara", f"voice_id:{entry.voice_id}"
+            if entry.backend == "indicf5":
+                return "indicf5", f"voice_id:{entry.voice_id}"
+            if entry.backend == "nemo":
+                return "nemo", f"voice_id:{entry.voice_id}"
+            return "parler", f"voice_id:{entry.voice_id}:fallback_to_parler"
     if section.type == "instrumental" or not (section.lyrics or section.transliteration):
         return "fake", "no-text"
     text = section.transliteration or section.lyrics or ""
@@ -86,7 +120,10 @@ class RoutingVocalModel:
         *,
         svara: SvaraTTSModel | None = None,
         parler: ParlerTTSModel | None = None,
+        indicf5: IndicF5Model | None = None,
+        nemo: NeMoTTSModel | None = None,
         fallback: FakeVocalModel | None = None,
+        chant_spec: ChantStyleSpec | None = None,
     ) -> None:
         self._svara = svara or SvaraTTSModel(
             os.environ.get("VOCAL_MODEL_ID_SVARA", "kenpath/svara-tts-v1"),
@@ -94,6 +131,10 @@ class RoutingVocalModel:
         self._parler = parler or ParlerTTSModel(
             os.environ.get("VOCAL_MODEL_ID_PARLER", "ai4bharat/indic-parler-tts"),
         )
+        self._indicf5 = indicf5 or IndicF5Model(
+            os.environ.get("VOCAL_MODEL_ID_INDICF5", "ai4bharat/IndicF5"),
+        )
+        self._nemo = nemo or NeMoTTSModel()
         # Fallback is constructed lazily: FakeVocalModel refuses to
         # exist when NEO_FM_REQUIRE_REAL_MODEL=1, and the prod path
         # never reaches it. We only allocate it on first use.
@@ -101,7 +142,14 @@ class RoutingVocalModel:
         self._fallback: FakeVocalModel | None = fallback
         self._svara_loaded = False
         self._parler_loaded = False
+        self._indicf5_loaded = False
+        self._nemo_loaded = False
+        self._chant_spec = chant_spec if chant_spec is not None else load_chant_spec()
         self._last_decisions: list[RouteDecision] = []
+
+    @property
+    def chant_spec(self) -> ChantStyleSpec:
+        return self._chant_spec
 
     def _get_fallback(self) -> FakeVocalModel:
         if self._fallback is None:
@@ -112,7 +160,12 @@ class RoutingVocalModel:
     def model_loaded(self) -> bool:
         # A routing model is loaded if at least one real backend is
         # available; the fallback is always loadable.
-        return self._svara_loaded or self._parler_loaded
+        return (
+            self._svara_loaded
+            or self._parler_loaded
+            or self._indicf5_loaded
+            or self._nemo_loaded
+        )
 
     @property
     def model_version(self) -> str | None:
@@ -121,6 +174,10 @@ class RoutingVocalModel:
             parts.append(f"svara={self._svara.model_version}")
         if self._parler_loaded:
             parts.append(f"parler={self._parler.model_version}")
+        if self._indicf5_loaded:
+            parts.append(f"indicf5={self._indicf5.model_version}")
+        if self._nemo_loaded:
+            parts.append(f"nemo={self._nemo.model_version}")
         if not parts:
             return "routing+fake"
         return "routing+" + ",".join(parts)
@@ -151,6 +208,26 @@ class RoutingVocalModel:
                         raise
                     return self._get_fallback()
             return self._parler
+        if key == "indicf5":
+            if not self._indicf5_loaded:
+                try:
+                    self._indicf5.load()
+                    self._indicf5_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._indicf5
+        if key == "nemo":
+            if not self._nemo_loaded:
+                try:
+                    self._nemo.load()
+                    self._nemo_loaded = True
+                except Exception:
+                    if require_real:
+                        raise
+                    return self._get_fallback()
+            return self._nemo
         return self._get_fallback()
 
     def synthesise(self, req: VocalRequest) -> bytes:
@@ -158,9 +235,22 @@ class RoutingVocalModel:
         chunks: list[np.ndarray] = []
         decisions: list[RouteDecision] = []
         for sec in req.sections:
-            key, reason = _pick_backend(sec)
+            key, base_reason = _pick_backend(sec)
+            use_chant, chant_reason = should_use_chant_style(
+                style_family=req.style_family,
+                section_type=sec.type,
+                voice_id=sec.voice_id,
+            )
+            reason = (
+                f"{base_reason}+chant:{chant_reason}" if use_chant else base_reason
+            )
             decisions.append(
-                RouteDecision(section_id=sec.id, backend=key, reason=reason)
+                RouteDecision(
+                    section_id=sec.id,
+                    backend=key,
+                    reason=reason,
+                    chant_style_applied=False if not use_chant else None,
+                )
             )
             # v1.3 Sprint 4: actually consume the preprocessor output
             # instead of running it for trace-only side-effects. The
@@ -215,6 +305,7 @@ class RoutingVocalModel:
                         f"{reason}+prepared({trace.utterances_emitted}"
                         f"{'-phon' if sec.phonemes else ''})"
                     ),
+                    chant_style_applied=decisions[-1].chant_style_applied,
                 )
             backend = self._ensure_backend(key)
             # Each backend renders a one-section sub-request so we can
@@ -234,7 +325,25 @@ class RoutingVocalModel:
             sub_wav = backend.synthesise(sub_req)  # type: ignore[attr-defined]
             # Decode the PCM body so we can re-concatenate without
             # nested WAV headers.
-            chunks.append(_decode_wav_mono(sub_wav))
+            decoded = _decode_wav_mono(sub_wav)
+            if use_chant:
+                # The chant prosody pass is mass-preserving in peak
+                # and length, so we don't need to renormalise here.
+                # The LoRA itself shapes pitch + timbre at backend
+                # synthesise() time when mounted; this pass is the
+                # always-on envelope companion (see chant_style.py).
+                decoded = apply_chant_prosody(
+                    decoded,
+                    spec=self._chant_spec,
+                    sample_rate=sr,
+                )
+                decisions[-1] = RouteDecision(
+                    section_id=decisions[-1].section_id,
+                    backend=decisions[-1].backend,
+                    reason=decisions[-1].reason,
+                    chant_style_applied=True,
+                )
+            chunks.append(decoded)
         self._last_decisions = decisions
 
         out = np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)

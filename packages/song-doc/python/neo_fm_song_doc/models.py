@@ -41,19 +41,34 @@ class SongDocument(_generated._SongDocumentBase):
     """Validated Song Document. Subclass of the codegen-only base; adds the
     invariants that JSON Schema cannot represent."""
 
+    # v1.4 Sprint 2: mirror of STYLE_RAGA_ALLOWLIST in
+    # packages/song-doc/src/index.ts. Keep this map and the Zod
+    # allow-list in lock-step.
+    _STYLE_RAGA_ALLOWLIST: dict[str, frozenset[str] | None] = {  # type: ignore[misc]
+        "western": None,
+        "bollywood-ballad": None,
+        "carnatic": frozenset({"carnatic"}),
+        "hindustani": frozenset({"hindustani"}),
+        "kannada-light-classical": frozenset({"light-classical", "carnatic"}),
+        "kannada-folk": frozenset({"folk"}),
+        "tamil-folk": frozenset({"folk"}),
+        "bengali-rabindrasangeet": frozenset({"hindustani", "light-classical"}),
+        "telugu-keerthana": frozenset({"carnatic"}),
+        "sanskrit-shloka": frozenset({"carnatic"}),
+    }
+
     @model_validator(mode="after")
     def _raga_matches_style(self) -> SongDocument:
         if self.raga is None:
             return self
         raga_system = self.raga.system
         style = self.style_family
-        match (raga_system, style):
-            case ("carnatic", "carnatic") | ("hindustani", "hindustani"):
-                pass
-            case _:
-                raise ValueError(
-                    f'raga.system "{raga_system}" does not match style_family "{style}"'
-                )
+        allowed = self._STYLE_RAGA_ALLOWLIST.get(style)
+        if allowed is None or raga_system not in allowed:
+            raise ValueError(
+                f'raga.system "{raga_system}" is not permitted for '
+                f'style_family "{style}"'
+            )
         return self
 
     @model_validator(mode="after")

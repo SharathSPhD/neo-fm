@@ -12,12 +12,21 @@
           "type": "string",
           "format": "uuid"
         },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
         "language": {
           "type": "string",
           "enum": [
             "en",
             "hi",
-            "kn"
+            "kn",
+            "ta",
+            "bn",
+            "te",
+            "sa"
           ]
         },
         "style_family": {
@@ -26,7 +35,13 @@
             "western",
             "carnatic",
             "hindustani",
-            "kannada-folk"
+            "kannada-folk",
+            "kannada-light-classical",
+            "tamil-folk",
+            "bollywood-ballad",
+            "sanskrit-shloka",
+            "bengali-rabindrasangeet",
+            "telugu-keerthana"
           ]
         },
         "tempo_bpm": {
@@ -76,11 +91,15 @@
                   "alaap",
                   "sargam",
                   "folk_refrain",
-                  "folk_stanza"
+                  "folk_stanza",
+                  "shloka_verse",
+                  "shloka_refrain",
+                  "phalashruti"
                 ]
               },
               "lyrics": {
-                "type": "string"
+                "type": "string",
+                "maxLength": 1000
               },
               "script": {
                 "type": "string",
@@ -160,7 +179,9 @@
               "type": "string",
               "enum": [
                 "carnatic",
-                "hindustani"
+                "hindustani",
+                "light-classical",
+                "folk"
               ]
             },
             "arohana": {
@@ -189,6 +210,50 @@
             "name",
             "system"
           ],
+          "additionalProperties": false
+        },
+        "voice_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "background_mix": {
+          "type": "object",
+          "properties": {
+            "accompaniment_density": {
+              "type": "string",
+              "enum": [
+                "sparse",
+                "balanced",
+                "dense"
+              ]
+            },
+            "dynamics": {
+              "type": "string",
+              "enum": [
+                "calm",
+                "balanced",
+                "energetic"
+              ]
+            },
+            "brightness": {
+              "type": "string",
+              "enum": [
+                "dark",
+                "neutral",
+                "bright"
+              ]
+            },
+            "reverb": {
+              "type": "string",
+              "enum": [
+                "dry",
+                "room",
+                "hall",
+                "cathedral"
+              ]
+            }
+          },
           "additionalProperties": false
         },
         "metadata": {
