@@ -46,6 +46,13 @@ export interface PublicLyricsLibraryProviderOptions {
   rootDir?: string;
 }
 
+// v1.4 Sprint 2: keep this map exhaustive over StyleFamily. Sprint 6
+// will replace the hardcoded sets with a filesystem-driven matrix
+// (derived from `data/public-lyrics/<lang>/`), but for now the lyric
+// corpus only has English / Kannada / Hindi / Tamil PD material — so
+// the new v1.4 families fall back to the language each preset ships
+// with. The provider raises a typed error if a request crosses these,
+// so the worker can fall back cleanly when Sprint 6 lands.
 const STYLE_LANGUAGE_ALLOWED: Record<StyleFamily, ReadonlySet<Language>> = {
   western: new Set<Language>(["en"]),
   carnatic: new Set<Language>(["kn"]),
@@ -55,6 +62,13 @@ const STYLE_LANGUAGE_ALLOWED: Record<StyleFamily, ReadonlySet<Language>> = {
   // is Tamil janapada. Both got their own families + language route.
   "kannada-light-classical": new Set<Language>(["kn"]),
   "tamil-folk": new Set<Language>(["ta"]),
+  // v1.4 Sprint 2: new families. Sprint 6 owns proper corpus seeding;
+  // for now we pair each family with its source language so the
+  // provider's allow-check at least narrows to a sane bucket.
+  "bollywood-ballad": new Set<Language>(["hi"]),
+  "bengali-rabindrasangeet": new Set<Language>(["bn"]),
+  "telugu-keerthana": new Set<Language>(["te"]),
+  "sanskrit-shloka": new Set<Language>(["sa"]),
 };
 
 function findEntry(entries: LyricsEntry[], hint?: string): LyricsEntry {

@@ -1113,7 +1113,7 @@ export type Database = {
     }
     Enums: {
       job_status_enum: "queued" | "processing" | "completed" | "failed"
-      language_enum: "en" | "hi" | "kn" | "ta"
+      language_enum: "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa"
       song_visibility_enum: "private" | "unlisted" | "public"
       style_family_enum:
         | "western"
@@ -1122,6 +1122,10 @@ export type Database = {
         | "kannada-folk"
         | "kannada-light-classical"
         | "tamil-folk"
+        | "bollywood-ballad"
+        | "sanskrit-shloka"
+        | "bengali-rabindrasangeet"
+        | "telugu-keerthana"
       tier_enum: "free" | "creator" | "pro"
       track_format_enum: "wav" | "mp3" | "flac"
     }
@@ -1252,7 +1256,7 @@ export const Constants = {
   public: {
     Enums: {
       job_status_enum: ["queued", "processing", "completed", "failed"],
-      language_enum: ["en", "hi", "kn", "ta"],
+      language_enum: ["en", "hi", "kn", "ta", "bn", "te", "sa"],
       song_visibility_enum: ["private", "unlisted", "public"],
       style_family_enum: [
         "western",
@@ -1261,6 +1265,10 @@ export const Constants = {
         "kannada-folk",
         "kannada-light-classical",
         "tamil-folk",
+        "bollywood-ballad",
+        "sanskrit-shloka",
+        "bengali-rabindrasangeet",
+        "telugu-keerthana",
       ],
       tier_enum: ["free", "creator", "pro"],
       track_format_enum: ["wav", "mp3", "flac"],

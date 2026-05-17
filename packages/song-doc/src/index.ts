@@ -5,7 +5,12 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 // route through the same hot path as the other Indic languages instead
 // of leaning on `metadata.language_hint`. Migration 0033 mirrors this in
 // the Postgres language_enum.
-export const LanguageSchema = z.enum(["en", "hi", "kn", "ta"]);
+//
+// v1.4 Sprint 2: bn/te/sa join for the Bengali / Telugu / Sanskrit
+// presets that Sprint 6 + Sprint 14 ship. Adding them at the schema
+// level (not just metadata) keeps the co-composer + lyric-provider +
+// G2P routing aligned to the same language tag.
+export const LanguageSchema = z.enum(["en", "hi", "kn", "ta", "bn", "te", "sa"]);
 export type Language = z.infer<typeof LanguageSchema>;
 
 // v1.3 Sprint 2: split the misclassified bhavageete and Tamil-folk
@@ -13,6 +18,12 @@ export type Language = z.infer<typeof LanguageSchema>;
 //   - "kannada-light-classical": bhavageete / sugama-sangeetha
 //   - "tamil-folk": parai-style janapada
 // Migration 0032 mirrors this in the Postgres style_family_enum.
+//
+// v1.4 Sprint 2: three new families:
+//   - "bollywood-ballad": Hindi film ballad / love-song mode
+//   - "sanskrit-shloka": chant-style Vedic / devotional (Sprint 14)
+//   - "bengali-rabindrasangeet": Tagore's signature mode (Sprint 15 preset)
+//   - "telugu-keerthana": Tyagaraja-style keerthana (Sprint 15 preset)
 export const StyleFamilySchema = z.enum([
   "western",
   "carnatic",
@@ -20,6 +31,10 @@ export const StyleFamilySchema = z.enum([
   "kannada-folk",
   "kannada-light-classical",
   "tamil-folk",
+  "bollywood-ballad",
+  "sanskrit-shloka",
+  "bengali-rabindrasangeet",
+  "telugu-keerthana",
 ]);
 export type StyleFamily = z.infer<typeof StyleFamilySchema>;
 
@@ -31,6 +46,10 @@ export const DurationSchema = z.union([
 ]);
 export type Duration = z.infer<typeof DurationSchema>;
 
+// v1.4 Sprint 2: add Indic section types so the music-inference
+// _SECTION_HEADERS map can route them to structural-contrast tags
+// (Intro/Chorus/Verse/Pre-Chorus). Sprint 14 adds the shloka_verse +
+// shloka_refrain + phalashruti triplet for Sanskrit chant.
 export const SectionTypeSchema = z.enum([
   "intro",
   "verse",
@@ -47,6 +66,9 @@ export const SectionTypeSchema = z.enum([
   "sargam",
   "folk_refrain",
   "folk_stanza",
+  "shloka_verse",
+  "shloka_refrain",
+  "phalashruti",
 ]);
 export type SectionType = z.infer<typeof SectionTypeSchema>;
 
@@ -59,6 +81,27 @@ export const ScriptSchema = z.enum([
   "bengali",
 ]);
 export type Script = z.infer<typeof ScriptSchema>;
+
+/**
+ * v1.4 Sprint 2: structured background-mix descriptor.
+ *
+ * Captures the part of the creation canvas that today maps onto vague
+ * `metadata.density` strings. Lifting it into the schema lets the
+ * music-inference worker, the advanced-controls UI (Sprint 4), and the
+ * voice picker (Sprint 5) all agree on the same shape.
+ *
+ * Every field is optional — a SongDocument that omits the mix block is
+ * still valid and routes via the preset's defaults.
+ */
+export const BackgroundMixSchema = z.object({
+  accompaniment_density: z
+    .enum(["sparse", "balanced", "dense"])
+    .optional(),
+  dynamics: z.enum(["calm", "balanced", "energetic"]).optional(),
+  brightness: z.enum(["dark", "neutral", "bright"]).optional(),
+  reverb: z.enum(["dry", "room", "hall", "cathedral"]).optional(),
+});
+export type BackgroundMix = z.infer<typeof BackgroundMixSchema>;
 
 /**
  * Lyric length caps (Sprint 4 / launch-readiness):
@@ -136,9 +179,13 @@ const SectionInputSchema = SectionSchema.extend({
 });
 export type SectionInput = z.infer<typeof SectionInputSchema>;
 
+// v1.4 Sprint 2: widen raga.system so bhavageete / Tamil-folk songs can
+// also carry a raga tag (e.g. mohanam-flavoured Kannada light-classical
+// pieces). The style/raga refinement below still enforces sensible
+// pairings — see the style→raga.system allow-list in superRefine.
 export const RagaSpecSchema = z.object({
   name: z.string().min(1),
-  system: z.enum(["carnatic", "hindustani"]),
+  system: z.enum(["carnatic", "hindustani", "light-classical", "folk"]),
   arohana: z.array(z.string()).optional(),
   avarohana: z.array(z.string()).optional(),
   nyas: z.array(z.string()).optional(),
@@ -177,6 +224,32 @@ export const SongTitleSchema = z
   .min(1, "title cannot be empty")
   .max(SONG_TITLE_MAX_CHARS, `title exceeds ${SONG_TITLE_MAX_CHARS} chars`);
 
+/**
+ * v1.4 Sprint 2: allowed `raga.system` per style_family.
+ *
+ * - Carnatic / Hindustani: enforce the strict 1:1 mapping (unchanged).
+ * - Kannada-light-classical: bhavageete pieces commonly borrow from
+ *   Carnatic ragas (mohanam, hindolam, kapi) — accept either
+ *   `"light-classical"` or `"carnatic"` so producers can be precise.
+ * - Kannada-folk / Tamil-folk: `"folk"` raga (modal scale), or no raga.
+ * - Bengali-rabindrasangeet: Hindustani-rooted, often catalogued as
+ *   Hindustani ragas — accept hindustani + light-classical.
+ * - Telugu-keerthana / sanskrit-shloka: Carnatic raga family.
+ * - Western / bollywood-ballad: no raga (must omit).
+ */
+const STYLE_RAGA_ALLOWLIST: Record<StyleFamily, ReadonlySet<RagaSpec["system"]> | null> = {
+  western: null,
+  "bollywood-ballad": null,
+  carnatic: new Set(["carnatic"]),
+  hindustani: new Set(["hindustani"]),
+  "kannada-light-classical": new Set(["light-classical", "carnatic"]),
+  "kannada-folk": new Set(["folk"]),
+  "tamil-folk": new Set(["folk"]),
+  "bengali-rabindrasangeet": new Set(["hindustani", "light-classical"]),
+  "telugu-keerthana": new Set(["carnatic"]),
+  "sanskrit-shloka": new Set(["carnatic"]),
+};
+
 export const SongDocumentSchema = z
   .object({
     id: z.string().uuid().optional(),
@@ -191,20 +264,26 @@ export const SongDocumentSchema = z
     sections: z.array(SectionSchema).min(1),
     orchestration: OrchestrationSchema.optional(),
     raga: RagaSpecSchema.optional(),
+    // v1.4 Sprint 2: opaque voice catalog ID (e.g. "kn-female-warm-01").
+    // Format mirrors the keys in `apps/web/lib/voice_catalog.json` shipped in
+    // Sprint 5; the song-doc layer does not validate the value against the
+    // catalog because the worker owns the routing and we don't want to
+    // re-deploy the schema every time a voice is added.
+    voice_id: z.string().min(1).max(64).optional(),
+    background_mix: BackgroundMixSchema.optional(),
     metadata: z.record(z.unknown()).optional(),
   })
   .superRefine((doc, ctx) => {
     if (doc.raga) {
       const raga_system = doc.raga.system;
       const style = doc.style_family;
-      const ok =
-        (raga_system === "carnatic" && style === "carnatic") ||
-        (raga_system === "hindustani" && style === "hindustani");
+      const allowed = STYLE_RAGA_ALLOWLIST[style];
+      const ok = allowed !== null && allowed.has(raga_system);
       if (!ok) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ["raga"],
-          message: `raga.system "${raga_system}" does not match style_family "${style}"`,
+          message: `raga.system "${raga_system}" is not permitted for style_family "${style}"`,
         });
       }
     }

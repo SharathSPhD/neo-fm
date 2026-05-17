@@ -49,6 +49,28 @@ _SECTION_HEADERS: dict[str, str] = {
     "hook": "[Chorus]",
     "instrumental": "[Verse]",
     "solo": "[Verse]",
+    # Carnatic / Hindustani section types from the Song Document schema.
+    # We route them to the structural-contrast HeartMuLa tag that gives
+    # the closest energy curve: pallavi/mukhda/anupallavi behave like
+    # verses + pre-chorus, charanam/antara like verses, alaap like an
+    # ambient intro, sargam/folk_refrain like a hook.
+    "pallavi": "[Verse]",
+    "anupallavi": "[Prechorus]",
+    "charanam": "[Verse]",
+    "mukhda": "[Verse]",
+    "antara": "[Verse]",
+    "saranam": "[Verse]",
+    "alaap": "[Intro]",
+    "sargam": "[Chorus]",
+    "folk_refrain": "[Chorus]",
+    "folk_stanza": "[Verse]",
+    # v1.4 Sprint 2: Sanskrit chant section types (see ADR 0023 R2.5).
+    # `shloka_refrain` repeats like a chorus; `shloka_verse` is the
+    # successive shloka body; `phalashruti` is the closing fruit-of-
+    # recitation verse, which we hand off as an outro for energy decay.
+    "shloka_verse": "[Verse]",
+    "shloka_refrain": "[Chorus]",
+    "phalashruti": "[Outro]",
 }
 
 
@@ -81,6 +103,43 @@ _STYLE_TAGS: dict[str, list[str]] = {
         "janapada",
         "parai",
         "nadaswaram",
+    ],
+    # v1.4 Sprint 2: new style families. Tag sets are starting points;
+    # Sprint 4 + Sprint 10 will refine them when AudioCraft + the
+    # advanced controls land. The conservative bias is to add the
+    # *genre*, the *language*, and one or two *instrument* anchors.
+    "bollywood-ballad": [
+        "bollywood",
+        "hindi",
+        "ballad",
+        "vocal",
+        "strings",
+        "tabla",
+        "harmonium",
+    ],
+    "sanskrit-shloka": [
+        "chant",
+        "sanskrit",
+        "vedic",
+        "devotional",
+        "tanpura",
+        "harmonium",
+    ],
+    "bengali-rabindrasangeet": [
+        "rabindra-sangeet",
+        "bengali",
+        "tagore",
+        "vocal",
+        "harmonium",
+        "esraj",
+    ],
+    "telugu-keerthana": [
+        "carnatic",
+        "telugu",
+        "keerthana",
+        "vocal",
+        "violin",
+        "mridangam",
     ],
 }
 
