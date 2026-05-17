@@ -1,6 +1,6 @@
 {
   "base": "https://neo-fm-web.vercel.app",
-  "finishedAt": "2026-05-17T10:15:32.478Z",
+  "finishedAt": "2026-05-17T10:21:38.507Z",
   "steps": [
     {
       "name": "1-landing",
@@ -45,8 +45,10 @@
     },
     {
       "name": "8-songs-new",
-      "ok": false,
-      "error": "presets missing from /songs/new: [\"carnatic-kriti\",\"hindustani-khayal-sketch\",\"kannada-bhavageete\",\"kannada-folk\",\"tamil-folk\",\"bollywood-ballad\",\"western-pop\",\"kabir-doha\"]"
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/new",
+      "file": "08-songs-new.png",
+      "presetsFound": 8
     },
     {
       "name": "9-pricing-authed",
@@ -86,14 +88,14 @@
         "checks": {
           "supabase": {
             "status": "ok",
-            "latencyMs": 13
+            "latencyMs": 12
           },
           "upstash": {
             "status": "missing",
             "latencyMs": null
           }
         },
-        "timestamp": "2026-05-17T10:15:32.248Z"
+        "timestamp": "2026-05-17T10:21:38.286Z"
       }
     },
     {
@@ -104,7 +106,7 @@
         "status": "ok",
         "phase": 1,
         "version": "v1.3-wedge",
-        "commit": "dc621ca",
+        "commit": "e028528",
         "env": "production",
         "checks": {
           "supabase": {
@@ -116,7 +118,7 @@
             "latencyMs": null
           }
         },
-        "timestamp": "2026-05-17T10:15:32.423Z"
+        "timestamp": "2026-05-17T10:21:38.463Z"
       }
     }
   ]

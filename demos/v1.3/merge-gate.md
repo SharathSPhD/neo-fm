@@ -84,33 +84,42 @@ SMOKE_OUT=demos/v1.3/sprint-6-prod-smoke \
 node infra/scripts/prod-smoke.mjs
 ```
 
-Result: **14 / 15 PASS** on the first run. The lone FAIL
-was `8-songs-new` — the smoke had been querying
+Result on `dc621ca`: **14 / 15 PASS**. Lone FAIL was
+`8-songs-new` — the smoke had been querying
 `a[href*='preset=']` but the creation canvas exposes
 presets as `<button>` chips, not anchors. The marketing
-landing is the only surface that uses anchor links.
+landing is the only surface that uses anchor links. Fixed
+in `e028528`:
 
-Fixed in this same commit:
-
-- `apps/web/.../preset-gallery.tsx` now stamps
+- `apps/web/.../preset-gallery.tsx` stamps
   `data-preset={preset.id}` on each `<button>` so the
   preset chip is observable from the outside.
-- `infra/scripts/prod-smoke.mjs` step `8-songs-new` now
-  unions `[data-preset]` and `a[href*='preset=']` results,
-  so the gate fires whether presets render as buttons or
-  anchors.
+- `infra/scripts/prod-smoke.mjs` step `8-songs-new` unions
+  `[data-preset]` and `a[href*='preset=']` results, so the
+  gate fires whether presets render as buttons or anchors.
+- A second re-run flagged a stale required-preset list
+  (`kannada-folk` was retired in Sprint 2); aligned the
+  list to the eight v1.3 IDs in
+  `packages/style-presets/src/index.ts`.
 
-Smoke gates that fired clean on the first run:
+Result on `e028528` (final): **15 / 15 PASS**.
 
-- Landing `<h1>` contains "phoneme" + "Indian languages"
-  → PASS (`"The only AI music platform that gets Indian
-  languages right at the phoneme level."`).
-- Cover-art panel visible on a completed song
-  → PASS (`/songs/<id>` step 12).
-- Anon `/api/health` returns `commit: null`
-  → PASS (privacy gate held).
-- Authed `/api/health` returns `version: v1.3-wedge`,
-  `commit: dc621ca` → PASS.
+| # | Step | Notes |
+| --- | --- | --- |
+| 1 | `1-landing` | H1 = "The only AI music platform that gets Indian languages right at the phoneme level." |
+| 2 | `2-pricing-anon` | pricing visible to anon |
+| 3 | `3-discover-anon` | discover visible to anon |
+| 4 | `4-sign-in` | smoke user logged in → /library |
+| 5 | `5-library-grid` | cover-art grid (Sprint 6 v1.2) |
+| 6 | `6-library-list` | list view (Sprint 6 v1.2) |
+| 7 | `7-cmd-palette` | Cmd+K palette opens |
+| 8 | `8-songs-new` | all **8 / 8** v1.3 presets observable |
+| 9 | `9-pricing-authed` | pricing visible to authed user |
+| 10 | `10-account` | account page renders |
+| 11 | `11-song-detail` | song detail + remix CTA visible |
+| 12 | `12-cover-art-panel` | cover-art panel visible (Sprint 3 evidence) |
+| 13 | `health-anon` | `commit: null` (Sprint 1 privacy gate held) |
+| 14 | `health` | authed `version: v1.3-wedge`, `commit: e028528` |
 
 ## Out of scope / accepted gaps
 

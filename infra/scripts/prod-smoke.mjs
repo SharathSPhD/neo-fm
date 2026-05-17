@@ -174,15 +174,21 @@ try {
     // folk + Kannada light-classical. Assert every preset chip is
     // actually painted — silent-drop is what tagore-set was doing
     // for months before v1.3.
+    // Eight v1.3 presets after Sprint 2's split: the legacy
+    // "kannada-folk" slug was retired in favour of
+    // "kannada-bhavageete" (light-classical) and "tamil-folk"
+    // (Janapada). "tagore-set" is back as a first-class preset
+    // (silent-drop bug fix). Keep this list in lock-step with
+    // packages/style-presets/src/index.ts.
     const requiredPresets = [
       "carnatic-kriti",
       "hindustani-khayal-sketch",
       "kannada-bhavageete",
-      "kannada-folk",
       "tamil-folk",
       "bollywood-ballad",
       "western-pop",
       "kabir-doha",
+      "tagore-set",
     ];
     // The creation canvas exposes presets as <button data-preset>
     // chips (it doesn't navigate -- it mutates form state). The
