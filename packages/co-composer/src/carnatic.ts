@@ -31,6 +31,7 @@ import type {
   Orchestration,
   Section,
   SongDocument,
+  StyleFamily,
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
@@ -203,9 +204,18 @@ function elaborateSection(
 
 export class CarnaticCoComposer implements CoComposer {
   readonly style_family = "carnatic" as const;
+  // v1.4: also accepts telugu-keerthana (Tyagaraja kriti shape) and
+  // sanskrit-shloka (Vedic chant). The song-doc schema's STYLE_RAGA_ALLOWLIST
+  // permits raga.system="carnatic" for all three, so the raga we set on
+  // the elaborated doc survives Zod re-validation.
+  readonly acceptedStyleFamilies: ReadonlySet<StyleFamily> = new Set([
+    "carnatic",
+    "telugu-keerthana",
+    "sanskrit-shloka",
+  ]);
 
   async elaborate(doc: SongDocument): Promise<SongDocument> {
-    if (doc.style_family !== "carnatic") {
+    if (!this.acceptedStyleFamilies.has(doc.style_family)) {
       throw new Error(
         `CarnaticCoComposer received style_family=${doc.style_family}; use getCoComposer(doc.style_family) instead`,
       );

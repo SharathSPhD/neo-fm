@@ -17,13 +17,30 @@ import { WesternCoComposer } from "./western.js";
  * - v1.3 Sprint 2 splits the misclassified Kannada light-classical
  *   (bhavageete) and Tamil-folk presets out of `kannada-folk` into
  *   their own families with dedicated co-composers.
+ * - v1.4 widens four new families (sanskrit-shloka, telugu-keerthana,
+ *   bengali-rabindrasangeet, bollywood-ballad) which delegate to an
+ *   existing composer's musical conventions while preserving their own
+ *   `doc.style_family` so downstream worker / vocal-synth / discover
+ *   routing sees the user-facing family. Each composer declares the
+ *   delegated families it accepts via `acceptedStyleFamilies`.
  * - Phase 10+ may replace the hand-rolled mappings with Pratyabhijna while
  *   keeping the same SongDocument-in, SongDocument-out interface. (Pratyabhijna
  *   is intentionally out of v1 scope; the hand-rolled mappings are the v1
  *   shipping path.)
  */
 export interface CoComposer {
+  /**
+   * Primary / native style family for this composer. Used for telemetry
+   * and `metadata.neo_fm_co_composer.name`; not used as the dispatch
+   * guard (use `acceptedStyleFamilies` for that).
+   */
   readonly style_family: StyleFamily;
+  /**
+   * Every `style_family` value this composer is willing to elaborate.
+   * Includes the primary family and any delegated families. `elaborate()`
+   * throws when invoked with a `doc.style_family` outside this set.
+   */
+  readonly acceptedStyleFamilies: ReadonlySet<StyleFamily>;
   elaborate(doc: SongDocument): Promise<SongDocument>;
 }
 
@@ -50,45 +67,57 @@ export * from "./raga-catalogue.js";
 export * from "./voice-catalogue.js";
 
 export function getCoComposer(style: StyleFamily): CoComposer {
+  let composer: CoComposer;
   switch (style) {
     case "western":
-      return new WesternCoComposer();
-    case "carnatic":
-      return new CarnaticCoComposer();
-    case "hindustani":
-      return new HindustaniCoComposer();
-    case "kannada-folk":
-      return new KannadaFolkCoComposer();
-    case "kannada-light-classical":
-      return new KannadaLightClassicalCoComposer();
-    case "tamil-folk":
-      return new TamilFolkCoComposer();
-    // v1.4 Sprint 2: new style families. Until their dedicated
-    // co-composers ship (Sprint 8 / Sprint 14 / Sprint 15), route to
-    // the closest existing composer so the worker can still elaborate
-    // a SongDocument end-to-end. The override is a temporary delegation
-    // -- the routing is exhaustively typed so as soon as a new
-    // co-composer lands we can flip the corresponding case here.
     case "bollywood-ballad":
-      // Pop-rock harmony with Indian instrument tags. The Western
-      // composer's chord progression is the closest existing fit; the
-      // music-inference tag set adds the Bollywood + harmonium tags.
-      return new WesternCoComposer();
-    case "bengali-rabindrasangeet":
-      // Tagore's songs catalogue under Hindustani ragas; the
-      // Hindustani composer's modal contour is the closest match
-      // until the Sprint 15 rabindra-sangeet composer lands.
-      return new HindustaniCoComposer();
+      // Western harmony + ballad-pop instrumentation. Composer tags
+      // `style:${doc.style_family}`, so a `bollywood-ballad` doc is
+      // tagged distinctly from a `western` doc and music-inference /
+      // stem planner can route on the user-facing family.
+      composer = new WesternCoComposer();
+      break;
+    case "carnatic":
     case "telugu-keerthana":
-      // Tyagaraja-style keerthana follows the Carnatic kriti shape.
-      return new CarnaticCoComposer();
     case "sanskrit-shloka":
-      // Vedic chant is closer to Carnatic alaap than to any folk
-      // template. Sprint 14 lands a dedicated chant composer.
-      return new CarnaticCoComposer();
+      // Carnatic raga + kriti/alaap section conventions. Telugu
+      // keerthana follows the Tyagaraja kriti shape; sanskrit shloka
+      // is closer to Carnatic alaap than any folk template. Composer
+      // sets `raga.system: "carnatic"` which the song-doc schema
+      // allows for all three (see STYLE_RAGA_ALLOWLIST).
+      composer = new CarnaticCoComposer();
+      break;
+    case "hindustani":
+    case "bengali-rabindrasangeet":
+      // Hindustani raga + tala. Tagore's songs catalogue under
+      // Hindustani ragas; composer's modal contour matches.
+      composer = new HindustaniCoComposer();
+      break;
+    case "kannada-folk":
+      composer = new KannadaFolkCoComposer();
+      break;
+    case "kannada-light-classical":
+      composer = new KannadaLightClassicalCoComposer();
+      break;
+    case "tamil-folk":
+      composer = new TamilFolkCoComposer();
+      break;
     default: {
       const _exhaustive: never = style;
       throw new Error(`Unknown style_family: ${String(_exhaustive)}`);
     }
   }
+  // Dev-only assertion: the dispatcher mapping above must match each
+  // composer's `acceptedStyleFamilies`. Catches future drift -- adding
+  // a new style to the dispatcher without updating the composer's
+  // accepted set (or vice versa) fails loudly in dev / CI / tests
+  // rather than at the runtime guard inside elaborate().
+  if (!composer.acceptedStyleFamilies.has(style)) {
+    throw new Error(
+      `getCoComposer(${style}) returned ${composer.style_family} composer ` +
+        `but its acceptedStyleFamilies set does not include "${style}". ` +
+        `Update the composer's acceptedStyleFamilies or the dispatcher mapping.`,
+    );
+  }
+  return composer;
 }

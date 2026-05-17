@@ -4,7 +4,7 @@
  * <ShareButton> -- owner-only share modal on /songs/[id].
  *
  * Opens a modal with three visibility options + actions:
- *   - Public  (listed once /explore exists; anyone with link can play)
+ *   - Public  (listed on /discover; anyone with link can play)
  *   - Unlisted (link-only; default)
  *   - Private (revokes the share; link 404s)
  *
@@ -14,7 +14,7 @@
  *   - a "copy link" button
  *   - an "embed code" snippet (iframe pointing at /s/[publicId]/embed)
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface ShareButtonProps {
   songId: string;
@@ -49,6 +49,13 @@ export function ShareButton({
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
     "idle",
   );
+  const doneButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    // Focus Done on open so keyboard users can close immediately.
+    doneButtonRef.current?.focus();
+  }, [open]);
 
   async function setTo(target: "public" | "unlisted" | "private") {
     if (submitting) return;
@@ -140,7 +147,7 @@ export function ShareButton({
                 value="public"
                 current={visibility}
                 title="Public"
-                description="Anyone with the link can play. Will show on /explore."
+                description="Anyone with the link can play. Will show on /discover."
                 onClick={() => setTo("public")}
                 disabled={submitting}
               />
@@ -215,6 +222,17 @@ export function ShareButton({
                   : "Publishing…"}
               </p>
             )}
+
+            <div className="flex justify-end">
+              <button
+                ref={doneButtonRef}
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-md border border-accent/40 bg-accent/10 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-accent hover:bg-accent/15"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

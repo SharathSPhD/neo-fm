@@ -61,6 +61,11 @@ type DiscoverRow = {
     language: string;
     style_family: string;
   } | null;
+  // v1.4 live-bug closeout: discover only surfaces rows that already
+  // have at least one track. Without `!inner` here, seeded catalog
+  // jobs (status=completed, zero tracks) showed up on /discover and
+  // then lied to the user on /s/<publicId> with "still being prepared".
+  tracks: { id: string }[];
   cover_art:
     | {
         url: string;
@@ -88,6 +93,7 @@ export default async function DiscoverPage({
       `
       id, public_id, published_at, user_id,
       song_documents!inner ( title, language, style_family ),
+      tracks!inner ( id ),
       cover_art ( url, is_current, created_at )
     `,
     )

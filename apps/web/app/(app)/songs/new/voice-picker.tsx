@@ -51,6 +51,13 @@ export function VoicePicker({
   previewBaseUrl,
 }: VoicePickerProps) {
   const [playing, setPlaying] = useState<string | null>(null);
+  // voice_id -> reason the most recent preview attempt failed. Rendered
+  // inline under the row so the user sees "Preview unavailable" instead
+  // of a silent click. Cleared on any successful play. Keyed by voice_id
+  // so per-row errors don't pollute other rows.
+  const [previewErrors, setPreviewErrors] = useState<Record<string, string>>(
+    {},
+  );
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Suggested = same-language. Everything else sits under "All voices".
@@ -69,6 +76,20 @@ export function VoicePicker({
     setPlaying(null);
   }, []);
 
+  const markFailed = useCallback((voice_id: string, reason: string) => {
+    setPlaying(null);
+    setPreviewErrors((prev) => ({ ...prev, [voice_id]: reason }));
+  }, []);
+
+  const clearError = useCallback((voice_id: string) => {
+    setPreviewErrors((prev) => {
+      if (!(voice_id in prev)) return prev;
+      const next = { ...prev };
+      delete next[voice_id];
+      return next;
+    });
+  }, []);
+
   const togglePreview = useCallback(
     (entry: VoiceCatalogueEntry) => {
       if (playing === entry.voice_id) {
@@ -80,27 +101,31 @@ export function VoicePicker({
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      // Optimistically clear any prior error for this row so a retry
+      // doesn't show stale text while loading.
+      clearError(entry.voice_id);
       const url = previewUrl(previewBaseUrl, entry);
       const a = new Audio(url);
       a.addEventListener("ended", () => setPlaying(null), { once: true });
       a.addEventListener(
         "error",
         () => {
-          // Missing/blocked preview shouldn't break the form -- just
-          // drop the playing state so the row stops showing "Stop".
-          setPlaying(null);
+          // Element-level error (404, network refused, decode failure).
+          // Surface in the row's aria-live region so the user knows the
+          // preview isn't broken-and-silent; previously this swallowed.
+          markFailed(entry.voice_id, "Preview unavailable");
         },
         { once: true },
       );
       audioRef.current = a;
       void a.play().catch(() => {
-        // Autoplay blocked / network error / decode failure -- swallow
-        // and reset state so the user can try again.
-        setPlaying(null);
+        // Autoplay blocked / network error / decode failure -- surface
+        // a recoverable error to the row instead of swallowing.
+        markFailed(entry.voice_id, "Preview unavailable");
       });
       setPlaying(entry.voice_id);
     },
-    [playing, previewBaseUrl, stop],
+    [playing, previewBaseUrl, stop, markFailed, clearError],
   );
 
   // Stop any in-flight preview when the picker unmounts.
@@ -146,6 +171,7 @@ export function VoicePicker({
               entry={entry}
               selected={value === entry.voice_id}
               playing={playing === entry.voice_id}
+              error={previewErrors[entry.voice_id]}
               onSelect={() => onChange(entry.voice_id)}
               onPreview={() => togglePreview(entry)}
             />
@@ -163,6 +189,7 @@ export function VoicePicker({
             entry={entry}
             selected={value === entry.voice_id}
             playing={playing === entry.voice_id}
+            error={previewErrors[entry.voice_id]}
             onSelect={() => onChange(entry.voice_id)}
             onPreview={() => togglePreview(entry)}
           />
@@ -176,6 +203,8 @@ interface VoiceRowProps {
   entry: Pick<VoiceCatalogueEntry, "voice_id" | "label" | "persona">;
   selected: boolean;
   playing?: boolean;
+  /** Inline error text when the most recent preview attempt failed. */
+  error?: string;
   onSelect: () => void;
   onPreview?: () => void;
 }
@@ -184,45 +213,64 @@ function VoiceRow({
   entry,
   selected,
   playing = false,
+  error,
   onSelect,
   onPreview,
 }: VoiceRowProps) {
   return (
     <div
-      className={`flex items-center justify-between gap-3 rounded-md border px-3 py-2 transition-colors ${
+      className={`flex flex-col gap-1 rounded-md border px-3 py-2 transition-colors ${
         selected
           ? "border-accent bg-accent/10"
           : "border-muted/30 hover:border-muted/60"
       }`}
       data-testid={`voice-row-${entry.voice_id || "auto"}`}
     >
-      <label className="flex flex-1 cursor-pointer items-center gap-3">
-        <input
-          type="radio"
-          name="voice_id"
-          value={entry.voice_id}
-          checked={selected}
-          onChange={onSelect}
-          className="accent-accent"
-          aria-label={entry.label}
-        />
-        <span className="flex flex-col">
-          <span className="text-sm">{entry.label}</span>
-          <span className="text-[10px] text-foreground/40">
-            {entry.persona}
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex flex-1 cursor-pointer items-center gap-3">
+          <input
+            type="radio"
+            name="voice_id"
+            value={entry.voice_id}
+            checked={selected}
+            onChange={onSelect}
+            className="accent-accent"
+            aria-label={entry.label}
+          />
+          <span className="flex flex-col">
+            <span className="text-sm">{entry.label}</span>
+            <span className="text-[10px] text-foreground/40">
+              {entry.persona}
+            </span>
           </span>
-        </span>
-      </label>
-      {onPreview && (
-        <button
-          type="button"
-          onClick={onPreview}
-          className="rounded-md border border-muted/30 px-2 py-1 text-[10px] uppercase tracking-widest text-foreground/70 hover:border-accent hover:text-accent"
-          data-testid={`voice-preview-${entry.voice_id}`}
-        >
-          {playing ? "Stop" : "Preview"}
-        </button>
-      )}
+        </label>
+        {onPreview && (
+          <button
+            type="button"
+            onClick={onPreview}
+            className="rounded-md border border-muted/30 px-2 py-1 text-[10px] uppercase tracking-widest text-foreground/70 hover:border-accent hover:text-accent"
+            data-testid={`voice-preview-${entry.voice_id}`}
+          >
+            {playing ? "Stop" : "Preview"}
+          </button>
+        )}
+      </div>
+      {/*
+        aria-live announces preview failures to screen readers without
+        moving focus. Kept under the row so it doesn't shift unrelated
+        layout when present. Empty when there's no error so we don't
+        announce blanks on every render.
+      */}
+      <div
+        role="status"
+        aria-live="polite"
+        className={`min-h-[14px] text-[10px] ${
+          error ? "text-red-500" : "sr-only"
+        }`}
+        data-testid={`voice-preview-error-${entry.voice_id}`}
+      >
+        {error ?? ""}
+      </div>
     </div>
   );
 }

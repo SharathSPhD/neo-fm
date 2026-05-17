@@ -267,7 +267,13 @@ export const BOLLYWOOD_BALLAD = preset({
   chips: ["Western", "Bollywood", "Crossover"],
   song_document: {
     language: "hi",
-    style_family: "western",
+    // v1.4: was "western" while bollywood-ballad delegated through
+    // WesternCoComposer's guard; with the dispatcher accepting the
+    // delegated families directly we restore the preset's user-facing
+    // family so the chip on /songs/new, the style dropdown, the
+    // discover filter, and the worker's stem planner all see the same
+    // value the user picked.
+    style_family: "bollywood-ballad",
     tempo_bpm: 75,
     time_signature: "4/4",
     target_duration_seconds: 90,

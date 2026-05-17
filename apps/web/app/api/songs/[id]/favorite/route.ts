@@ -1,9 +1,11 @@
 /**
  * POST /api/songs/[id]/favorite
  *
- * Toggles `jobs.is_favorite` for the authenticated user. RLS on the
- * underlying table enforces ownership; the `toggle_favorite` RPC
- * (migration 0022) is SECURITY INVOKER so we still go through RLS.
+ * Toggles `jobs.is_favorite` for the authenticated user. The
+ * `toggle_favorite` RPC is now SECURITY DEFINER (see migration
+ * 0035_jobs_favorite_security_definer.sql), so we no longer rely on
+ * RLS UPDATE for this column; the RPC body checks ownership against
+ * `auth.uid()` before flipping the flag.
  */
 import { NextResponse } from "next/server";
 

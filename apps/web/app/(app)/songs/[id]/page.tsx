@@ -68,6 +68,12 @@ interface SongDocumentView {
   raga?: RagaView;
   orchestration?: OrchestrationView;
   sections: SectionView[];
+  // v1.4: top-level voice_id (per Section can override). Read in the
+  // variation/remix dialog so dropdowns seed from the parent doc.
+  voice_id?: string;
+  // metadata.key carries the Western chord key (e.g. "F#m"). Used to
+  // seed the fork dialog's Key placeholder.
+  metadata?: { key?: string } & Record<string, unknown>;
 }
 
 interface RegenChildView {
@@ -257,6 +263,14 @@ export default async function SongDetailPage({
                   id: s.id,
                   type: s.type,
                 }))}
+                initialTempo={doc?.tempo_bpm}
+                initialKey={
+                  typeof doc?.metadata?.key === "string"
+                    ? doc.metadata.key
+                    : undefined
+                }
+                initialVoiceId={doc?.voice_id}
+                language={doc?.language}
               />
               <RemixButton
                 songId={data.id}
@@ -265,6 +279,14 @@ export default async function SongDetailPage({
                   id: s.id,
                   type: s.type,
                 }))}
+                initialTempo={doc?.tempo_bpm}
+                initialKey={
+                  typeof doc?.metadata?.key === "string"
+                    ? doc.metadata.key
+                    : undefined
+                }
+                initialVoiceId={doc?.voice_id}
+                language={doc?.language}
               />
             </div>
           ) : null}

@@ -29,6 +29,8 @@
 //  22. /library batch-publish bar surfaces on row selection
 //  23. health-anon: no commit-SHA leak
 //  24. health (authed)
+//  24a. v1.4 closeout: cover-art / voice-samples / tracks buckets exist
+//  24b. v1.4 closeout: a handful of voice-preview WAVs return 2xx on HEAD
 //  25. /api/p/[publicId]/audio-url returns a 200 signed URL
 //
 // We don't actually fork a remix here — that's covered by the
@@ -553,6 +555,97 @@ try {
       throw new Error(`health ${probe.status}: ${JSON.stringify(probe.body)}`);
     }
     return probe;
+  });
+
+  await step("24a-buckets-exist", async () => {
+    // v1.4 live-bug closeout: the missing `cover-art` bucket caused
+    // every cover-art write to 4xx in prod for weeks. The smoke now
+    // pings the storage API directly for each bucket the app depends
+    // on so we catch a forgotten migration on the next deploy.
+    const projectUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      process.env.SMOKE_SUPABASE_URL;
+    const anonKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      process.env.SMOKE_SUPABASE_ANON_KEY;
+    if (!projectUrl || !anonKey) {
+      // Without Supabase creds we can't probe storage. Don't fail the
+      // overall smoke — but emit a clear note so this gap is visible
+      // in the SUMMARY.md.
+      return {
+        skipped: true,
+        reason:
+          "SUPABASE_URL / SUPABASE_ANON_KEY not set in env; bucket probe skipped",
+      };
+    }
+    const buckets = ["cover-art", "voice-samples", "tracks"];
+    const results = {};
+    for (const id of buckets) {
+      // `/storage/v1/bucket/<id>` returns 200 if the bucket exists and
+      // is readable by the anon role, 400/404 otherwise. Some buckets
+      // are private; the anon key gets 400 on those rather than 404,
+      // so we treat any non-404 reply as "exists".
+      const url = `${projectUrl.replace(/\/$/, "")}/storage/v1/bucket/${id}`;
+      const r = await fetch(url, {
+        method: "GET",
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+      });
+      results[id] = r.status;
+    }
+    const missing = Object.entries(results).filter(
+      ([, status]) => status === 404,
+    );
+    if (missing.length > 0) {
+      throw new Error(
+        `storage buckets missing in prod: ${JSON.stringify(missing)}`,
+      );
+    }
+    return { results };
+  });
+
+  await step("24b-voice-previews", async () => {
+    // v1.4 live-bug closeout: the voice-picker on /songs/new fires
+    // `new Audio(url).play()` against
+    //   https://<project>.supabase.co/storage/v1/object/public/voice-samples/samples/<voice_id>.wav
+    // The bucket has existed since migration 0039 but the objects
+    // weren't uploaded until the closeout, so playback silently 404'd
+    // in production. HEAD a handful of voice ids that the picker
+    // ships to detect future regressions where the bucket is in place
+    // but the WAVs are gone.
+    const projectUrl =
+      process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      process.env.SMOKE_SUPABASE_URL;
+    if (!projectUrl) {
+      return {
+        skipped: true,
+        reason:
+          "SUPABASE_URL not set in env; voice-preview HEAD probe skipped",
+      };
+    }
+    const sampleVoiceIds = [
+      "indic_hi_male_broadcast",
+      "indic_hi_female_devotional",
+      "indic_kn_female_folk",
+    ];
+    const results = {};
+    for (const id of sampleVoiceIds) {
+      const url = `${projectUrl.replace(/\/$/, "")}/storage/v1/object/public/voice-samples/samples/${id}.wav`;
+      const r = await fetch(url, { method: "HEAD" });
+      results[id] = r.status;
+    }
+    const missing = Object.entries(results).filter(([, status]) => status >= 400);
+    if (missing.length > 0) {
+      throw new Error(
+        `voice-sample previews missing in prod: ${JSON.stringify(missing)}`,
+      );
+    }
+    return { results };
   });
 
   await step("25-public-audio-url", async () => {

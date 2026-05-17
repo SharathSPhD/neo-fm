@@ -36,7 +36,7 @@ from typing import TYPE_CHECKING
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app.model import VocalRequest, VocalSection  # noqa: E402
+from app.model import FakeVocalModel, VocalRequest, VocalSection  # noqa: E402
 from app.routing import RoutingVocalModel  # noqa: E402
 from app.voice_catalog import VOICES  # noqa: E402
 
@@ -91,18 +91,36 @@ def _build_request(voice_id: str) -> VocalRequest:
 
 
 def _upload(wav_bytes: bytes, voice_id: str) -> None:
-    # Lazy import: only operators with the upload extra need supabase-py.
-    from supabase import create_client  # type: ignore[import-not-found]
+    """Upload the rendered WAV to the public ``voice-samples`` bucket.
 
-    url = os.environ["SUPABASE_URL"]
+    Uses the Supabase Storage REST API directly via stdlib `urllib` so
+    the operator doesn't have to install `supabase-py` (which pulls
+    httpx/postgrest as transitive deps). Idempotent: ``x-upsert: true``
+    overwrites any existing object at the path.
+    """
+    import urllib.error
+    import urllib.request
+
+    base_url = os.environ.get("SUPABASE_URL") or os.environ["NEXT_PUBLIC_SUPABASE_URL"]
     key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    sb = create_client(url, key)
     path = f"samples/{voice_id}.wav"
-    sb.storage.from_("voice-samples").upload(
-        path=path,
-        file=wav_bytes,
-        file_options={"content-type": "audio/wav", "upsert": "true"},
+    upload_url = f"{base_url.rstrip('/')}/storage/v1/object/voice-samples/{path}"
+    req = urllib.request.Request(
+        upload_url,
+        data=wav_bytes,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "audio/wav",
+            "x-upsert": "true",
+        },
     )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"upload {path} failed: {e.code} {body}") from e
     print(f"  uploaded -> voice-samples/{path}", flush=True)
 
 
@@ -128,8 +146,19 @@ def main() -> int:
     args = parser.parse_args()
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    model = RoutingVocalModel()
-    model.load()
+    # On DGX we use the RoutingVocalModel which lazily loads svara /
+    # parler / indicf5 / nemo per-section and falls back to the fake
+    # backend when the real model isn't loadable. Off-DGX operators
+    # (this script as a CI / dev tool) get the FakeVocalModel directly
+    # so they don't need transformers + torch installed -- the fake
+    # produces a deterministic vowel-shaped tone that's playable for
+    # UI smoke checks, while still being clearly synthetic.
+    require_real = os.environ.get("NEO_FM_REQUIRE_REAL_MODEL") == "1"
+    model: RoutingVocalModel | FakeVocalModel
+    if require_real:
+        model = RoutingVocalModel()
+    else:
+        model = FakeVocalModel()
 
     voice_ids = [args.only] if args.only else sorted(VOICES.keys())
     for vid in voice_ids:

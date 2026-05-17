@@ -37,6 +37,7 @@ import type {
   Orchestration,
   Section,
   SongDocument,
+  StyleFamily,
 } from "@neo-fm/song-doc";
 
 import type { CoComposer } from "./index.js";
@@ -131,9 +132,17 @@ function elaborateSection(
 
 export class WesternCoComposer implements CoComposer {
   readonly style_family = "western" as const;
+  // v1.4: also accepts bollywood-ballad (pop-rock harmony + Indian
+  // instrumentation). The composer emits `style:${doc.style_family}`
+  // so music-inference and the stem planner see the user-facing
+  // family, not "western", and can route accordingly.
+  readonly acceptedStyleFamilies: ReadonlySet<StyleFamily> = new Set([
+    "western",
+    "bollywood-ballad",
+  ]);
 
   async elaborate(doc: SongDocument): Promise<SongDocument> {
-    if (doc.style_family !== "western") {
+    if (!this.acceptedStyleFamilies.has(doc.style_family)) {
       throw new Error(
         `WesternCoComposer received style_family=${doc.style_family}; use getCoComposer(doc.style_family) instead`,
       );

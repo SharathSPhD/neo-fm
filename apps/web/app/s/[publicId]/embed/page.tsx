@@ -125,7 +125,11 @@ export default async function EmbedPage({
           format={latestTrack.format}
         />
       ) : (
-        <p className="text-xs text-amber-200">Audio is still being prepared.</p>
+        <p className="text-xs text-amber-200">
+          {data.status === "queued" || data.status === "processing"
+            ? "Rendering now."
+            : "Audio preview not available."}
+        </p>
       )}
     </main>
   );
