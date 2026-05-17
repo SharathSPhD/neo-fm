@@ -50,6 +50,11 @@ class QueueMessage(BaseModel):
     attempt_id: UUID
     attempt_number: int = Field(default=1, ge=1)
     trace_id: str = Field(min_length=1)
+    # v1.4 Sprint 16: optional candidate generation. When >1, the
+    # worker renders that many alternates and lets the RLHF reranker
+    # pick which becomes `is_current=true`. Default of 1 preserves
+    # legacy single-candidate behaviour.
+    top_n_candidates: int = Field(default=1, ge=1, le=8)
 
 
 class SongDocumentSection(BaseModel):

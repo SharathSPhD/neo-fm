@@ -1,0 +1,63 @@
+# Western pop / folk style prompts in English. Voice persona is the
+# English Indian-radio neutral; engine is heartmula baseline.
+prompts:
+  - id: western-001
+    style: western
+    language: en
+    lyrics_seed: "morning light through the kitchen blinds"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-002
+    style: western
+    language: en
+    lyrics_seed: "drove the highway in the rain"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-003
+    style: western
+    language: en
+    lyrics_seed: "old guitar leans against the wall"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-004
+    style: western
+    language: en
+    lyrics_seed: "city lights spell your name"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-005
+    style: western
+    language: en
+    lyrics_seed: "we were running through the field"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-006
+    style: western
+    language: en
+    lyrics_seed: "december came and you were gone"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-007
+    style: western
+    language: en
+    lyrics_seed: "thirty miles to the next town"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-008
+    style: western
+    language: en
+    lyrics_seed: "porch light flickering at three"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-009
+    style: western
+    language: en
+    lyrics_seed: "yellow leaves on a winding road"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60
+  - id: western-010
+    style: western
+    language: en
+    lyrics_seed: "your sweater on the chair again"
+    expected: { raga: null, tala: null, voice_persona: en_in_female_rj }
+    duration_seconds: 60

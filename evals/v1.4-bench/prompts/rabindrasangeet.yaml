@@ -1,0 +1,63 @@
+# Rabindrasangeet prompts. Engine target is heartmula; voice persona
+# is the Bengali Rabindra catalogue entry.
+prompts:
+  - id: rabindrasangeet-001
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "amar shonar bangla ami tomay"
+    expected: { raga: bhairavi, tala: dadra, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: rabindrasangeet-002
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "tumi robe nirobe"
+    expected: { raga: bhupali, tala: dadra, voice_persona: indic_bn_female }
+    duration_seconds: 60
+  - id: rabindrasangeet-003
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "purano sei diner kotha"
+    expected: { raga: pilu, tala: kaharva, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: rabindrasangeet-004
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "majhe majhe tobo dekha pai"
+    expected: { raga: bhairavi, tala: dadra, voice_persona: indic_bn_female }
+    duration_seconds: 60
+  - id: rabindrasangeet-005
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "ektuku chowa lage"
+    expected: { raga: malhar, tala: kaharva, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: rabindrasangeet-006
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "jodi tor dak shune"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: rabindrasangeet-007
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "amar mukti aloy aloy"
+    expected: { raga: kafi, tala: dadra, voice_persona: indic_bn_female }
+    duration_seconds: 60
+  - id: rabindrasangeet-008
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "bhalobeshe sokhi nibhrite"
+    expected: { raga: yaman, tala: dadra, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60
+  - id: rabindrasangeet-009
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "ami tomar shongey"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: indic_bn_female }
+    duration_seconds: 60
+  - id: rabindrasangeet-010
+    style: rabindrasangeet
+    language: bn
+    lyrics_seed: "akash bhora surjo tara"
+    expected: { raga: malkauns, tala: dadra, voice_persona: indic_bn_male_rabindra }
+    duration_seconds: 60

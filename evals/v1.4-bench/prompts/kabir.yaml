@@ -1,0 +1,63 @@
+# Kabir doha prompts. Voice persona is the devotional chant route;
+# music engine is heartmula baseline with a deliberately sparse mix.
+prompts:
+  - id: kabir-001
+    style: kabir
+    language: hi
+    lyrics_seed: "pothi padhi padhi jag mua"
+    expected: { raga: bhairavi, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-002
+    style: kabir
+    language: hi
+    lyrics_seed: "kabira khada bazaar mein"
+    expected: { raga: bhairavi, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-003
+    style: kabir
+    language: hi
+    lyrics_seed: "dukh me sumiran sab kare"
+    expected: { raga: jaijaiwanti, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-004
+    style: kabir
+    language: hi
+    lyrics_seed: "guru govind dou khade"
+    expected: { raga: bhairavi, tala: kaharva, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-005
+    style: kabir
+    language: hi
+    lyrics_seed: "saiyaan bhayo kotwal"
+    expected: { raga: pilu, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-006
+    style: kabir
+    language: hi
+    lyrics_seed: "moko kahaan dhoondhe re"
+    expected: { raga: jaijaiwanti, tala: rupak, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-007
+    style: kabir
+    language: hi
+    lyrics_seed: "chadariya jhini re jhini"
+    expected: { raga: kafi, tala: kaharva, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-008
+    style: kabir
+    language: hi
+    lyrics_seed: "naiya tori"
+    expected: { raga: bhairavi, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-009
+    style: kabir
+    language: hi
+    lyrics_seed: "kab tak rahihu kab tak rahihu"
+    expected: { raga: pilu, tala: dadra, voice_persona: chant_devotional }
+    duration_seconds: 60
+  - id: kabir-010
+    style: kabir
+    language: hi
+    lyrics_seed: "panchhi udi jaayega"
+    expected: { raga: jaijaiwanti, tala: rupak, voice_persona: chant_devotional }
+    duration_seconds: 60

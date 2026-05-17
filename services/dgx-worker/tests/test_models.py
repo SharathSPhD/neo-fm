@@ -26,6 +26,60 @@ def test_queue_message_rejects_unknown_fields() -> None:
         QueueMessage.model_validate(payload)
 
 
+def test_queue_message_defaults_top_n_candidates_to_one() -> None:
+    payload = {
+        "job_id": "11111111-1111-1111-1111-111111111111",
+        "user_id": "22222222-2222-2222-2222-222222222222",
+        "song_document_id": "33333333-3333-3333-3333-333333333333",
+        "priority": "normal",
+        "created_at": "2026-05-17T16:00:00Z",
+        "style_family": "carnatic",
+        "target_duration_seconds": 60,
+        "attempt_id": "44444444-4444-4444-4444-444444444444",
+        "attempt_number": 1,
+        "trace_id": "abc",
+    }
+    msg = QueueMessage.model_validate(payload)
+    assert msg.top_n_candidates == 1
+
+
+def test_queue_message_accepts_top_n_candidates_in_range() -> None:
+    payload = {
+        "job_id": "11111111-1111-1111-1111-111111111111",
+        "user_id": "22222222-2222-2222-2222-222222222222",
+        "song_document_id": "33333333-3333-3333-3333-333333333333",
+        "priority": "normal",
+        "created_at": "2026-05-17T16:00:00Z",
+        "style_family": "carnatic",
+        "target_duration_seconds": 60,
+        "attempt_id": "44444444-4444-4444-4444-444444444444",
+        "attempt_number": 1,
+        "trace_id": "abc",
+        "top_n_candidates": 4,
+    }
+    msg = QueueMessage.model_validate(payload)
+    assert msg.top_n_candidates == 4
+
+
+def test_queue_message_rejects_top_n_candidates_out_of_range() -> None:
+    base = {
+        "job_id": "11111111-1111-1111-1111-111111111111",
+        "user_id": "22222222-2222-2222-2222-222222222222",
+        "song_document_id": "33333333-3333-3333-3333-333333333333",
+        "priority": "normal",
+        "created_at": "2026-05-17T16:00:00Z",
+        "style_family": "carnatic",
+        "target_duration_seconds": 60,
+        "attempt_id": "44444444-4444-4444-4444-444444444444",
+        "attempt_number": 1,
+        "trace_id": "abc",
+    }
+    with pytest.raises(ValidationError):
+        QueueMessage.model_validate({**base, "top_n_candidates": 0})
+    with pytest.raises(ValidationError):
+        QueueMessage.model_validate({**base, "top_n_candidates": 9})
+
+
 def test_queue_message_target_duration_must_be_allowed() -> None:
     payload = {
         "job_id": "11111111-1111-1111-1111-111111111111",

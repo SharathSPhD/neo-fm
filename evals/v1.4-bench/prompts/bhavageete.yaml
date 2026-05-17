@@ -1,0 +1,64 @@
+# Kannada bhavageete prompts -- D.R. Bendre / G.S. Shivarudrappa /
+# K.S. Narasimhaswamy era light-classical settings. Engine target is
+# heartmula+bhavageete-lora with the Kannada voice catalogue.
+prompts:
+  - id: bhavageete-001
+    style: bhavageete
+    language: kn
+    lyrics_seed: "malenaada maleya sanje"
+    expected: { raga: yaman_kalyani, tala: chapu, voice_persona: indic_kn_male_warm }
+    duration_seconds: 60
+  - id: bhavageete-002
+    style: bhavageete
+    language: kn
+    lyrics_seed: "olidante maaduva neenu"
+    expected: { raga: hamsadhwani, tala: adi, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: bhavageete-003
+    style: bhavageete
+    language: kn
+    lyrics_seed: "kurudu kaanchana"
+    expected: { raga: mishra_pilu, tala: adi, voice_persona: indic_kn_male_warm }
+    duration_seconds: 60
+  - id: bhavageete-004
+    style: bhavageete
+    language: kn
+    lyrics_seed: "jogada siri belakinalli"
+    expected: { raga: bhairavi, tala: adi, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: bhavageete-005
+    style: bhavageete
+    language: kn
+    lyrics_seed: "ninna preetiya"
+    expected: { raga: kapi, tala: adi, voice_persona: indic_kn_male_warm }
+    duration_seconds: 60
+  - id: bhavageete-006
+    style: bhavageete
+    language: kn
+    lyrics_seed: "bayasade bandita"
+    expected: { raga: chandrakauns, tala: misra_chapu, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: bhavageete-007
+    style: bhavageete
+    language: kn
+    lyrics_seed: "mooru hottu mooru jaali"
+    expected: { raga: hamsanada, tala: adi, voice_persona: indic_kn_male_warm }
+    duration_seconds: 60
+  - id: bhavageete-008
+    style: bhavageete
+    language: kn
+    lyrics_seed: "shravana banda"
+    expected: { raga: malhar, tala: rupakam, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: bhavageete-009
+    style: bhavageete
+    language: kn
+    lyrics_seed: "preetiya neralu"
+    expected: { raga: kalyani, tala: adi, voice_persona: indic_kn_male_warm }
+    duration_seconds: 60
+  - id: bhavageete-010
+    style: bhavageete
+    language: kn
+    lyrics_seed: "huttida halliyondu"
+    expected: { raga: pilu, tala: misra_chapu, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60

@@ -1,0 +1,66 @@
+# Carnatic kriti prompts -- ten phrases drawn from public-domain
+# Tyagaraja / Dikshitar / Syama Sastri sahityas. Each row is the
+# anu-pallavi or first line of a well-known kriti; the system is
+# expected to compose around the seed at the given raga & tala.
+# Voice persona maps to voice_catalog.json ids.
+prompts:
+  - id: carnatic-001
+    style: carnatic
+    language: hi
+    lyrics_seed: "vatapi ganapatim bhaje"
+    expected: { raga: hamsadhwani, tala: adi, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: carnatic-002
+    style: carnatic
+    language: hi
+    lyrics_seed: "nagumomu ganaleni"
+    expected: { raga: abheri, tala: adi, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: carnatic-003
+    style: carnatic
+    language: hi
+    lyrics_seed: "endaro mahanubhavulu"
+    expected: { raga: sri, tala: adi, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: carnatic-004
+    style: carnatic
+    language: kn
+    lyrics_seed: "krishna nee begane baro"
+    expected: { raga: yaman_kalyani, tala: misra_chapu, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: carnatic-005
+    style: carnatic
+    language: hi
+    lyrics_seed: "bhavayami raghuramam"
+    expected: { raga: saveri, tala: rupakam, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: carnatic-006
+    style: carnatic
+    language: hi
+    lyrics_seed: "marivere gati"
+    expected: { raga: anandabhairavi, tala: misra_chapu, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: carnatic-007
+    style: carnatic
+    language: kn
+    lyrics_seed: "jagadodharana adisidale"
+    expected: { raga: kapi, tala: adi, voice_persona: indic_kn_female_bhajan }
+    duration_seconds: 60
+  - id: carnatic-008
+    style: carnatic
+    language: hi
+    lyrics_seed: "ninnu vina sukhamemi"
+    expected: { raga: todi, tala: adi, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60
+  - id: carnatic-009
+    style: carnatic
+    language: hi
+    lyrics_seed: "raghuvamsa sudha"
+    expected: { raga: kathanakuthuhalam, tala: adi, voice_persona: indic_hi_male_broadcast }
+    duration_seconds: 60
+  - id: carnatic-010
+    style: carnatic
+    language: hi
+    lyrics_seed: "sami daya juda"
+    expected: { raga: mohanam, tala: adi, voice_persona: indic_hi_female_lyrical }
+    duration_seconds: 60

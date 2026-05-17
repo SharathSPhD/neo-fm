@@ -1072,6 +1072,15 @@ export type Database = {
           visibility: Database["public"]["Enums"]["song_visibility_enum"] | null
         }[]
       }
+      record_preference_pair: {
+        Args: {
+          p_job_id: string
+          p_winner_track_id: string
+          p_loser_track_id: string
+          p_vote_source?: string
+        }
+        Returns: string
+      }
       reconciler_recover_job: {
         Args: { p_job_id: string }
         Returns: {
