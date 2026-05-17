@@ -17,7 +17,7 @@ test("Discover renders demo songs and the style filter chips work", async ({
 }) => {
   await page.goto("/discover", { waitUntil: "networkidle" });
 
-  const cards = page.locator('a[href^="/p/"]');
+  const cards = page.locator('a[href^="/s/"]');
   await expect(cards.first()).toBeVisible({ timeout: 15_000 });
   const count = await cards.count();
   expect(count).toBeGreaterThan(0);
@@ -26,7 +26,7 @@ test("Discover renders demo songs and the style filter chips work", async ({
   await page.goto("/discover?style=sanskrit-shloka", {
     waitUntil: "networkidle",
   });
-  await expect(page.locator('a[href^="/p/"]').first()).toBeVisible({
+  await expect(page.locator('a[href^="/s/"]').first()).toBeVisible({
     timeout: 15_000,
   });
 

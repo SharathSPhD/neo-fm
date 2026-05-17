@@ -1,0 +1,177 @@
+{
+  "apply": true,
+  "reset": false,
+  "audio_manifest": null,
+  "generated_at": "2026-05-17T18:53:57.182Z",
+  "preset_count": 12,
+  "results": [
+    {
+      "seed_id": 1,
+      "preset_id": "carnatic-kriti",
+      "user_id": "aa093b2a-b853-4fdd-a803-0276dc43bd5d",
+      "job_id": "e6f88fe3-0920-4d15-be45-ab44d188a0ef",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "ba6ch3hkae",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:54.722+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 2,
+      "preset_id": "carnatic-kriti-kn",
+      "user_id": "e3ca4d30-da24-4a26-8963-a1cb22b09973",
+      "job_id": "fa82e173-1185-42f6-b3f4-aae03c49ccd5",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "gx6sb8080b",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:54.941+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 3,
+      "preset_id": "hindustani-khayal-sketch",
+      "user_id": "44d07edf-fb5b-4c13-b99c-ab0f2b08f25c",
+      "job_id": "c1c9f3a2-8e83-4da3-bd3b-6c54dd2f6710",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "61c5nn6fj1",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:55.162+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 4,
+      "preset_id": "kannada-bhavageete",
+      "user_id": "f1ea5406-a97b-4260-a885-398303c1e132",
+      "job_id": "3e8b58d3-045c-4a32-881d-fe72301a3229",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "e9h5mp9wcw",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:55.392+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 5,
+      "preset_id": "tamil-folk",
+      "user_id": "d19d9553-4e32-4896-8424-9c10e1d62c73",
+      "job_id": "cc7181c4-c7da-4d94-b507-e28982dc3d7e",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "gdffgfwpx8",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:55.611+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 6,
+      "preset_id": "kabir-doha",
+      "user_id": "ab841d74-0ec8-402f-8117-d42aea8b84c9",
+      "job_id": "de22243a-7d6b-4b17-a0a6-6525cca491d9",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "9hakgwaeem",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:55.817+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 7,
+      "preset_id": "tagore-set",
+      "user_id": "0403c194-fe5e-4743-83fe-8e4b49c1c4d2",
+      "job_id": "bd9db3d0-d9fa-4854-916a-2e020bf2666f",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "qdsxtjnj69",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:56.038+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 8,
+      "preset_id": "bollywood-ballad",
+      "user_id": "87c0a72d-dfeb-4ecc-88d4-304e83639867",
+      "job_id": "ae561a02-893d-4071-a242-03cf0e1249b8",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "n2td66tbzf",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:56.25+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 9,
+      "preset_id": "western-pop",
+      "user_id": "f81838ca-e3fd-48ca-9b22-3fd84ff73892",
+      "job_id": "3cab061f-4d57-4246-a7b1-09f652da6b2f",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "wkr4ya30kh",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:56.463+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 10,
+      "preset_id": "sanskrit-shloka",
+      "user_id": "7ed1af4b-42e2-4d95-8b9f-1d83b956415c",
+      "job_id": "a53b244d-b1de-4ba5-91d7-cab42dd02b34",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "hrnyhwsbdt",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:56.69+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 11,
+      "preset_id": "bengali-rabindrasangeet",
+      "user_id": "2d7df5e3-ba08-4a70-b0bc-b6998ff1d7df",
+      "job_id": "a2f3d6d4-1f6b-483e-a7ab-2a7b0757385c",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "khz317md9b",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:56.898+00:00"
+        }
+      ]
+    },
+    {
+      "seed_id": 12,
+      "preset_id": "telugu-keerthana",
+      "user_id": "f2e67d13-bf4a-448b-9a64-06fa83fcf2a9",
+      "job_id": "62e4825c-8b2c-49b5-a767-b95c934c7d26",
+      "reused": true,
+      "published": [
+        {
+          "public_id": "fw6yttfjbr",
+          "visibility": "public",
+          "published_at": "2026-05-17T18:53:57.134+00:00"
+        }
+      ]
+    }
+  ]
+}

@@ -366,12 +366,18 @@ try {
   // these steps when cardCount === 0. Set `STRICT_V14_DISCOVER=0` to
   // soften this (only useful when seed has not yet been applied).
   const strictDiscover = process.env.STRICT_V14_DISCOVER !== "0";
+  const strictAudio = process.env.STRICT_V14_AUDIO !== "0";
+
+  // v1.4 closeout: Discover cards link to /s/<publicId>, not /p/.
+  // /p/ is the API surface (apps/web/app/api/p/...). The smoke
+  // previously checked `a[href^="/p/"]` and matched zero.
+  const publicLinkSelector = 'a[href^="/s/"]';
 
   await step("16-discover-sanskrit", async () => {
     await page.goto(`${BASE}/discover?style=sanskrit-shloka`, {
       waitUntil: "networkidle",
     });
-    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const cardCount = await page.locator(publicLinkSelector).count();
     const file = await shot("16-discover-sanskrit");
     if (strictDiscover && cardCount === 0) {
       throw new Error(
@@ -386,7 +392,7 @@ try {
     await page.goto(`${BASE}/discover?style=bengali-rabindrasangeet`, {
       waitUntil: "networkidle",
     });
-    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const cardCount = await page.locator(publicLinkSelector).count();
     const file = await shot("17-discover-bengali");
     if (strictDiscover && cardCount === 0) {
       throw new Error(
@@ -401,7 +407,7 @@ try {
     await page.goto(`${BASE}/discover?style=telugu-keerthana`, {
       waitUntil: "networkidle",
     });
-    const cardCount = await page.locator('a[href^="/p/"]').count();
+    const cardCount = await page.locator(publicLinkSelector).count();
     const file = await shot("18-discover-telugu");
     if (strictDiscover && cardCount === 0) {
       throw new Error(
@@ -414,7 +420,7 @@ try {
 
   await step("19-public-song-page", async () => {
     await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
-    const firstPublic = page.locator('a[href^="/p/"]').first();
+    const firstPublic = page.locator(publicLinkSelector).first();
     const haveAny = await firstPublic
       .waitFor({ state: "visible", timeout: 10_000 })
       .then(() => true)
@@ -423,13 +429,13 @@ try {
       throw new Error("no public songs on /discover — seed missing?");
     }
     await firstPublic.click();
-    await page.waitForURL(/\/p\/[a-z0-9-]+/i, { timeout: 15_000 });
+    await page.waitForURL(/\/s\/[a-z0-9-]+/i, { timeout: 15_000 });
     const file = await shot("19-public-song");
     return { url: page.url(), file: path.basename(file) };
   });
 
   await step("20-variation-dialog", async () => {
-    // Already on /p/[publicId] from step 19.
+    // Already on /s/[publicId] from step 19.
     const trigger = page
       .getByRole("button", { name: /make a variation/i })
       .first();
@@ -438,7 +444,12 @@ try {
       .then(() => true)
       .catch(() => false);
     if (!visible) {
-      throw new Error("variation CTA missing on /p/[publicId]");
+      const hasAudio = await page.locator("audio").count();
+      if (!strictAudio && hasAudio === 0) {
+        const file = await shot("20-variation-dialog");
+        return { file: path.basename(file), dialogOpen: false, note: "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)" };
+      }
+      throw new Error("variation CTA missing on /s/[publicId]");
     }
     await trigger.click();
     const distance = page.getByLabel(/distance from the original/i);
@@ -551,7 +562,7 @@ try {
     // /discover loses every audio control silently.
     await page.goto(`${BASE}/discover`, { waitUntil: "networkidle" });
     const firstHref = await page
-      .locator('a[href^="/p/"]')
+      .locator(publicLinkSelector)
       .first()
       .getAttribute("href")
       .catch(() => null);
@@ -567,6 +578,17 @@ try {
       };
     }, publicId);
     if (probe.status !== 200) {
+      if (
+        !strictAudio &&
+        probe.status === 404 &&
+        probe.body?.error === "no_track"
+      ) {
+        return {
+          publicId,
+          status: probe.status,
+          note: "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)",
+        };
+      }
       throw new Error(
         `audio-url ${probe.status}: ${JSON.stringify(probe.body)}`,
       );

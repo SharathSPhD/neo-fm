@@ -342,16 +342,23 @@ async function insertSongDocument(userId, preset) {
 }
 
 async function insertJob(userId, songDocId, preset) {
-  const audio = audioManifest[String(preset.seed_id)] ?? null;
+  // The jobs schema (infra/supabase/migrations/0003_jobs_tracks.sql)
+  // has NO audio_url / duration_seconds columns -- those live on
+  // `tracks` and are written by the dgx-worker. For the staging seed
+  // we only need a completed job + a public_id (set by publish_song
+  // below). Discover's SSR query (apps/web/app/(marketing)/discover/
+  // page.tsx) selects jobs.id, public_id, published_at, plus
+  // song_documents.{title, language, style_family} and cover_art --
+  // audio never appears in the card render. The audio_manifest hook
+  // is retained for when real WAVs land via insert_track in v1.5+.
+  void audioManifest[String(preset.seed_id)];
   const { data, error } = await supabase
     .from("jobs")
     .insert({
       user_id: userId,
       song_document_id: songDocId,
       status: "completed",
-      progress: 100,
-      audio_url: audio?.audio_url ?? null,
-      duration_seconds: audio?.duration_seconds ?? 60,
+      progress: 1.0,
     })
     .select("id")
     .single();
@@ -360,12 +367,60 @@ async function insertJob(userId, songDocId, preset) {
 }
 
 async function publishJob(jobId) {
-  const { data, error } = await supabase.rpc("publish_song", {
-    p_job_id: jobId,
-    p_visibility: "public",
-  });
-  if (error) throw new Error(`publish_song(${jobId}): ${error.message}`);
-  return data;
+  // publish_song() (0013_public_songs.sql) is auth.uid()-gated, so it
+  // raises "authentication required" when called with the service
+  // role. For the seed we replicate its effect directly: call
+  // gen_public_id() (locked down to service_role in
+  // 0014_lock_down_gen_public_id.sql) and UPDATE jobs.public_id /
+  // published_visibility / published_at. We retry up to 8 times on the
+  // unique_violation that gen_public_id can return on slug collision,
+  // exactly like publish_song does internally.
+  const existing = await supabase
+    .from("jobs")
+    .select("public_id, published_visibility, published_at")
+    .eq("id", jobId)
+    .single();
+  if (existing.error) throw new Error(`select jobs: ${existing.error.message}`);
+  if (existing.data?.public_id) {
+    return [
+      {
+        public_id: existing.data.public_id,
+        visibility: existing.data.published_visibility,
+        published_at: existing.data.published_at,
+      },
+    ];
+  }
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const { data: slugRow, error: slugErr } = await supabase.rpc(
+      "gen_public_id",
+    );
+    if (slugErr) throw new Error(`gen_public_id: ${slugErr.message}`);
+    const slug = typeof slugRow === "string" ? slugRow : slugRow?.[0];
+    if (!slug) throw new Error(`gen_public_id returned empty: ${JSON.stringify(slugRow)}`);
+    const { data: updated, error: upErr } = await supabase
+      .from("jobs")
+      .update({
+        public_id: slug,
+        published_visibility: "public",
+        published_at: new Date().toISOString(),
+      })
+      .eq("id", jobId)
+      .select("public_id, published_visibility, published_at")
+      .single();
+    if (!upErr) {
+      return [
+        {
+          public_id: updated.public_id,
+          visibility: updated.published_visibility,
+          published_at: updated.published_at,
+        },
+      ];
+    }
+    if (upErr.code !== "23505") {
+      throw new Error(`publish job ${jobId}: ${upErr.message}`);
+    }
+  }
+  throw new Error(`publish job ${jobId}: failed to mint unique public_id after 8 attempts`);
 }
 
 if (RESET) {

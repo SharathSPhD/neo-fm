@@ -1,0 +1,193 @@
+{
+  "base": "https://neo-fm-web.vercel.app",
+  "finishedAt": "2026-05-17T19:01:00.814Z",
+  "steps": [
+    {
+      "name": "1-landing",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/",
+      "file": "01-landing.png",
+      "h1": "The only AI music platform that gets Indian languages right at the phoneme level."
+    },
+    {
+      "name": "2-pricing-anon",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/pricing",
+      "file": "02-pricing-anon.png"
+    },
+    {
+      "name": "3-discover-anon",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/discover",
+      "file": "03-discover-anon.png"
+    },
+    {
+      "name": "4-sign-in",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library"
+    },
+    {
+      "name": "5-library-grid",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library",
+      "file": "05-library-grid.png"
+    },
+    {
+      "name": "6-library-list",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/library?view=list",
+      "file": "06-library-list.png"
+    },
+    {
+      "name": "7-cmd-palette",
+      "ok": true,
+      "file": "07-cmd-palette.png"
+    },
+    {
+      "name": "8-songs-new",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/new",
+      "file": "08-songs-new.png",
+      "presetsFound": 11
+    },
+    {
+      "name": "9-pricing-authed",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/pricing",
+      "file": "09-pricing-authed.png"
+    },
+    {
+      "name": "10-account",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/account",
+      "file": "10-account.png"
+    },
+    {
+      "name": "11-song-detail",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/1130b2cf-6f54-42ea-a544-9976afa6b8e5",
+      "file": "11-song-detail.png",
+      "remixCtaVisible": true
+    },
+    {
+      "name": "12-cover-art-panel",
+      "ok": true,
+      "file": "12-cover-art-panel.png",
+      "panelVisible": true
+    },
+    {
+      "name": "13-voice-picker",
+      "ok": true,
+      "file": "13-voice-picker.png",
+      "rowCount": 17
+    },
+    {
+      "name": "14-advanced-disclosure",
+      "ok": true,
+      "file": "14-advanced-disclosure.png"
+    },
+    {
+      "name": "15-preset-chip-count",
+      "ok": true,
+      "presetCount": 11
+    },
+    {
+      "name": "16-discover-sanskrit",
+      "ok": true,
+      "file": "16-discover-sanskrit.png",
+      "cardCount": 2
+    },
+    {
+      "name": "17-discover-bengali",
+      "ok": true,
+      "file": "17-discover-bengali.png",
+      "cardCount": 2
+    },
+    {
+      "name": "18-discover-telugu",
+      "ok": true,
+      "file": "18-discover-telugu.png",
+      "cardCount": 2
+    },
+    {
+      "name": "19-public-song-page",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/s/fw6yttfjbr",
+      "file": "19-public-song.png"
+    },
+    {
+      "name": "20-variation-dialog",
+      "ok": true,
+      "file": "20-variation-dialog.png",
+      "dialogOpen": false,
+      "note": "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)"
+    },
+    {
+      "name": "21-compare-page",
+      "ok": true,
+      "url": "https://neo-fm-web.vercel.app/songs/1130b2cf-6f54-42ea-a544-9976afa6b8e5/compare",
+      "file": "21-compare-page.png",
+      "audioCount": 0
+    },
+    {
+      "name": "22-batch-publish-bar",
+      "ok": true,
+      "file": "22-batch-publish-bar.png",
+      "checkable": false,
+      "barVisible": false
+    },
+    {
+      "name": "health-anon",
+      "ok": true,
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "phase": 1,
+        "version": "production",
+        "commit": null,
+        "env": "production",
+        "checks": {
+          "supabase": {
+            "status": "ok",
+            "latencyMs": 12
+          },
+          "upstash": {
+            "status": "missing",
+            "latencyMs": null
+          }
+        },
+        "timestamp": "2026-05-17T19:00:57.618Z"
+      }
+    },
+    {
+      "name": "health",
+      "ok": true,
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "phase": 1,
+        "version": "v1.3-wedge",
+        "commit": "dd33d7d",
+        "env": "production",
+        "checks": {
+          "supabase": {
+            "status": "ok",
+            "latencyMs": 5
+          },
+          "upstash": {
+            "status": "missing",
+            "latencyMs": null
+          }
+        },
+        "timestamp": "2026-05-17T19:00:57.795Z"
+      }
+    },
+    {
+      "name": "25-public-audio-url",
+      "ok": true,
+      "publicId": "fw6yttfjbr",
+      "status": 404,
+      "note": "skipped (catalog-only seed, no audio track; set STRICT_V14_AUDIO=1 once audio lands)"
+    }
+  ]
+}
