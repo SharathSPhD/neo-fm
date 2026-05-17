@@ -50,8 +50,10 @@ from .cover_art_worker import cover_art_consumer_loop
 from .db import WorkerDB
 from .governor import DEFAULT_STATE_PATH, GovernorState, read_state
 from .inference_client import MusicInferenceClient
-from .mixer import MixSettings, mix_to_stereo_48k
+from .mixer import MixSettings, StemInsert, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
+from .stem_planner import PlannerSection, plan_stem_inserts
+from .stems_client import StemsSynthClient
 from .storage import StorageClient
 from .vocal_client import VocalSynthClient
 
@@ -253,6 +255,81 @@ async def _vocalize_all_languages(
     return stems, failed
 
 
+async def _fetch_stem_inserts(
+    *,
+    stems: StemsSynthClient,
+    settings: Settings,
+    message: QueueMessage,
+    song_document: SongDocument,
+) -> tuple[list[StemInsert], list[dict[str, Any]]]:
+    """Plan + fetch transition stems for this song (v1.4 Sprint 11).
+
+    Returns (inserts, plan_summary). The plan_summary is what the
+    worker logs even when individual stem fetches fail; we still want
+    operators to see what *was* requested even if the sidecar 503'd.
+    Individual stem failures are non-fatal: we just drop that insert
+    and continue.
+    """
+    plan = plan_stem_inserts(
+        sections=[
+            PlannerSection(id=s.id, target_seconds=float(s.target_seconds))
+            for s in song_document.sections
+        ],
+        style_family=song_document.style_family,
+        max_inserts=settings.stems_max_inserts_per_song,
+    )
+    plan_summary = [
+        {
+            "preset": p.preset,
+            "insert_at_seconds": p.insert_at_seconds,
+            "section_index": p.section_index,
+        }
+        for p in plan
+    ]
+    if not plan:
+        return [], plan_summary
+
+    async def one(p: Any) -> tuple[Any, bytes | BaseException]:
+        try:
+            wav = await stems.generate_stem(
+                request_body={
+                    "job_id": str(message.job_id),
+                    "attempt_id": str(message.attempt_id),
+                    "trace_id": message.trace_id,
+                    "style_family": song_document.style_family,
+                    "preset": p.preset,
+                },
+                trace_id=message.trace_id,
+            )
+            return p, wav
+        except BaseException as exc:
+            return p, exc
+
+    results = await asyncio.gather(*(one(p) for p in plan))
+    inserts: list[StemInsert] = []
+    for planned, payload in results:
+        if isinstance(payload, BaseException):
+            LOG.warning(
+                "stem_fetch_failed",
+                extra={
+                    "job_id": str(message.job_id),
+                    "preset": planned.preset,
+                    "err": str(payload),
+                },
+            )
+            metrics.stem_failures_total.labels(preset=planned.preset).inc()
+            continue
+        inserts.append(
+            StemInsert(
+                audio=payload,
+                insert_at_seconds=planned.insert_at_seconds,
+                crossfade_seconds=planned.crossfade_seconds,
+                label=planned.label,
+            )
+        )
+    return inserts, plan_summary
+
+
 async def process_one(
     *,
     settings: Settings,
@@ -261,6 +338,7 @@ async def process_one(
     storage: StorageClient,
     queue_msg: dict[str, Any],
     vocal: VocalSynthClient | None = None,
+    stems: StemsSynthClient | None = None,
     shutdown: asyncio.Event | None = None,
 ) -> str:
     """Process a single leased queue message; return one of JobOutcome.*."""
@@ -273,6 +351,7 @@ async def process_one(
             storage=storage,
             queue_msg=queue_msg,
             vocal=vocal,
+            stems=stems,
             shutdown=shutdown,
         )
     finally:
@@ -289,6 +368,7 @@ async def _process_one_impl(
     storage: StorageClient,
     queue_msg: dict[str, Any],
     vocal: VocalSynthClient | None = None,
+    stems: StemsSynthClient | None = None,
     shutdown: asyncio.Event | None = None,
 ) -> str:
     msg_id = int(queue_msg["msg_id"])
@@ -450,12 +530,33 @@ async def _process_one_impl(
                 song_document=song_document,
             )
 
+        # ---- 5b'. transition stems (v1.4 Sprint 11) ----------------------
+        stem_inserts: list[StemInsert] = []
+        stem_plan_summary: list[dict[str, Any]] = []
+        if stems is not None and settings.stems_synth_url:
+            stem_inserts, stem_plan_summary = await _fetch_stem_inserts(
+                stems=stems,
+                settings=settings,
+                message=message,
+                song_document=song_document,
+            )
+            if stem_plan_summary:
+                LOG.info(
+                    "stem_plan",
+                    extra={
+                        "job_id": job_id,
+                        "plan": stem_plan_summary,
+                        "rendered": len(stem_inserts),
+                    },
+                )
+
         # ---- 5c. mixdown to stereo 48k -----------------------------------
         mix_started = _time.perf_counter()
         try:
             final_audio = mix_to_stereo_48k(
                 instrumental_wav=audio_bytes,
                 vocal_wavs=vocal_stems or None,
+                stem_inserts=stem_inserts or None,
                 target_duration_seconds=song_document.target_duration_seconds,
                 settings=MixSettings(),
             )
@@ -467,6 +568,7 @@ async def _process_one_impl(
                     "job_id": job_id,
                     "err": str(exc),
                     "vocal_failures": vocal_failures,
+                    "stem_failures": len(stem_plan_summary) - len(stem_inserts),
                 },
             )
             # Mixer failures are retryable: they're not the request's
@@ -616,6 +718,13 @@ async def main_loop(
             hmac_secret=settings.vocal_synth_hmac_secret,
             timeout_seconds=settings.vocal_synth_timeout_seconds,
         )
+    stems: StemsSynthClient | None = None
+    if settings.stems_synth_url and settings.stems_synth_hmac_secret:
+        stems = StemsSynthClient(
+            base_url=settings.stems_synth_url,
+            hmac_secret=settings.stems_synth_hmac_secret,
+            timeout_seconds=settings.stems_synth_timeout_seconds,
+        )
     storage = StorageClient(
         supabase_url=settings.supabase_url,
         service_role_key=settings.supabase_service_role_key,
@@ -718,6 +827,7 @@ async def main_loop(
                 storage=storage,
                 queue_msg=msg,
                 vocal=vocal,
+                stems=stems,
                 shutdown=stop,
             )
     finally:

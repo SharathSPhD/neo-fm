@@ -79,6 +79,18 @@ class Settings:
     cover_art_max_attempts: int = 3
     cover_art_poll_interval_seconds: float = 2.0
 
+    # v1.4 Sprint 11 — stems-synth sidecar (optional). When `stems_synth_url`
+    # is empty the worker still renders songs, just without transition
+    # stems. This is the default for local dev + the path the song-render
+    # tests exercise.
+    stems_synth_url: str = ""
+    stems_synth_hmac_secret: str = ""
+    stems_synth_timeout_seconds: float = 60.0
+    # Max stem inserts per song. Caps cost on long target_duration_seconds
+    # while still meeting the Sprint 11 contract (≥3 inserts on a
+    # bhavageete render).
+    stems_max_inserts_per_song: int = 4
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -133,5 +145,13 @@ def load_settings() -> Settings:
         cover_art_max_attempts=int(os.environ.get("COVER_ART_MAX_ATTEMPTS", "3")),
         cover_art_poll_interval_seconds=float(
             os.environ.get("COVER_ART_POLL_INTERVAL_SECONDS", "2"),
+        ),
+        stems_synth_url=os.environ.get("STEMS_SYNTH_URL", ""),
+        stems_synth_hmac_secret=os.environ.get("STEMS_SYNTH_HMAC_SECRET", ""),
+        stems_synth_timeout_seconds=float(
+            os.environ.get("STEMS_SYNTH_TIMEOUT_SECONDS", "60"),
+        ),
+        stems_max_inserts_per_song=int(
+            os.environ.get("STEMS_MAX_INSERTS_PER_SONG", "4"),
         ),
     )
