@@ -181,6 +181,70 @@ services:
       start_period: 120s
     profiles: ["vocal"]
 
+  pwm-api:
+    # Phase 1: thin FastAPI wrapper around the Pratyabhijñā World Model
+    # (PWM) creative-generation backend. The PWM project and its
+    # pwm-phase2 source live on the DGX host -- we volume-mount them
+    # read-only rather than copying them into the image (their ML
+    # dependencies are large, GPU-tuned, and operator-owned).
+    #
+    # Wrapper adds:
+    #   - HMAC auth (ADR 0003) keyed by PWM_HMAC_SECRET
+    #   - Structured JSON logs (ADR 0007)
+    #   - A neo-fm-shaped /v1/generate-lyric that translates StyleFamily
+    #     -> PWM Domain before invoking the upstream API.
+    build:
+      context: ../services/pwm-api
+      dockerfile: Dockerfile
+      args:
+        STAGE: "${PWM_API_STAGE:-phase1}"
+    image: "neo-fm/pwm-api:${PWM_API_STAGE:-phase1}"
+    container_name: neo-fm-pwm-api
+    restart: unless-stopped
+    expose:
+      - "9000"
+    # Loopback bind for operator curl + smoke tests. Music-inference
+    # owns :8000; PWM owns :9000. Internal calls go over the compose
+    # bridge as ``http://pwm-api:9000``.
+    ports:
+      - "127.0.0.1:9000:9000"
+    env_file:
+      - .env.dgx
+    environment:
+      PHASE: "1"
+      PWM_HMAC_SECRET: "${PWM_HMAC_SECRET:?PWM_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
+      PWM_HMAC_SECRET_NEXT: "${PWM_HMAC_SECRET_NEXT:-}"
+      PWM_PROJECT_PATH: "/opt/pwm"
+      PWM_PHASE2_PATH: "/opt/pwm-phase2"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    volumes:
+      # Read-only mounts: the wrapper imports from the PWM repo at
+      # runtime; we don't want a container restart to mutate the
+      # operator's working tree.
+      - "${PWM_PROJECT_HOST_PATH:-/home/sharaths/projects/PWM}:/opt/pwm:ro"
+      - "${PWM_PHASE2_HOST_PATH:-/home/sharaths/projects/pwm-phase2}:/opt/pwm-phase2:ro"
+      - "${PWM_VLLM_ENV_HOST_PATH:-/home/sharaths/vllm-env}:/opt/vllm-env:ro"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test:
+        - "CMD"
+        - "curl"
+        - "-fsS"
+        - "http://localhost:9000/healthz"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      # PWM's lifespan kicks off background WM warmup. /healthz reports
+      # ``pwm_ready`` independently so we don't need to wait for the
+      # full warm-up to mark the container healthy.
+      start_period: 60s
+
   prometheus:
     image: prom/prometheus:v2.55.1
     container_name: neo-fm-prometheus
