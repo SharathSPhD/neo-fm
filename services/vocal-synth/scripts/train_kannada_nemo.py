@@ -30,6 +30,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -47,7 +48,7 @@ class TrainingConfig:
 DEFAULT_CONFIG = TrainingConfig()
 
 
-def load_manifest(path: Path) -> list[dict[str, object]]:
+def load_manifest(path: Path) -> list[dict[str, Any]]:
     """Parse a NeMo JSONL manifest. Raises if any row violates the
     schema `curate_kannada_tts.validate_rows` enforced."""
     rows: list[dict[str, object]] = []
@@ -74,7 +75,7 @@ def load_manifest(path: Path) -> list[dict[str, object]]:
     return rows
 
 
-def build_speaker_map(rows: list[dict[str, object]]) -> dict[str, int]:
+def build_speaker_map(rows: list[dict[str, Any]]) -> dict[str, int]:
     """Map every catalogue voice_id present in the manifest to a
     stable int id.
 
@@ -149,32 +150,168 @@ def main() -> int:
         )
         return 0
 
-    # Real DGX path: we don't import nemo_toolkit here so a missing
-    # install in CI doesn't error in the import phase. The operator
-    # imports it inside this block.
+    # Real DGX path: deferred imports so CI (no nemo_toolkit) stays clean.
     try:
         from nemo.collections.tts.models import (  # type: ignore[import-not-found]
             FastPitchModel,
             HifiGanModel,
         )
+        import pytorch_lightning as pl  # type: ignore[import-not-found]
+        from omegaconf import OmegaConf  # type: ignore[import-not-found]
     except ImportError as e:
         raise RuntimeError(
             "nemo_toolkit is not installed. On DGX run "
             "`uv pip install 'nemo_toolkit[tts]==1.23.*'` first."
         ) from e
 
-    # The real training loop is plumbed by the operator: FastPitch
-    # fine-tune from the multilingual NeMo checkpoint, then HiFi-GAN
-    # vocoder retrain on the same speakers. The orchestration lives
-    # in shell scripts on DGX (Sprint 13 docs/DECISIONS/0033).
-    del FastPitchModel, HifiGanModel  # silence "imported but unused"
-    print(
-        "real-mode training is DGX-only; see "
-        "docs/DECISIONS/0033-custom-nemo-kannada-tts.md for the "
-        "operator shell-script wrapper.",
-        file=sys.stderr,
+    return _real_train(
+        rows=rows,
+        speaker_map=speaker_map,
+        out_dir=args.out_dir,
+        cfg=DEFAULT_CONFIG,
+        fastpitch_cls=FastPitchModel,
+        hifigan_cls=HifiGanModel,
+        pl_trainer_cls=pl.Trainer,
+        omegaconf=OmegaConf,
     )
-    return 1
+
+
+def _real_train(  # pragma: no cover
+    *,
+    rows: list[dict[str, Any]],
+    speaker_map: dict[str, int],
+    out_dir: Path,
+    cfg: TrainingConfig,
+    fastpitch_cls: Any,
+    hifigan_cls: Any,
+    pl_trainer_cls: Any,
+    omegaconf: Any,
+) -> int:
+    """FastPitch + HiFi-GAN fine-tune loop (DGX-only).
+
+    Pipeline:
+      1. Rewrite manifest: speaker_id → speaker (NeMo standard field).
+      2. Load tts_en_multispeaker_fastpitchmodel; cross-lingual fine-tune
+         on Kannada corpus (pitch + energy sup_data computed on first run).
+      3. Save fastpitch.nemo.
+      4. Load tts_hifigan; fine-tune vocoder on same corpus.
+      5. Save hifigan.nemo + speaker_map.json.
+    """
+    import json as _json
+    import logging as _logging
+
+    log = _logging.getLogger("train_kannada_nemo")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    sup_dir = out_dir / "sup_data"
+    sup_dir.mkdir(exist_ok=True)
+
+    # ── 1. Rewrite manifest (speaker_id → speaker for NeMo) ───────────────
+    nemo_manifest = out_dir / "nemo_train.jsonl"
+    with nemo_manifest.open("w", encoding="utf-8") as f:
+        for row in rows:
+            nemo_row = dict(row)
+            nemo_row["speaker"] = nemo_row.pop("speaker_id")
+            f.write(_json.dumps(nemo_row, ensure_ascii=False) + "\n")
+    log.info("nemo_manifest_written rows=%d path=%s", len(rows), nemo_manifest)
+
+    oc = omegaconf  # type: ignore[assignment]
+
+    _train_ds = oc.create(
+        {
+            "manifest_filepath": str(nemo_manifest),
+            "sample_rate": cfg.target_sample_rate,
+            "sup_data_path": str(sup_dir),
+            "sup_data_types": ["pitch", "energy"],
+            "batch_size": cfg.fastpitch_batch_size,
+            "num_workers": 4,
+            "pin_memory": True,
+            "shuffle": True,
+            "min_duration": 1.0,
+            "max_duration": 15.0,
+        }
+    )
+    _val_ds = oc.merge(_train_ds, {"shuffle": False, "batch_size": max(1, cfg.fastpitch_batch_size // 2)})
+
+    # ── 2. Fine-tune FastPitch ────────────────────────────────────────────
+    log.info("loading_fastpitch base=tts_en_multispeaker_fastpitchmodel")
+    fp_model = fastpitch_cls.from_pretrained("tts_en_multispeaker_fastpitchmodel")  # type: ignore[union-attr]
+    fp_model.setup_training_data(_train_ds)
+    fp_model.setup_validation_data(_val_ds)
+
+    fp_trainer = pl_trainer_cls(  # type: ignore[operator]
+        max_epochs=cfg.fastpitch_epochs,
+        devices=1,
+        accelerator="gpu",
+        log_every_n_steps=10,
+        val_check_interval=1.0,
+        default_root_dir=str(out_dir / "fp_checkpoints"),
+        enable_progress_bar=True,
+        logger=False,
+    )
+    log.info("fastpitch_training_start epochs=%d", cfg.fastpitch_epochs)
+    fp_trainer.fit(fp_model)
+
+    fp_path = out_dir / "fastpitch.nemo"
+    fp_model.save_to(str(fp_path))
+    log.info("fastpitch_saved path=%s", fp_path)
+
+    # ── 3. Fine-tune HiFi-GAN vocoder ────────────────────────────────────
+    _hg_train_ds = oc.create(
+        {
+            "manifest_filepath": str(nemo_manifest),
+            "sample_rate": cfg.target_sample_rate,
+            "batch_size": cfg.hifigan_batch_size,
+            "num_workers": 4,
+            "pin_memory": True,
+            "shuffle": True,
+            "min_duration": 1.0,
+            "max_duration": 15.0,
+        }
+    )
+    _hg_val_ds = oc.merge(_hg_train_ds, {"shuffle": False, "batch_size": max(1, cfg.hifigan_batch_size // 2)})
+
+    log.info("loading_hifigan base=tts_hifigan")
+    hg_model = hifigan_cls.from_pretrained("tts_hifigan")  # type: ignore[union-attr]
+    hg_model.setup_training_data(_hg_train_ds)
+    hg_model.setup_validation_data(_hg_val_ds)
+
+    hg_trainer = pl_trainer_cls(  # type: ignore[operator]
+        max_epochs=cfg.hifigan_epochs,
+        devices=1,
+        accelerator="gpu",
+        log_every_n_steps=10,
+        default_root_dir=str(out_dir / "hg_checkpoints"),
+        enable_progress_bar=True,
+        logger=False,
+    )
+    log.info("hifigan_training_start epochs=%d", cfg.hifigan_epochs)
+    hg_trainer.fit(hg_model)
+
+    hg_path = out_dir / "hifigan.nemo"
+    hg_model.save_to(str(hg_path))
+    log.info("hifigan_saved path=%s", hg_path)
+
+    # ── 4. Write speaker_map + training_config sidecar ───────────────────
+    (out_dir / "speaker_map.json").write_text(
+        _json.dumps(speaker_map, ensure_ascii=False), encoding="utf-8"
+    )
+    (out_dir / "training_config.json").write_text(
+        _json.dumps(
+            {
+                "fastpitch_epochs": cfg.fastpitch_epochs,
+                "fastpitch_batch_size": cfg.fastpitch_batch_size,
+                "fastpitch_lr": cfg.fastpitch_lr,
+                "hifigan_epochs": cfg.hifigan_epochs,
+                "hifigan_batch_size": cfg.hifigan_batch_size,
+                "hifigan_lr": cfg.hifigan_lr,
+                "target_sample_rate": cfg.target_sample_rate,
+                "train_rows": len(rows),
+            }
+        ),
+        encoding="utf-8",
+    )
+    log.info("training_complete out_dir=%s", out_dir)
+    return 0
 
 
 if __name__ == "__main__":

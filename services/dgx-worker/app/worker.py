@@ -53,6 +53,8 @@ from .governor import read_state
 from .inference_client import MusicInferenceClient
 from .mixer import MixSettings, StemInsert, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
+from .lyric_gen_client import LyricGenClient, fill_lyrics_with_indicbart
+from .pwm_client import PWMClient, expand_lyrics_from_pwm
 from .stem_planner import PlannerSection, plan_stem_inserts
 from .stems_client import StemsSynthClient
 from .storage import StorageClient
@@ -367,6 +369,8 @@ async def process_one(
     queue_msg: dict[str, Any],
     vocal: VocalSynthClient | None = None,
     stems: StemsSynthClient | None = None,
+    pwm: PWMClient | None = None,
+    lyric_gen: LyricGenClient | None = None,
     shutdown: asyncio.Event | None = None,
 ) -> str:
     """Process a single leased queue message; return one of JobOutcome.*."""
@@ -380,6 +384,8 @@ async def process_one(
             queue_msg=queue_msg,
             vocal=vocal,
             stems=stems,
+            pwm=pwm,
+            lyric_gen=lyric_gen,
             shutdown=shutdown,
         )
     finally:
@@ -397,6 +403,8 @@ async def _process_one_impl(
     queue_msg: dict[str, Any],
     vocal: VocalSynthClient | None = None,
     stems: StemsSynthClient | None = None,
+    pwm: PWMClient | None = None,
+    lyric_gen: LyricGenClient | None = None,
     shutdown: asyncio.Event | None = None,
 ) -> str:
     msg_id = int(queue_msg["msg_id"])
@@ -472,6 +480,31 @@ async def _process_one_impl(
                 )
                 db.delete(conn, settings.queue_name, msg_id)
             return JobOutcome.FAILED_DLQ
+
+        # ---- 4b. PWM lyric expansion (prompt branch, v1.5 Sprint 1) -----
+        # When the user submitted a bare prompt instead of a full Song
+        # Document, the web API stored the prompt in metadata.prompt and
+        # left section.lyrics=null. The PWM sidecar generates lyrics here,
+        # before inference, so music-inference always sees complete docs.
+        if pwm is not None:
+            song_document = await expand_lyrics_from_pwm(
+                song_document,
+                pwm,
+                job_id=job_id,
+                trace_id=message.trace_id,
+            )
+
+        # ---- 4c. IndicBART lyric-gen fallback (v1.5 Sprint 1) ------------
+        # For Indic-language songs, fill any sections that still lack lyrics
+        # (either because PWM was not configured or produced fewer sections
+        # than expected).  English sections are skipped automatically.
+        if lyric_gen is not None:
+            song_document = await fill_lyrics_with_indicbart(
+                song_document,
+                lyric_gen,
+                job_id=job_id,
+                trace_id=message.trace_id,
+            )
 
         # ---- 5. inference -------------------------------------------------
         # v1.4 Sprint 16: when top_n_candidates > 1 the worker iterates
@@ -851,6 +884,20 @@ async def main_loop(
             hmac_secret=settings.stems_synth_hmac_secret,
             timeout_seconds=settings.stems_synth_timeout_seconds,
         )
+    pwm: PWMClient | None = None
+    if settings.pwm_api_url:
+        pwm = PWMClient(
+            base_url=settings.pwm_api_url,
+            hmac_secret=settings.pwm_hmac_secret,
+            timeout_seconds=settings.pwm_lyric_timeout_seconds,
+        )
+    lyric_gen: LyricGenClient | None = None
+    if settings.lyric_gen_url:
+        lyric_gen = LyricGenClient(
+            base_url=settings.lyric_gen_url,
+            hmac_secret=settings.lyric_gen_hmac_secret,
+            timeout_seconds=settings.lyric_gen_timeout_seconds,
+        )
     storage = StorageClient(
         supabase_url=settings.supabase_url,
         service_role_key=settings.supabase_service_role_key,
@@ -954,6 +1001,8 @@ async def main_loop(
                 queue_msg=msg,
                 vocal=vocal,
                 stems=stems,
+                pwm=pwm,
+                lyric_gen=lyric_gen,
                 shutdown=stop,
             )
     finally:

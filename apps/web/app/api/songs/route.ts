@@ -1,10 +1,17 @@
 /**
  * /api/songs
  *
- *   POST  -- accept a song document (or a prompt, behind a 501 stub for
- *            Phase 10), and atomically: persist the document, create a
- *            jobs row, enqueue a pgmq message. Returns
- *            `{ job_id, status, song_id }`.
+ *   POST  -- accept a song document OR a bare prompt, and atomically:
+ *            persist the document, create a jobs row, enqueue a pgmq
+ *            message. Returns `{ job_id, status, song_id }`.
+ *
+ *            Prompt branch (v1.5 Sprint 1):
+ *              The API builds a shell Song Document with style-appropriate
+ *              sections (no lyrics) and stores the prompt in
+ *              `metadata.prompt`. The DGX worker calls the Pratyabhijna
+ *              World Model sidecar to fill in lyrics before music inference.
+ *              This keeps the ML stack entirely on DGX (ADR 0003 / AGENTS.md
+ *              trust boundary: "cloud → DGX is forbidden").
  *
  *   GET   -- list the authenticated user's songs (most recent first),
  *            with a simple cursor.
@@ -24,7 +31,12 @@
  * PostgREST" hole flagged in the Phase 4 adversarial review.
  */
 import { getCoComposer } from "@neo-fm/co-composer";
-import { allocateSectionDurations, SongDocumentSchema } from "@neo-fm/song-doc";
+import {
+  allocateSectionDurations,
+  SongDocumentSchema,
+  type SectionType,
+  type StyleFamily,
+} from "@neo-fm/song-doc";
 import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -37,8 +49,47 @@ import type { Json } from "../../../lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
 
+// v1.5 Sprint 1: prompt branch is now implemented. The flag is kept for
+// emergency rollback only; it defaults to true so the feature is live.
 const PROMPT_BRANCH_ENABLED =
-  process.env.NEO_FM_PROMPT_BRANCH_ENABLED === "true";
+  process.env.NEO_FM_PROMPT_BRANCH_ENABLED !== "false";
+
+/**
+ * Style-appropriate skeleton section types for the prompt branch.
+ * Co-composer elaborate() fills in musical context (raga/tala/tags);
+ * the DGX worker's PWM sidecar fills in the actual lyrics.
+ */
+const STYLE_SECTION_TEMPLATES: Record<StyleFamily, SectionType[]> = {
+  western: ["intro", "verse", "chorus", "verse", "bridge", "chorus", "outro"],
+  carnatic: ["pallavi", "anupallavi", "charanam", "charanam"],
+  hindustani: ["alaap", "mukhda", "antara"],
+  "kannada-folk": ["folk_stanza", "folk_refrain", "folk_stanza", "folk_refrain"],
+  "kannada-light-classical": ["mukhda", "antara", "mukhda"],
+  "tamil-folk": ["folk_stanza", "folk_refrain", "folk_stanza"],
+  "bollywood-ballad": ["mukhda", "antara", "mukhda", "antara", "mukhda"],
+  "bengali-rabindrasangeet": ["mukhda", "antara", "mukhda"],
+  "telugu-keerthana": ["pallavi", "anupallavi", "charanam"],
+  "sanskrit-shloka": ["shloka_verse", "shloka_refrain", "shloka_verse", "phalashruti"],
+};
+
+function buildShellDocument(
+  language: string,
+  styleFamily: StyleFamily,
+  targetDurationSeconds: number,
+): ReturnType<typeof SongDocumentSchema.parse> {
+  const types = STYLE_SECTION_TEMPLATES[styleFamily] ?? ["verse", "chorus"];
+  const sections = types.map((type, i) => ({
+    id: `s${i + 1}`,
+    type,
+    // target_seconds left unset so allocateSectionDurations distributes evenly
+  }));
+  return {
+    language,
+    style_family: styleFamily,
+    target_duration_seconds: targetDurationSeconds as 30 | 60 | 90 | 180,
+    sections,
+  } as ReturnType<typeof SongDocumentSchema.parse>;
+}
 
 type SongListRow = {
   id: string;
@@ -118,22 +169,31 @@ export async function POST(request: NextRequest) {
 
   if (parsed.data.prompt && !PROMPT_BRANCH_ENABLED) {
     return NextResponse.json(
-      { error: "prompt_branch_not_yet_enabled" },
-      { status: 501 },
+      { error: "prompt_branch_disabled" },
+      { status: 503 },
     );
   }
 
-  if (!parsed.data.song_document) {
-    // Prompt-branch with the flag on would hand off to Pratyabhijna here.
-    return NextResponse.json(
-      { error: "prompt_branch_not_yet_enabled" },
-      { status: 501 },
-    );
-  }
+  // ---- Resolve a validated Song Document (both branches) ------------------
+  //
+  // song_document branch: user supplied a full document → validate + elaborate.
+  // prompt branch: build a shell doc from style_family+language+duration,
+  //   elaborate for musical context, then attach the prompt in metadata so the
+  //   DGX PWM sidecar can fill in the lyrics before music inference.
+  //
+  // In both cases we elaborate via the co-composer so the stored document
+  // always carries raga/tala/orchestration tags (ADR 0003 trust-boundary note:
+  // co-composer runs on cloud; PWM/inference runs on DGX — this is correct).
 
-  // Re-validate after `allocateSectionDurations` -- the helper fills in any
-  // unset target_seconds before the full superRefine runs.
-  const allocated = allocateSectionDurations(parsed.data.song_document);
+  let raw_document = parsed.data.song_document
+    ?? buildShellDocument(
+        parsed.data.language!,
+        parsed.data.style_family!,
+        parsed.data.target_duration_seconds!,
+      );
+
+  // Re-validate after `allocateSectionDurations` -- fills in target_seconds.
+  const allocated = allocateSectionDurations(raw_document);
   const docCheck = SongDocumentSchema.safeParse(allocated);
   if (!docCheck.success) {
     return NextResponse.json(
@@ -143,7 +203,7 @@ export async function POST(request: NextRequest) {
   }
   const validated_document = docCheck.data;
 
-  // --- Co-composer hot path -----------------------------------------------
+  // --- Co-composer elaboration (both branches) ----------------------------
   //
   // The adversarial review (Phase 1 of v1-finish plan) flagged that the
   // /api/songs hot path was forwarding the user-supplied Song Document
@@ -162,9 +222,6 @@ export async function POST(request: NextRequest) {
   try {
     const cc = getCoComposer(validated_document.style_family);
     song_document = await cc.elaborate(validated_document);
-    // Defence in depth: the composer should never produce a document
-    // that fails the schema (its tests enforce this), but if it
-    // somehow does, surface as a 500 rather than silently DLQ later.
     const elaboratedCheck = SongDocumentSchema.safeParse(song_document);
     if (!elaboratedCheck.success) {
       return NextResponse.json(
@@ -177,15 +234,25 @@ export async function POST(request: NextRequest) {
     }
     song_document = elaboratedCheck.data;
   } catch (err) {
-    // A composer reject (e.g. mismatched style/raga combination that
-    // slipped past Zod, or an unsupported tempo) is a 400 -- it tells
-    // the user their inputs were not compatible. Distinct from a 500
-    // (the composer crashed on what should have been a valid doc).
     const message = err instanceof Error ? err.message : String(err);
     return NextResponse.json(
       { error: "co_composer_rejected", details: message },
       { status: 400 },
     );
+  }
+
+  // ---- Prompt branch: attach prompt as metadata carrier ------------------
+  // The DGX worker's PWM sidecar reads metadata.prompt and generates
+  // section lyrics before calling music-inference. The prompt never reaches
+  // the music model directly — only the generated lyrics do.
+  if (parsed.data.prompt) {
+    song_document = {
+      ...song_document,
+      metadata: {
+        ...(song_document.metadata ?? {}),
+        prompt: parsed.data.prompt,
+      },
+    };
   }
 
   // ----- 2. atomic create_song_job RPC ----------------------------------

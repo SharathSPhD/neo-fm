@@ -1,0 +1,75 @@
+[project]
+name = "neo-fm-pwm-api"
+version = "0.1.0"
+description = "Thin FastAPI wrapper around the Pratyabhijna World Model (PWM) on DGX Spark."
+readme = "README.md"
+# nvcr.io/nvidia/pytorch:25.11-py3 ships python 3.12. The phase0 smoke
+# image is python:3.12-slim. We support 3.10+ so a developer laptop on
+# 3.10/3.11 can still run the wrapper against a fake backend.
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9.0",
+  "httpx>=0.27",
+  # The PWM backend's api/main.py imports `requests` at module top level
+  # for its Ollama client. We declare it here so an editable install of
+  # the wrapper (without the full DGX vllm-env mounted) can still import
+  # the PWM module enough to surface a useful error.
+  "requests>=2.32",
+  # Prometheus exposition for the /metrics endpoint scraped by the
+  # monitoring profile (infra/prometheus.yml → pwm-api:9000).
+  "prometheus_client>=0.20",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# The service is a single-file `serve.py` rather than a package; point
+# hatch at the top-level module so a build doesn't error out looking
+# for an `app/` directory.
+only-include = ["serve.py", "__init__.py"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "pytest-asyncio>=0.24",
+  "ruff>=0.7",
+  "mypy>=1.13",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.ruff.lint.isort]
+# ``serve`` is the single-file module that lives at the service root;
+# without this hint ruff classifies it as a third-party import.
+known-first-party = ["serve"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+asyncio_mode = "auto"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disable_error_code = [
+  "arg-type",
+  "no-untyped-def",
+  "unused-ignore",
+  "import-untyped",
+  "no-any-return",
+  "import-not-found",
+]

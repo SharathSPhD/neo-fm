@@ -1,0 +1,4 @@
+{
+  "schedule": "*/2 * * * *",
+  "description": "Poll email notification queue every 2 minutes"
+}

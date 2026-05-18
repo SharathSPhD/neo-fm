@@ -97,6 +97,21 @@ class Settings:
     # reranker artefact directory.
     reranker_checkpoint_path: Path | None = None
 
+    # v1.5 Sprint 1 — Pratyabhijna World Model lyric expansion. When
+    # pwm_api_url is empty the worker skips PWM entirely and proceeds with
+    # whatever lyrics the document already carries (or none, in the prompt
+    # branch). The sidecar lives at http://pwm-api:9000 in docker-compose.
+    pwm_api_url: str = ""
+    pwm_hmac_secret: str = ""
+    pwm_lyric_timeout_seconds: float = 120.0
+
+    # v1.5 Sprint 1 — IndicBART lyric-gen fallback. Fills sections that
+    # still have no lyrics after PWM expansion (or when PWM is not configured).
+    # Indic languages only; English sections are skipped automatically.
+    lyric_gen_url: str = ""
+    lyric_gen_hmac_secret: str = ""
+    lyric_gen_timeout_seconds: float = 180.0
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -164,5 +179,15 @@ def load_settings() -> Settings:
             Path(os.environ["RERANKER_CHECKPOINT_PATH"])
             if os.environ.get("RERANKER_CHECKPOINT_PATH")
             else None
+        ),
+        pwm_api_url=os.environ.get("PWM_API_URL", ""),
+        pwm_hmac_secret=os.environ.get("PWM_HMAC_SECRET", ""),
+        pwm_lyric_timeout_seconds=float(
+            os.environ.get("PWM_LYRIC_TIMEOUT_SECONDS", "120"),
+        ),
+        lyric_gen_url=os.environ.get("LYRIC_GEN_URL", ""),
+        lyric_gen_hmac_secret=os.environ.get("LYRIC_GEN_HMAC_SECRET", ""),
+        lyric_gen_timeout_seconds=float(
+            os.environ.get("LYRIC_GEN_TIMEOUT_SECONDS", "180"),
         ),
     )
