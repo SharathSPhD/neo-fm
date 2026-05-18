@@ -1,4 +1,4 @@
--- 0040_cover_art_bucket.sql -- create the `cover-art` Storage bucket
+-- 0042_cover_art_bucket.sql -- create the `cover-art` Storage bucket
 --
 -- Why this exists:
 --   The Sprint H cover-art table migration (0026_cover_art.sql)
