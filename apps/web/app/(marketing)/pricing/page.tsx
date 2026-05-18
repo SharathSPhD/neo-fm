@@ -114,10 +114,9 @@ export default async function PricingPage() {
           <br className="hidden sm:block" /> Pay only when you scale.
         </h1>
         <p className="mx-auto max-w-2xl text-base text-foreground/60">
-          Free covers the casual creator. Creator and Pro unlock longer
-          songs, priority queue, stems, and (soon) an API. We&apos;re
-          finishing billing -- drop your email and we&apos;ll write the
-          day we open the gates.
+          {billingEnabled
+            ? "Free covers the casual creator. Creator and Pro unlock longer songs, priority queue, stem downloads, and API access. Upgrade anytime — cancel anytime."
+            : "Free covers the casual creator. Creator and Pro unlock longer songs, priority queue, stems, and an API. We're finishing billing — drop your email and we'll write the day we open the gates."}
         </p>
       </header>
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
