@@ -373,9 +373,10 @@ try {
   // a card renders, the public-song page it links to must not show
   // the still-being-prepared / preview-unavailable notices.
   //
-  // The legacy STRICT_V14_DISCOVER knob is kept for back-compat but
-  // is now off by default to match the post-Phase-3.5 contract.
-  const strictDiscover = process.env.STRICT_V14_DISCOVER === "1";
+  // STRICT_V14_DISCOVER defaults to "1" (strict) because render-discover.mjs
+  // seeds the catalog before smoke runs. Set STRICT_V14_DISCOVER=0 only in
+  // environments where the catalog is intentionally empty (pre-seed runs).
+  const strictDiscover = process.env.STRICT_V14_DISCOVER !== "0";
   const strictAudio = process.env.STRICT_V14_AUDIO !== "0";
 
   // v1.4 closeout: Discover cards link to /s/<publicId>, not /p/.
