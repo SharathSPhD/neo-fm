@@ -125,23 +125,188 @@ def run_or_dry(args: argparse.Namespace) -> int:
 
 
 def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
-    """DGX-only path. Refuses to run without audiocraft + peft."""
+    """MusicGen LoRA training loop (DGX-only).
+
+    Pipeline:
+      1. Load MusicgenForConditionalGeneration + AutoProcessor.
+      2. Freeze T5 text encoder and EnCodec audio encoder.
+      3. Apply PEFT LoRA to decoder (q/k/v/out_proj in self- and cross-attn).
+      4. Iterate corpus: WAV → resample 32 kHz → EnCodec codebook-0 tokens.
+         Condition string: "<style> music, raga <raga>, tala <tala>".
+      5. Train with HuggingFace Trainer (CrossEntropy on next audio token).
+      6. Save LoRA adapter to output_dir / "adapter"; optional push_to_hub.
+    """
     try:
-        import audiocraft  # type: ignore[import-not-found]  # noqa: F401
-        import peft  # type: ignore[import-not-found]  # noqa: F401
-        import torch  # type: ignore[import-not-found]  # noqa: F401
+        import torch  # type: ignore[import-not-found]
+        import peft  # type: ignore[import-not-found]
+        import torchaudio  # type: ignore[import-not-found]
+        from transformers import (  # type: ignore[import-not-found]
+            MusicgenForConditionalGeneration,
+            AutoProcessor,
+            TrainingArguments,
+            Trainer,
+        )
     except ImportError as exc:
         raise SystemExit(
             f"ML deps missing: {exc}. Run `uv sync --extra training` on "
-            f"the DGX and verify audiocraft is installed."
+            f"the DGX and verify audiocraft + transformers>=4.40 are installed."
         ) from exc
 
+    import json as _json
+    from typing import Any as _Any
+
     cfg = build_dry_run_summary(args)
-    LOG.info("training config", extra={"extra_fields": cfg})
-    raise NotImplementedError(
-        "DGX trainer integration is operator-only at this commit; "
-        "see docs/DECISIONS/0030 for the runbook."
+    LOG.info("training_start", extra={"extra_fields": cfg})
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    corpus_dir = Path(args.corpus)
+
+    # ── 1. Load model + processor ─────────────────────────────────────────
+    torch_dtype = torch.bfloat16 if args.bf16 else torch.float16
+    LOG.info("loading_model", extra={"extra_fields": {"base_model": args.base_model}})
+    model = MusicgenForConditionalGeneration.from_pretrained(
+        args.base_model,
+        torch_dtype=torch_dtype,
+    ).to("cuda")
+    processor = AutoProcessor.from_pretrained(args.base_model)
+
+    # ── 2. Freeze T5 text encoder + EnCodec audio encoder ────────────────
+    for frozen in (model.text_encoder, model.audio_encoder):
+        frozen.eval()
+        for p in frozen.parameters():
+            p.requires_grad_(False)
+
+    # ── 3. Apply PEFT LoRA to decoder ─────────────────────────────────────
+    # T5 text encoder uses q/k/v/o (no _proj suffix) so target_modules
+    # q_proj/k_proj/v_proj/out_proj naturally scope to the decoder only.
+    lora_cfg = peft.LoraConfig(
+        r=args.rank,
+        lora_alpha=args.alpha,
+        lora_dropout=args.dropout,
+        target_modules=list(args.target_modules),
+        bias="none",
+        task_type=peft.TaskType.SEQ_2_SEQ_LM,
     )
+    model = peft.get_peft_model(model, lora_cfg)
+    trainable, total = model.get_nb_trainable_parameters()
+    LOG.info(
+        "peft_applied",
+        extra={"extra_fields": {"trainable": trainable, "total": total}},
+    )
+
+    # ── 4. Build dataset ──────────────────────────────────────────────────
+    summary = _json.loads((corpus_dir / "summary.json").read_text())
+    clips_by_id: dict[str, dict[str, _Any]] = {}
+    for line in (corpus_dir / "clips.jsonl").read_text().splitlines():
+        if line.strip():
+            c = _json.loads(line)
+            clips_by_id[c["id"]] = c
+
+    # MusicGen's EnCodec operates at 32 kHz; HeartMuLa uses 48 kHz.
+    _MG_SR = 32_000
+
+    class _MusicGenDataset(torch.utils.data.Dataset):  # type: ignore[misc]
+        def __init__(self, clip_ids: list[str]) -> None:
+            self._ids = clip_ids
+
+        def __len__(self) -> int:
+            return len(self._ids)
+
+        def __getitem__(self, idx: int) -> dict[str, _Any]:
+            cid = self._ids[idx]
+            meta = clips_by_id.get(cid, {})
+            wav_path = corpus_dir / f"{cid}.wav"
+            waveform, sr = torchaudio.load(str(wav_path))
+            if sr != _MG_SR:
+                waveform = torchaudio.functional.resample(waveform, sr, _MG_SR)
+            waveform = waveform.mean(0, keepdim=True)  # mono (1, samples)
+
+            # EnCodec encode → audio_codes (1, num_codebooks, seq_len)
+            # We train on codebook 0 only — sufficient for style adaptation.
+            with torch.no_grad():
+                enc_out = model.audio_encoder.encode(
+                    waveform.unsqueeze(0).to("cuda"),
+                    bandwidth=6.0,
+                )
+                audio_codes = enc_out.audio_codes[0, 0].cpu()  # (seq_len,)
+
+            # Conditioning text: human-readable style tag the model can
+            # associate with the learned timbral distribution.
+            raga = meta.get("raga") or ""
+            tala = meta.get("tala") or ""
+            style = getattr(args, "style_family", "") or ""
+            conditioning = f"{style} music, raga {raga}, tala {tala}".strip(", ")
+
+            text_enc = processor.tokenizer(
+                conditioning,
+                return_tensors="pt",
+                truncation=True,
+                max_length=256,
+                padding=False,
+            )
+            return {
+                "input_ids": text_enc.input_ids.squeeze(0),
+                "attention_mask": text_enc.attention_mask.squeeze(0),
+                "labels": audio_codes,
+            }
+
+    def _collate(batch: list[dict[str, _Any]]) -> dict[str, _Any]:
+        import torch as _t
+
+        input_ids = _t.nn.utils.rnn.pad_sequence(
+            [b["input_ids"] for b in batch], batch_first=True, padding_value=0
+        )
+        attention_mask = _t.nn.utils.rnn.pad_sequence(
+            [b["attention_mask"] for b in batch], batch_first=True, padding_value=0
+        )
+        labels = _t.nn.utils.rnn.pad_sequence(
+            [b["labels"] for b in batch], batch_first=True, padding_value=-100
+        )
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels,
+        }
+
+    train_ds = _MusicGenDataset(summary["splits"]["train_clip_ids"])
+    eval_ds = _MusicGenDataset(summary["splits"]["eval_clip_ids"])
+
+    # ── 5. Train ──────────────────────────────────────────────────────────
+    training_args = TrainingArguments(
+        output_dir=str(output_dir / "checkpoints"),
+        num_train_epochs=args.epochs,
+        per_device_train_batch_size=args.batch_size,
+        per_device_eval_batch_size=max(1, args.batch_size // 2),
+        gradient_accumulation_steps=args.grad_accum,
+        learning_rate=args.lr,
+        bf16=args.bf16,
+        fp16=(not args.bf16),
+        evaluation_strategy="epoch",
+        save_strategy="epoch",
+        save_total_limit=2,
+        load_best_model_at_end=True,
+        logging_steps=25,
+        dataloader_num_workers=2,
+        report_to=[],
+    )
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=train_ds,
+        eval_dataset=eval_ds,
+        data_collator=_collate,
+    )
+    trainer.train()
+
+    # ── 6. Save adapter ───────────────────────────────────────────────────
+    adapter_path = output_dir / "adapter"
+    model.save_pretrained(str(adapter_path))
+    LOG.info("adapter_saved", extra={"extra_fields": {"path": str(adapter_path)}})
+    if args.push_to_hub:
+        model.push_to_hub(args.push_to_hub)
+        LOG.info("pushed_to_hub", extra={"extra_fields": {"repo": args.push_to_hub}})
+    return 0
 
 
 __all__ = ["add_common_args", "build_dry_run_summary", "run_or_dry"]
