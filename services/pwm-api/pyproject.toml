@@ -18,6 +18,9 @@ dependencies = [
   # the wrapper (without the full DGX vllm-env mounted) can still import
   # the PWM module enough to surface a useful error.
   "requests>=2.32",
+  # Prometheus exposition for the /metrics endpoint scraped by the
+  # monitoring profile (infra/prometheus.yml → pwm-api:9000).
+  "prometheus_client>=0.20",
 ]
 
 [build-system]

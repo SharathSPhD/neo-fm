@@ -245,6 +245,53 @@ services:
       # full warm-up to mark the container healthy.
       start_period: 60s
 
+  lyric-gen:
+    # Phase 1 (v1.5 Sprint 1): IndicBART SFT sidecar for Indic section lyrics.
+    # The dgx stage ships torch + transformers; phase0 runs the FakeLyricGenModel
+    # for CI smoke. Never internet-facing — HMAC-authenticated internal API.
+    build:
+      context: ../services/lyric-gen
+      dockerfile: Dockerfile
+      target: "${LYRIC_GEN_STAGE:-dgx}"
+    image: "neo-fm/lyric-gen:${LYRIC_GEN_STAGE:-dgx}"
+    container_name: neo-fm-lyric-gen
+    restart: unless-stopped
+    expose:
+      - "8090"
+    ports:
+      - "127.0.0.1:8090:8090"
+    env_file:
+      - .env.dgx
+    environment:
+      PHASE: "1"
+      LYRIC_GEN_HMAC_SECRET: "${LYRIC_GEN_HMAC_SECRET:?LYRIC_GEN_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
+      LYRIC_GEN_HMAC_SECRET_NEXT: "${LYRIC_GEN_HMAC_SECRET_NEXT:-}"
+      INDICBART_MODEL_ID: "${INDICBART_MODEL_ID:-ai4bharat/IndicBART}"
+      LYRIC_GEN_MAX_CONCURRENT: "${LYRIC_GEN_MAX_CONCURRENT:-4}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - "${LYRIC_GEN_HF_HOME_HOST:-/var/cache/huggingface}:/var/cache/huggingface:ro"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - >-
+          import urllib.request,sys;
+          r=urllib.request.urlopen('http://localhost:8090/healthz', timeout=4);
+          sys.exit(0 if r.status==200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
   prometheus:
     image: prom/prometheus:v2.55.1
     container_name: neo-fm-prometheus

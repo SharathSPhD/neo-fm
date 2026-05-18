@@ -203,6 +203,141 @@
       "gridPos": {"h": 9, "w": 12, "x": 12, "y": 23},
       "targets": [{"expr": "max(neofm_music_inference_gpu_memory_mb)", "refId": "A"}],
       "fieldConfig": {"defaults": {"unit": "decmbytes"}}
+    },
+    {
+      "id": 13,
+      "type": "row",
+      "title": "v1.5 — PWM lyric expansion & IndicBART",
+      "collapsed": false,
+      "gridPos": {"h": 1, "w": 24, "x": 0, "y": 32}
+    },
+    {
+      "id": 14,
+      "type": "stat",
+      "title": "PWM backend ready",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 0, "y": 33},
+      "targets": [{"expr": "min(neofm_pwm_api_backend_ready)", "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {"options": {"0": {"text": "DOWN", "color": "red"}}, "type": "value"},
+            {"options": {"1": {"text": "OK", "color": "green"}}, "type": "value"}
+          ]
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"}
+    },
+    {
+      "id": 15,
+      "type": "stat",
+      "title": "lyric-gen requests (1h)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 4, "y": 33},
+      "targets": [
+        {
+          "expr": "sum(increase(neofm_lyric_gen_requests_total[1h]))",
+          "refId": "A"
+        }
+      ],
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "value"}
+    },
+    {
+      "id": 16,
+      "type": "stat",
+      "title": "lyric-gen error rate (10m)",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 5, "w": 4, "x": 8, "y": 33},
+      "targets": [
+        {
+          "expr": "sum(rate(neofm_lyric_gen_requests_total{status_code=~\"5..\"}[10m])) / clamp_min(sum(rate(neofm_lyric_gen_requests_total[10m])), 0.001)",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "orange", "value": 0.05},
+              {"color": "red", "value": 0.15}
+            ]
+          }
+        }
+      },
+      "options": {"reduceOptions": {"calcs": ["lastNotNull"]}, "colorMode": "background"}
+    },
+    {
+      "id": 17,
+      "type": "timeseries",
+      "title": "PWM lyric wall seconds p50/p95 by style",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 38},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(neofm_pwm_api_lyric_wall_seconds_bucket[5m])) by (le, style_family))",
+          "refId": "A",
+          "legendFormat": "p50 {{style_family}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(neofm_pwm_api_lyric_wall_seconds_bucket[5m])) by (le, style_family))",
+          "refId": "B",
+          "legendFormat": "p95 {{style_family}}"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "lyric-gen latency p50/p95",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 38},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.5, sum(rate(neofm_lyric_gen_request_latency_seconds_bucket[5m])) by (le))",
+          "refId": "A",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(neofm_lyric_gen_request_latency_seconds_bucket[5m])) by (le))",
+          "refId": "B",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {"defaults": {"unit": "s"}}
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "lyric-gen in-flight requests",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 47},
+      "targets": [
+        {
+          "expr": "sum(neofm_lyric_gen_in_flight)",
+          "refId": "A",
+          "legendFormat": "in-flight"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "PWM api request rate by route",
+      "datasource": {"type": "prometheus", "uid": "$ds"},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 47},
+      "targets": [
+        {
+          "expr": "sum by (route, status_code) (rate(neofm_pwm_api_requests_total[5m]))",
+          "refId": "A",
+          "legendFormat": "{{route}} {{status_code}}"
+        }
+      ]
     }
-  ]
+  ],
+  "version": 2,
+  "tags": ["neo-fm", "phase-7", "v1.5"]
 }

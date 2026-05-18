@@ -122,3 +122,83 @@ groups:
             soft. This alert fires when the soft-failure rate breaches
             5/15min for one language, indicating a model or input
             issue specific to that language.
+
+  # v1.5 Sprint 1 alerts ─────────────────────────────────────────────────────
+
+  - name: neo-fm.pwm-api
+    interval: 30s
+    rules:
+      - alert: NeoFmPwmApiLyricP95Slow
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(neofm_pwm_api_lyric_wall_seconds_bucket[5m]))
+              by (le, style_family)
+          ) > 120
+        for: 10m
+        labels:
+          severity: warning
+          service: pwm-api
+        annotations:
+          summary: "PWM lyric p95 wall time > 120s for style {{$labels.style_family}}."
+          description: |
+            The PancakrtyaLoopV2 (WM warmup + IndicBART lyric expansion)
+            is exceeding 120s p95 for this style_family. Expected causes:
+            cold WM checkpoint (pwm_api restart), Ollama 120B model
+            eviction from VRAM, or a very long target_duration_seconds.
+            Check pwm-api container logs for `pwm_backend_import_failed`
+            or `timeout`.
+
+      - alert: NeoFmPwmApiBackendDown
+        expr: neofm_pwm_api_backend_ready == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: pwm-api
+        annotations:
+          summary: "PWM backend not loaded on pwm-api for 5 minutes."
+          description: |
+            pwm-api reports `pwm_ready: false` — the PWM project mount
+            failed or the import errored at startup. All /v1/generate-lyric
+            calls return 503. Restart the container after confirming
+            the PWM volume mounts are intact and the checkpoint files exist.
+
+  - name: neo-fm.lyric-gen
+    interval: 30s
+    rules:
+      - alert: NeoFmLyricGenFailureRateHigh
+        expr: |
+          sum(rate(neofm_lyric_gen_requests_total{status_code=~"5.."}[10m]))
+            / clamp_min(sum(rate(neofm_lyric_gen_requests_total[10m])), 0.001) > 0.15
+        for: 5m
+        labels:
+          severity: warning
+          service: lyric-gen
+        annotations:
+          summary: "lyric-gen 5xx error rate > 15% over 10 minutes."
+          description: |
+            IndicBART SFT sidecar is returning 5xx for >15% of requests.
+            Check for OOM (IndicBART is ~600MB resident + batch expansion),
+            HMAC misconfiguration (401s will also appear here if the secret
+            rotated), or model checkpoint corruption. Inspect
+            `neofm_lyric_gen_requests_total{status_code="500"}` by route.
+
+      - alert: NeoFmLyricGenP95Slow
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(neofm_lyric_gen_request_latency_seconds_bucket[5m]))
+              by (le)
+          ) > 30
+        for: 10m
+        labels:
+          severity: warning
+          service: lyric-gen
+        annotations:
+          summary: "lyric-gen p95 request latency > 30s for 10 minutes."
+          description: |
+            IndicBART section lyric generation is slow. At 30s p95 the
+            DGX worker lyric-step will hit its 60s default budget.
+            Causes: GPU contention (music-inference occupying all VRAM),
+            IndicBART running on CPU fallback, or very long input prompts.
+            Check `neofm_lyric_gen_in_flight` for accumulating backlog.

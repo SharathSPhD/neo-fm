@@ -63,12 +63,57 @@ from typing import Any, Literal
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.responses import Response as FastAPIResponse
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    generate_latest,
+)
 from pydantic import BaseModel, Field
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
 PHASE = 1
 SERVICE_NAME = "pwm-api"
+
+# --- Prometheus metrics -------------------------------------------------------
+
+_prom_registry = CollectorRegistry()
+
+_pwm_requests_total = Counter(
+    "neofm_pwm_api_requests_total",
+    "Requests handled by pwm-api, by route + status.",
+    labelnames=("route", "status_code"),
+    registry=_prom_registry,
+)
+_pwm_request_latency = Histogram(
+    "neofm_pwm_api_request_latency_seconds",
+    "Request latency seconds.",
+    labelnames=("route",),
+    buckets=(0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0),
+    registry=_prom_registry,
+)
+_pwm_in_flight = Gauge(
+    "neofm_pwm_api_in_flight",
+    "In-flight requests.",
+    labelnames=("route",),
+    registry=_prom_registry,
+)
+_pwm_backend_ready = Gauge(
+    "neofm_pwm_api_backend_ready",
+    "1 if the PWM backend imported successfully, 0 otherwise.",
+    registry=_prom_registry,
+)
+_pwm_lyric_wall_seconds = Histogram(
+    "neofm_pwm_api_lyric_wall_seconds",
+    "Wall-clock seconds for /v1/generate-lyric (including PWM poll).",
+    labelnames=("style_family",),
+    buckets=(0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0),
+    registry=_prom_registry,
+)
 
 HMAC_HEADER_SIG = "x-neofm-signature"
 HMAC_HEADER_TS = "x-neofm-timestamp"
@@ -78,7 +123,7 @@ HMAC_MAX_SKEW_SECONDS = 60
 # Routes that bypass HMAC. Everything else under /v1/* and the PWM-native
 # /generate, /result, /domains, /batch surface is authenticated.
 _UNAUTH_ROUTES: frozenset[str] = frozenset(
-    {"/healthz", "/health", "/", "/docs", "/openapi.json", "/redoc"}
+    {"/healthz", "/health", "/metrics", "/", "/docs", "/openapi.json", "/redoc"}
 )
 
 # neo-fm StyleFamily -> PWM Domain. Keep in lock-step with
@@ -384,10 +429,15 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
         request.state.request_id = request_id
         request.state.trace_id = trace_id
 
+        route_label = request.url.path
+        _pwm_in_flight.labels(route=route_label).inc()
         try:
             response = await call_next(request)
         except Exception:
             latency_ms = int((time.perf_counter() - start) * 1000)
+            _pwm_in_flight.labels(route=route_label).dec()
+            _pwm_requests_total.labels(route=route_label, status_code="500").inc()
+            _pwm_request_latency.labels(route=route_label).observe(latency_ms / 1000)
             log.exception(
                 "request_failed",
                 extra={
@@ -402,6 +452,9 @@ class HmacAndLogMiddleware(BaseHTTPMiddleware):
             raise
 
         latency_ms = int((time.perf_counter() - start) * 1000)
+        _pwm_in_flight.labels(route=route_label).dec()
+        _pwm_requests_total.labels(route=route_label, status_code=str(response.status_code)).inc()
+        _pwm_request_latency.labels(route=route_label).observe(latency_ms / 1000)
         log.info(
             "request",
             extra={
@@ -722,6 +775,7 @@ async def generate_lyric(req: LyricRequest, _request: Request) -> LyricResponse:
         ) from exc
 
     # PWM's ``generate`` is async and returns ``{job_id, ...}``.
+    _lyric_start = time.perf_counter()
     _submit = _backend.generate(pwm_req)
     submit_result: dict[str, Any] = (await _submit) if asyncio.iscoroutine(_submit) else _submit  # type: ignore[assignment]
     pwm_job_id = (submit_result or {}).get("job_id")
@@ -735,6 +789,9 @@ async def generate_lyric(req: LyricRequest, _request: Request) -> LyricResponse:
         )
 
     result = await _await_job_result(pwm_job_id, req.timeout_seconds)
+    _pwm_lyric_wall_seconds.labels(style_family=req.style_family).observe(
+        time.perf_counter() - _lyric_start
+    )
     if result.get("status") == "error":
         return LyricResponse(
             job_id=req.job_id,
@@ -757,6 +814,16 @@ async def generate_lyric(req: LyricRequest, _request: Request) -> LyricResponse:
         text=text,
         sections=sections,
         music_context=dict(req.music_context or result.get("music_context") or {}),
+    )
+
+
+@app.get("/metrics", include_in_schema=False)
+def metrics_endpoint() -> FastAPIResponse:
+    """Prometheus exposition; scraped by infra/prometheus.yml → pwm-api:9000."""
+    _pwm_backend_ready.set(1.0 if _backend.ready else 0.0)
+    return FastAPIResponse(
+        content=generate_latest(_prom_registry),
+        media_type=CONTENT_TYPE_LATEST,
     )
 
 
