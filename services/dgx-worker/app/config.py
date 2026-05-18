@@ -105,6 +105,13 @@ class Settings:
     pwm_hmac_secret: str = ""
     pwm_lyric_timeout_seconds: float = 120.0
 
+    # v1.5 Sprint 1 — IndicBART lyric-gen fallback. Fills sections that
+    # still have no lyrics after PWM expansion (or when PWM is not configured).
+    # Indic languages only; English sections are skipped automatically.
+    lyric_gen_url: str = ""
+    lyric_gen_hmac_secret: str = ""
+    lyric_gen_timeout_seconds: float = 180.0
+
 
 def load_settings() -> Settings:
     raw_langs = os.environ.get("VOCAL_LANGUAGES", "")
@@ -177,5 +184,10 @@ def load_settings() -> Settings:
         pwm_hmac_secret=os.environ.get("PWM_HMAC_SECRET", ""),
         pwm_lyric_timeout_seconds=float(
             os.environ.get("PWM_LYRIC_TIMEOUT_SECONDS", "120"),
+        ),
+        lyric_gen_url=os.environ.get("LYRIC_GEN_URL", ""),
+        lyric_gen_hmac_secret=os.environ.get("LYRIC_GEN_HMAC_SECRET", ""),
+        lyric_gen_timeout_seconds=float(
+            os.environ.get("LYRIC_GEN_TIMEOUT_SECONDS", "180"),
         ),
     )
