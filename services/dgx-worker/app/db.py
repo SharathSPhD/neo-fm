@@ -202,7 +202,7 @@ class WorkerDB:
                   and user_id = %s
                   and song_document_id = %s
                   and (
-                    status = 'queued'
+                    status in ('queued', 'failed')
                     or (
                       status = 'processing'
                       and lease_renewed_at is not null
@@ -282,6 +282,18 @@ class WorkerDB:
             calls :meth:`set_current_track` to flip the reranker's winner.
         """
         with conn.cursor() as cur:
+            # The partial-unique index (job_id WHERE is_current=true) allows
+            # only one current track per job. When a pgmq message is
+            # re-delivered (VT expiry) a new attempt_id is generated; the
+            # plain conflict clause on (job_id, attempt_id, candidate_index)
+            # won't catch the partial-index collision. Clear old current rows
+            # first so the insert is idempotent regardless of re-delivery.
+            if is_current:
+                cur.execute(
+                    "update public.tracks set is_current = false "
+                    "where job_id = %s and is_current = true;",
+                    (job_id,),
+                )
             cur.execute(
                 """
                 insert into public.tracks

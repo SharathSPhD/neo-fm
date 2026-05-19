@@ -840,12 +840,36 @@ async def _handle_retryable_failure(
 # ---------------------------------------------------------------------------
 
 
+class _JsonFormatter(logging.Formatter):
+    """JSON line formatter that serialises `extra` kwargs alongside the base fields."""
+
+    _STDLIB_ATTRS = frozenset({
+        "args", "asctime", "created", "exc_info", "exc_text", "filename",
+        "funcName", "levelname", "levelno", "lineno", "message", "module",
+        "msecs", "msg", "name", "pathname", "process", "processName",
+        "relativeCreated", "stack_info", "taskName", "thread", "threadName",
+    })
+
+    def format(self, record: logging.LogRecord) -> str:
+        import json as _json
+
+        base: dict[str, object] = {
+            "ts": self.formatTime(record, "%Y-%m-%d %H:%M:%S,%03d"),
+            "level": record.levelname,
+            "logger": record.name,
+            "msg": record.getMessage(),
+        }
+        extra = {k: v for k, v in record.__dict__.items() if k not in self._STDLIB_ATTRS}
+        if extra:
+            base.update(extra)
+        if record.exc_info:
+            base["exc"] = self.formatException(record.exc_info)
+        return _json.dumps(base, default=str)
+
+
 def _configure_logging() -> None:
     handler = logging.StreamHandler(sys.stdout)
-    formatter = logging.Formatter(
-        '{"ts":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":"%(message)s"}',
-    )
-    handler.setFormatter(formatter)
+    handler.setFormatter(_JsonFormatter())
     root = logging.getLogger()
     root.handlers = [handler]
     root.setLevel(logging.INFO)

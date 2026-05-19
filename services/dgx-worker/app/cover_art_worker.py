@@ -345,17 +345,28 @@ async def cover_art_consumer_loop(
     queue = settings.cover_art_queue_name or DEFAULT_QUEUE_NAME
     vt = settings.cover_art_visibility_seconds or DEFAULT_VISIBILITY_SECONDS
     LOG.info("cover_art_consumer_started", extra={"queue": queue})
+    backoff = poll_interval_seconds
+    _MAX_BACKOFF = 60.0
+    consecutive_read_failures = 0
     try:
         while not stop.is_set():
             try:
                 with db.connect() as conn:
                     msg = db.read_one(conn, queue, vt)
-            except Exception as exc:  # never abort the loop on a transient db error
-                LOG.warning("cover_art_read_failed", extra={"err": str(exc)})
+                backoff = poll_interval_seconds
+                consecutive_read_failures = 0
+            except Exception as exc:
+                consecutive_read_failures += 1
+                if consecutive_read_failures == 1 or consecutive_read_failures % 30 == 0:
+                    LOG.warning(
+                        "cover_art_read_failed",
+                        extra={"err": str(exc), "consecutive": consecutive_read_failures},
+                    )
+                backoff = min(backoff * 2, _MAX_BACKOFF)
                 msg = None
             if msg is None:
                 try:
-                    await asyncio.wait_for(stop.wait(), timeout=poll_interval_seconds)
+                    await asyncio.wait_for(stop.wait(), timeout=backoff)
                 except TimeoutError:
                     pass
                 continue

@@ -21,6 +21,10 @@ tts = [
   "transformers>=4.45",
   "torch>=2.4",
   "huggingface_hub>=0.25",
+  # Orpheus SNAC codec for kenpath/svara-tts-v1 audio token decoding
+  "snac>=1.2.1",
+  # ParlerTTS for ai4bharat/indic-parler-tts
+  "parler_tts>=0.2.3",
 ]
 
 [build-system]
