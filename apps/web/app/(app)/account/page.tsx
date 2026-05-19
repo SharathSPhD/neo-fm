@@ -31,6 +31,7 @@ const PLAN_LABEL: Record<string, string> = {
   free: "Free",
   creator: "Creator",
   pro: "Pro",
+  developer: "Developer",
 };
 
 const STATUS_LABEL: Record<string, string> = {

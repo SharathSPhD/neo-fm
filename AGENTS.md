@@ -78,4 +78,4 @@ When two requirements conflict, log an ADR under `docs/DECISIONS/` and route thr
 - Do **not** propose or use HuggingFace Jobs, RunPod, Vast.ai, AWS / GCP / Azure GPU instances, or any other paid cloud GPU service.
 - This rule supersedes any conflicting suggestion in past plans or transcripts.
 
-v1 scope: web only; styles `{Western, Carnatic, Hindustani, Kannada-folk}`; langs `{en, hi, kn}`; durations `{30s, 60s, 90s, 3min}`. No payments. No MCP exposure.
+v1.5 scope: web only; 10 styles (Western, Carnatic, Hindustani, Kannada-folk, Kannada-light-classical, Tamil-folk, Bollywood-ballad, Sanskrit-shloka, Bengali-Rabindrasangeet, Telugu-keerthana); langs `{en, hi, kn, ta, bn, te, sa}`; durations `{30s, 60s, 90s, 3min}`; tiers `{free, creator, pro, developer}`. No payments for developer tier. No MCP exposure.

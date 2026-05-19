@@ -109,25 +109,27 @@ class IndicF5Model:
             return
         # Heavy imports live inside load(). Tests stub the backend
         # before reaching this code, so the unit suite never imports
-        # torch.
+        # torch or f5_tts.
         import torch  # type: ignore[import-not-found]
         from huggingface_hub import snapshot_download  # type: ignore[import-not-found]
 
         try:
-            from transformers import AutoModel  # type: ignore[import-not-found]
+            from f5_tts.infer.utils_infer import load_vocoder  # type: ignore[import-not-found]
         except ImportError as e:
             raise RuntimeError(
-                "transformers is not installed. Add it to vocal-synth "
-                "requirements when enabling the IndicF5 backend."
+                "f5_tts is not installed. Run: uv pip install f5-tts pydub"
             ) from e
 
         cache_dir = os.environ.get("HF_HOME") or os.environ.get(
             "HUGGINGFACE_HUB_CACHE"
         )
-        local_path = snapshot_download(
-            self._model_id,
-            cache_dir=cache_dir,
-            local_files_only=os.environ.get("NEO_FM_OFFLINE", "0") == "1",
+        offline = os.environ.get("NEO_FM_OFFLINE", "0") == "1"
+        local_path = Path(
+            snapshot_download(
+                self._model_id,
+                cache_dir=cache_dir,
+                local_files_only=offline,
+            )
         )
         self._device = (
             "cuda"
@@ -137,11 +139,127 @@ class IndicF5Model:
             and torch.backends.mps.is_available()
             else "cpu"
         )
-        self._model = (
-            AutoModel.from_pretrained(local_path, trust_remote_code=True)
-            .to(self._device)
-            .eval()
+        # IndicF5's custom model.py calls load_model() without ckpt_path,
+        # which is broken against f5_tts>=0.3. Bypass AutoModel and build
+        # the pipeline directly.
+        #
+        # The IndicF5 safetensors was saved from a torch.compile()-wrapped
+        # model, so all keys carry an "_orig_mod." prefix that
+        # load_checkpoint doesn't strip. We load it manually:
+        #   1. Build the unweighted CFM model via load_model with a dummy path.
+        #   2. Load safetensors, strip "_orig_mod.", inject as state_dict.
+        from f5_tts.infer.utils_infer import get_tokenizer  # type: ignore[import-not-found]
+        from f5_tts.model.backbones.dit import DiT as _DiT  # type: ignore[import-not-found]
+        from f5_tts.model.cfm import CFM  # type: ignore[import-not-found]
+        from safetensors.torch import (
+            load_file as _load_safetensors,  # type: ignore[import-not-found]
         )
+
+        vocab_path = str(local_path / "checkpoints" / "vocab.txt")
+        safetensors_path = str(local_path / "model.safetensors")
+
+        vocab_char_map, vocab_size = get_tokenizer(vocab_path, "custom")
+        n_mel = 100  # vocos mel channels
+        ema_model_inner = CFM(
+            transformer=_DiT(
+                dim=1024, depth=22, heads=16, ff_mult=2,
+                text_dim=512, conv_layers=4,
+                text_num_embeds=vocab_size, mel_dim=n_mel,
+            ),
+            mel_spec_kwargs=dict(
+                n_fft=1024, hop_length=256, win_length=1024,
+                n_mel_channels=n_mel, target_sample_rate=24000,
+                mel_spec_type="vocos",
+            ),
+            odeint_kwargs=dict(method="euler"),
+            vocab_char_map=vocab_char_map,
+        ).to(self._device)
+
+        raw_sd = _load_safetensors(safetensors_path, device=self._device)
+        # Strip torch.compile() "_orig_mod." prefix if present.
+        stripped_sd = {
+            (k[len("_orig_mod."):] if k.startswith("_orig_mod.") else k): v
+            for k, v in raw_sd.items()
+        }
+        ema_model_inner.load_state_dict(stripped_sd, strict=False)
+        ema_model_inner.eval()
+
+        vocoder = torch.compile(
+            load_vocoder(vocoder_name="vocos", is_local=False, device=self._device)
+        )
+        ema_model = torch.compile(ema_model_inner)
+        # synthesise() calls model(text=..., ref_audio=np.ndarray, ref_sr=int, language=str).
+        # f5_tts's infer_process needs a preprocessed tuple, not a numpy array.
+        # This wrapper bridges the two: it writes the numpy ref to a temp WAV,
+        # runs preprocess_ref_audio_text, then calls infer_process.
+        import tempfile as _tempfile
+
+        class _INF5Wrapper:
+            def __init__(self, ema: object, voc: object, dev: str) -> None:
+                self.ema_model = ema
+                self.vocoder = voc
+                self._device = dev
+
+            def __call__(
+                self,
+                *,
+                text: str,
+                ref_audio: np.ndarray,
+                ref_sr: int,
+                language: str,  # passed by routing; f5_tts infers from ref
+                ref_text: str = "Reference audio.",
+            ) -> np.ndarray:
+                import soundfile as _sf  # type: ignore[import-not-found]
+                import torch as _torch
+                from f5_tts.infer.utils_infer import (  # type: ignore[import-not-found]
+                    chunk_text,
+                    infer_batch_process,
+                )
+                # Resample ref_audio to 24kHz (IndicF5 native) and write as WAV.
+                # soundfile can read it without system FFmpeg (unlike torchaudio).
+                target_sr = 24000
+                if ref_sr != target_sr:
+                    ratio = target_sr / ref_sr
+                    new_len = int(len(ref_audio) * ratio)
+                    ref_audio = np.interp(
+                        np.linspace(0, len(ref_audio) - 1, new_len),
+                        np.arange(len(ref_audio)),
+                        ref_audio,
+                    ).astype(np.float32)
+                with _tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
+                    _sf.write(tmp.name, ref_audio, target_sr)
+                    ref_data, _sr_check = _sf.read(tmp.name, dtype="float32")
+                # Convert to shape (1, T) tensor as torchaudio would produce.
+                audio_tensor = _torch.from_numpy(ref_data).unsqueeze(0).to(self._device)
+                # Bypass infer_process (uses torchaudio.load → torchcodec → ffmpeg).
+                # Call infer_batch_process directly with the tensor.
+                speed = 1.0
+                max_chars = max(
+                    1,
+                    int(
+                        len(ref_text.encode("utf-8"))
+                        / (audio_tensor.shape[-1] / target_sr)
+                        * (22 - audio_tensor.shape[-1] / target_sr)
+                        * speed
+                    ),
+                )
+                gen_text_batches = chunk_text(text, max_chars=max_chars)
+                if not gen_text_batches:
+                    return np.zeros(target_sr, dtype=np.float32)
+                result_wav, _out_sr, _ = next(
+                    infer_batch_process(
+                        (audio_tensor, target_sr),
+                        ref_text,
+                        gen_text_batches,
+                        self.ema_model,
+                        self.vocoder,
+                        mel_spec_type="vocos",
+                        device=self._device,
+                    )
+                )
+                return np.asarray(result_wav, dtype=np.float32)
+
+        self._model = _INF5Wrapper(ema_model, vocoder, self._device)
         self._inference_mode = torch.inference_mode
         self._loaded = True
 

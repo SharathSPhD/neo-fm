@@ -1,16 +1,19 @@
 "use client";
 
 /**
- * v1.4 Sprint 5: voice picker.
+ * v1.5: voice picker with fake-preview detection + in-browser timbre synthesis.
  *
  * 16-persona, "Suggested for <language>" + "All voices" UI. Each row
  * has a play/stop preview button that streams the 10s WAV from the
- * public `voice-samples` Supabase Storage bucket — no extra round-trip
- * because the preview URL is the storage CDN path.
+ * public `voice-samples` Supabase Storage bucket.
+ *
+ * If a preview WAV is the known FakeVocalModel sentinel size (960 044 bytes),
+ * the component synthesises a short, clearly-labelled tone via the Web Audio
+ * API instead of playing static. Real WAVs self-supersede once the DGX
+ * operator runs render_voice_previews.py with real weights.
  *
  * The component is controlled: the parent (`creation-canvas`) owns the
- * selected `voice_id` and the audio element. Keeping playback state
- * here would make it awkward to pause when the user navigates away.
+ * selected `voice_id`. Playback state lives here.
  */
 import {
   VOICE_CATALOGUE,
@@ -19,6 +22,12 @@ import {
   voicesForLanguage,
 } from "@neo-fm/co-composer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import {
+  FAKE_PREVIEW_BYTES,
+  isFakePreview,
+  synthesiseTimbrePreview,
+} from "@/lib/audio/timbre-preview";
 
 export interface VoicePickerProps {
   /** Currently selected `voice_id` ("" = use language-default routing). */
@@ -34,6 +43,7 @@ const NEUTRAL_OPTION = {
   voice_id: "",
   label: "Auto · Match language",
   persona: "language-default",
+  gender: "androgynous" as const,
 } as const;
 
 function previewUrl(base: string, entry: VoiceCatalogueEntry): string {
@@ -51,14 +61,41 @@ export function VoicePicker({
   previewBaseUrl,
 }: VoicePickerProps) {
   const [playing, setPlaying] = useState<string | null>(null);
-  // voice_id -> reason the most recent preview attempt failed. Rendered
-  // inline under the row so the user sees "Preview unavailable" instead
-  // of a silent click. Cleared on any successful play. Keyed by voice_id
-  // so per-row errors don't pollute other rows.
+  // voice_id -> reason the most recent preview attempt failed.
   const [previewErrors, setPreviewErrors] = useState<Record<string, string>>(
     {},
   );
+  // voice_ids confirmed to be fake (960 044-byte FakeVocalModel output).
+  // Populated by HEAD-checks on mount; cached in sessionStorage per base URL.
+  const [fakeVoiceIds, setFakeVoiceIds] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Pre-check all preview URLs for fake content on mount.
+  useEffect(() => {
+    const cacheKey = `neo-fm-fake-previews-v1:${previewBaseUrl}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        setFakeVoiceIds(new Set(JSON.parse(cached) as string[]));
+      } catch {
+        /* ignore corrupt cache */
+      }
+      return;
+    }
+    void Promise.all(
+      VOICE_CATALOGUE.map(async (entry) => {
+        const url = previewUrl(previewBaseUrl, entry);
+        const fake = await isFakePreview(url, entry.voice_id, previewBaseUrl);
+        return fake ? entry.voice_id : null;
+      }),
+    ).then((results) => {
+      const fakes = results.filter((id): id is string => id !== null);
+      setFakeVoiceIds(new Set(fakes));
+      sessionStorage.setItem(cacheKey, JSON.stringify(fakes));
+    });
+  }, [previewBaseUrl]);
 
   // Suggested = same-language. Everything else sits under "All voices".
   const { suggested, others } = useMemo(() => {
@@ -96,36 +133,37 @@ export function VoicePicker({
         stop();
         return;
       }
-      // Re-use a single Audio element so we never overlap two
-      // previews; pause-then-play handles the cross-row case.
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      // Optimistically clear any prior error for this row so a retry
-      // doesn't show stale text while loading.
       clearError(entry.voice_id);
+
+      if (fakeVoiceIds.has(entry.voice_id)) {
+        // Synthesise a short timbre tone instead of playing static noise.
+        // AudioContext is created here (inside the click handler) to satisfy
+        // browser autoplay policies.
+        setPlaying(entry.voice_id);
+        synthesiseTimbrePreview(entry.gender, entry.persona, () =>
+          setPlaying(null),
+        );
+        return;
+      }
+
       const url = previewUrl(previewBaseUrl, entry);
       const a = new Audio(url);
       a.addEventListener("ended", () => setPlaying(null), { once: true });
       a.addEventListener(
         "error",
-        () => {
-          // Element-level error (404, network refused, decode failure).
-          // Surface in the row's aria-live region so the user knows the
-          // preview isn't broken-and-silent; previously this swallowed.
-          markFailed(entry.voice_id, "Preview unavailable");
-        },
+        () => markFailed(entry.voice_id, "Preview unavailable"),
         { once: true },
       );
       audioRef.current = a;
-      void a.play().catch(() => {
-        // Autoplay blocked / network error / decode failure -- surface
-        // a recoverable error to the row instead of swallowing.
-        markFailed(entry.voice_id, "Preview unavailable");
-      });
+      void a.play().catch(() =>
+        markFailed(entry.voice_id, "Preview unavailable"),
+      );
       setPlaying(entry.voice_id);
     },
-    [playing, previewBaseUrl, stop, markFailed, clearError],
+    [playing, previewBaseUrl, stop, markFailed, clearError, fakeVoiceIds],
   );
 
   // Stop any in-flight preview when the picker unmounts.
@@ -171,6 +209,7 @@ export function VoicePicker({
               entry={entry}
               selected={value === entry.voice_id}
               playing={playing === entry.voice_id}
+              simulated={fakeVoiceIds.has(entry.voice_id)}
               error={previewErrors[entry.voice_id]}
               onSelect={() => onChange(entry.voice_id)}
               onPreview={() => togglePreview(entry)}
@@ -189,6 +228,7 @@ export function VoicePicker({
             entry={entry}
             selected={value === entry.voice_id}
             playing={playing === entry.voice_id}
+            simulated={fakeVoiceIds.has(entry.voice_id)}
             error={previewErrors[entry.voice_id]}
             onSelect={() => onChange(entry.voice_id)}
             onPreview={() => togglePreview(entry)}
@@ -200,9 +240,11 @@ export function VoicePicker({
 }
 
 interface VoiceRowProps {
-  entry: Pick<VoiceCatalogueEntry, "voice_id" | "label" | "persona">;
+  entry: Pick<VoiceCatalogueEntry, "voice_id" | "label" | "persona" | "gender">;
   selected: boolean;
   playing?: boolean;
+  /** True when the preview WAV is a FakeVocalModel placeholder — timbre synthesis is used instead. */
+  simulated?: boolean;
   /** Inline error text when the most recent preview attempt failed. */
   error?: string;
   onSelect: () => void;
@@ -213,6 +255,7 @@ function VoiceRow({
   entry,
   selected,
   playing = false,
+  simulated = false,
   error,
   onSelect,
   onPreview,
@@ -250,17 +293,22 @@ function VoiceRow({
             onClick={onPreview}
             className="rounded-md border border-muted/30 px-2 py-1 text-[10px] uppercase tracking-widest text-foreground/70 hover:border-accent hover:text-accent"
             data-testid={`voice-preview-${entry.voice_id}`}
+            title={simulated ? "Simulated timbre — real preview generating on DGX" : undefined}
           >
             {playing ? "Stop" : "Preview"}
           </button>
         )}
       </div>
-      {/*
-        aria-live announces preview failures to screen readers without
-        moving focus. Kept under the row so it doesn't shift unrelated
-        layout when present. Empty when there's no error so we don't
-        announce blanks on every render.
-      */}
+      {/* Simulated-timbre notice — amber, not red, so it reads as informational not error. */}
+      {simulated && !error && (
+        <p
+          className="text-[10px] text-amber-400/70"
+          data-testid={`voice-preview-simulated-${entry.voice_id}`}
+        >
+          Simulated timbre · real preview generating
+        </p>
+      )}
+      {/* aria-live error region for network/decode failures. */}
       <div
         role="status"
         aria-live="polite"

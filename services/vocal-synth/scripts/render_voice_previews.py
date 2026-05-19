@@ -27,8 +27,11 @@ each preview takes only a few seconds on the Grace Blackwell GB10.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -90,38 +93,51 @@ def _build_request(voice_id: str) -> VocalRequest:
     )
 
 
+def _supabase_client():  # type: ignore[return]
+    """Return an authenticated Supabase client.
+
+    Uses the ``supabase`` Python SDK (>=2.x) which supports both legacy JWT
+    service-role keys and the newer ``sb_secret_*`` compact-JWS format that
+    raw urllib Bearer auth cannot handle.
+    """
+    from supabase import create_client
+
+    url = os.environ.get("SUPABASE_URL") or os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    return create_client(url, key)
+
+
 def _upload(wav_bytes: bytes, voice_id: str) -> None:
     """Upload the rendered WAV to the public ``voice-samples`` bucket.
 
-    Uses the Supabase Storage REST API directly via stdlib `urllib` so
-    the operator doesn't have to install `supabase-py` (which pulls
-    httpx/postgrest as transitive deps). Idempotent: ``x-upsert: true``
-    overwrites any existing object at the path.
+    Idempotent: upsert overwrites any existing object at the path.
     """
-    import urllib.error
-    import urllib.request
-
-    base_url = os.environ.get("SUPABASE_URL") or os.environ["NEXT_PUBLIC_SUPABASE_URL"]
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     path = f"samples/{voice_id}.wav"
-    upload_url = f"{base_url.rstrip('/')}/storage/v1/object/voice-samples/{path}"
-    req = urllib.request.Request(
-        upload_url,
-        data=wav_bytes,
-        method="POST",
-        headers={
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "audio/wav",
-            "x-upsert": "true",
-        },
+    client = _supabase_client()
+    client.storage.from_("voice-samples").upload(
+        path,
+        wav_bytes,
+        file_options={"content-type": "audio/wav", "upsert": "true"},
     )
-    try:
-        with urllib.request.urlopen(req) as resp:
-            resp.read()
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"upload {path} failed: {e.code} {body}") from e
     print(f"  uploaded -> voice-samples/{path}", flush=True)
+
+
+def _upload_manifest(manifest: dict[str, object]) -> None:
+    """Upload voice-samples/manifest.json so the web picker can gate fake previews.
+
+    The manifest records ``is_real`` per voice so the picker can distinguish
+    real Parler-TTS previews from FakeVocalModel placeholders — both produce
+    identical 960 044-byte WAVs for 10 s at 48 kHz, making size checks alone
+    unreliable.
+    """
+    client = _supabase_client()
+    payload = json.dumps(manifest, indent=2).encode()
+    client.storage.from_("voice-samples").upload(
+        "manifest.json",
+        payload,
+        file_options={"content-type": "application/json", "upsert": "true"},
+    )
+    print("  uploaded -> voice-samples/manifest.json", flush=True)
 
 
 def main() -> int:
@@ -161,6 +177,7 @@ def main() -> int:
         model = FakeVocalModel()
 
     voice_ids = [args.only] if args.only else sorted(VOICES.keys())
+    manifest: dict[str, object] = {}
     for vid in voice_ids:
         if vid not in VOICES:
             print(f"skipping unknown voice_id: {vid}", file=sys.stderr)
@@ -171,8 +188,17 @@ def main() -> int:
         out_path = args.out_dir / f"{vid}.wav"
         out_path.write_bytes(wav)
         print(f"  wrote {out_path}", flush=True)
+        manifest[vid] = {
+            "byte_size": len(wav),
+            "sha256": hashlib.sha256(wav).hexdigest(),
+            "rendered_at": datetime.now(UTC).isoformat(),
+            "is_real": require_real,
+        }
         if args.upload:
             _upload(wav, vid)
+    if args.upload:
+        generated_at = datetime.now(UTC).isoformat()
+        _upload_manifest({"voices": manifest, "generated_at": generated_at})
     return 0
 
 

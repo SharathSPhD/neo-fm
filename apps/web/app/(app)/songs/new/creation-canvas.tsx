@@ -16,6 +16,7 @@ import {
 } from "./advanced-disclosure";
 import { LibraryPicker } from "./library-picker";
 import { PresetGallery } from "./preset-gallery";
+import { PromptTab } from "./prompt-tab";
 import { LYRIC_MAX_CHARS, SectionEditor } from "./section-editor";
 import { VoicePicker } from "./voice-picker";
 
@@ -94,8 +95,11 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
   "sanskrit-shloka": "shloka_verse",
 };
 
+type CreationMode = "compose" | "describe";
+
 export function CreationCanvas() {
   const router = useRouter();
+  const [creationMode, setCreationMode] = useState<CreationMode>("compose");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -339,6 +343,34 @@ export function CreationCanvas() {
 
   return (
     <>
+      {/* Tab switcher — v1.5 PWM prompt branch */}
+      <div
+        role="tablist"
+        aria-label="Song creation mode"
+        className="flex gap-1 rounded-lg border border-muted/20 bg-muted/10 p-1 mb-4"
+      >
+        {(["compose", "describe"] as const).map((mode) => (
+          <button
+            key={mode}
+            role="tab"
+            type="button"
+            aria-selected={creationMode === mode}
+            onClick={() => setCreationMode(mode)}
+            className={[
+              "flex-1 rounded-md px-4 py-2 text-sm font-medium transition",
+              creationMode === mode
+                ? "bg-accent/15 text-accent"
+                : "text-foreground/50 hover:text-foreground/80",
+            ].join(" ")}
+          >
+            {mode === "compose" ? "Compose manually" : "Describe with AI"}
+          </button>
+        ))}
+      </div>
+
+      {creationMode === "describe" ? (
+        <PromptTab />
+      ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
           onPick={pickPreset}
@@ -478,6 +510,7 @@ export function CreationCanvas() {
           {pending ? "Queueing..." : "Queue song"}
         </button>
       </form>
+      )}
 
       <LibraryPicker
         language={form.language}
