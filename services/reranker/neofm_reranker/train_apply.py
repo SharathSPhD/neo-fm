@@ -55,7 +55,7 @@ def _encode_audio(path: str, processor: Any, model: Any, device: Any) -> Any:
     if path.startswith("synthetic://"):
         return torch.zeros(ENCODER_DIM, dtype=torch.float32, device=device)
 
-    import torchaudio
+    import torchaudio  # type: ignore[import-not-found]
 
     audio_path = Path(path)
     if not audio_path.is_file():
@@ -173,7 +173,7 @@ def train_with_torch(
     """
     try:
         import torch
-        from transformers import AutoModel, Wav2Vec2FeatureExtractor
+        from transformers import AutoModel, Wav2Vec2FeatureExtractor  # type: ignore[import-not-found]
     except ImportError as exc:
         raise RuntimeError(
             f"train_apply requires torch and transformers: {exc}\n"
@@ -238,7 +238,7 @@ def train_with_torch(
             # Bradley-Terry: -w * log(sigmoid(margin))
             loss = -row.weight * torch.nn.functional.logsigmoid(margin)
             optimizer.zero_grad()
-            loss.backward()
+            loss.backward()  # type: ignore[no-untyped-call]
             optimizer.step()
 
             running_loss += loss.item()

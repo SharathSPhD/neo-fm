@@ -154,10 +154,10 @@ def fill_section_lyrics(
     for doc_idx, doc_sec in enumerate(result):
         if doc_sec.lyrics is not None:
             continue
-        lyric = next(rem_iter, None)
-        if lyric is None:
+        rem_lyric = next(rem_iter, None)
+        if rem_lyric is None:
             break
-        result[doc_idx] = doc_sec.model_copy(update={"lyrics": lyric.get("text") or ""})
+        result[doc_idx] = doc_sec.model_copy(update={"lyrics": rem_lyric.get("text") or ""})
 
     return result
 
