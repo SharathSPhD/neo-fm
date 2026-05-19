@@ -50,12 +50,12 @@ def _encode_audio(path: str, processor: Any, model: Any, device: Any) -> Any:
     - Real WAV/MP3/FLAC paths: load with torchaudio, resample to 24 kHz,
       mix to mono, run through the frozen MERT encoder, mean-pool over time.
     """
-    import torch  # noqa: PLC0415
+    import torch
 
     if path.startswith("synthetic://"):
         return torch.zeros(ENCODER_DIM, dtype=torch.float32, device=device)
 
-    import torchaudio  # noqa: PLC0415
+    import torchaudio
 
     audio_path = Path(path)
     if not audio_path.is_file():
@@ -94,7 +94,6 @@ def _encode_dataset_cached(
     device: Any,
 ) -> dict[str, Any]:
     """Encode every unique audio path once and cache by path."""
-    import torch  # noqa: PLC0415
 
     cache: dict[str, Any] = {}
     unique = list(dict.fromkeys(audio_paths))
@@ -116,8 +115,8 @@ def _build_torch_head(config: Any, device: Any) -> Any:
     Uses the same Glorot init seed as RerankerHead.from_config so the
     warm-start is identical to the dry-run head.
     """
-    import torch  # noqa: PLC0415
-    import torch.nn as nn  # noqa: PLC0415
+    import torch
+    import torch.nn as nn
 
     linear1 = nn.Linear(config.in_dim, config.hidden_dim)
     linear2 = nn.Linear(config.hidden_dim, 1)
@@ -140,9 +139,9 @@ def _build_torch_head(config: Any, device: Any) -> Any:
     return head.to(device)
 
 
-def _export_to_reranker_head(torch_head: Any, config: Any) -> "RerankerHead":
+def _export_to_reranker_head(torch_head: Any, config: Any) -> RerankerHead:
     """Copy trained torch weights into a pure-Python RerankerHead."""
-    from .model import RerankerHead  # noqa: PLC0415
+    from .model import RerankerHead
 
     linear1 = torch_head[0]  # nn.Linear(in_dim, hidden_dim)
     linear2 = torch_head[3]  # nn.Linear(hidden_dim, 1)
@@ -162,26 +161,26 @@ def _export_to_reranker_head(torch_head: Any, config: Any) -> "RerankerHead":
 # ---------------------------------------------------------------------------
 
 def train_with_torch(
-    dataset: "PreferencePairsDataset",
+    dataset: PreferencePairsDataset,
     *,
     epochs: int = 4,
     learning_rate: float = 0.01,
-) -> "tuple[RerankerHead, float, float]":
+) -> tuple[RerankerHead, float, float]:
     """Train MERT-95M + MLP head on a pairwise preference dataset.
 
     Returns the trained ``RerankerHead`` (pure Python) together with the
     final training and validation losses.
     """
     try:
-        import torch  # noqa: PLC0415
-        from transformers import AutoModel, Wav2Vec2FeatureExtractor  # noqa: PLC0415
+        import torch
+        from transformers import AutoModel, Wav2Vec2FeatureExtractor
     except ImportError as exc:
         raise RuntimeError(
             f"train_apply requires torch and transformers: {exc}\n"
             "On DGX: uv sync --extra training"
         ) from exc
 
-    from .model import HeadConfig  # noqa: PLC0415
+    from .model import HeadConfig
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     LOGGER.info("train_with_torch: device=%s epochs=%d lr=%g", device, epochs, learning_rate)

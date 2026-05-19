@@ -105,7 +105,11 @@ class PWMClient:
         if data.get("status") != "complete":
             LOG.warning(
                 "pwm_generate_lyric_non_complete",
-                extra={"status": data.get("status"), "error": data.get("error"), "trace_id": trace_id},
+                extra={
+                    "status": data.get("status"),
+                    "error": data.get("error"),
+                    "trace_id": trace_id,
+                },
             )
             return None
 

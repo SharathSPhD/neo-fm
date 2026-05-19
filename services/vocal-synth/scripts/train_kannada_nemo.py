@@ -152,11 +152,11 @@ def main() -> int:
 
     # Real DGX path: deferred imports so CI (no nemo_toolkit) stays clean.
     try:
+        import pytorch_lightning as pl  # type: ignore[import-not-found]
         from nemo.collections.tts.models import (  # type: ignore[import-not-found]
             FastPitchModel,
             HifiGanModel,
         )
-        import pytorch_lightning as pl  # type: ignore[import-not-found]
         from omegaconf import OmegaConf  # type: ignore[import-not-found]
     except ImportError as e:
         raise RuntimeError(
@@ -230,7 +230,9 @@ def _real_train(  # pragma: no cover
             "max_duration": 15.0,
         }
     )
-    _val_ds = oc.merge(_train_ds, {"shuffle": False, "batch_size": max(1, cfg.fastpitch_batch_size // 2)})
+    _val_ds = oc.merge(
+        _train_ds, {"shuffle": False, "batch_size": max(1, cfg.fastpitch_batch_size // 2)}
+    )
 
     # ── 2. Fine-tune FastPitch ────────────────────────────────────────────
     log.info("loading_fastpitch base=tts_en_multispeaker_fastpitchmodel")
@@ -268,7 +270,9 @@ def _real_train(  # pragma: no cover
             "max_duration": 15.0,
         }
     )
-    _hg_val_ds = oc.merge(_hg_train_ds, {"shuffle": False, "batch_size": max(1, cfg.hifigan_batch_size // 2)})
+    _hg_val_ds = oc.merge(
+        _hg_train_ds, {"shuffle": False, "batch_size": max(1, cfg.hifigan_batch_size // 2)}
+    )
 
     log.info("loading_hifigan base=tts_hifigan")
     hg_model = hifigan_cls.from_pretrained("tts_hifigan")  # type: ignore[union-attr]

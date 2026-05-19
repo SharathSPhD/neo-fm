@@ -156,10 +156,10 @@ def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
       5. Save the LoRA adapter to output_dir / "adapter".
     """
     try:
-        import torch  # type: ignore[import-not-found]
         import peft  # type: ignore[import-not-found]
+        import torch  # type: ignore[import-not-found]
         from heartlib import HeartMuLaGenPipeline  # type: ignore[import-not-found]
-        from transformers import TrainingArguments, Trainer  # type: ignore[import-not-found]
+        from transformers import Trainer, TrainingArguments  # type: ignore[import-not-found]
     except ImportError as exc:
         raise SystemExit(
             f"ML deps missing: {exc}. Run `uv sync --extra training` on "
@@ -206,6 +206,7 @@ def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
 
     # ── 3. Build dataset ─────────────────────────────────────────────────
     import json as _json
+
     import torchaudio  # type: ignore[import-not-found]
 
     summary = _json.loads((corpus_dir / "summary.json").read_text())
