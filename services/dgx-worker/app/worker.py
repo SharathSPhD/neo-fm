@@ -843,19 +843,23 @@ async def _handle_retryable_failure(
 class _JsonFormatter(logging.Formatter):
     """JSON line formatter that serialises `extra` kwargs alongside the base fields."""
 
+    _STDLIB_ATTRS = frozenset({
+        "args", "asctime", "created", "exc_info", "exc_text", "filename",
+        "funcName", "levelname", "levelno", "lineno", "message", "module",
+        "msecs", "msg", "name", "pathname", "process", "processName",
+        "relativeCreated", "stack_info", "taskName", "thread", "threadName",
+    })
+
     def format(self, record: logging.LogRecord) -> str:
         import json as _json
 
-        base = {
+        base: dict[str, object] = {
             "ts": self.formatTime(record, "%Y-%m-%d %H:%M:%S,%03d"),
             "level": record.levelname,
             "logger": record.name,
             "msg": record.getMessage(),
         }
-        skip = logging.LogRecord.__dict__.keys() | {
-            "message", "asctime", "exc_info", "exc_text", "stack_info",
-        }
-        extra = {k: v for k, v in record.__dict__.items() if k not in skip}
+        extra = {k: v for k, v in record.__dict__.items() if k not in self._STDLIB_ATTRS}
         if extra:
             base.update(extra)
         if record.exc_info:
