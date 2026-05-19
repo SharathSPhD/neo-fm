@@ -145,7 +145,8 @@ services:
     build:
       context: ../services/vocal-synth
       dockerfile: Dockerfile
-      target: "${VOCAL_SYNTH_STAGE:-dgx}"
+      args:
+        STAGE: "${VOCAL_SYNTH_STAGE:-dgx}"
     image: "neo-fm/vocal-synth:${VOCAL_SYNTH_STAGE:-dgx}"
     container_name: neo-fm-vocal-synth
     restart: unless-stopped
@@ -173,7 +174,7 @@ services:
               count: all
               capabilities: [gpu]
     volumes:
-      - "${VOCAL_HF_HOME_HOST:-/var/cache/huggingface}:/var/cache/huggingface:ro"
+      - "${VOCAL_HF_HOME_HOST:-/home/sharaths/.cache/huggingface}:/var/cache/huggingface"
     healthcheck:
       test:
         - "CMD"
@@ -259,7 +260,8 @@ services:
     build:
       context: ../services/lyric-gen
       dockerfile: Dockerfile
-      target: "${LYRIC_GEN_STAGE:-dgx}"
+      args:
+        STAGE: "${LYRIC_GEN_STAGE:-dgx}"
     image: "neo-fm/lyric-gen:${LYRIC_GEN_STAGE:-dgx}"
     container_name: neo-fm-lyric-gen
     restart: unless-stopped
