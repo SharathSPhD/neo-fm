@@ -100,3 +100,72 @@ def test_initialise_from_env_z_image_falls_back_when_diffusers_missing() -> None
     m = model_module.get_active_model()
     assert m is not None
     assert m.backend == "fake"
+
+
+# The next two tests stub `_DiffusersBackend` so they exercise the env-resolution
+# path *without* needing torch / diffusers installed. They pin the canonical
+# defaults so a future typo (e.g. resurrecting `tonyassi/z-image-turbo`) is
+# caught in CI rather than silently degrading prod to the fake backend.
+
+
+def _stub_diffusers_backend_recorder(monkeypatch: pytest.MonkeyPatch) -> dict[str, object]:
+    """Replace `_DiffusersBackend` so initialise_from_env succeeds and records
+    the (backend, model_id) it was constructed with. Returns the dict that
+    will be populated when the boot path runs."""
+    captured: dict[str, object] = {}
+
+    class _StubBackend:
+        def __init__(self, backend: str, model_id: str) -> None:
+            captured["backend"] = backend
+            captured["model_id"] = model_id
+            self.backend = backend  # type: ignore[assignment]
+            self.model_loaded = True
+            self.model_version = model_id
+
+        def load(self) -> None:
+            return None
+
+        def synthesise(self, req: CoverArtRequest) -> bytes:  # pragma: no cover
+            raise NotImplementedError
+
+    monkeypatch.setattr(model_module, "_DiffusersBackend", _StubBackend)
+    return captured
+
+
+def test_initialise_from_env_z_image_defaults_to_tongyi_mai(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`COVER_ART_BACKEND=z-image` with no `COVER_ART_MODEL_ID` override must
+    resolve to the canonical Tongyi-MAI release. The previous default
+    (`tonyassi/z-image-turbo`) 404s upstream, so this test pins the new
+    default so we don't regress to a silent FakeCoverArtModel fallback."""
+    captured = _stub_diffusers_backend_recorder(monkeypatch)
+    os.environ["COVER_ART_BACKEND"] = "z-image"
+    os.environ.pop("COVER_ART_MODEL_ID", None)
+    model_module.set_active_model(None)
+    model_module.initialise_from_env()
+    assert captured == {"backend": "z-image", "model_id": "Tongyi-MAI/Z-Image-Turbo"}
+
+
+def test_initialise_from_env_sdxl_turbo_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The sdxl-turbo branch still defaults to stabilityai/sdxl-turbo."""
+    captured = _stub_diffusers_backend_recorder(monkeypatch)
+    os.environ["COVER_ART_BACKEND"] = "sdxl-turbo"
+    os.environ.pop("COVER_ART_MODEL_ID", None)
+    model_module.set_active_model(None)
+    model_module.initialise_from_env()
+    assert captured == {"backend": "sdxl-turbo", "model_id": "stabilityai/sdxl-turbo"}
+
+
+def test_initialise_from_env_respects_cover_art_model_id_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The `COVER_ART_MODEL_ID` env var still wins over the per-backend default."""
+    captured = _stub_diffusers_backend_recorder(monkeypatch)
+    os.environ["COVER_ART_BACKEND"] = "z-image"
+    os.environ["COVER_ART_MODEL_ID"] = "some-org/some-finetune"
+    model_module.set_active_model(None)
+    model_module.initialise_from_env()
+    assert captured["model_id"] == "some-org/some-finetune"

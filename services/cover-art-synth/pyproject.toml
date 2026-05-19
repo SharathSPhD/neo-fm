@@ -19,7 +19,12 @@ dependencies = [
 # CI / unit tests rely on the FakeCoverArtModel path and skip these.
 diffusion = [
   "torch>=2.4",
-  "diffusers>=0.30",
+  # 0.36 is the first release that exposes `ZImagePipeline` /
+  # `ZImageTransformer2DModel` (the classes declared by
+  # Tongyi-MAI/Z-Image-Turbo's model_index.json). Older diffusers
+  # fall back to AutoPipelineForText2Image, which won't work for
+  # Z-Image-Turbo -- so the pin is load-bearing for the prod default.
+  "diffusers>=0.36",
   "transformers>=4.45",
   "huggingface_hub>=0.25",
   "accelerate>=0.34",
