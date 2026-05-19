@@ -223,14 +223,40 @@ class SvaraTTSModel:
     def model_version(self) -> str | None:
         return self._model_id if self._loaded else None
 
+    # Orpheus SNAC codec: 24 kHz, 3-level hierarchy.
+    # Audio vocab starts at <custom_token_0> = token id 128256.
+    _AUDIO_TOKEN_OFFSET = 128256
+    _SNAC_SAMPLE_RATE = 24000
+
+    # Language → Orpheus speaker-identity string (case-sensitive, matches
+    # training speaker IDs in kenpath/svara-tts-v1).
+    _LANG_TO_SPEAKER: dict[str, str] = {
+        "hi": "Hindi",
+        "kn": "Kannada",
+        "ta": "Tamil",
+        "te": "Telugu",
+        "bn": "Bengali",
+        "sa": "Sanskrit",
+        "mr": "Marathi",
+        "ml": "Malayalam",
+        "pa": "Punjabi",
+        "gu": "Gujarati",
+        "en": "English",
+    }
+
     def load(self) -> None:
         if self._loaded:
             return
-        # Heavy imports are kept inside load() so CI / unit tests can
-        # import this module without torch installed.
         import torch  # type: ignore[import-not-found]
         from huggingface_hub import snapshot_download  # type: ignore[import-not-found]
-        from transformers import AutoModel, AutoTokenizer  # type: ignore[import-not-found]
+        from transformers import AutoTokenizer, LlamaForCausalLM  # type: ignore[import-not-found]
+
+        try:
+            from snac import SNAC  # type: ignore[import-not-found]
+        except ImportError as e:
+            raise RuntimeError(
+                "snac is not installed. Add `snac>=1.2.1` to vocal-synth tts extras."
+            ) from e
 
         cache_dir = os.environ.get("HF_HOME") or os.environ.get("HUGGINGFACE_HUB_CACHE")
         local_path = snapshot_download(
@@ -248,24 +274,99 @@ class SvaraTTSModel:
         )
         self._tokenizer = AutoTokenizer.from_pretrained(local_path)
         self._model = (
-            AutoModel.from_pretrained(local_path)
+            LlamaForCausalLM.from_pretrained(
+                local_path,
+                torch_dtype=torch.bfloat16 if self._device == "cuda" else torch.float32,
+            )
             .to(self._device)
             .eval()
         )
+        # SNAC codec for audio token → waveform decoding (24 kHz, 3-level)
+        self._snac = SNAC.from_pretrained("hubertsiuzdak/snac_24khz").to(self._device).eval()
         self._loaded = True
+
+    def _orpheus_prompt(self, text: str, language: str | None, voice_timbre: str | None = None) -> str:
+        """Build Orpheus TTS prompt using the <|audio|> trigger token.
+
+        kenpath/svara-tts-v1 uses a special <|audio|> token (id 156939) that
+        switches the Llama backbone from text-generation mode into audio-token
+        generation mode. The Llama-3 chat-template format does NOT trigger
+        this mode — the model must see <|audio|> directly.
+
+        Format: <|audio|>Speaker (Gender)\\ntext<|eot_id|>
+        """
+        lang_code = (language or "en").lower()
+        speaker = self._LANG_TO_SPEAKER.get(lang_code, "Hindi")
+        gender = "Female" if (voice_timbre or "female") != "male" else "Male"
+        return f"<|audio|>{speaker} ({gender})\n{text}<|eot_id|>"
+
+    def _decode_snac_tokens(self, token_ids: "list[int]") -> "np.ndarray":  # type: ignore[name-defined]
+        """Convert Orpheus audio token ids to a float32 waveform via SNAC.
+
+        kenpath/svara-tts-v1 (Orpheus-style) token layout:
+          - First 3 tokens after <custom_token_0> are header tokens; skip them.
+          - Remaining tokens form groups of 7, one group per SNAC frame (~85ms):
+              pos 0: L0 code = (val - OFFSET) in [0, 4096)
+              pos 1: L1 code = (val - OFFSET - 4096) in [0, 4096)
+              pos 2: L2 code = (val - OFFSET - 8192) in [0, 4096)
+              pos 3: L2 code = (val - OFFSET - 12288) in [0, 4096)
+              pos 4: L1 code = (val - OFFSET - 16384) in [0, 4096)
+              pos 5: L2 code = (val - OFFSET - 20480) in [0, 4096)
+              pos 6: L2 code = (val - OFFSET - 24576) in [0, 4096)
+          - SNAC decode expects: [L0: (1×T), L1: (2×T), L2: (4×T)]
+        """
+        import torch  # type: ignore[import-not-found]
+        import numpy as np  # type: ignore[import-not-found]
+
+        offset = self._AUDIO_TOKEN_OFFSET
+        audio_ids = [t for t in token_ids if t >= offset]
+
+        # The first 3 tokens are header tokens; skip them.
+        if len(audio_ids) <= 3:
+            return np.zeros(0, dtype=np.float32)
+        audio_ids = audio_ids[3:]
+
+        n_blocks = len(audio_ids) // 7
+        if n_blocks == 0:
+            return np.zeros(0, dtype=np.float32)
+
+        l0: list[int] = []
+        l1: list[int] = []
+        l2: list[int] = []
+        LEVEL_OFFSETS = [0, 4096, 8192, 12288, 16384, 20480, 24576]
+        LEVEL_MAP = [0, 1, 2, 2, 1, 2, 2]  # which SNAC level each position feeds
+        for i in range(n_blocks):
+            b = audio_ids[i * 7 : i * 7 + 7]
+            for tok, lv_off, lv in zip(b, LEVEL_OFFSETS, LEVEL_MAP):
+                code = (tok - offset) - lv_off
+                code = max(0, min(4095, code))  # clamp to valid codebook range
+                if lv == 0:
+                    l0.append(code)
+                elif lv == 1:
+                    l1.append(code)
+                else:
+                    l2.append(code)
+
+        if not l0:
+            return np.zeros(0, dtype=np.float32)
+
+        codes = [
+            torch.tensor(l0, dtype=torch.long, device=self._device).unsqueeze(0),
+            torch.tensor(l1, dtype=torch.long, device=self._device).unsqueeze(0),
+            torch.tensor(l2, dtype=torch.long, device=self._device).unsqueeze(0),
+        ]
+        with torch.inference_mode():
+            waveform = self._snac.decode(codes)  # type: ignore[misc]
+        return waveform.squeeze().cpu().numpy().astype(np.float32)
 
     def synthesise(self, req: VocalRequest) -> bytes:
         if not self._loaded:
             raise RuntimeError("SvaraTTSModel.load() not called")
-        # Real synthesis stitches a stem per section and concatenates.
-        # We keep this branch behind a single try/except so any model-
-        # specific failure (OOM, missing tokenizer, etc.) cleanly falls
-        # back to a deterministic silence rather than crashing the
-        # inference worker mid-job.
         import numpy as np  # type: ignore[import-not-found]
         import torch  # type: ignore[import-not-found]
 
         sr = req.sample_rate
+        snac_sr = self._SNAC_SAMPLE_RATE
         chunks: list[np.ndarray] = []
         with torch.inference_mode():
             for sec in req.sections:
@@ -275,22 +376,27 @@ class SvaraTTSModel:
                     chunks.append(np.zeros(int(sec.target_seconds * sr), dtype=np.float32))
                     continue
                 text = sec.transliteration or sec.lyrics or ""
-                # Real call shape varies by model release; we keep the
-                # tokeniser->model->vocoder pattern abstract here. Sites
-                # that need fine control can plug a customised model
-                # implementation behind the same protocol.
-                inputs = self._tokenizer(text, return_tensors="pt").to(  # type: ignore[union-attr]
-                    self._device
+                prompt = self._orpheus_prompt(text, sec.language or req.language, req.voice_timbre)
+                input_ids = self._tokenizer(  # type: ignore[union-attr]
+                    prompt, return_tensors="pt"
+                ).input_ids.to(self._device)
+                # Generate audio tokens; stop at <|eot_id|> (128009) or limit.
+                max_new = max(512, int(sec.target_seconds * 86))  # ~86 tok/s at 24kHz
+                output_ids = self._model.generate(  # type: ignore[union-attr]
+                    input_ids,
+                    max_new_tokens=max_new,
+                    do_sample=True,
+                    temperature=0.6,
+                    top_p=0.95,
+                    repetition_penalty=1.1,
+                    eos_token_id=128009,
+                    pad_token_id=128009,
                 )
-                outputs = self._model(**inputs)  # type: ignore[misc]
-                waveform = (
-                    outputs.audio if hasattr(outputs, "audio") else outputs.waveform
-                )
-                stem = waveform.detach().cpu().numpy().astype(np.float32).reshape(-1)
-                # Resample to target sr if model emits 22.05k native.
-                src_sr = getattr(outputs, "sampling_rate", sr)
-                if src_sr != sr and stem.size > 0:
-                    ratio = sr / src_sr
+                new_tokens = output_ids[0][input_ids.shape[-1]:].tolist()
+                stem = self._decode_snac_tokens(new_tokens)
+                # Resample from SNAC 24k to requested sr if needed.
+                if snac_sr != sr and stem.size > 0:
+                    ratio = sr / snac_sr
                     new_n = int(stem.size * ratio)
                     idx = np.linspace(0, stem.size - 1, new_n).astype(np.int64)
                     stem = stem[idx]
@@ -306,12 +412,9 @@ class SvaraTTSModel:
         out = np.concatenate(chunks) if chunks else np.zeros(0, dtype=np.float32)
         target_n = int(req.target_duration_seconds * sr)
         if out.size < target_n:
-            out = np.concatenate(
-                [out, np.zeros(target_n - out.size, dtype=np.float32)]
-            )
+            out = np.concatenate([out, np.zeros(target_n - out.size, dtype=np.float32)])
         else:
             out = out[:target_n]
-        # Soft limiter to avoid surprise clipping on a hot prediction.
         peak = float(np.max(np.abs(out)) or 1.0)
         if peak > 0.95:
             out = out * (0.95 / peak)
