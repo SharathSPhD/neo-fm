@@ -87,7 +87,7 @@ export function VoicePicker({
     void Promise.all(
       VOICE_CATALOGUE.map(async (entry) => {
         const url = previewUrl(previewBaseUrl, entry);
-        const fake = await isFakePreview(url);
+        const fake = await isFakePreview(url, entry.voice_id, previewBaseUrl);
         return fake ? entry.voice_id : null;
       }),
     ).then((results) => {

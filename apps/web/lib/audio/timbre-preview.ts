@@ -1,6 +1,11 @@
 "use client";
 
-// Known FakeVocalModel output size — deterministic 10 s × 48 kHz × 16-bit mono WAV.
+/**
+ * Known FakeVocalModel output size (10 s × 48 kHz × 16-bit mono + 44-byte header).
+ * Real Parler-TTS output for the same duration is identical in size, so
+ * Content-Length alone cannot distinguish real from fake. Use the manifest instead.
+ * This constant is kept for tests that set up stub servers.
+ */
 export const FAKE_PREVIEW_BYTES = 960_044;
 
 // Fundamental frequencies by gender register.
@@ -29,11 +34,46 @@ const PERSONA_Q: Record<string, number> = {
   "language-default": 1.0,
 };
 
+interface VoiceManifest {
+  voices: Record<string, { is_real: boolean }>;
+}
+
+let _manifestCache: Promise<VoiceManifest | null> | null = null;
+
 /**
- * HEAD-checks a preview URL to detect FakeVocalModel output.
- * Returns true when content-length exactly equals FAKE_PREVIEW_BYTES.
+ * Fetches (and caches) the voice-samples manifest.json to determine which
+ * previews are real Parler-TTS audio vs FakeVocalModel placeholders.
+ * One request per page load; subsequent callers share the same promise.
  */
-export async function isFakePreview(url: string): Promise<boolean> {
+function _fetchManifest(baseUrl: string): Promise<VoiceManifest | null> {
+  if (_manifestCache) return _manifestCache;
+  const trimmed = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  _manifestCache = fetch(`${trimmed}/manifest.json`)
+    .then((r) => (r.ok ? (r.json() as Promise<VoiceManifest>) : null))
+    .catch(() => null);
+  return _manifestCache;
+}
+
+/**
+ * Returns true when the voice preview has NOT yet been rendered with a real
+ * model. Checks the bucket manifest; falls back to the legacy Content-Length
+ * sentinel only when the manifest is unavailable.
+ */
+export async function isFakePreview(
+  url: string,
+  voiceId: string,
+  manifestBaseUrl: string,
+): Promise<boolean> {
+  const manifest = await _fetchManifest(manifestBaseUrl);
+  if (manifest?.voices) {
+    const entry = manifest.voices[voiceId];
+    // If the voice is listed, trust the manifest.
+    if (entry !== undefined) return !entry.is_real;
+    // Voice not listed → treat as fake (render not yet run for this voice).
+    return true;
+  }
+  // Manifest unavailable: fall back to size check (broken for same-size real
+  // audio but better than always returning false).
   try {
     const res = await fetch(url, { method: "HEAD" });
     const len = res.headers.get("content-length");
