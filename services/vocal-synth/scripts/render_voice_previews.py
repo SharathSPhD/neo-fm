@@ -27,8 +27,11 @@ each preview takes only a few seconds on the Grace Blackwell GB10.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -124,6 +127,34 @@ def _upload(wav_bytes: bytes, voice_id: str) -> None:
     print(f"  uploaded -> voice-samples/{path}", flush=True)
 
 
+def _upload_manifest(manifest: dict[str, object]) -> None:
+    """Upload voice-samples/manifest.json so the web picker can gate fake previews."""
+    import urllib.error
+    import urllib.request
+
+    base_url = os.environ.get("SUPABASE_URL") or os.environ["NEXT_PUBLIC_SUPABASE_URL"]
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    payload = json.dumps(manifest, indent=2).encode()
+    upload_url = f"{base_url.rstrip('/')}/storage/v1/object/voice-samples/manifest.json"
+    req = urllib.request.Request(
+        upload_url,
+        data=payload,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "x-upsert": "true",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            resp.read()
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"manifest upload failed: {e.code} {body}") from e
+    print("  uploaded -> voice-samples/manifest.json", flush=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -161,6 +192,7 @@ def main() -> int:
         model = FakeVocalModel()
 
     voice_ids = [args.only] if args.only else sorted(VOICES.keys())
+    manifest: dict[str, object] = {}
     for vid in voice_ids:
         if vid not in VOICES:
             print(f"skipping unknown voice_id: {vid}", file=sys.stderr)
@@ -171,8 +203,16 @@ def main() -> int:
         out_path = args.out_dir / f"{vid}.wav"
         out_path.write_bytes(wav)
         print(f"  wrote {out_path}", flush=True)
+        manifest[vid] = {
+            "byte_size": len(wav),
+            "sha256": hashlib.sha256(wav).hexdigest(),
+            "rendered_at": datetime.now(timezone.utc).isoformat(),
+            "is_real": require_real,
+        }
         if args.upload:
             _upload(wav, vid)
+    if args.upload:
+        _upload_manifest({"voices": manifest, "generated_at": datetime.now(timezone.utc).isoformat()})
     return 0
 
 
