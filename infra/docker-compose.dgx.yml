@@ -275,6 +275,7 @@ services:
       PHASE: "1"
       LYRIC_GEN_HMAC_SECRET: "${LYRIC_GEN_HMAC_SECRET:?LYRIC_GEN_HMAC_SECRET must be set in infra/.env.dgx (see ADR 0003)}"
       LYRIC_GEN_HMAC_SECRET_NEXT: "${LYRIC_GEN_HMAC_SECRET_NEXT:-}"
+      LYRIC_GEN_BACKEND: "${LYRIC_GEN_BACKEND:-indicbart}"
       INDICBART_MODEL_ID: "${INDICBART_MODEL_ID:-ai4bharat/IndicBART}"
       LYRIC_GEN_MAX_CONCURRENT: "${LYRIC_GEN_MAX_CONCURRENT:-4}"
       LOG_LEVEL: "${LOG_LEVEL:-INFO}"
@@ -286,7 +287,7 @@ services:
               count: 1
               capabilities: [gpu]
     volumes:
-      - "${LYRIC_GEN_HF_HOME_HOST:-/var/cache/huggingface}:/var/cache/huggingface:ro"
+      - "${LYRIC_GEN_HF_HOME_HOST:-/home/sharaths/.cache/huggingface}:/var/cache/huggingface"
     healthcheck:
       test:
         - "CMD"
