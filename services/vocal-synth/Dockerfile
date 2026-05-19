@@ -25,7 +25,7 @@ RUN uv sync --frozen --no-dev || uv sync --no-dev
 COPY app ./app
 
 # ----- dgx stage (GPU prod) --------------------------------------------------
-FROM nvcr.io/nvidia/pytorch:24.08-py3 AS dgx
+FROM nvcr.io/nvidia/pytorch:25.11-py3 AS dgx
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \

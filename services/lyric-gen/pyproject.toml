@@ -27,6 +27,7 @@ training = [
   "safetensors>=0.4",
   "peft>=0.13",
   "sentencepiece>=0.2",
+  "protobuf>=4.25",
   "indic-nlp-library>=0.92",
   "evaluate>=0.4",
 ]
