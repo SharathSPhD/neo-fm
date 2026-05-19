@@ -55,7 +55,7 @@ def _encode_audio(path: str, processor: Any, model: Any, device: Any) -> Any:
     if path.startswith("synthetic://"):
         return torch.zeros(ENCODER_DIM, dtype=torch.float32, device=device)
 
-    import torchaudio  # type: ignore[import-not-found]
+    import torchaudio
 
     audio_path = Path(path)
     if not audio_path.is_file():
@@ -173,7 +173,7 @@ def train_with_torch(
     """
     try:
         import torch
-        from transformers import (  # type: ignore[import-not-found]
+        from transformers import (
             AutoModel,
             Wav2Vec2FeatureExtractor,
         )
