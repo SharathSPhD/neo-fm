@@ -9,7 +9,7 @@
  * Goals:
  *   1. unauthenticated -> 401
  *   2. invalid body   -> 400
- *   3. prompt branch (flag off) -> 501
+ *   3. prompt branch (flag on, default) -> 202 via buildShellDocument
  *   4. happy path: RPC called with the right args, 202 returned
  *   5. quota_exceeded raised by RPC -> 429
  *   6. unknown RPC failure -> 500
@@ -92,7 +92,10 @@ describe("POST /api/songs", () => {
     expect(res.status).toBe(400);
   });
 
-  it("501 for prompt branch when flag is off", async () => {
+  it("202 for prompt branch when flag is on (default)", async () => {
+    // NEO_FM_PROMPT_BRANCH_ENABLED defaults to true (flag is kept for emergency
+    // rollback only). A prompt-mode request should flow through buildShellDocument
+    // → elaborate → create_song_job → 202.
     const user_client = makeUserClient();
     vi.mocked(requireUser).mockResolvedValueOnce({
       user: { id: USER_ID } as never,
@@ -106,9 +109,9 @@ describe("POST /api/songs", () => {
         target_duration_seconds: 30,
       }),
     );
-    expect(res.status).toBe(501);
+    expect(res.status).toBe(202);
     const body = await res.json();
-    expect(body.error).toBe("prompt_branch_not_yet_enabled");
+    expect(body).toEqual({ job_id: JOB_ID, song_id: SONG_ID, status: "queued" });
   });
 
   it("happy path: calls create_song_job with the validated document and returns 202", async () => {
