@@ -136,6 +136,23 @@ class WorkerDB:
             doc = row["document_json"]
             if isinstance(doc, str):
                 doc = json.loads(doc)
+            # Defensively fill target_seconds if sections are missing it.
+            # Mirrors allocate_section_durations() in the song-doc package.
+            sections = doc.get("sections", [])
+            total = int(doc.get("target_duration_seconds", 0))
+            if total and any("target_seconds" not in s for s in sections):
+                unset = [s for s in sections if "target_seconds" not in s]
+                fixed = sum(int(s["target_seconds"]) for s in sections if "target_seconds" in s)
+                per, extra = divmod(total - fixed, len(unset))
+                i = 0
+                patched: list[object] = []
+                for s in sections:
+                    if "target_seconds" in s:
+                        patched.append(s)
+                    else:
+                        patched.append({**s, "target_seconds": per + (1 if i < extra else 0)})
+                        i += 1
+                doc = {**doc, "sections": patched}
             return SongDocument.model_validate(doc)
 
     def claim_job_processing(
