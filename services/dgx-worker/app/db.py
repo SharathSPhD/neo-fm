@@ -202,7 +202,7 @@ class WorkerDB:
                   and user_id = %s
                   and song_document_id = %s
                   and (
-                    status = 'queued'
+                    status in ('queued', 'failed')
                     or (
                       status = 'processing'
                       and lease_renewed_at is not null
