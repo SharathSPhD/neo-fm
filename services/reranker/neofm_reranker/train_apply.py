@@ -173,7 +173,10 @@ def train_with_torch(
     """
     try:
         import torch
-        from transformers import AutoModel, Wav2Vec2FeatureExtractor  # type: ignore[import-not-found]
+        from transformers import (  # type: ignore[import-not-found]
+            AutoModel,
+            Wav2Vec2FeatureExtractor,
+        )
     except ImportError as exc:
         raise RuntimeError(
             f"train_apply requires torch and transformers: {exc}\n"
