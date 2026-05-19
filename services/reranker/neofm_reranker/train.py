@@ -194,7 +194,7 @@ def train(
     else:  # pragma: no cover (DGX-only path)
         # Lazy torch import; the dry-run path is the one CI exercises.
         try:
-            from .train_apply import train_with_torch  # type: ignore
+            from .train_apply import train_with_torch
         except ImportError as exc:
             raise RuntimeError(
                 "Apply training requires services/reranker/app/train_apply.py "
