@@ -1,11 +1,23 @@
 openapi: 3.1.0
 info:
   title: neo-fm Cloud API
-  version: 0.3.0
+  version: 0.4.0
   description: |
     Public REST API served by Next.js on Vercel. Authenticated via Supabase Auth.
     All audio rendering happens on the DGX side and is reached only through
     this surface.
+
+    Version 0.4.0 (v1.5 close-out):
+      - `Tier` enum extended with `developer` — unlimited quota (999 999 songs/month,
+        1 TB storage). The developer role is granted internally; it is not exposed
+        in the Stripe billing surface.
+      - `POST /api/songs` prompt branch is **live** (no longer gated). The
+        `NEO_FM_PROMPT_BRANCH_ENABLED` feature flag is removed; the 501 response
+        is no longer returned. Sending `{ prompt, language, style_family,
+        target_duration_seconds }` routes through `pwm-api` on the DGX to produce
+        a full SongDocument before enqueueing.
+      - Cover-art bucket now accepts `image/svg+xml` (migration 0044).
+      - `developer` tier passes the stems-access gate (not `free`).
 
     Version 0.3.0 (v1.4 close-out):
       - Style family + language enums widened to match the v1.4 gallery
@@ -102,11 +114,11 @@ paths:
       summary: Submit a new song generation request
       description: |
         Accepts either a fully-formed Song Document under `song_document` OR a
-        `prompt`. The `prompt` branch is gated by the server-side feature flag
-        `NEO_FM_PROMPT_BRANCH_ENABLED` (off by default). Until Phase 10,
-        requests using the `prompt` branch receive `501 Not Implemented` with
-        the typed error `{ "error": "prompt_branch_not_yet_enabled" }`. The
-        `song_document` branch is fully functional from Phase 4.
+        `prompt`. Both branches are fully functional as of v1.5 (Phase 10).
+        The `prompt` branch routes through `pwm-api` (port 9000 on the DGX)
+        which generates a full SongDocument including raga, tala, lyrics, and
+        voice before the job is enqueued. The `song_document` branch accepts a
+        pre-structured document directly.
       operationId: createSong
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -130,8 +142,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/QuotaError"
-        "501":
-          description: prompt branch not yet enabled (pre-Phase-10)
+        "503":
+          description: pwm-api unavailable (PWM project files not mounted on DGX)
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Error" }
@@ -283,7 +295,11 @@ components:
 
     Tier:
       type: string
-      enum: [free, creator, pro]
+      enum: [free, creator, pro, developer]
+      description: |
+        `developer` is an internal tier (not purchasable via Stripe) with
+        effectively unlimited quota (999 999 songs/month, 1 TB storage).
+        Added in v1.5 via migration 0045/0046.
 
     UserProfile:
       type: object

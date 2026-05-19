@@ -60,8 +60,8 @@
     },
     "tier": {
       "type": "string",
-      "enum": ["free", "creator", "pro"],
-      "description": "used by `MusicEngine` router in Phase 12 to pick HeartMuLa vs Lyria; also enforces per-tier storage caps from ADR 0005"
+      "enum": ["free", "creator", "pro", "developer"],
+      "description": "used by `MusicEngine` router in Phase 12 to pick HeartMuLa vs Lyria; also enforces per-tier storage caps from ADR 0005. `developer` tier added in v1.5 (migration 0045/0046)."
     },
     "attempt_id": {
       "type": "string",
