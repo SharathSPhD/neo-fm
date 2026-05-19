@@ -51,9 +51,9 @@ from .cover_art_worker import cover_art_consumer_loop
 from .db import WorkerDB
 from .governor import read_state
 from .inference_client import MusicInferenceClient
+from .lyric_gen_client import LyricGenClient, fill_lyrics_with_indicbart
 from .mixer import MixSettings, StemInsert, mix_to_stereo_48k
 from .models import QueueMessage, SongDocument
-from .lyric_gen_client import LyricGenClient, fill_lyrics_with_indicbart
 from .pwm_client import PWMClient, expand_lyrics_from_pwm
 from .stem_planner import PlannerSection, plan_stem_inserts
 from .stems_client import StemsSynthClient

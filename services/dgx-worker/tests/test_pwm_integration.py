@@ -11,8 +11,8 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from typing import Any
 import uuid
+from typing import Any
 
 import httpx
 import pytest
@@ -23,7 +23,6 @@ from app.pwm_client import (
     expand_lyrics_from_pwm,
     fill_section_lyrics,
 )
-
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -56,7 +55,9 @@ def _make_song_doc(
     })
 
 
-def _fake_lyric_response(sections: list[dict[str, Any]], status: str = "complete") -> dict[str, Any]:
+def _fake_lyric_response(
+    sections: list[dict[str, Any]], status: str = "complete"
+) -> dict[str, Any]:
     return {
         "job_id": str(uuid.uuid4()),
         "status": status,

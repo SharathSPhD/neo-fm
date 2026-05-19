@@ -129,12 +129,14 @@ def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
       5. Save LoRA adapter to --output-dir; optionally push to Hub.
     """
     try:
-        import torch  # noqa: PLC0415
-        import torchaudio  # type: ignore[import-not-found]  # noqa: PLC0415
-        import peft  # type: ignore[import-not-found]  # noqa: PLC0415
-        from diffusers import StableAudioPipeline  # type: ignore[import-not-found]  # noqa: PLC0415
-        from diffusers.training_utils import compute_snr  # type: ignore[import-not-found]  # noqa: PLC0415
-        import torch.nn.functional as F  # noqa: PLC0415
+        import peft  # type: ignore[import-not-found]
+        import torch
+        import torch.nn.functional as F
+        import torchaudio  # type: ignore[import-not-found]
+        from diffusers import StableAudioPipeline  # type: ignore[import-not-found]
+        from diffusers.training_utils import (
+            compute_snr,  # type: ignore[import-not-found]
+        )
     except ImportError as exc:
         raise SystemExit(
             f"ML deps missing: {exc}. Run `uv sync --extra training` on "

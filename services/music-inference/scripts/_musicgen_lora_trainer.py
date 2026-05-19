@@ -137,14 +137,14 @@ def _real_train(args: argparse.Namespace) -> int:  # pragma: no cover
       6. Save LoRA adapter to output_dir / "adapter"; optional push_to_hub.
     """
     try:
-        import torch  # type: ignore[import-not-found]
         import peft  # type: ignore[import-not-found]
+        import torch  # type: ignore[import-not-found]
         import torchaudio  # type: ignore[import-not-found]
         from transformers import (  # type: ignore[import-not-found]
-            MusicgenForConditionalGeneration,
             AutoProcessor,
-            TrainingArguments,
+            MusicgenForConditionalGeneration,
             Trainer,
+            TrainingArguments,
         )
     except ImportError as exc:
         raise SystemExit(

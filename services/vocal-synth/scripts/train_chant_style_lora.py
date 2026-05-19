@@ -282,11 +282,14 @@ def main() -> int:
 
     # Real DGX path: deferred imports so CI (no peft/torch) stays clean.
     try:
-        import torch  # type: ignore[import-not-found]  # noqa: PLC0415
-        import torchaudio  # type: ignore[import-not-found]  # noqa: PLC0415
-        import peft  # type: ignore[import-not-found]  # noqa: PLC0415
-        from transformers import AutoModel, AutoProcessor  # type: ignore[import-not-found]  # noqa: PLC0415
-        import torch.nn.functional as F  # noqa: PLC0415
+        import peft  # type: ignore[import-not-found]
+        import torch  # type: ignore[import-not-found]
+        import torch.nn.functional as F
+        import torchaudio  # type: ignore[import-not-found]
+        from transformers import (  # type: ignore[import-not-found]
+            AutoModel,
+            AutoProcessor,
+        )
     except ImportError as exc:
         LOG.error(
             "ML deps missing: %s. Run `uv sync --extra training` on the "
