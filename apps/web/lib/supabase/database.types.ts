@@ -1186,7 +1186,7 @@ export type Database = {
         | "sanskrit-shloka"
         | "bengali-rabindrasangeet"
         | "telugu-keerthana"
-      tier_enum: "free" | "creator" | "pro"
+      tier_enum: "free" | "creator" | "pro" | "developer"
       track_format_enum: "wav" | "mp3" | "flac"
     }
     CompositeTypes: {
@@ -1330,7 +1330,7 @@ export const Constants = {
         "bengali-rabindrasangeet",
         "telugu-keerthana",
       ],
-      tier_enum: ["free", "creator", "pro"],
+      tier_enum: ["free", "creator", "pro", "developer"],
       track_format_enum: ["wav", "mp3", "flac"],
     },
   },
