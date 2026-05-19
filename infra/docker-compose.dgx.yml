@@ -117,6 +117,14 @@ services:
       VOCAL_LANGUAGES: "${VOCAL_LANGUAGES:-hi,kn,ta,te,bn}"
       VOCAL_VOICE_TIMBRE: "${VOCAL_VOICE_TIMBRE:-androgynous}"
       VOCAL_SYNTH_TIMEOUT_SECONDS: "${VOCAL_SYNTH_TIMEOUT_SECONDS:-300}"
+      # v1.5 Sprint 1: PWM lyric expansion + IndicBART fallback.
+      PWM_API_URL: "${PWM_API_URL:-}"
+      PWM_HMAC_SECRET: "${PWM_HMAC_SECRET:-}"
+      LYRIC_GEN_URL: "${LYRIC_GEN_URL:-}"
+      LYRIC_GEN_HMAC_SECRET: "${LYRIC_GEN_HMAC_SECRET:-}"
+      # v1.3 Sprint 3: cover-art sidecar.
+      COVER_ART_SYNTH_URL: "${COVER_ART_SYNTH_URL:-}"
+      COVER_ART_SYNTH_HMAC_SECRET: "${COVER_ART_SYNTH_HMAC_SECRET:-}"
       # ADR 0011 governor coordination. The host bind-mount of
       # /var/run/neo-fm lets `scripts/neo-fm-governor.py` pause/resume
       # the worker from outside the container.
@@ -179,7 +187,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 120s
-    profiles: ["vocal"]
 
   pwm-api:
     # Phase 1: thin FastAPI wrapper around the Pratyabhijñā World Model
@@ -291,6 +298,42 @@ services:
       timeout: 5s
       retries: 3
       start_period: 120s
+
+  cover-art-synth:
+    # v1.3 Sprint 3: cover-art sidecar. Generates PNG cover art for completed
+    # songs. COVER_ART_HMAC_SECRET is the server-side auth key; the worker
+    # uses COVER_ART_SYNTH_HMAC_SECRET (same value, different env name convention).
+    build:
+      context: ../services/cover-art-synth
+      dockerfile: Dockerfile
+    image: neo-fm/cover-art-synth:phase1
+    container_name: neo-fm-cover-art-synth
+    restart: unless-stopped
+    expose:
+      - "8090"
+    ports:
+      - "127.0.0.1:8091:8090"
+    env_file:
+      - .env.dgx
+    environment:
+      COVER_ART_HMAC_SECRET: "${COVER_ART_HMAC_SECRET:?COVER_ART_HMAC_SECRET must be set in infra/.env.dgx}"
+      COVER_ART_HMAC_SECRET_NEXT: "${COVER_ART_HMAC_SECRET_NEXT:-}"
+      SUPABASE_URL: "${SUPABASE_URL}"
+      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - >-
+          import urllib.request,sys;
+          r=urllib.request.urlopen('http://localhost:8090/healthz', timeout=4);
+          sys.exit(0 if r.status==200 else 1)
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   prometheus:
     image: prom/prometheus:v2.55.1

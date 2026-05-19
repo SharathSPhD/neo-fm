@@ -716,7 +716,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "accelerate", marker = "extra == 'diffusion'", specifier = ">=0.34" },
-    { name = "diffusers", marker = "extra == 'diffusion'", specifier = ">=0.30" },
+    { name = "diffusers", marker = "extra == 'diffusion'", specifier = ">=0.36" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "huggingface-hub", marker = "extra == 'diffusion'", specifier = ">=0.25" },
     { name = "numpy", specifier = ">=1.26" },
