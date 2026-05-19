@@ -23,11 +23,16 @@ supported via `COVER_ART_HMAC_SECRET_NEXT`.
 
 `COVER_ART_BACKEND` selects the model:
 
-| value          | behaviour                                                                 |
-|----------------|---------------------------------------------------------------------------|
-| `z-image`      | Default. Loads `tonyassi/z-image-turbo` from the local HF cache.          |
-| `sdxl-turbo`   | Fallback. Loads `stabilityai/sdxl-turbo`.                                 |
-| `fake`         | Deterministic PIL gradient. Always selected in CI/tests.                  |
+| value          | behaviour                                                                       |
+|----------------|---------------------------------------------------------------------------------|
+| `z-image`      | Default. Loads `Tongyi-MAI/Z-Image-Turbo` via `diffusers.ZImagePipeline` (bf16, 8 steps). Requires `diffusers>=0.36` and ~15 GB of HF cache. |
+| `sdxl-turbo`   | Fallback. Loads `stabilityai/sdxl-turbo` via `AutoPipelineForText2Image` (fp16, 4 steps). |
+| `fake`         | Deterministic PIL gradient. Always selected in CI/tests.                         |
+
+`COVER_ART_MODEL_ID` overrides the default repo for either real backend.
+Historical note: the `z-image` default used to be `tonyassi/z-image-turbo`,
+which 404s upstream and caused the lifespan to silently fall through to
+`fake`. The current default points at the official Tongyi-MAI release.
 
 The lifespan boot tries the requested backend; if `diffusers` /
 `torch` aren't installed (the CI image), it falls back to `fake`

@@ -4,10 +4,18 @@ Cover-art model layer.
 `CoverArtModel` is a Protocol so tests can substitute `FakeCoverArtModel`.
 Two real backends are wired:
 
-  - **z-image**   : `tonyassi/z-image-turbo` (default in prod). Tuned for
-                    1024^2 album-art generations.
+  - **z-image**   : `Tongyi-MAI/Z-Image-Turbo` (default in prod). Official
+                    Alibaba Tongyi-MAI release. 6B-param DiT (Lumina-2-based)
+                    + Qwen3 text encoder, distilled via Decoupled-DMD to 8
+                    NFEs. Loads through the diffusers `ZImagePipeline`
+                    class in bfloat16, native up to 2048^2. Tuned for
+                    1024^2 album-art generations. (Replaces the legacy
+                    `tonyassi/z-image-turbo` ID, which 404s upstream and
+                    caused the service to silently degrade to the fake
+                    backend in production.)
   - **sdxl-turbo**: `stabilityai/sdxl-turbo`. Fallback for environments
-                    where Z-Image weights aren't on disk.
+                    where the Z-Image weights aren't on disk. UNet-based,
+                    float16 + `variant="fp16"`, 4 NFEs, AutoPipeline.
 
 If neither weight set is available, `initialise_from_env()` returns a
 `FakeCoverArtModel` so the container can boot in `docker compose`
@@ -111,7 +119,24 @@ class FakeCoverArtModel:
 
 
 class _DiffusersBackend:
-    """Shared backend for Z-Image-Turbo + SDXL-Turbo via diffusers."""
+    """Shared backend for Z-Image-Turbo + SDXL-Turbo via diffusers.
+
+    The two pipelines have meaningfully different load and inference
+    contracts, so this class branches on `backend`:
+
+    | aspect            | z-image                 | sdxl-turbo           |
+    | ----------------- | ----------------------- | -------------------- |
+    | pipeline class    | `ZImagePipeline`        | `AutoPipeline...`    |
+    | dtype on GPU      | bfloat16                | float16              |
+    | weights variant   | (none)                  | `variant="fp16"`     |
+    | num_inference_steps | 8 (Decoupled-DMD)     | 4 (ADD)              |
+    | guidance_scale    | 0.0                     | 0.0                  |
+
+    The z-image path requires `diffusers>=0.36` (when `ZImagePipeline`
+    landed). On older diffusers we fall back to `AutoPipelineForText2Image`
+    -- it won't actually work for Z-Image-Turbo but it keeps the error
+    surface inside diffusers' own message rather than an `ImportError`.
+    """
 
     def __init__(self, backend: Backend, model_id: str) -> None:
         self._backend: Backend = backend
@@ -134,18 +159,35 @@ class _DiffusersBackend:
     def load(self) -> None:
         # Imported lazily; CI / tests never hit this branch.
         import torch  # type: ignore[import-not-found]
-        from diffusers import AutoPipelineForText2Image  # type: ignore[import-not-found]
 
-        dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-        pipe = AutoPipelineForText2Image.from_pretrained(
-            self._model_id,
-            torch_dtype=dtype,
-            variant="fp16" if dtype == torch.float16 else None,
-        )
-        if torch.cuda.is_available():
-            pipe = pipe.to("cuda")
+        if self._backend == "z-image":
+            # ZImagePipeline landed in diffusers 0.36; fall back to the
+            # AutoPipeline if we're on an older release so the error
+            # bubbles up from diffusers rather than ImportError here.
+            try:
+                from diffusers import ZImagePipeline as _Pipeline  # type: ignore[import-not-found]
+            except ImportError:  # pragma: no cover -- only hit on diffusers<0.36
+                from diffusers import (  # type: ignore[import-not-found]
+                    AutoPipelineForText2Image as _Pipeline,
+                )
+            dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+            pipe = _Pipeline.from_pretrained(
+                self._model_id,
+                torch_dtype=dtype,
+            )
         else:
-            pipe = pipe.to("cpu")
+            # sdxl-turbo (and any future ADD-distilled UNet)
+            from diffusers import (  # type: ignore[import-not-found]
+                AutoPipelineForText2Image,
+            )
+
+            dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+            pipe = AutoPipelineForText2Image.from_pretrained(
+                self._model_id,
+                torch_dtype=dtype,
+                variant="fp16" if dtype == torch.float16 else None,
+            )
+        pipe = pipe.to("cuda" if torch.cuda.is_available() else "cpu")
         self._pipe = pipe
         self._model_version = self._model_id
 
@@ -159,13 +201,15 @@ class _DiffusersBackend:
             device = "cuda" if torch.cuda.is_available() else "cpu"
             generator = torch.Generator(device=device).manual_seed(int(req.seed))
 
-        # z-image-turbo / sdxl-turbo are both single-step inference;
-        # we feed num_inference_steps=4 as the documented default.
+        # Both backends are distillation-class single-pass samplers, but
+        # they differ on NFEs: SDXL-Turbo (ADD) uses 4; Z-Image-Turbo
+        # (Decoupled-DMD) uses 8. Guidance is 0.0 in both cases.
+        num_inference_steps = 8 if self._backend == "z-image" else 4
         result = self._pipe(  # type: ignore[operator]
             req.prompt,
             width=req.width,
             height=req.height,
-            num_inference_steps=4,
+            num_inference_steps=num_inference_steps,
             guidance_scale=0.0,
             generator=generator,
         )
@@ -209,9 +253,12 @@ def initialise_from_env() -> None:
         set_active_model(FakeCoverArtModel())
         return
 
-    model_id = (
-        os.environ.get("COVER_ART_MODEL_ID")
-        or ("tonyassi/z-image-turbo" if backend == "z-image" else "stabilityai/sdxl-turbo")
+    # Canonical defaults per backend. The previous `tonyassi/z-image-turbo`
+    # default 404s on HF and caused the service to silently fall through to
+    # `FakeCoverArtModel` in production. `Tongyi-MAI/Z-Image-Turbo` is the
+    # official Alibaba Tongyi-MAI release of the model.
+    model_id = os.environ.get("COVER_ART_MODEL_ID") or (
+        "Tongyi-MAI/Z-Image-Turbo" if backend == "z-image" else "stabilityai/sdxl-turbo"
     )
     try:
         impl = _DiffusersBackend(backend, model_id)  # type: ignore[arg-type]

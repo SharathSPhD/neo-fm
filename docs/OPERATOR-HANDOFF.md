@@ -149,6 +149,15 @@ live `preference_pairs` accumulate (target: ≥ 5,000 votes).
 - **DGX host**: `spark-5208.local` (Grace Blackwell GB10).
   Training/inference jobs run via `services/dgx-worker`'s
   scheduler with `top_n_candidates ≤ 8`.
+- **DGX HuggingFace cache**: inventory + refresh runbook in
+  `scripts/MODEL_CACHE.md`. The 13 repos that back the
+  vocal-synth, music-inference, stems-synth, cover-art-synth,
+  lyric-gen, and reranker services live under
+  `~/.cache/huggingface/hub/` (~155 GB). Three of them
+  (`ai4bharat/IndicF5`, `ai4bharat/indic-parler-tts`,
+  `stabilityai/stable-audio-open-1.0`) are gated and require a
+  one-click "accept terms" form on the HF account whose token
+  is on disk.
 - **Smoke runbook**: `node infra/scripts/prod-smoke.mjs`. 25
   steps. Outputs `SUMMARY.md` + per-step PNGs in
   `demos/v1.4/sprint-17-prod-smoke/`.
