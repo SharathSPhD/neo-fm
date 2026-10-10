@@ -11,7 +11,15 @@ export function serviceClient(env = process.env): SupabaseClient {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-export function sessionApi(client = new Anthropic()): SessionApi {
+/**
+ * Managed Agents authenticate with a Console API key. Cloud dev sessions strip
+ * `ANTHROPIC_API_KEY`, so prefer the dedicated `MA_ANTHROPIC_API_KEY`.
+ */
+export function anthropicClient(env = process.env): Anthropic {
+  return new Anthropic({ apiKey: env.MA_ANTHROPIC_API_KEY ?? env.ANTHROPIC_API_KEY });
+}
+
+export function sessionApi(client = anthropicClient()): SessionApi {
   return {
     async create({ agentId, environmentId, title }) {
       const s = await client.beta.sessions.create({ agent: agentId, environment_id: environmentId, title });
