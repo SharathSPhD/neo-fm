@@ -13,7 +13,7 @@ import {
   environmentParams, freeProducerParams, poetParams, polisherParams, proProducerParams,
 } from "../../../../lib/agent/definitions";
 import { cleanId } from "../../../../lib/agent/tiers";
-import { SKILL_PCE_POEM_MD } from "../../../../lib/agent/skill-pce-poem";
+import { SKILL_FILES, SKILL_PCE_POEM_MD } from "../../../../lib/agent/skill-pce-poem";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -47,6 +47,25 @@ export async function POST(req: NextRequest) {
     const env = environmentParams();
     let environmentId = await firstByName(client.beta.environments.list(), "name", env.name);
     if (!environmentId) { environmentId = (await client.beta.environments.create(env)).id; created.push("environment"); }
+
+    if (req.nextUrl.searchParams.get("upgrade")) {
+      // Roll existing resources forward: new skill version (SKILL.md + vendored engine), sandbox networking
+      // (package managers + embedder allowlist), and the pro producer's tools/system. Nothing is deleted.
+      const hosts: string[] = [];
+      try { if (process.env.EMBED_URL) hosts.push(new URL(process.env.EMBED_URL.trim()).host); } catch { /* ignore a bad URL */ }
+      const files = await Promise.all(Object.entries(SKILL_FILES).map(([name, text]) => toFile(Buffer.from(text), name, { type: "text/plain" })));
+      const v = await client.skills.versions.create(skillId, { files });
+      const envParams = environmentParams(hosts);
+      await client.beta.environments.update(environmentId, { config: envParams.config });
+      const pro = (await client.beta.agents.list()) as AsyncIterable<{ id: string; name: string }>;
+      let proId: string | undefined;
+      for await (const a of pro) if (a.name === "neo-fm Producer (pro)") proId = a.id;
+      if (proId) {
+        const p = proProducerParams(skillId, "", "");
+        await client.beta.agents.update(proId, { system: p.system, tools: p.tools });
+      }
+      return NextResponse.json({ upgraded: true, skill_version: (v as { version?: string }).version ?? null, files: files.length, allowed_hosts: hosts, pro_agent_updated: Boolean(proId) });
+    }
 
     const ensureAgent = async (params: { name: string }, make: () => Promise<{ id: string }>) => {
       const existing = await firstByName(client.beta.agents.list(), "name", params.name);

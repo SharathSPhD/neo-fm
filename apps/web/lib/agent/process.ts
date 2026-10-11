@@ -7,6 +7,7 @@ import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
+import { mintEmbedToken } from "./embed-token";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -77,6 +78,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           language: doc.language, styleFamily: doc.style_family,
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
+          engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
         },
         music: async (a) => {
           // Last gate before spend: the agent's own output is untrusted too.

@@ -13,6 +13,7 @@ policy are the original code.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -21,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import numpy as np  # noqa: E402
 
 from pce.cascade import run_cascade  # noqa: E402
-from pce.substrate.embed import Embedder  # noqa: E402
+from pce.substrate.embed import Embedder as LexicalEmbedder  # noqa: E402
 from pce.operators.iccha import PERTURBATION_TABLE, iccha  # noqa: E402
 from pce.substrate.replay_lm import NeedGeneration, RecorderLM, ReplayLM  # noqa: E402
 from pce.types import Constraint  # noqa: E402
@@ -35,7 +36,12 @@ def main(workdir: str) -> int:
     wd = Path(workdir)
     brief = json.loads((wd / "brief.json").read_text(encoding="utf-8"))
     gens = _load(wd / "generations.json", {"draft": [], "revision": []})
-    embed = Embedder()
+    if os.environ.get("EMBED_URL") and os.environ.get("EMBED_TOKEN"):
+        from pce.substrate.http_embed import Embedder  # multilingual service (preferred)
+
+        embed = Embedder()
+    else:
+        embed = LexicalEmbedder()  # offline fallback: lexical only, flagged in result.json
     constraint = Constraint(
         text=brief["constraint"],
         embedding=embed.encode(brief["constraint"]),
@@ -50,6 +56,7 @@ def main(workdir: str) -> int:
             aspects=brief.get("aspects") or None,
             retrieval_set=brief.get("retrieval_set") or None,
             cit_temperature=cit_t,
+            aspect_cosine_hit=float(brief.get("aspect_cosine_hit", 0.20 if embed.model_id.endswith("@service") else 0.40)),
             commit_policy=brief.get("commit_policy", "event_gated"),
             base_seed=int(brief.get("seed", 0)),
         )

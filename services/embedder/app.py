@@ -7,8 +7,10 @@ Vectors are L2-normalised, so cosine == dot product. Stateless; the model is bak
 """
 from __future__ import annotations
 
+import hashlib
 import hmac
 import os
+import time
 from functools import lru_cache
 
 import numpy as np
@@ -51,6 +53,23 @@ def embed(texts: list[str], kind: str) -> np.ndarray:
     return pooled.astype(np.float32)
 
 
+def _authorized(given: str) -> bool:
+    """Master token, or a short-lived scoped token `v1.<unix-exp>.<hex hmac-sha256(master, "v1.<exp>")>`.
+
+    The app mints scoped tokens per job so the master secret never enters an agent sandbox.
+    """
+    master = os.environ.get("EMBED_TOKEN", "")
+    if not master or not given:
+        return False
+    if hmac.compare_digest(given.encode(), master.encode()):
+        return True
+    parts = given.split(".")
+    if len(parts) != 3 or parts[0] != "v1" or not parts[1].isdigit() or int(parts[1]) < time.time():
+        return False
+    want = hmac.new(master.encode(), f"v1.{parts[1]}".encode(), hashlib.sha256).hexdigest()
+    return hmac.compare_digest(parts[2].encode(), want.encode())
+
+
 class Req(BaseModel):
     texts: list[str] = Field(min_length=1)
     kind: str = "passage"
@@ -64,9 +83,7 @@ def healthz() -> dict[str, str]:
 
 @app.post("/embed")
 def post_embed(req: Req, authorization: str | None = Header(default=None)) -> dict[str, object]:
-    token = os.environ.get("EMBED_TOKEN", "")
-    given = (authorization or "").removeprefix("Bearer ").strip()
-    if not token or not hmac.compare_digest(given.encode(), token.encode()):
+    if not _authorized((authorization or "").removeprefix("Bearer ").strip()):
         raise HTTPException(status_code=401, detail="unauthorized")
     if len(req.texts) > MAX_TEXTS or any(len(t) > MAX_CHARS for t in req.texts):
         raise HTTPException(status_code=413, detail=f"max {MAX_TEXTS} texts of {MAX_CHARS} chars")

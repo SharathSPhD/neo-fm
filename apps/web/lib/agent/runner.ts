@@ -50,6 +50,8 @@ export interface Brief {
   styleFamily: string;
   targetSeconds: number;
   prompt: string;
+  /** Embedding service for the pce-poem engine mode (scoped, short-lived token only); omitted -> manual cascade. */
+  engine?: { url: string; token: string };
 }
 
 export const RUBRIC = `# neo-fm song rubric - starter, tune the criteria
@@ -67,6 +69,7 @@ export function briefText(b: Brief): string {
     `Language: ${b.language}`,
     `Style family: ${b.styleFamily}`,
     `Target duration: ${b.targetSeconds}s`,
+    ...(b.engine ? [`Engine mode: yes. EMBED_URL=${b.engine.url}`, `EMBED_TOKEN=${b.engine.token}`] : []),
   ].join("\n");
 }
 

@@ -54,7 +54,7 @@ Expect `{"ok":"true",...}` and a `"dim":384` vector. First call after idle takes
 | Name | Value |
 |---|---|
 | `EMBED_URL` | the Service URL from step 3 |
-| `EMBED_TOKEN` | the token from step 3 |
+| `EMBED_TOKEN` | the master token from step 3 (the app derives short-lived scoped tokens for agents; the master never enters a sandbox) |
 
 Then redeploy the preview (push any commit, or Deployments → Redeploy). You do **not** need to paste either
 value into chat; the app reads them from Vercel.
