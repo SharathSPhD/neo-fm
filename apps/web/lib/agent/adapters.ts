@@ -61,9 +61,18 @@ export function sessionApi(client = anthropicClient()): SessionApi {
 export function runStore(db: SupabaseClient, agentKey: "free" | "pro"): RunStore {
   return {
     async get(jobId) {
-      const { data, error } = await db.from("agent_runs").select("job_id,session_id,lyria_calls,audio_path,status").eq("job_id", jobId).maybeSingle();
+      // Array read + first row (maybeSingle on an explicit column list returned null for an existing row).
+      const { data, error } = await db.from("agent_runs").select("*").eq("job_id", jobId).limit(1);
       if (error) throw new Error(`agent_runs get: ${error.message}`);
-      return (data as RunRow | null) ?? null;
+      const r = (data ?? [])[0] as Record<string, unknown> | undefined;
+      if (!r) return null;
+      return {
+        job_id: String(r.job_id),
+        session_id: (r.session_id as string | null) ?? null,
+        lyria_calls: Number(r.lyria_calls ?? 0),
+        audio_path: (r.audio_path as string | null) ?? null,
+        status: r.status as RunRow["status"],
+      };
     },
     async claimStart(jobId) {
       const { data, error } = await db
