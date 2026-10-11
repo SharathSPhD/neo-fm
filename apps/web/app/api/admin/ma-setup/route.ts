@@ -12,6 +12,7 @@ import { anthropicClient } from "../../../../lib/agent/adapters";
 import {
   environmentParams, freeProducerParams, poetParams, polisherParams, proProducerParams,
 } from "../../../../lib/agent/definitions";
+import { cleanId } from "../../../../lib/agent/tiers";
 import { SKILL_PCE_POEM_MD } from "../../../../lib/agent/skill-pce-poem";
 
 export const dynamic = "force-dynamic";
@@ -65,6 +66,12 @@ export async function POST(req: NextRequest) {
       created,
       MA_ENVIRONMENT_ID: environmentId, MA_AGENT_ID_FREE: freeId, MA_AGENT_ID_PRO: proId,
       skill_id: skillId, poet_id: poetId, polisher_id: polisherId,
+      // Booleans only: does each configured env var equal the real ID?
+      configured_matches: {
+        MA_ENVIRONMENT_ID: cleanId(process.env.MA_ENVIRONMENT_ID) === environmentId,
+        MA_AGENT_ID_FREE: cleanId(process.env.MA_AGENT_ID_FREE) === freeId,
+        MA_AGENT_ID_PRO: cleanId(process.env.MA_AGENT_ID_PRO) === proId,
+      },
     });
   } catch (e) {
     const err = e as { status?: number; message?: string };
