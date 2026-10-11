@@ -39,20 +39,24 @@ export async function GET(req: NextRequest) {
     await db.from("jobs").update({ status: "processing", started_at: new Date().toISOString() }).eq("id", j.id).eq("status", "queued");
   }
 
-  const { data: active } = await db
+  // Plain queries (no PostgREST embeds): embed resolution depends on the schema cache
+  // and failed silently once; errors are surfaced instead of swallowed.
+  const { data: active, error: activeErr } = await db
     .from("jobs")
-    .select("id,user_id,song_document_id,song_documents(language,style_family,document_json),users(tier)")
+    .select("id,user_id,song_document_id")
     .eq("status", "processing");
+  if (activeErr) return NextResponse.json({ error: "jobs_query_failed", message: activeErr.message }, { status: 500 });
 
   const results: Record<string, string> = {};
-  for (const job of (active ?? []) as unknown as {
-    id: string; user_id: string; song_document_id: string;
-    song_documents: { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
-    users: { tier: UserTier } | null;
-  }[]) {
+  for (const job of (active ?? []) as { id: string; user_id: string; song_document_id: string }[]) {
     try {
-      const plan = planForTier(job.users?.tier);
-      const doc = job.song_documents;
+      const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
+        db.from("song_documents").select("language,style_family,document_json").eq("id", job.song_document_id).single(),
+        db.from("users").select("tier").eq("id", job.user_id).single(),
+      ]);
+      if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
+      const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free");
+      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       const outcome = await advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
