@@ -9,6 +9,7 @@ import { anthropicClient, runStore, serviceClient } from "../../../../lib/agent/
 import { checkBearer } from "../../../../lib/agent/auth";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {

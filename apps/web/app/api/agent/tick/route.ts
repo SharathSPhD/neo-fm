@@ -16,6 +16,7 @@ import { agentIdFor, planForTier, requireId, type UserTier } from "../../../../l
 class SafetyRefusal extends Error {}
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 const MAX_CLAIM = 3;
@@ -136,8 +137,13 @@ async function finalize(db: ReturnType<typeof serviceClient>, jobId: string) {
     await db.from("jobs").update({ status: "failed", error: "agent finished without audio", finished_at: now }).eq("id", jobId);
     return;
   }
-  const attemptId = crypto.randomUUID();
-  await db.from("jobs").update({ attempt_id: attemptId }).eq("id", jobId);
+  // One attempt per job: reuse the stored attempt_id so a repeated finalize can never insert a second track.
+  const { data: jobRow } = await db.from("jobs").select("attempt_id").eq("id", jobId).limit(1);
+  let attemptId = ((jobRow ?? [])[0] as { attempt_id: string | null } | undefined)?.attempt_id ?? null;
+  if (!attemptId) {
+    attemptId = crypto.randomUUID();
+    await db.from("jobs").update({ attempt_id: attemptId }).eq("id", jobId);
+  }
   await db.from("tracks").upsert({ job_id: jobId, attempt_id: attemptId, url: `tracks/${run.audio_path}`, format: "mp3" }, { onConflict: "job_id,attempt_id" });
   await db.from("jobs").update({ status: "completed", progress: 1, finished_at: now }).eq("id", jobId);
 }

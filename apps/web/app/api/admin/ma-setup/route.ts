@@ -16,6 +16,7 @@ import { cleanId } from "../../../../lib/agent/tiers";
 import { SKILL_PCE_POEM_MD } from "../../../../lib/agent/skill-pce-poem";
 
 export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 async function firstByName<T extends { id: string }>(

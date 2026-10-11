@@ -8,7 +8,9 @@ export function serviceClient(env = process.env): SupabaseClient {
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const key = env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
-  return createClient(url, key, { auth: { persistSession: false } });
+  // Next.js (Vercel) caches fetch() GETs in a persistent data cache; the worker must always read live state.
+  const noStore: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store" });
+  return createClient(url, key, { auth: { persistSession: false }, global: { fetch: noStore } });
 }
 
 /**
@@ -16,7 +18,9 @@ export function serviceClient(env = process.env): SupabaseClient {
  * `ANTHROPIC_API_KEY`, so prefer the dedicated `MA_ANTHROPIC_API_KEY`.
  */
 export function anthropicClient(env = process.env): Anthropic {
-  return new Anthropic({ apiKey: env.MA_ANTHROPIC_API_KEY ?? env.ANTHROPIC_API_KEY });
+  // Same reason as serviceClient(): never let Next's persistent fetch cache answer session/event reads.
+  const noStore: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store" });
+  return new Anthropic({ apiKey: env.MA_ANTHROPIC_API_KEY ?? env.ANTHROPIC_API_KEY, fetch: noStore });
 }
 
 export function sessionApi(client = anthropicClient()): SessionApi {
