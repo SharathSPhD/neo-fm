@@ -53,6 +53,7 @@ export async function GET(req: NextRequest) {
   if (activeErr) return NextResponse.json({ error: "jobs_query_failed", message: activeErr.message }, { status: 500 });
 
   const results: Record<string, string> = {};
+  const trace: string[] = [];
   for (const job of (active ?? []) as { id: string; user_id: string; song_document_id: string }[]) {
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
@@ -65,6 +66,7 @@ export async function GET(req: NextRequest) {
       const outcome = await advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
+        log: (m) => trace.push(m.slice(0, 600)),
         maxLyriaCalls: plan.maxLyriaCalls, maxOutcomeIterations: plan.maxOutcomeIterations,
         brief: {
           language: doc.language, styleFamily: doc.style_family,
@@ -95,7 +97,7 @@ export async function GET(req: NextRequest) {
       }
     }
   }
-  return NextResponse.json({ results });
+  return NextResponse.json({ results, trace });
 }
 
 async function finalize(db: ReturnType<typeof serviceClient>, jobId: string) {

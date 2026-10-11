@@ -76,6 +76,8 @@ export interface AdvanceDeps {
   maxLyriaCalls: number;
   maxOutcomeIterations: number;
   brief: Brief;
+  /** Optional trace sink (surfaced in the tick response) - never receives secrets. */
+  log?: (message: string) => void;
   music: (a: { stylePrompt: string; lyrics: string; durationClass: DurationClass }) => Promise<LyriaResult>;
   saveAudio: (jobId: string, n: number, r: LyriaResult) => Promise<string>;
 }
@@ -105,6 +107,12 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
 
   const sid = run.session_id;
   const events = await d.sessions.listEvents(sid);
+  if (d.log) {
+    const counts: Record<string, number> = {};
+    for (const e of events) counts[e.type] = (counts[e.type] ?? 0) + 1;
+    const cu = events.filter((e) => e.type === "agent.custom_tool_use").map((e) => `${e.name}`);
+    d.log(`events=${events.length} counts=${JSON.stringify(counts)} custom_tool_uses=${JSON.stringify(cu)}`);
+  }
   const answered = new Set(events.filter((e) => e.type === "user.custom_tool_result").map((e) => e.custom_tool_use_id));
   const pending = events.filter((e) => e.type === "agent.custom_tool_use" && e.name === "generate_music" && !answered.has(e.id));
 
