@@ -31,3 +31,12 @@ describe("agent id handling", () => {
     expect(() => requireId("X", undefined, "agent_")).toThrow(/Missing X/);
   });
 });
+
+describe("second secret", () => {
+  const both = { CRON_SECRET: "aaa", AGENT_TICK_SECRET: "bbb" } as unknown as NodeJS.ProcessEnv;
+  it("accepts either secret and rejects others", () => {
+    expect(checkBearer("Bearer aaa", both).ok).toBe(true);
+    expect(checkBearer("Bearer bbb", both).ok).toBe(true);
+    expect(checkBearer("Bearer ccc", both).ok).toBe(false);
+  });
+});
