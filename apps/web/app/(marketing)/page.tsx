@@ -395,7 +395,15 @@ function Footer() {
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p>
-          © {new Date().getFullYear()} neo-fm · Phoneme-correct AI music for Indian languages
+          © {new Date().getFullYear()} neo-fm · Phoneme-correct AI music for Indian languages ·{" "}
+          A product of{" "}
+          <a
+            href="https://technektar.com"
+            rel="noopener"
+            className="underline hover:text-foreground"
+          >
+            Technektar
+          </a>
         </p>
         <p className="flex flex-wrap items-center gap-4 text-xs text-foreground/50">
           <Link
@@ -403,6 +411,12 @@ function Footer() {
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             Pricing
+          </Link>
+          <Link
+            href="/trust"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Trust &amp; safety
           </Link>
           <Link
             href="/help"
