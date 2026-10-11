@@ -17,6 +17,20 @@ export async function GET(req: NextRequest) {
   const jobId = req.nextUrl.searchParams.get("job");
   if (!jobId) return NextResponse.json({ error: "job required" }, { status: 400 });
 
+  if (req.nextUrl.searchParams.get("probe")) {
+    const db = serviceClient();
+    const all = await db.from("agent_runs").select("job_id,status");
+    const eq = await db.from("agent_runs").select("job_id,status,session_id").eq("job_id", jobId);
+    const single = await db.from("agent_runs").select("job_id,status,session_id").eq("job_id", jobId).maybeSingle();
+    const jobs = await db.from("jobs").select("id,status").eq("id", jobId);
+    return NextResponse.json({
+      all: { n: all.data?.length ?? null, err: all.error?.message ?? null },
+      eq: { n: eq.data?.length ?? null, err: eq.error?.message ?? null, status: eq.data?.[0]?.status ?? null },
+      single: { has: Boolean(single.data), err: single.error?.message ?? null, code: single.error?.code ?? null },
+      jobs: { n: jobs.data?.length ?? null, err: jobs.error?.message ?? null },
+    });
+  }
+
   const { data: run } = await serviceClient().from("agent_runs").select("session_id,status,lyria_calls").eq("job_id", jobId).maybeSingle();
   if (!run?.session_id) return NextResponse.json({ error: "no_session", run });
 
