@@ -162,8 +162,10 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   }
   if (pending.length > 0 || paused.length > 0) return "waiting";
 
-  const idle = events.some((e) => e.type === "session.status_idle" && e.stop_reason?.type !== "requires_action");
-  const terminated = events.some((e) => e.type === "session.status_terminated");
+  // Only the LATEST status event matters: an earlier idle(requires_action) must not hide a later end_turn, nor the reverse.
+  const lastStatus = [...events].reverse().find((e) => e.type === "session.status_idle" || e.type === "session.status_terminated");
+  const idle = lastStatus?.type === "session.status_idle" && lastStatus.stop_reason?.type !== "requires_action";
+  const terminated = lastStatus?.type === "session.status_terminated";
   if ((idle && (await d.sessions.status(sid)) === "idle") || terminated) {
     await d.store.upsert({ job_id: jobId, status: terminated && !idle ? "failed" : "done" });
     return "done";

@@ -38,9 +38,17 @@ export function sessionApi(client = anthropicClient()): SessionApi {
       });
     },
     async listEvents(sessionId) {
-      const out: AgentEvent[] = [];
-      for await (const e of client.beta.sessions.events.list(sessionId)) out.push(e as unknown as AgentEvent);
-      return out;
+      // The unfiltered list returns only the oldest page, so a long session's later events were
+      // invisible. Ask for exactly what the worker needs: tool calls/answers (all), and the newest status events.
+      const wanted = ["agent.custom_tool_use", "user.custom_tool_result", "agent.tool_use", "agent.mcp_tool_use", "user.tool_confirmation"] as const;
+      const [tools, status] = await Promise.all([
+        client.beta.sessions.events.list(sessionId, { types: [...wanted], limit: 100 }),
+        client.beta.sessions.events.list(sessionId, { types: ["session.status_idle", "session.status_terminated"], order: "desc", limit: 5 }),
+      ]);
+      const toolEvents = ((tools as unknown as { data: AgentEvent[] }).data ?? []) as AgentEvent[];
+      // Newest-first from the API; hand the runner chronological order so "last" means latest.
+      const statusEvents = [...(((status as unknown as { data: AgentEvent[] }).data ?? []) as AgentEvent[])].reverse();
+      return [...toolEvents, ...statusEvents];
     },
     async sendToolResult(sessionId, toolUseId, text) {
       const res = await client.beta.sessions.events.send(sessionId, {
