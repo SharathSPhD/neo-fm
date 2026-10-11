@@ -6,6 +6,7 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { checkBearer } from "../../../../lib/agent/auth";
 import { runStore, serviceClient, sessionApi, spendGuard } from "../../../../lib/agent/adapters";
 import { generateMusic } from "../../../../lib/agent/lyria";
 import { advance } from "../../../../lib/agent/runner";
@@ -20,8 +21,9 @@ export const maxDuration = 60;
 const MAX_CLAIM = 3;
 
 export async function GET(req: NextRequest) {
-  if (!process.env.CRON_SECRET || req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const auth = checkBearer(req.headers.get("authorization"));
+  if (!auth.ok) {
+    return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   }
   const environmentId = process.env.MA_ENVIRONMENT_ID;
   const geminiKey = process.env.GEMINI_API_KEY;

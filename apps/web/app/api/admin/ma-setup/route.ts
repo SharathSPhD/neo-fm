@@ -7,6 +7,7 @@
 import { toFile } from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { checkBearer } from "../../../../lib/agent/auth";
 import { anthropicClient } from "../../../../lib/agent/adapters";
 import {
   environmentParams, freeProducerParams, poetParams, polisherParams, proProducerParams,
@@ -26,8 +27,9 @@ async function firstByName<T extends { id: string }>(
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.CRON_SECRET || req.headers.get("authorization") !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const auth = checkBearer(req.headers.get("authorization"));
+  if (!auth.ok) {
+    return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   }
   const client = anthropicClient();
   const created: string[] = [];
