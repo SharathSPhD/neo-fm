@@ -15,6 +15,20 @@ export const maxDuration = 60;
 export async function GET(req: NextRequest) {
   const auth = checkBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
+  const probeText = req.nextUrl.searchParams.get("moderate");
+  if (probeText) {
+    try {
+      const res = await anthropicClient().messages.create({
+        model: "claude-haiku-5-5", max_tokens: 400, thinking: { type: "disabled" },
+        messages: [{ role: "user", content: "Reply with only the JSON {\"ok\":true}" }],
+      });
+      const { screenRequest } = await import("../../../../lib/safety");
+      return NextResponse.json({ api_ok: true, stop_reason: res.stop_reason, blocks: res.content.map((b) => b.type), verdict: await screenRequest(probeText, "brief") });
+    } catch (e) {
+      const err = e as { status?: number; message?: string };
+      return NextResponse.json({ api_ok: false, status: err.status ?? null, message: String(err.message ?? e).slice(0, 400) });
+    }
+  }
   const jobId = req.nextUrl.searchParams.get("job");
   if (!jobId) return NextResponse.json({ error: "job required" }, { status: 400 });
 

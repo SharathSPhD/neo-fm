@@ -21,7 +21,9 @@ export async function moderate(
   try {
     const res = await client.messages.create({
       model: MODERATION_MODEL,
-      max_tokens: 200,
+      max_tokens: 400,
+      // Haiku 5.5 thinks by default; a short classification must not spend its token budget on reasoning.
+      thinking: { type: "disabled" },
       system: SYSTEM,
       messages: [{ role: "user", content: `<request kind="${kind}">${text}</request>` }],
     });
@@ -37,7 +39,8 @@ export async function moderate(
       category: (typeof parsed.category === "string" ? parsed.category : "hate_harassment") as SafetyCategory,
       reason: typeof parsed.reason === "string" ? parsed.reason.slice(0, 200) : "This request can't be made.",
     };
-  } catch {
+  } catch (e) {
+    console.error("moderation_unavailable:", e instanceof Error ? e.message.slice(0, 300) : String(e));
     return { allowed: false, category: "moderation_unavailable", reason: "Safety check is temporarily unavailable. Please try again." };
   }
 }
