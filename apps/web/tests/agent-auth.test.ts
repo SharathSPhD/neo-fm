@@ -40,3 +40,14 @@ describe("second secret", () => {
     expect(checkBearer("Bearer ccc", both).ok).toBe(false);
   });
 });
+
+import { planForTier } from "../lib/agent/tiers";
+
+describe("plan override", () => {
+  it("uses the override when valid, ignores junk, otherwise follows the tier", () => {
+    expect(planForTier("pro", "free").agent).toBe("free");
+    expect(planForTier("free", "pro").agent).toBe("pro");
+    expect(planForTier("pro", "weird").agent).toBe("pro");
+    expect(planForTier("free", null).agent).toBe("free");
+  });
+});

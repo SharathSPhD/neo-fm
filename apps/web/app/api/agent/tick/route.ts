@@ -60,10 +60,10 @@ export async function GET(req: NextRequest) {
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
         db.from("song_documents").select("language,style_family,document_json").eq("id", job.song_document_id).single(),
-        db.from("users").select("tier").eq("id", job.user_id).single(),
+        db.from("users").select("*").eq("id", job.user_id).single(),
       ]);
       if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
-      const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free");
+      const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan);
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       const outcome = await advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,

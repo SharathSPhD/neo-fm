@@ -19,7 +19,8 @@ const PLANS: Record<AgentKey, TierPlan> = {
   pro: { agent: "pro", maxLyriaCalls: 2, maxOutcomeIterations: 3 },
 };
 
-export function planForTier(tier: UserTier | null | undefined): TierPlan {
+export function planForTier(tier: UserTier | null | undefined, override?: string | null): TierPlan {
+  if (override === "free" || override === "pro") return PLANS[override];
   return tier === "creator" || tier === "pro" || tier === "developer"
     ? PLANS.pro
     : PLANS.free;
