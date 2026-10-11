@@ -56,7 +56,10 @@ export async function GET(req: NextRequest) {
 
   const results: Record<string, string> = {};
   const trace: string[] = [];
-  for (const job of (active ?? []) as { id: string; user_id: string; song_document_id: string }[]) {
+  // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
+  const CONCURRENCY = 4;
+  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string }[];
+  const runJob = async (job: { id: string; user_id: string; song_document_id: string }) => {
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
         db.from("song_documents").select("language,style_family,document_json").eq("id", job.song_document_id).single(),
@@ -99,6 +102,9 @@ export async function GET(req: NextRequest) {
         await db.from("jobs").update({ status: "failed", error: msg, finished_at: new Date().toISOString() }).eq("id", job.id);
       }
     }
+  };
+  for (let i = 0; i < work.length; i += CONCURRENCY) {
+    await Promise.all(work.slice(i, i + CONCURRENCY).map(runJob));
   }
   return NextResponse.json({ results, trace });
 }
