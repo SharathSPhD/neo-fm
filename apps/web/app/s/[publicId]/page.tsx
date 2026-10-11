@@ -387,7 +387,7 @@ export default async function PublicSongPage({
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
-        <span>Generated on neo-fm</span>
+        <span>AI-generated music and lyrics, made on neo-fm (a Technektar product) · <Link href="/trust" className="underline hover:text-foreground/70">how we keep it safe</Link></span>
         <Link href="/" className="hover:text-foreground/70">
           Make your own →
         </Link>
