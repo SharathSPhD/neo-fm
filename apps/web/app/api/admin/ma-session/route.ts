@@ -39,6 +39,16 @@ export async function GET(req: NextRequest) {
   if (!run?.session_id) return NextResponse.json({ error: "no_session", run });
 
   const client = anthropicClient();
+  if (req.nextUrl.searchParams.get("newest")) {
+    const page = await client.beta.sessions.events.list(run.session_id, { order: "desc", limit: 12 });
+    const items = (page as unknown as { data: Record<string, unknown>[] }).data ?? [];
+    const res = await client.beta.sessions.events.list(run.session_id, { types: ["user.custom_tool_result"] });
+    const results = (res as unknown as { data: Record<string, unknown>[] }).data ?? [];
+    return NextResponse.json({
+      newest: items.map((e) => ({ type: e.type, id: e.id, processed_at: e.processed_at })),
+      custom_tool_results: results.map((e) => ({ id: e.id, for: e.custom_tool_use_id, processed_at: e.processed_at })),
+    });
+  }
   const session = await client.beta.sessions.retrieve(run.session_id);
   const events: Record<string, unknown>[] = [];
   for await (const e of client.beta.sessions.events.list(run.session_id)) events.push(e as unknown as Record<string, unknown>);
