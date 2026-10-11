@@ -22,7 +22,7 @@ export interface SessionApi {
   create(args: { agentId: string; environmentId: string; title: string }): Promise<{ id: string }>;
   sendOutcome(sessionId: string, args: { description: string; rubric: string; maxIterations: number }): Promise<void>;
   listEvents(sessionId: string): Promise<AgentEvent[]>;
-  sendToolResult(sessionId: string, toolUseId: string, text: string, isError?: boolean): Promise<void>;
+  sendToolResult(sessionId: string, toolUseId: string, text: string, isError?: boolean): Promise<string | void>;
   sendToolConfirmation(sessionId: string, toolUseId: string, result: "allow" | "deny", denyMessage?: string): Promise<void>;
   status(sessionId: string): Promise<string>;
 }
@@ -132,7 +132,8 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   for (const call of pending) {
     run = (await d.store.get(jobId)) ?? run;
     if (run.lyria_calls >= d.maxLyriaCalls) {
-      await d.sessions.sendToolResult(sid, call.id, "Refused: render limit for this tier reached. Finish with the lyrics you have.", true);
+      const sent = await d.sessions.sendToolResult(sid, call.id, "Refused: render limit for this tier reached. Finish with the lyrics you have.", true);
+      d.log?.(`sent refusal (limit) for ${call.id}: ${sent ?? "ok"}`);
       continue;
     }
     const inp = call.input as { style_prompt?: string; lyrics?: string; duration_class?: DurationClass };
@@ -146,14 +147,16 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       const r = await d.music({ stylePrompt: inp.style_prompt, lyrics: inp.lyrics, durationClass: inp.duration_class });
       const path = await d.saveAudio(jobId, run.lyria_calls + 1, r);
       await d.store.upsert({ job_id: jobId, audio_path: path });
-      await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
+      const sent = await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
+      d.log?.(`sent render result for ${call.id}: ${sent ?? "ok"}`);
     } catch (e) {
       const msg = e instanceof SpendCapError
         ? "Refused: spend budget reached. Finish with the lyrics you have."
         : e instanceof Error && e.constructor.name === "SafetyRefusal"
           ? "Refused by content policy. Do not retry or reword; report that the brief cannot be made."
           : "Render failed; do not retry.";
-      await d.sessions.sendToolResult(sid, call.id, msg, true);
+      const sent = await d.sessions.sendToolResult(sid, call.id, msg, true);
+      d.log?.(`render path failed (${e instanceof Error ? e.message.slice(0, 120) : "?"}); sent: ${sent ?? "ok"}`);
     }
   }
   if (pending.length > 0 || paused.length > 0) return "waiting";

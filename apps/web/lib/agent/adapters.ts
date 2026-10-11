@@ -43,9 +43,10 @@ export function sessionApi(client = anthropicClient()): SessionApi {
       return out;
     },
     async sendToolResult(sessionId, toolUseId, text) {
-      await client.beta.sessions.events.send(sessionId, {
+      const res = await client.beta.sessions.events.send(sessionId, {
         events: [{ type: "user.custom_tool_result", custom_tool_use_id: toolUseId, content: [{ type: "text", text }] }],
       });
+      return JSON.stringify(res).slice(0, 400);
     },
     async sendToolConfirmation(sessionId, toolUseId, result, denyMessage) {
       await client.beta.sessions.events.send(sessionId, {
