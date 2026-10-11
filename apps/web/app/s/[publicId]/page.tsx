@@ -15,6 +15,7 @@
  *
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
+import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -391,6 +392,7 @@ export default async function PublicSongPage({
           Make your own →
         </Link>
       </footer>
+          <ProCta />
     </main>
   );
 }

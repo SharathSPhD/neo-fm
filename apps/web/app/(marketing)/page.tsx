@@ -1,3 +1,4 @@
+import { ListenFirst } from "@/components/listen-first";
 import Link from "next/link";
 import { PRESETS } from "@neo-fm/style-presets";
 
@@ -91,10 +92,11 @@ const HIGHLIGHT_PRESETS = HIGHLIGHT_PRESET_IDS.map((id) =>
   PRESETS.find((p) => p.id === id),
 ).filter((p): p is (typeof PRESETS)[number] => Boolean(p));
 
-export default function Page() {
+export default async function Page() {
   return (
     <main className="min-h-screen">
       <Hero />
+      <ListenFirst />
       <ValueProps />
       <Listen />
       <StyleGallery />

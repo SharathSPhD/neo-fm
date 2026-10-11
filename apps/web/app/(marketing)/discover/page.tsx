@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CoverArt } from "@/components/cover-art";
+import { ProCta } from "@/components/pro-cta";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
@@ -182,6 +183,8 @@ export default async function DiscoverPage({
           and Western. Click through to play the full track.
         </p>
       </header>
+
+      <ProCta compact />
 
       <nav
         aria-label="Style filter"
