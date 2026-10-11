@@ -114,7 +114,11 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       await d.store.upsert({ job_id: jobId, audio_path: path });
       await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
     } catch (e) {
-      const msg = e instanceof SpendCapError ? "Refused: spend budget reached. Finish with the lyrics you have." : "Render failed; do not retry.";
+      const msg = e instanceof SpendCapError
+        ? "Refused: spend budget reached. Finish with the lyrics you have."
+        : e instanceof Error && e.constructor.name === "SafetyRefusal"
+          ? "Refused by content policy. Do not retry or reword; report that the brief cannot be made."
+          : "Render failed; do not retry.";
       await d.sessions.sendToolResult(sid, call.id, msg, true);
     }
   }

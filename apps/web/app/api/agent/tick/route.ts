@@ -9,7 +9,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { runStore, serviceClient, sessionApi, spendGuard } from "../../../../lib/agent/adapters";
 import { generateMusic } from "../../../../lib/agent/lyria";
 import { advance } from "../../../../lib/agent/runner";
+import { screenRequest } from "../../../../lib/safety";
 import { agentIdFor, planForTier, type UserTier } from "../../../../lib/agent/tiers";
+
+class SafetyRefusal extends Error {}
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -57,7 +60,12 @@ export async function GET(req: NextRequest) {
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
         },
-        music: (a) => generateMusic(a, { guard, apiKey: geminiKey }),
+        music: async (a) => {
+          // Last gate before spend: the agent's own output is untrusted too.
+          const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
+          if (!v.allowed) throw new SafetyRefusal(v.reason);
+          return generateMusic(a, { guard, apiKey: geminiKey });
+        },
         saveAudio: async (jobId, n, r) => {
           const path = `${job.user_id}/${jobId}/${n}.mp3`;
           const { error } = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });

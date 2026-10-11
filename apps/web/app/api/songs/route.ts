@@ -44,6 +44,7 @@ import {
   CreateSongRequestSchema,
   ListSongsQuerySchema,
 } from "../../../lib/api/song-schemas";
+import { screenRequest } from "../../../lib/safety";
 import { requireUser } from "../../../lib/supabase/auth";
 import type { Json } from "../../../lib/supabase/database.types";
 
@@ -172,6 +173,17 @@ export async function POST(request: NextRequest) {
       { error: "prompt_branch_disabled" },
       { status: 503 },
     );
+  }
+
+  // Safety gate: screen free-text briefs before a job (and any paid call) exists.
+  if (parsed.data.prompt) {
+    const verdict = await screenRequest(parsed.data.prompt, "brief");
+    if (!verdict.allowed) {
+      return NextResponse.json(
+        { error: "content_policy", category: verdict.category, message: verdict.reason },
+        { status: verdict.category === "moderation_unavailable" ? 503 : 422 },
+      );
+    }
   }
 
   // ---- Resolve a validated Song Document (both branches) ------------------
