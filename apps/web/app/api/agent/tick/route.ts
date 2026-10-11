@@ -11,6 +11,7 @@ import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from
 import { generateMusic } from "../../../../lib/agent/lyria";
 import { advance } from "../../../../lib/agent/runner";
 import { screenRequest } from "../../../../lib/safety";
+import { mergeLyrics } from "../../../../lib/agent/lyrics-merge";
 import { agentIdFor, planForTier, requireId, type UserTier } from "../../../../lib/agent/tiers";
 
 class SafetyRefusal extends Error {}
@@ -81,7 +82,8 @@ export async function GET(req: NextRequest) {
           return generateMusic(a, { guard, apiKey: geminiKey });
         },
         saveAudio: async (jobId, n, r) => {
-          const path = `${job.user_id}/${jobId}/${n}.mp3`;
+          // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
+          const path = `${jobId}/${n}.mp3`;
           const { error } = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });
           if (error) throw new Error(error.message);
           return path;
@@ -119,9 +121,15 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
     try { agentDoc = docText ? JSON.parse(docText) : null; } catch { agentDoc = null; }
     await db.from("agent_runs").update({ lyrics, agent_song_document: agentDoc }).eq("job_id", jobId);
     const title = (agentDoc as { title?: unknown } | null)?.title;
-    if (typeof title === "string" && title.trim()) {
-      const { data: job } = await db.from("jobs").select("song_document_id").eq("id", jobId).single();
-      if (job) await db.from("song_documents").update({ title: title.trim().slice(0, 120) }).eq("id", job.song_document_id);
+    const { data: job } = await db.from("jobs").select("song_document_id").eq("id", jobId).limit(1);
+    const docId = ((job ?? [])[0] as { song_document_id: string } | undefined)?.song_document_id;
+    if (docId) {
+      const { data: sdRows } = await db.from("song_documents").select("document_json").eq("id", docId).limit(1);
+      const sd = (sdRows ?? [])[0] as { document_json: { sections?: unknown[] } } | undefined;
+      const patch: Record<string, unknown> = {};
+      if (typeof title === "string" && title.trim()) patch.title = title.trim().slice(0, 120);
+      if (sd && lyrics) patch.document_json = mergeLyrics(sd.document_json as { sections?: never[] }, lyrics);
+      if (Object.keys(patch).length) await db.from("song_documents").update(patch).eq("id", docId);
     }
   } catch {
     /* outputs are a nicety; the audio and job state are already safe */
