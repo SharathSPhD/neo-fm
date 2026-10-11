@@ -11,6 +11,7 @@ function harness(events: AgentEvent[], over: Partial<AdvanceDeps> = {}) {
       sendOutcome: vi.fn(async () => {}),
       listEvents: vi.fn(async () => events),
       sendToolResult: vi.fn(async (_s, id, text, err) => void sent.push({ id, text, err })),
+      sendToolConfirmation: vi.fn(async () => {}),
       status: vi.fn(async () => "idle"),
     },
     store: {
@@ -70,6 +71,17 @@ describe("advance", () => {
     await advance("j1", h.deps);
     expect(h.sent[0]).toMatchObject({ err: true });
     expect(h.sent[0]?.text).toMatch(/budget/);
+  });
+  it("allows paused sandbox tools, denies everything else, and never re-answers", async () => {
+    const h = harness([
+      { id: "t1", type: "agent.tool_use", name: "bash", evaluated_permission: "ask" },
+      { id: "t2", type: "agent.mcp_tool_use", name: "x", evaluated_permission: "ask" },
+      { id: "t3", type: "agent.tool_use", name: "write", evaluated_permission: "ask" },
+      { id: "c3", type: "user.tool_confirmation", tool_use_id: "t3" },
+    ]);
+    expect(await advance("j1", h.deps)).toBe("waiting");
+    const calls = (h.deps.sessions.sendToolConfirmation as ReturnType<typeof vi.fn>).mock.calls.map((c) => [c[1], c[2]]);
+    expect(calls).toEqual([["t1", "allow"], ["t2", "deny"]]);
   });
   it("keeps waiting while requires_action", async () => {
     const h = harness([{ id: "i", type: "session.status_idle", stop_reason: { type: "requires_action" } }]);

@@ -47,6 +47,11 @@ export function sessionApi(client = anthropicClient()): SessionApi {
         events: [{ type: "user.custom_tool_result", custom_tool_use_id: toolUseId, content: [{ type: "text", text }] }],
       });
     },
+    async sendToolConfirmation(sessionId, toolUseId, result, denyMessage) {
+      await client.beta.sessions.events.send(sessionId, {
+        events: [{ type: "user.tool_confirmation", tool_use_id: toolUseId, result, ...(denyMessage ? { deny_message: denyMessage } : {}) }],
+      });
+    },
     async status(sessionId) {
       return (await client.beta.sessions.retrieve(sessionId)).status;
     },

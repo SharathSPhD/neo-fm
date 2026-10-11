@@ -11,6 +11,8 @@ export interface AgentEvent {
   id: string;
   type: string;
   name?: string;
+  evaluated_permission?: string;
+  tool_use_id?: string;
   input?: unknown;
   custom_tool_use_id?: string;
   stop_reason?: { type: string };
@@ -21,6 +23,7 @@ export interface SessionApi {
   sendOutcome(sessionId: string, args: { description: string; rubric: string; maxIterations: number }): Promise<void>;
   listEvents(sessionId: string): Promise<AgentEvent[]>;
   sendToolResult(sessionId: string, toolUseId: string, text: string, isError?: boolean): Promise<void>;
+  sendToolConfirmation(sessionId: string, toolUseId: string, result: "allow" | "deny", denyMessage?: string): Promise<void>;
   status(sessionId: string): Promise<string>;
 }
 
@@ -77,6 +80,9 @@ export interface AdvanceDeps {
   saveAudio: (jobId: string, n: number, r: LyriaResult) => Promise<string>;
 }
 
+/** Sandbox-only tools an unattended run may use. Anything else that pauses for approval is denied. */
+export const AUTO_ALLOW_TOOLS = new Set(["bash", "read", "write", "edit", "glob", "grep"]);
+
 export type AdvanceResult = "started" | "waiting" | "done";
 
 export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceResult> {
@@ -101,6 +107,16 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   const events = await d.sessions.listEvents(sid);
   const answered = new Set(events.filter((e) => e.type === "user.custom_tool_result").map((e) => e.custom_tool_use_id));
   const pending = events.filter((e) => e.type === "agent.custom_tool_use" && e.name === "generate_music" && !answered.has(e.id));
+
+  // Paused tool calls wait forever unless someone answers; nobody is watching, so apply a fixed rule.
+  const confirmed = new Set(events.filter((e) => e.type === "user.tool_confirmation").map((e) => e.tool_use_id));
+  const paused = events.filter(
+    (e) => (e.type === "agent.tool_use" || e.type === "agent.mcp_tool_use") && e.evaluated_permission === "ask" && !confirmed.has(e.id),
+  );
+  for (const e of paused) {
+    const ok = e.type === "agent.tool_use" && AUTO_ALLOW_TOOLS.has(String(e.name));
+    await d.sessions.sendToolConfirmation(sid, e.id, ok ? "allow" : "deny", ok ? undefined : "Not permitted for unattended runs.");
+  }
 
   for (const call of pending) {
     run = (await d.store.get(jobId)) ?? run;
@@ -129,7 +145,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       await d.sessions.sendToolResult(sid, call.id, msg, true);
     }
   }
-  if (pending.length > 0) return "waiting";
+  if (pending.length > 0 || paused.length > 0) return "waiting";
 
   const idle = events.some((e) => e.type === "session.status_idle" && e.stop_reason?.type !== "requires_action");
   const terminated = events.some((e) => e.type === "session.status_terminated");
