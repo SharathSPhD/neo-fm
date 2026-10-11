@@ -11,7 +11,7 @@ import { runStore, serviceClient, sessionApi, spendGuard } from "../../../../lib
 import { generateMusic } from "../../../../lib/agent/lyria";
 import { advance } from "../../../../lib/agent/runner";
 import { screenRequest } from "../../../../lib/safety";
-import { agentIdFor, planForTier, type UserTier } from "../../../../lib/agent/tiers";
+import { agentIdFor, planForTier, requireId, type UserTier } from "../../../../lib/agent/tiers";
 
 class SafetyRefusal extends Error {}
 
@@ -25,9 +25,14 @@ export async function GET(req: NextRequest) {
   if (!auth.ok) {
     return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   }
-  const environmentId = process.env.MA_ENVIRONMENT_ID;
   const geminiKey = process.env.GEMINI_API_KEY;
-  if (!environmentId || !geminiKey) return NextResponse.json({ error: "not_configured" }, { status: 503 });
+  let environmentId: string;
+  try {
+    environmentId = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
+  } catch (e) {
+    return NextResponse.json({ error: "not_configured", message: (e as Error).message }, { status: 503 });
+  }
+  if (!geminiKey) return NextResponse.json({ error: "not_configured", message: "Missing GEMINI_API_KEY" }, { status: 503 });
 
   const db = serviceClient();
   const sessions = sessionApi();

@@ -18,3 +18,16 @@ describe("checkBearer", () => {
   it("never accepts an empty secret", () => expect(checkBearer("Bearer ", env("")).ok).toBe(false));
   it("cleanSecret leaves inner quotes alone", () => expect(cleanSecret("a'b")).toBe("a'b"));
 });
+
+import { agentIdFor, requireId } from "../lib/agent/tiers";
+
+describe("agent id handling", () => {
+  it("cleans whitespace/quotes and accepts valid ids", () => {
+    expect(requireId("X", ' "agent_01AbC"\n', "agent_")).toBe("agent_01AbC");
+    expect(agentIdFor("free", { MA_AGENT_ID_FREE: "agent_01Zz" } as unknown as NodeJS.ProcessEnv)).toBe("agent_01Zz");
+  });
+  it("names the problem without echoing the full value", () => {
+    expect(() => requireId("MA_AGENT_ID_FREE", "env_01VeryLongSecretish", "agent_")).toThrow(/malformed.*"env_01\.\.\."/);
+    expect(() => requireId("X", undefined, "agent_")).toThrow(/Missing X/);
+  });
+});

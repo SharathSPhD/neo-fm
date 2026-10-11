@@ -25,8 +25,23 @@ export function planForTier(tier: UserTier | null | undefined): TierPlan {
     : PLANS.free;
 }
 
-export function agentIdFor(agent: AgentKey, env = process.env): string {
-  const id = agent === "pro" ? env.MA_AGENT_ID_PRO : env.MA_AGENT_ID_FREE;
-  if (!id) throw new Error(`Missing MA_AGENT_ID_${agent.toUpperCase()}`);
+/** Dashboard-pasted IDs often carry whitespace or wrapping quotes; strip them. */
+export function cleanId(v: string | undefined): string {
+  return (v ?? "").trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+}
+
+/** Returns a cleaned ID or throws a message that names the problem without echoing the value. */
+export function requireId(name: string, v: string | undefined, prefix: "agent_" | "env_"): string {
+  const id = cleanId(v);
+  if (!id) throw new Error(`Missing ${name}`);
+  if (!id.startsWith(prefix) || !/^[A-Za-z0-9_]+$/.test(id)) {
+    throw new Error(`${name} is malformed: expected ${prefix}..., got "${id.slice(0, 6)}..." (length ${id.length})`);
+  }
   return id;
+}
+
+export function agentIdFor(agent: AgentKey, env = process.env): string {
+  return agent === "pro"
+    ? requireId("MA_AGENT_ID_PRO", env.MA_AGENT_ID_PRO, "agent_")
+    : requireId("MA_AGENT_ID_FREE", env.MA_AGENT_ID_FREE, "agent_");
 }
