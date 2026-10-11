@@ -10,9 +10,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { SongIdSchema } from "../../../../lib/api/song-schemas";
+import { waitUntil } from "@vercel/functions";
+
+import { processJobs } from "../../../../lib/agent/process";
 import { requireUser } from "../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 
@@ -87,6 +91,20 @@ export async function GET(
   }
   if (!data) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+
+  // Pull-based worker: whoever is watching an unfinished job moves it forward. RLS above
+  // proved ownership; a per-job lease keeps concurrent polls from doubling the work.
+  if (data.status === "queued" || data.status === "processing") {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const environmentId = process.env.MA_ENVIRONMENT_ID;
+    if (geminiKey && environmentId) {
+      waitUntil(
+        processJobs({ environmentId, geminiKey }, data.id).catch((e) =>
+          console.error("pull-advance failed", data.id, String(e?.message ?? e)),
+        ),
+      );
+    }
   }
 
   // Pick the most recent track for this job. The query orders nested
