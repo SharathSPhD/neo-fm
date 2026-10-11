@@ -16,6 +16,7 @@ function harness(events: AgentEvent[], over: Partial<AdvanceDeps> = {}) {
     store: {
       get: vi.fn(async () => row),
       upsert: vi.fn(async (r) => void (row = { ...(row as RunRow), ...r })),
+      claimStart: vi.fn(async () => true),
     },
     environmentId: "env", agentId: "ag", maxLyriaCalls: 1, maxOutcomeIterations: 2,
     brief: { language: "kn", styleFamily: "carnatic", targetSeconds: 30, prompt: "x" },
@@ -33,6 +34,25 @@ describe("advance", () => {
     h.deps.store.get = vi.fn(async () => null);
     expect(await advance("j1", h.deps)).toBe("started");
     expect(h.deps.sessions.sendOutcome).toHaveBeenCalledOnce();
+  });
+  it("never creates a second session when another tick already claimed the job", async () => {
+    const h = harness([]);
+    h.deps.store.get = vi.fn(async () => null);
+    h.deps.store.claimStart = vi.fn(async () => false);
+    expect(await advance("j1", h.deps)).toBe("waiting");
+    expect(h.deps.sessions.create).not.toHaveBeenCalled();
+  });
+  it("does not create a session when the row exists without one", async () => {
+    const h = harness([]);
+    h.deps.store.get = vi.fn(async () => ({ job_id: "j1", session_id: null, lyria_calls: 0, audio_path: null, status: "pending" as const }));
+    expect(await advance("j1", h.deps)).toBe("waiting");
+    expect(h.deps.sessions.create).not.toHaveBeenCalled();
+  });
+  it("propagates lookup errors instead of treating them as 'no run'", async () => {
+    const h = harness([]);
+    h.deps.store.get = vi.fn(async () => { throw new Error("db down"); });
+    await expect(advance("j1", h.deps)).rejects.toThrow("db down");
+    expect(h.deps.sessions.create).not.toHaveBeenCalled();
   });
   it("answers a pending render once, then refuses the second over the tier limit", async () => {
     const h = harness([call("e1"), call("e2")]);

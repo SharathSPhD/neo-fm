@@ -33,8 +33,11 @@ export interface RunRow {
 }
 
 export interface RunStore {
+  /** Throws on a database error: "no row" and "lookup failed" must never look the same. */
   get(jobId: string): Promise<RunRow | null>;
   upsert(row: Partial<RunRow> & { job_id: string }): Promise<void>;
+  /** Atomically create the run row; true only for the caller that created it (guards double session creation). */
+  claimStart(jobId: string): Promise<boolean>;
 }
 
 export interface Brief {
@@ -78,9 +81,11 @@ export type AdvanceResult = "started" | "waiting" | "done";
 
 export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceResult> {
   let run = await d.store.get(jobId);
-  if (!run?.session_id) {
+  if (!run) {
+    // Only the tick that wins this insert may create the session; everyone else waits.
+    if (!(await d.store.claimStart(jobId))) return "waiting";
     const s = await d.sessions.create({ agentId: d.agentId, environmentId: d.environmentId, title: `neo-fm job ${jobId}` });
-    await d.store.upsert({ job_id: jobId, session_id: s.id, status: "running", lyria_calls: 0 });
+    await d.store.upsert({ job_id: jobId, session_id: s.id, status: "running" });
     await d.sessions.sendOutcome(s.id, {
       description: briefText(d.brief),
       rubric: RUBRIC,
@@ -88,6 +93,8 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
     });
     return "started";
   }
+  // Row exists but no session yet: another tick is starting it (or crashed mid-start; an operator resets the row).
+  if (!run.session_id) return "waiting";
   if (run.status === "done" || run.status === "failed") return "done";
 
   const sid = run.session_id;

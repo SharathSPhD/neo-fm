@@ -87,8 +87,12 @@ export async function GET(req: NextRequest) {
       results[job.id] = outcome;
       if (outcome === "done") await finalize(db, job.id);
     } catch (e) {
-      results[job.id] = "error";
-      await db.from("jobs").update({ status: "failed", error: String((e as Error).message).slice(0, 500), finished_at: new Date().toISOString() }).eq("id", job.id);
+      const msg = String((e as Error).message ?? e).slice(0, 300);
+      results[job.id] = `error: ${msg}`;
+      // Infrastructure hiccups (our own DB) are retried on the next tick; everything else fails the job.
+      if (!/^agent_runs |song_document lookup/.test(msg)) {
+        await db.from("jobs").update({ status: "failed", error: msg, finished_at: new Date().toISOString() }).eq("id", job.id);
+      }
     }
   }
   return NextResponse.json({ results });
