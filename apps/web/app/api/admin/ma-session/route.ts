@@ -5,7 +5,7 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 
-import { anthropicClient, serviceClient } from "../../../../lib/agent/adapters";
+import { anthropicClient, runStore, serviceClient } from "../../../../lib/agent/adapters";
 import { checkBearer } from "../../../../lib/agent/auth";
 
 export const dynamic = "force-dynamic";
@@ -22,11 +22,15 @@ export async function GET(req: NextRequest) {
     const all = await db.from("agent_runs").select("job_id,status");
     const eq = await db.from("agent_runs").select("job_id,status,session_id").eq("job_id", jobId);
     const single = await db.from("agent_runs").select("job_id,status,session_id").eq("job_id", jobId).maybeSingle();
+    const exact = await db.from("agent_runs").select("job_id,session_id,lyria_calls,audio_path,status").eq("job_id", jobId).maybeSingle();
+    const viaStore = await runStore(db, "free").get(jobId).then((r) => ({ has: Boolean(r), status: r?.status ?? null }), (e: Error) => ({ error: e.message }));
     const jobs = await db.from("jobs").select("id,status").eq("id", jobId);
     return NextResponse.json({
       all: { n: all.data?.length ?? null, err: all.error?.message ?? null },
       eq: { n: eq.data?.length ?? null, err: eq.error?.message ?? null, status: eq.data?.[0]?.status ?? null },
       single: { has: Boolean(single.data), err: single.error?.message ?? null, code: single.error?.code ?? null },
+      exact: { has: Boolean(exact.data), err: exact.error?.message ?? null, code: exact.error?.code ?? null },
+      viaStore,
       jobs: { n: jobs.data?.length ?? null, err: jobs.error?.message ?? null },
     });
   }
