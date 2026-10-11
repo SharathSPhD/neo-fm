@@ -89,9 +89,12 @@ export type AdvanceResult = "started" | "waiting" | "done";
 
 export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceResult> {
   let run = await d.store.get(jobId);
+  d.log?.(`get -> ${run ? `row status=${run.status} session=${run.session_id ? "yes" : "no"}` : "null"}`);
   if (!run) {
     // Only the tick that wins this insert may create the session; everyone else waits.
-    if (!(await d.store.claimStart(jobId))) return "waiting";
+    const claimed = await d.store.claimStart(jobId);
+    d.log?.(`claimStart -> ${claimed}`);
+    if (!claimed) return "waiting";
     const s = await d.sessions.create({ agentId: d.agentId, environmentId: d.environmentId, title: `neo-fm job ${jobId}` });
     await d.store.upsert({ job_id: jobId, session_id: s.id, status: "running" });
     await d.sessions.sendOutcome(s.id, {
