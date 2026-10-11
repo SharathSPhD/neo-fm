@@ -18,6 +18,7 @@ function harness(events: AgentEvent[], over: Partial<AdvanceDeps> = {}) {
       get: vi.fn(async () => row),
       upsert: vi.fn(async (r) => void (row = { ...(row as RunRow), ...r })),
       claimStart: vi.fn(async () => true),
+      claimRender: vi.fn(async (_j: string, max: number) => { const n = (row?.lyria_calls ?? 0) + 1; if (n > max) return null; row = { ...(row as RunRow), lyria_calls: n }; return n; }),
     },
     environmentId: "env", agentId: "ag", maxLyriaCalls: 1, maxOutcomeIterations: 2,
     brief: { language: "kn", styleFamily: "carnatic", targetSeconds: 30, prompt: "x" },

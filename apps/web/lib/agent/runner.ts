@@ -41,6 +41,8 @@ export interface RunStore {
   upsert(row: Partial<RunRow> & { job_id: string }): Promise<void>;
   /** Atomically create the run row; true only for the caller that created it (guards double session creation). */
   claimStart(jobId: string): Promise<boolean>;
+  /** Atomically take one render slot. Returns the new count, or null when the limit is reached. */
+  claimRender(jobId: string, max: number): Promise<number | null>;
 }
 
 export interface Brief {
@@ -130,22 +132,21 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   }
 
   for (const call of pending) {
-    run = (await d.store.get(jobId)) ?? run;
-    if (run.lyria_calls >= d.maxLyriaCalls) {
-      const sent = await d.sessions.sendToolResult(sid, call.id, "Refused: render limit for this tier reached. Finish with the lyrics you have.", true);
-      d.log?.(`sent refusal (limit) for ${call.id}: ${sent ?? "ok"}`);
-      continue;
-    }
     const inp = call.input as { style_prompt?: string; lyrics?: string; duration_class?: DurationClass };
     if (!inp?.style_prompt || !inp.lyrics || (inp.duration_class !== "clip" && inp.duration_class !== "full")) {
       await d.sessions.sendToolResult(sid, call.id, "Invalid input: style_prompt, lyrics and duration_class (clip|full) are required.", true);
       continue;
     }
-    // Count the attempt first so a crash between render and reply cannot double-spend.
-    await d.store.upsert({ job_id: jobId, lyria_calls: run.lyria_calls + 1 });
+    // The slot is taken atomically in the database before any paid call, so no read can cause an extra render.
+    const slot = await d.store.claimRender(jobId, d.maxLyriaCalls);
+    if (slot === null) {
+      const sent = await d.sessions.sendToolResult(sid, call.id, "Refused: render limit for this tier reached. Finish with the lyrics you have.", true);
+      d.log?.(`sent refusal (limit) for ${call.id}: ${sent ?? "ok"}`);
+      continue;
+    }
     try {
       const r = await d.music({ stylePrompt: inp.style_prompt, lyrics: inp.lyrics, durationClass: inp.duration_class });
-      const path = await d.saveAudio(jobId, run.lyria_calls + 1, r);
+      const path = await d.saveAudio(jobId, slot, r);
       await d.store.upsert({ job_id: jobId, audio_path: path });
       const sent = await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
       d.log?.(`sent render result for ${call.id}: ${sent ?? "ok"}`);

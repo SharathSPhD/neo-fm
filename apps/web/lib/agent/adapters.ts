@@ -83,6 +83,11 @@ export function runStore(db: SupabaseClient, agentKey: "free" | "pro"): RunStore
       if (error) throw new Error(`agent_runs claim: ${error.message}`);
       return (data ?? []).length > 0;
     },
+    async claimRender(jobId, max) {
+      const { data, error } = await db.rpc("claim_render", { p_job_id: jobId, p_max: max });
+      if (error) throw new Error(`agent_runs claim_render: ${error.message}`);
+      return typeof data === "number" ? data : null;
+    },
     async upsert(row) {
       const { error } = await db.from("agent_runs").upsert({ agent_key: agentKey, updated_at: new Date().toISOString(), ...row }, { onConflict: "job_id" });
       if (error) throw new Error(`agent_runs upsert: ${error.message}`);
