@@ -7,7 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { checkBearer } from "../../../../lib/agent/auth";
-import { runStore, serviceClient, sessionApi, spendGuard } from "../../../../lib/agent/adapters";
+import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "../../../../lib/agent/adapters";
 import { generateMusic } from "../../../../lib/agent/lyria";
 import { advance } from "../../../../lib/agent/runner";
 import { screenRequest } from "../../../../lib/safety";
@@ -100,8 +100,37 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ results, trace });
 }
 
+/** Best-effort: copy the agent's lyrics + song document out of the session sandbox into our database. */
+async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: string, sessionId: string) {
+  try {
+    const client = anthropicClient();
+    const files: { id: string; filename: string }[] = [];
+    for await (const f of client.beta.files.list({ scope_id: sessionId, betas: ["managed-agents-2026-04-01"] })) {
+      files.push({ id: f.id, filename: f.filename });
+    }
+    const read = async (name: string) => {
+      const f = files.find((x) => x.filename.endsWith(name));
+      return f ? await (await client.beta.files.download(f.id)).text() : null;
+    };
+    const lyrics = await read("lyrics.md");
+    const docText = await read("song_document.json");
+    let agentDoc: unknown = null;
+    try { agentDoc = docText ? JSON.parse(docText) : null; } catch { agentDoc = null; }
+    await db.from("agent_runs").update({ lyrics, agent_song_document: agentDoc }).eq("job_id", jobId);
+    const title = (agentDoc as { title?: unknown } | null)?.title;
+    if (typeof title === "string" && title.trim()) {
+      const { data: job } = await db.from("jobs").select("song_document_id").eq("id", jobId).single();
+      if (job) await db.from("song_documents").update({ title: title.trim().slice(0, 120) }).eq("id", job.song_document_id);
+    }
+  } catch {
+    /* outputs are a nicety; the audio and job state are already safe */
+  }
+}
+
 async function finalize(db: ReturnType<typeof serviceClient>, jobId: string) {
-  const { data: run } = await db.from("agent_runs").select("audio_path,status").eq("job_id", jobId).maybeSingle();
+  const { data: runRows } = await db.from("agent_runs").select("audio_path,status,session_id").eq("job_id", jobId).limit(1);
+  const run = (runRows ?? [])[0] as { audio_path: string | null; status: string; session_id: string | null } | undefined;
+  if (run?.session_id) await persistOutputs(db, jobId, run.session_id);
   const now = new Date().toISOString();
   if (!run?.audio_path || run.status === "failed") {
     await db.from("jobs").update({ status: "failed", error: "agent finished without audio", finished_at: now }).eq("id", jobId);

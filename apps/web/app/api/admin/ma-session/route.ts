@@ -38,6 +38,14 @@ export async function GET(req: NextRequest) {
   const { data: run } = await serviceClient().from("agent_runs").select("session_id,status,lyria_calls").eq("job_id", jobId).maybeSingle();
   if (!run?.session_id) return NextResponse.json({ error: "no_session", run });
 
+  if (req.nextUrl.searchParams.get("audio")) {
+    const db = serviceClient();
+    const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,agent_song_document").eq("job_id", jobId).limit(1);
+    const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; agent_song_document: unknown } | undefined;
+    if (!r?.audio_path) return NextResponse.json({ error: "no_audio" });
+    const { data: signed } = await db.storage.from("tracks").createSignedUrl(r.audio_path, 900);
+    return NextResponse.json({ url: signed?.signedUrl ?? null, lyrics: r.lyrics, song_document: r.agent_song_document });
+  }
   const client = anthropicClient();
   if (req.nextUrl.searchParams.get("newest")) {
     const page = await client.beta.sessions.events.list(run.session_id, { order: "desc", limit: 12 });
