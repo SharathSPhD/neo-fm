@@ -1,3 +1,4 @@
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
 import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
@@ -29,6 +30,7 @@ const DIFFERENT = [
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <FunnelBeacon event="landing_view" />
       <Hero />
       <div className="mx-auto max-w-6xl px-6 pt-12">
         <SongOfTheDay />
