@@ -17,12 +17,18 @@
 import { useEffect, useRef, useState } from "react";
 
 import { buildSharePayload } from "@/lib/share/card";
+import {
+  DEDICATION_MESSAGE_MAX,
+  DEDICATION_TO_MAX,
+  whatsappShareUrl,
+} from "@/lib/share/dedication";
 
 interface ShareButtonProps {
   songId: string;
   initialVisibility: "public" | "unlisted" | "private";
   initialPublicId: string | null;
   title?: string;
+  initialDedication?: { to: string; message: string };
   canShare: boolean; // false for non-completed songs
 }
 
@@ -38,6 +44,7 @@ export function ShareButton({
   initialVisibility,
   initialPublicId,
   title = "this song",
+  initialDedication = { to: "", message: "" },
   canShare,
 }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
@@ -53,6 +60,13 @@ export function ShareButton({
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
     "idle",
   );
+  const [dedTo, setDedTo] = useState(initialDedication.to);
+  const [dedMsg, setDedMsg] = useState(initialDedication.message);
+  const [dedSaved, setDedSaved] = useState(
+    initialDedication.to.length > 0,
+  );
+  const [dedBusy, setDedBusy] = useState(false);
+  const [dedError, setDedError] = useState<string | null>(null);
   const doneButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -85,6 +99,44 @@ export function ShareButton({
       setError((e as Error).message);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function saveDedication(clear: boolean) {
+    if (dedBusy) return;
+    setDedBusy(true);
+    setDedError(null);
+    try {
+      const res = await fetch(`/api/songs/${songId}/dedication`, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(
+          clear ? { to: null, message: null } : { to: dedTo, message: dedMsg },
+        ),
+      });
+      const payload = (await res.json()) as {
+        to?: string | null;
+        message?: string | null;
+        error?: string;
+        reason?: string;
+      };
+      if (!res.ok) {
+        setDedError(
+          payload.error === "content_blocked"
+            ? (payload.reason ?? "That text can't be used on a shared card.")
+            : payload.error === "recipient_required" || payload.error === "invalid_body"
+              ? "Add who it's for, within the length limits."
+              : `Could not save (${res.status})`,
+        );
+        return;
+      }
+      setDedTo(payload.to ?? "");
+      setDedMsg(payload.message ?? "");
+      setDedSaved(!!payload.to);
+    } catch (e) {
+      setDedError((e as Error).message);
+    } finally {
+      setDedBusy(false);
     }
   }
 
@@ -225,6 +277,78 @@ export function ShareButton({
                           : "Copy"}
                     </button>
                   </div>
+                </div>
+
+                <div className="flex flex-col gap-2 rounded-md border border-accent/30 bg-accent/5 p-3">
+                  <span className="text-[10px] uppercase tracking-widest text-accent/80">
+                    Dedicate this song
+                  </span>
+                  <input
+                    value={dedTo}
+                    onChange={(e) => setDedTo(e.target.value)}
+                    maxLength={DEDICATION_TO_MAX}
+                    placeholder="For… (e.g. Amma, Priya, दादी जी)"
+                    aria-label="Dedicated to"
+                    className="rounded-md border border-muted/30 bg-muted/10 px-3 py-2 text-sm"
+                  />
+                  <textarea
+                    value={dedMsg}
+                    onChange={(e) => setDedMsg(e.target.value)}
+                    maxLength={DEDICATION_MESSAGE_MAX}
+                    rows={3}
+                    placeholder="A short message (optional)"
+                    aria-label="Dedication message"
+                    className="rounded-md border border-muted/30 bg-muted/10 px-3 py-2 text-sm"
+                  />
+                  {dedError ? (
+                    <p role="alert" className="text-xs text-red-300">{dedError}</p>
+                  ) : null}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => saveDedication(false)}
+                      disabled={dedBusy || dedTo.trim().length === 0}
+                      className="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs text-accent hover:bg-accent/15 disabled:opacity-50"
+                    >
+                      {dedSaved ? "Update dedication" : "Save dedication"}
+                    </button>
+                    {dedSaved ? (
+                      <button
+                        type="button"
+                        onClick={() => saveDedication(true)}
+                        disabled={dedBusy}
+                        className="rounded-md border border-muted/30 px-3 py-1.5 text-xs hover:bg-muted/10 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    ) : null}
+                  </div>
+                  {dedSaved ? (
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <a
+                        href={whatsappShareUrl({
+                          to: dedTo,
+                          title,
+                          url: publicUrl,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-md border border-emerald-400/40 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 hover:bg-emerald-400/15"
+                      >
+                        Send on WhatsApp
+                      </a>
+                      <a
+                        href={`/s/${publicId}/story?download=1`}
+                        className="rounded-md border border-muted/30 px-3 py-1.5 text-xs hover:bg-muted/10"
+                      >
+                        Download story image
+                      </a>
+                    </div>
+                  ) : null}
+                  <p className="text-[10px] text-foreground/50">
+                    Shown on the public page for this link. Dedicated songs are
+                    kept out of search engines.
+                  </p>
                 </div>
 
                 <div className="flex flex-col gap-1">
