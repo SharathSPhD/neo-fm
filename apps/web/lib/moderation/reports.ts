@@ -1,6 +1,6 @@
 /**
  * Abuse-report review: queue listing and resolution (takedown / dismiss / reinstate). Used by /api/admin/reports*.
- * Takedown makes the song private and flags it (migration 0065) so the owner cannot re-publish it; everything is
+ * Takedown makes the song private and flags it (migration 0069) so the owner cannot re-publish it; everything is
  * applied per job, because several reports on one song are one decision.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
