@@ -14,6 +14,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { serverI18n } from "@/lib/i18n/server";
 import { PRESETS, type StylePreset } from "@neo-fm/style-presets";
 
 // The shared MarketingLayout reads the auth session per-request
@@ -54,20 +55,18 @@ const STYLE_TONE: Record<string, string> = {
 };
 
 export default function TemplatesPage() {
+  const { t } = serverI18n();
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
       <header className="flex flex-col gap-3">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Templates
+          {t("templates.kicker")}
         </span>
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Curated Song Document templates
+          {t("templates.title")}
         </h1>
         <p className="max-w-2xl text-base text-foreground/70">
-          Indian classical, Indian folk, and crossover starters with raga,
-          tala, instrumentation and a starter verse already chosen. Pick one
-          to seed the creation canvas -- you can rewrite the lyrics, change
-          the language, swap the raga, or regenerate any section.
+          {t("templates.intro")}
         </p>
       </header>
 
@@ -81,19 +80,19 @@ export default function TemplatesPage() {
 
       <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-muted/30 pt-6 text-sm text-foreground/60">
         <p>
-          Already have an account?{" "}
+          {t("templates.haveAccount")}{" "}
           <Link
             href="/sign-in?next=/songs/new"
             className="text-accent hover:underline"
           >
-            Sign in to start creating &rarr;
+            {t("templates.signIn")}
           </Link>
         </p>
         <Link
           href="/discover"
           className="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded"
         >
-          Listen to songs others have made &rarr;
+          {t("templates.listen")}
         </Link>
       </footer>
     </main>

@@ -34,6 +34,21 @@ jobs:
 
       - run: pnpm --filter @neo-fm/web build
 
+  secret-scan:
+    name: secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks (full history, pinned)
+        run: |
+          set -euo pipefail
+          V=8.21.2
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${V}/gitleaks_${V}_linux_x64.tar.gz" -o gl.tgz
+          tar -xzf gl.tgz gitleaks
+          ./gitleaks detect --source . --config .gitleaks.toml --redact --no-banner --exit-code 1
+
   migration-security:
     name: migration security lint
     runs-on: ubuntu-latest

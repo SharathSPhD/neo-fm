@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Do not advertise the framework version.
+  poweredByHeader: false,
+  // WebP only: the Next 14 AVIF image-optimizer advisories (GHSA-2xp9-vwfh-vxw4) are not reachable.
+  images: { formats: ["image/webp"] },
   experimental: {
     // harfbuzzjs loads its wasm from disk; keep it out of the webpack bundle.
     serverComponentsExternalPackages: ["harfbuzzjs"],

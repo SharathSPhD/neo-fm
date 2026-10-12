@@ -3,6 +3,9 @@
 import type { Section } from "@neo-fm/song-doc";
 import { useId } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
 /**
  * M2 per-section lyric editor.
  *
@@ -28,34 +31,34 @@ import { useId } from "react";
 const SCRIPTS = ["devanagari", "kannada", "tamil", "telugu", "bengali", "latin"] as const;
 type Script = (typeof SCRIPTS)[number];
 
-const SCRIPT_LABEL: Record<Script, string> = {
-  devanagari: "Devanagari (\u0905\u0906)",
-  kannada: "Kannada (\u0c85\u0c86)",
-  tamil: "Tamil (\u0b85\u0b86)",
-  telugu: "Telugu (\u0c05\u0c06)",
-  bengali: "Bengali (\u0985\u0986)",
-  latin: "Latin (Aa)",
+const SCRIPT_LABEL: Record<Script, UiKey> = {
+  devanagari: "create.script.devanagari",
+  kannada: "create.script.kannada",
+  tamil: "create.script.tamil",
+  telugu: "create.script.telugu",
+  bengali: "create.script.bengali",
+  latin: "create.script.latin",
 };
 
 export const LYRIC_MAX_CHARS = 1000;
 export const LYRIC_WARN_CHARS = 800;
 
-const SECTION_LABEL: Record<string, string> = {
-  intro: "Intro",
-  verse: "Verse",
-  chorus: "Chorus",
-  bridge: "Bridge",
-  outro: "Outro",
-  pallavi: "Pallavi",
-  anupallavi: "Anupallavi",
-  charanam: "Charanam",
-  mukhda: "Mukhda",
-  antara: "Antara",
-  saranam: "Saranam",
-  alaap: "\u0100lap",
-  sargam: "Sargam",
-  folk_refrain: "Folk refrain",
-  folk_stanza: "Folk stanza",
+const SECTION_LABEL: Record<string, UiKey> = {
+  intro: "create.section.intro",
+  verse: "create.section.verse",
+  chorus: "create.section.chorus",
+  bridge: "create.section.bridge",
+  outro: "create.section.outro",
+  pallavi: "create.section.pallavi",
+  anupallavi: "create.section.anupallavi",
+  charanam: "create.section.charanam",
+  mukhda: "create.section.mukhda",
+  antara: "create.section.antara",
+  saranam: "create.section.saranam",
+  alaap: "create.section.alaap",
+  sargam: "create.section.sargam",
+  folk_refrain: "create.section.folkRefrain",
+  folk_stanza: "create.section.folkStanza",
 };
 
 export type EditableSection = Section;
@@ -73,6 +76,7 @@ export function SectionEditor({
   onChange,
   onPickFromLibrary,
 }: SectionEditorProps) {
+  const { t } = useUiLang();
   const labelId = useId();
   const scriptId = useId();
   const lyricsLen = section.lyrics?.length ?? 0;
@@ -90,7 +94,7 @@ export function SectionEditor({
             id={labelId}
             className="text-xs uppercase tracking-widest text-foreground/50"
           >
-            {SECTION_LABEL[section.type] ?? section.type} #{index + 1}
+            {SECTION_LABEL[section.type] ? t(SECTION_LABEL[section.type]!) : section.type} #{index + 1}
           </span>
           <span className="text-[10px] text-foreground/40">
             ({section.target_seconds}s)
@@ -101,12 +105,12 @@ export function SectionEditor({
           onClick={onPickFromLibrary}
           className="rounded-md border border-accent/30 px-2 py-1 text-[11px] text-accent hover:bg-accent/10"
         >
-          Pick from library
+          {t("create.pickLibrary")}
         </button>
       </div>
 
       <label htmlFor={scriptId} className="flex items-center gap-2 text-xs">
-        <span className="text-foreground/50">Script:</span>
+        <span className="text-foreground/50">{t("create.scriptLabel")}</span>
         <select
           id={scriptId}
           value={section.script ?? "latin"}
@@ -117,7 +121,7 @@ export function SectionEditor({
         >
           {SCRIPTS.map((s) => (
             <option key={s} value={s}>
-              {SCRIPT_LABEL[s]}
+              {t(SCRIPT_LABEL[s])}
             </option>
           ))}
         </select>
@@ -140,7 +144,7 @@ export function SectionEditor({
             ? "\u0938\u0902\u0917\u0940\u0924 \u0915\u0947 \u092C\u094B\u0932..."
             : section.script === "kannada"
               ? "\u0CB9\u0CBE\u0CA1\u0BBF\u0CA8 \u0CB8\u0CBE\u0CB9\u0CBF\u0CA4\u0BCD\u0BAF..."
-              : "Lyrics for this section..."
+              : t("create.lyricsPlaceholder")
         }
         className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
       />
@@ -158,7 +162,7 @@ export function SectionEditor({
         </span>
         {section.transliteration ? (
           <span className="text-foreground/40">
-            Romanization on submit → carried as transliteration
+            {t("create.romanization")}
           </span>
         ) : null}
       </div>

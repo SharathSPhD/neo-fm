@@ -3,6 +3,8 @@ import Script from "next/script";
 
 import { siteUrl } from "@/lib/seo/site";
 import { AuthListener } from "@/components/auth-listener";
+import { getUiLang } from "@/lib/i18n/server";
+import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
 import { ClientErrorListener } from "@/components/client-error-listener";
 
 import "./globals.css";
@@ -51,9 +53,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const lang = getUiLang();
   return (
-    <html lang="en">
+    <html lang={lang}>
       <body>
+        <UiLangProvider initial={lang}>
         {/* Applies persisted theme before paint; static file served from
             /public so no inline-script audit surface. */}
         <Script src="/theme-boot.js" strategy="beforeInteractive" />
@@ -61,6 +65,7 @@ export default function RootLayout({
         <ClientErrorListener />
         {children}
         <ServiceWorkerRegister />
+        </UiLangProvider>
       </body>
     </html>
   );

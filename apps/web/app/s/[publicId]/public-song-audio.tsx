@@ -11,12 +11,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AudioSpectrogram } from "@/components/audio-spectrogram";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 interface PublicSongAudioProps {
   publicId: string;
   initialUrl: string;
   durationSeconds: number | null;
   format: string;
+  /** Set for signed-in listeners: finished listens feed the weekly chart. */
+  feedbackSongId?: string;
   /** Called with the playhead (seconds) as it moves; used by the embed's synced lyrics. */
   onTime?: (seconds: number) => void;
   /** Hide the spectrogram and the footer line (compact embed). */
@@ -28,9 +31,11 @@ export function PublicSongAudio({
   initialUrl,
   durationSeconds,
   format,
+  feedbackSongId,
   onTime,
   minimal = false,
 }: PublicSongAudioProps) {
+  const { t } = useUiLang();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
   const [refreshing, setRefreshing] = useState(false);
@@ -41,6 +46,23 @@ export function PublicSongAudio({
     setError(null);
   }, [initialUrl]);
 
+  // Furthest play fraction, sent when playback pauses/ends. Signed-in
+  // listeners only (the chart dedupes per user); anonymous plays are not recorded.
+  const sentRef = useRef(0);
+  function reportPlay() {
+    const el = audioRef.current;
+    if (!feedbackSongId || !el || !el.duration || !isFinite(el.duration)) return;
+    const pct = Math.min(1, el.currentTime / el.duration);
+    if (pct <= sentRef.current + 0.2) return;
+    sentRef.current = pct;
+    void fetch(`/api/songs/${encodeURIComponent(feedbackSongId)}/feedback`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ kind: "play_pct", value: Number(pct.toFixed(2)) }),
+    }).catch(() => undefined);
+  }
+
   async function onError() {
     if (refreshing) return;
     setRefreshing(true);
@@ -49,12 +71,12 @@ export function PublicSongAudio({
         cache: "no-store",
       });
       if (!res.ok) {
-        setError(`refresh failed (${res.status})`);
+        setError(t("pub.audio.refreshFailed", { status: res.status }));
         return;
       }
       const payload = (await res.json()) as { url?: string };
       if (!payload.url) {
-        setError("refresh returned no url");
+        setError(t("pub.audio.noUrl"));
         return;
       }
       setSrc(payload.url);
@@ -69,7 +91,7 @@ export function PublicSongAudio({
         }
       }
     } catch (e) {
-      setError(`refresh failed: ${(e as Error).message}`);
+      setError(t("pub.audio.refreshFailedMsg", { message: (e as Error).message }));
     } finally {
       setRefreshing(false);
     }
@@ -84,6 +106,8 @@ export function PublicSongAudio({
         preload="metadata"
         src={src}
         onError={onError}
+        onPause={reportPlay}
+        onEnded={reportPlay}
         onTimeUpdate={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
         onSeeked={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
         crossOrigin="anonymous"
@@ -97,7 +121,7 @@ export function PublicSongAudio({
           {durationSeconds ? `${durationSeconds}s · ` : ""}
           {format.toUpperCase()}
         </span>
-        {refreshing ? <span>refreshing signed URL…</span> : null}
+        {refreshing ? <span>{t("pub.audio.refreshing")}</span> : null}
         {error ? <span className="text-red-300">{error}</span> : null}
       </div>
     </div>
