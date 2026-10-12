@@ -26,6 +26,10 @@ export function isTransient(status: number | undefined, msg: string): boolean {
 const MAX_CLAIM = 12;
 /** Sliding pool: a slow render no longer holds back jobs queued behind it (was fixed batches of 4). */
 export const POOL_SIZE = 8;
+/** Fleet-wide ceiling on jobs being worked at once (ticks overlap, so POOL_SIZE alone is per tick). */
+export const GLOBAL_MAX = 10;
+/** A job is not started this late in a tick: the function is killed at ~300 s and the lease would be held for nothing. */
+export const START_DEADLINE_MS = 200_000;
 export const TIER_WEIGHT: Record<string, number> = { pro: 3, developer: 3, creator: 2, free: 1 };
 
 /** Weighted aging: score = minutes waited x tier weight, highest first, so paying tiers go first but nobody starves. */
@@ -76,7 +80,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
 
   // Plain queries (no PostgREST embeds): embed resolution depends on the schema cache
   // and failed silently once; errors are surfaced instead of swallowed.
-  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at").eq("status", "processing");
+  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at,agent_lease_until").eq("status", "processing");
   const { data: active, error: activeErr } = await (onlyJobId ? activeQuery.eq("id", onlyJobId) : activeQuery);
   if (activeErr) throw new Error(`jobs_query_failed: ${activeErr.message}`);
 
@@ -84,8 +88,14 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
   const trace: string[] = [];
   // Renders take ~30s+ each, so jobs run in a sliding parallel pool, highest weighted-age first.
   const tickStart = Date.now();
-  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
+  const allActive = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null; agent_lease_until?: string | null }[];
+  const nowMs = Date.now();
+  const live = allActive.filter((j) => j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs).length;
+  // Jobs another tick holds are skipped, and new work is capped so overlapping ticks cannot exceed GLOBAL_MAX renders.
+  const free = allActive.filter((j) => !(j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs));
+  const room = onlyJobId ? free.length : Math.max(0, GLOBAL_MAX - live);
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
+    if (Date.now() - tickStart > START_DEADLINE_MS) { results[job.id] = "deferred"; return; }
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
@@ -183,11 +193,11 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
     }
   };
   const tiers = new Map<string, string>();
-  if (work.length > 1) {
-    const { data: us } = await db.from("users").select("id,tier").in("id", [...new Set(work.map((w) => w.user_id))]);
+  if (free.length > 1) {
+    const { data: us } = await db.from("users").select("id,tier").in("id", [...new Set(free.map((w) => w.user_id))]);
     for (const u of (us ?? []) as { id: string; tier: string | null }[]) tiers.set(u.id, u.tier ?? "free");
   }
-  await runPool(prioritise(work, (j) => TIER_WEIGHT[tiers.get(j.user_id) ?? "free"] ?? 1), POOL_SIZE, runJob);
+  await runPool(prioritise(free, (j) => TIER_WEIGHT[tiers.get(j.user_id) ?? "free"] ?? 1).slice(0, room), POOL_SIZE, runJob);
   return { results, trace };
 }
 
