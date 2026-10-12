@@ -31,6 +31,10 @@ export async function MoreLikeThis({
   language: string;
   style: string;
 }) {
+  // style/language come from stored documents and are interpolated into a
+  // PostgREST .or() filter below, so only plain slugs are allowed through.
+  const SLUG = /^[a-z0-9_-]{1,40}$/;
+  if (!SLUG.test(style) || !SLUG.test(language)) return null;
   try {
     const supabase = createServerClient();
     const { data } = await supabase
