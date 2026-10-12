@@ -134,6 +134,20 @@ const loadProfile = cache(async function loadProfile(handle: string) {
   return { profile, songs, totalLikes };
 });
 
+/** Placeholder swapped into a count string so the number can be rendered bold in the right spot. */
+const MARK = "\u0000";
+
+function Count({ text, n }: { text: string; n: number }) {
+  const [before = "", after = ""] = text.split(MARK);
+  return (
+    <>
+      {before}
+      <strong className="font-semibold">{n}</strong>
+      {after}
+    </>
+  );
+}
+
 export default async function ProfilePage({ params }: Props) {
   const { t } = serverI18n();
   const supabase = createServerClient();
@@ -231,14 +245,13 @@ export default async function ProfilePage({ params }: Props) {
           {stats.songs > 0 ? (
             <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/80">
               <li>
-                <strong className="font-semibold">{stats.songs}</strong> {stats.songs === 1 ? "song" : "songs"}
+                <Count text={t(stats.songs === 1 ? "profile.song.one" : "profile.song.other", { n: MARK })} n={stats.songs} />
               </li>
               <li>
-                <strong className="font-semibold">{stats.languages}</strong>{" "}
-                {stats.languages === 1 ? "language" : "languages"}
+                <Count text={t(stats.languages === 1 ? "profile.language.one" : "profile.language.other", { n: MARK })} n={stats.languages} />
               </li>
               <li>
-                <strong className="font-semibold">{stats.likes}</strong> {stats.likes === 1 ? "like" : "likes"}
+                <Count text={t(stats.likes === 1 ? "profile.like.one" : "profile.like.other", { n: MARK })} n={stats.likes} />
               </li>
             </ul>
           ) : null}
@@ -251,7 +264,7 @@ export default async function ProfilePage({ params }: Props) {
                 href={`/sign-in?next=${encodeURIComponent(`/u/${profile.handle}`)}`}
                 className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent"
               >
-                Sign in to follow
+                {t("profile.signInFollow")}
               </Link>
             ) : null}
             {isSelf ? (
@@ -276,7 +289,7 @@ export default async function ProfilePage({ params }: Props) {
       ) : (
         <>
           {groups.length > 1 ? (
-            <nav aria-label="Jump to language" className="flex flex-wrap gap-2">
+            <nav aria-label={t("profile.jumpToLang")} className="flex flex-wrap gap-2">
               {groups.map((g) => (
                 <a
                   key={g.language}
@@ -293,12 +306,12 @@ export default async function ProfilePage({ params }: Props) {
               <h2 id={`h-${g.language}`} className="mb-4 text-xl font-medium tracking-tight">
                 {prettyLanguage(g.language)}{" "}
                 <span className="text-sm font-normal text-foreground/60">
-                  {g.songs.length} {g.songs.length === 1 ? "song" : "songs"}
+                  {t(g.songs.length === 1 ? "profile.song.one" : "profile.song.other", { n: g.songs.length })}
                 </span>
               </h2>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {g.songs.map((song) => {
-                  const title = song.title?.trim() || `${prettyStyle(song.style_family)} song`;
+                  const title = song.title?.trim() || t("discover.styleSong", { style: prettyStyle(song.style_family) });
                   return (
                     <li key={song.id}>
                       <Link
@@ -326,7 +339,7 @@ export default async function ProfilePage({ params }: Props) {
               </ul>
             </section>
           ))}
-          <p className="text-xs text-foreground/50">AI-generated music and lyrics, made on neo-fm.</p>
+          <p className="text-xs text-foreground/50">{t("profile.aiNote")}</p>
         </>
       )}
     </main>

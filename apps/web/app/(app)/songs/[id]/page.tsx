@@ -222,7 +222,7 @@ export default async function SongDetailPage({
   const doc = data.song_documents?.document_json;
   const title =
     data.song_documents?.title ??
-    (doc ? prettyStyle(doc.style_family) : "Song");
+    (doc ? prettyStyle(doc.style_family) : t("song.song"));
   const tracks = (data.tracks ?? [])
     .slice()
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
@@ -260,7 +260,7 @@ export default async function SongDetailPage({
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
         items={[
-          { href: "/library", label: "Library" },
+          { href: "/library", label: t("nav.library") },
           { label: title },
         ]}
       />
@@ -458,30 +458,30 @@ export default async function SongDetailPage({
 function SongMetadata({ doc }: { doc: SongDocumentView }) {
   const { t } = serverI18n();
   const rows: { label: string; value: string }[] = [];
-  if (doc.tempo_bpm) rows.push({ label: "Tempo", value: `${doc.tempo_bpm} BPM` });
+  if (doc.tempo_bpm) rows.push({ label: t("songmeta.tempo"), value: `${doc.tempo_bpm} BPM` });
   if (doc.time_signature)
-    rows.push({ label: "Time signature", value: doc.time_signature });
-  if (doc.tala) rows.push({ label: "Tala", value: doc.tala });
+    rows.push({ label: t("songmeta.timeSig"), value: doc.time_signature });
+  if (doc.tala) rows.push({ label: t("songmeta.tala"), value: doc.tala });
   if (doc.raga) {
     rows.push({
-      label: "Raga",
+      label: t("songmeta.raga"),
       value: `${doc.raga.name} (${doc.raga.system})`,
     });
     if (doc.raga.arohana?.length)
-      rows.push({ label: "Arohana", value: doc.raga.arohana.join(" ") });
+      rows.push({ label: t("songmeta.arohana"), value: doc.raga.arohana.join(" ") });
     if (doc.raga.avarohana?.length)
-      rows.push({ label: "Avarohana", value: doc.raga.avarohana.join(" ") });
+      rows.push({ label: t("songmeta.avarohana"), value: doc.raga.avarohana.join(" ") });
   }
   if (doc.orchestration) {
     if (doc.orchestration.lead_vocal)
-      rows.push({ label: "Lead vocal", value: doc.orchestration.lead_vocal });
+      rows.push({ label: t("songmeta.leadVocal"), value: doc.orchestration.lead_vocal });
     if (doc.orchestration.instruments?.length)
       rows.push({
-        label: "Instruments",
+        label: t("songmeta.instruments"),
         value: doc.orchestration.instruments.join(", "),
       });
     if (doc.orchestration.texture)
-      rows.push({ label: "Texture", value: doc.orchestration.texture });
+      rows.push({ label: t("songmeta.texture"), value: doc.orchestration.texture });
   }
 
   if (rows.length === 0) return null;

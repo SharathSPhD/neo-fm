@@ -4,16 +4,18 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { formatDuration, type JobStage } from "@/lib/progress/job-progress";
+import { translate, type UiKey, type UiVars } from "@/lib/i18n/ui-strings";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 type Stage = JobStage;
 type Eta = { n: number; p50_s: number; p90_s: number };
 
-const STEPS: { key: Stage[]; label: string; hint: string }[] = [
-  { key: ["queued", "starting"], label: "Warming up", hint: "Your brief is safe and in the queue." },
-  { key: ["writing"], label: "Writing lyrics", hint: "Our poets draft several versions; the Pratyabhijna engine scores them for freshness and form." },
-  { key: ["polishing"], label: "Polishing the lyrics", hint: "A final pass for rhythm and pronunciation, line by line." },
-  { key: ["singing"], label: "Singing your song", hint: "Lyria is performing your lyrics. Read along below while it finishes." },
-  { key: ["finishing", "done"], label: "Checking diction", hint: "Saving your track and listening for pronunciation." },
+const STEPS: { key: Stage[]; label: UiKey; hint: UiKey }[] = [
+  { key: ["queued", "starting"], label: "job.warming", hint: "job.warmingHint" },
+  { key: ["writing"], label: "job.writing", hint: "job.writingHint" },
+  { key: ["polishing"], label: "job.polishing", hint: "job.polishingHint" },
+  { key: ["singing"], label: "job.singing", hint: "job.singingHint" },
+  { key: ["finishing", "done"], label: "job.checking", hint: "job.checkingHint" },
 ];
 
 /**
@@ -23,6 +25,7 @@ const STEPS: { key: Stage[]; label: string; hint: string }[] = [
  */
 export function JobProgress({ songId, initialStage = "queued", createdAt }: { songId: string; initialStage?: Stage; createdAt?: string }) {
   const router = useRouter();
+  const { t } = useUiLang();
   const [stage, setStage] = useState<Stage>(initialStage);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
           if (j.eta) setEta(j.eta);
           if (j.status === "completed" || j.status === "failed") {
             done.current = true;
-            if (j.status === "failed") setError(friendlyJobError(j.error));
+            if (j.status === "failed") setError(friendlyJobError(j.error, t));
             router.refresh();
             return;
           }
@@ -59,15 +62,15 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
     };
     void poll();
     return () => { done.current = true; clearInterval(tick); clearTimeout(timer); };
-  }, [songId, router, createdAt]);
+  }, [songId, router, createdAt, t]);
 
   const current = Math.max(0, STEPS.findIndex((s) => s.key.includes(stage)));
   const clock = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
   const etaLine = eta
     ? elapsed <= eta.p90_s
-      ? `Usually about ${formatDuration(eta.p50_s)}; most songs finish within ${formatDuration(eta.p90_s)}.`
-      : "Taking longer than usual; it's still running."
-    : "This usually takes a few minutes.";
+      ? t("job.etaUsual", { p50: formatDuration(eta.p50_s), p90: formatDuration(eta.p90_s) })
+      : t("job.etaLonger")
+    : t("job.etaDefault");
   return (
     <section data-testid="job-progress" aria-live="polite" className="rounded-lg border border-muted/20 bg-muted/5 p-5">
       <ol className="flex flex-col gap-3">
@@ -83,8 +86,8 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
                 }
               />
               <div className={state === "todo" ? "opacity-50" : ""}>
-                <p className="text-sm font-medium">{s.label}</p>
-                {state === "active" ? <p className="text-xs text-foreground/60">{s.hint}</p> : null}
+                <p className="text-sm font-medium">{t(s.label)}</p>
+                {state === "active" ? <p className="text-xs text-foreground/60">{t(s.hint)}</p> : null}
               </div>
             </li>
           );
@@ -92,24 +95,27 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
       </ol>
       {lyrics ? (
         <div data-testid="job-progress-lyrics" className="mt-4 rounded-md border border-muted/20 bg-background/40 p-3">
-          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground/50">Your lyrics</p>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wide text-foreground/50">{t("job.yourLyrics")}</p>
           <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{lyrics}</pre>
         </div>
       ) : null}
       <p className="mt-4 text-xs text-foreground/50">
-        {error ?? `Elapsed ${clock} · ${etaLine} You can leave this page; your song keeps going.`}
+        {error ?? t("job.status", { clock, eta: etaLine })}
       </p>
     </section>
   );
 }
 
-const FRIENDLY: Record<string, string> = {
-  allowance_reached: "You've used this month's song allowance. It resets on the 1st, or upgrade your plan for more songs.",
-  render_failed: "The music engine had a hiccup and we couldn't finish this one. Your allowance was not used; please try again.",
-  timed_out: "This one took too long and we stopped it. Your allowance was not used; please try again.",
-  content_policy: "We couldn't make this one because it didn't pass our content guidelines. Try rewording your idea.",
+const FRIENDLY: Record<string, UiKey> = {
+  allowance_reached: "job.err.allowance",
+  render_failed: "job.err.render",
+  timed_out: "job.err.timeout",
+  content_policy: "job.err.policy",
 };
 
-export function friendlyJobError(code?: string | null): string {
-  return (code && FRIENDLY[code]) || "Something went wrong while making this song. Please try again.";
+type Translate = (key: UiKey, vars?: UiVars) => string;
+
+/** `t` defaults to English so non-React callers (and tests) keep working. */
+export function friendlyJobError(code?: string | null, t: Translate = (k, v) => translate("en", k, v)): string {
+  return t((code && FRIENDLY[code]) || "job.err.generic");
 }
