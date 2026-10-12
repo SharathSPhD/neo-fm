@@ -31,6 +31,15 @@ export function singable(raw: string): string {
   }).join("\n");
 }
 
+/** 60 s songs: the stored lyrics target 30 s, so close with the opening section (standard hook repeat) when the lyric does not already end on a repeat. */
+export function withOutro(raw: string): string {
+  const secs = raw.split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean);
+  if (secs.length < 3) return raw;
+  const first = singable(secs[0] ?? "");
+  const last = singable(secs[secs.length - 1] ?? "");
+  return first && first !== last ? `${raw}\n\n${secs[0]}` : raw;
+}
+
 const STYLE: Record<string, string> = {
   Hindi: "A warm Hindi folk-pop song with acoustic guitar and tabla, expressive female vocal.",
   Tamil: "A warm Tamil folk-pop song with acoustic guitar and mridangam, expressive female vocal.",
@@ -73,7 +82,7 @@ const load = (f: string): Rec[] => existsSync(f) ? readFileSync(f, "utf8").split
 async function main() {
   const rep = arg("report");
   if (rep) {
-    const items = JSON.parse(readFileSync(new URL("./lyrics-fullB-n10.json", import.meta.url), "utf8")) as Item[];
+    const items = JSON.parse(readFileSync(new URL(arg("lyrics", "./lyrics-fullB-n10.json")!, import.meta.url), "utf8")) as Item[];
     const rs = rescore(load(rep), items);
     console.log(report(rs));
     const tr = rs.filter((r) => (r.tailMissing ?? 0) > 0);
@@ -103,7 +112,7 @@ async function main() {
   const guard: SpendGuard = { reserve: async (a) => (spent + a <= cap ? ((spent += a), true) : false), release: async (a) => { spent -= a; } };
   console.error(`${work.length} renders, est GBP ${(work.length * estimatedCostGbp(cls)).toFixed(2)} (cap ${cap})`);
   const run = async (it: Item) => {
-    const lyrics = singable(it.lyrics);
+    const lyrics = cls === "full" ? singable(withOutro(it.lyrics)) : singable(it.lyrics);
     const base: Rec = { id: it.id, language: it.language, cls, matchPct: null, flagged: [] };
     try {
       const r = await generateMusic({ stylePrompt: `${STYLE[it.language]} ${dictionHints(it.language)}`.trim(), lyrics, durationClass: cls, targetSeconds: cls === "full" ? 60 : undefined }, { guard, apiKey: key });
