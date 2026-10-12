@@ -1,4 +1,4 @@
--- 0076_ui_review.sql
+-- 0086_ui_review.sql
 -- Native review of UI translations: token-link reviewers approve or edit translated strings.
 -- No PII: a reviewer is an opaque token (stored as a SHA-256 hash) plus an optional operator-chosen alias.
 -- Service role only: RLS on with no policies, and the default Supabase grants are revoked.
