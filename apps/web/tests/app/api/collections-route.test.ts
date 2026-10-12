@@ -13,10 +13,15 @@ vi.mock("../../../lib/collections/load", async (orig) => ({
   collectionsDb: vi.fn(),
 }));
 
+vi.mock("../../../lib/notifications/db", () => ({ notificationsDb: vi.fn(() => ({})) }));
+vi.mock("../../../lib/notifications/notify", () => ({ notifyUser: vi.fn() }));
+
 import { PATCH } from "../../../app/api/collections/[id]/route";
 import { POST as ADD } from "../../../app/api/collections/[id]/items/route";
 import { POST as CREATE } from "../../../app/api/collections/route";
 import { collectionsDb } from "../../../lib/collections/load";
+import { notificationsDb } from "../../../lib/notifications/db";
+import { notifyUser } from "../../../lib/notifications/notify";
 import { screenRequest } from "../../../lib/safety";
 import { requireUser } from "../../../lib/supabase/auth";
 
@@ -159,6 +164,42 @@ describe("POST /api/collections/[id]/items", () => {
     expect(res.status).toBe(201);
     const insert = calls.find((c) => c.table === "collection_items" && c.op === "insert")!;
     expect(insert.args[0]).toMatchObject({ collection_id: COL, job_id: JOB, position: 5 });
+  });
+
+  it("notifies the author when their song joins a shared playlist", async () => {
+    authed();
+    (notificationsDb as ReturnType<typeof vi.fn>).mockReturnValue({});
+    fakeDb({
+      collections: [{ data: { id: COL, visibility: "public" } }, { data: null }],
+      jobs: [{ data: { user_id: "author", published_visibility: "public", song_document_id: "doc1" } }],
+      song_documents: [{ data: { title: "Raat" } }],
+      collection_items: [{ data: [] }, { error: null }],
+    });
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
+    expect(notifyUser).toHaveBeenCalledWith(
+      expect.anything(),
+      "author",
+      "collection_add",
+      { job_id: JOB, title: "Raat" },
+      `collection_add:${JOB}`,
+    );
+  });
+
+  it("stays silent for private playlists and for your own songs", async () => {
+    authed();
+    fakeDb({
+      collections: [{ data: { id: COL, visibility: "private" } }, { data: null }],
+      jobs: [{ data: { user_id: "author", published_visibility: "public" } }],
+      collection_items: [{ data: [] }, { error: null }],
+    });
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
+    fakeDb({
+      collections: [{ data: { id: COL, visibility: "public" } }, { data: null }],
+      jobs: [{ data: { user_id: USER, published_visibility: "private" } }],
+      collection_items: [{ data: [] }, { error: null }],
+    });
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
+    expect(notifyUser).not.toHaveBeenCalled();
   });
 
   it("is idempotent", async () => {

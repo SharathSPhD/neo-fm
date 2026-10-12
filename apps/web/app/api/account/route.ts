@@ -81,6 +81,16 @@ export async function DELETE() {
   }
   steps.feedback = "deleted";
 
+  // Push endpoints are credential-like (they let anyone holding them push to the device), so erase them explicitly
+  // rather than relying on the auth cascade. Tables appear with migration 0085: a missing table means nothing to erase.
+  for (const table of ["push_subscriptions", "notifications", "notification_prefs"]) {
+    const r = await (admin as unknown as import("@supabase/supabase-js").SupabaseClient).from(table).delete().eq("user_id", user.id);
+    if (r.error && !isMissingTable(r.error)) {
+      return NextResponse.json({ error: "notifications_delete_failed", details: r.error.message }, { status: 500 });
+    }
+  }
+  steps.notifications = "deleted";
+
   const deleteAuth = await admin.auth.admin.deleteUser(user.id);
   if (deleteAuth.error) {
     return NextResponse.json(
@@ -92,6 +102,10 @@ export async function DELETE() {
     );
   }
   return NextResponse.json({ deleted: true, steps });
+}
+
+function isMissingTable(e: { code?: string; message?: string }): boolean {
+  return e.code === "42P01" || e.code === "PGRST205" || /does not exist|schema cache/i.test(e.message ?? "");
 }
 
 async function ignoreMissing(fn: () => Promise<unknown>): Promise<void> {
