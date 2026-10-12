@@ -1,6 +1,8 @@
 {
+  "skipDangerousModePermissionPrompt": true,
   "permissions": {
     "allow": [
+      "defaultMode": "bypassPermissions",
       "mcp__Vercel__list_deployments",
       "mcp__Vercel__get_access_to_vercel_url",
       "mcp__Vercel__get_deployment",
