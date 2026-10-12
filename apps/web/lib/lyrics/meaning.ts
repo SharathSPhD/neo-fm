@@ -5,6 +5,12 @@ import { lyricLines } from "./prosody-lint";
 import type { SyncSectionInput } from "./sync";
 
 export const MEANING_MODEL = "claude-haiku-5-5";
+
+/** Cost guards for the meaning route. They live here, not in the route file, because Next.js rejects unknown route exports. */
+export const MEANING_DAILY_CAP = 20;
+export const FAILURE_CACHE_MS = 10 * 60 * 1000;
+/** Ledger units (GBP) reserved per generation: one Haiku call over a few thousand tokens, rounded up. */
+export const MEANING_COST_GBP = 0.005;
 /** Shown wherever the English line appears. */
 export const MEANING_DISCLAIMER = "English meaning is an AI machine translation. It conveys the sense, not the poetry, and may miss cultural nuance.";
 

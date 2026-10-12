@@ -27,7 +27,8 @@ vi.mock("@/lib/agent/adapters", () => ({
   }),
 }));
 
-import { GET, MEANING_DAILY_CAP } from "../app/api/songs/[id]/meaning/route";
+import { GET } from "../app/api/songs/[id]/meaning/route";
+import { MEANING_DAILY_CAP } from "../lib/lyrics/meaning";
 
 const call = () => GET(new Request("http://x"), { params: { id: JOB } });
 
