@@ -24,3 +24,17 @@ Clip pacing varies: Telugu songs were cut at 84-88 syllables while another Telug
 - **C adaptive**: no cap; after the existing diction QA, if the last line(s) were unsung, re-render once with the lyric trimmed to the sung lines. Costs one extra clip (GBP 0.05) on about 12% of songs; does not shorten songs that fit.
 
 Recommendation: C over B (B pre-penalises healthy songs; A's loss is only ~12% of songs). Needs about GBP 1 to run on the 6 known-truncated briefs plus 14 fresh ones; waiting for the lead's spend answer before any render.
+
+## Arm C, first measurement (2026-10-12, 6 renders, GBP 0.30)
+For the 6 sweep songs whose last lines were never sung, one re-render with the lyric trimmed to the sung lines (`scripts/quality/adaptive-rerender.mts`, rows in `managed-agents/quality/adaptive-rerender.jsonl`):
+
+| Song | Before | After | Lines |
+|---|---|---|---|
+| bn-14 | 81 | 97 | 5 -> 4 |
+| bn-18 | 91 | 100 | 6 -> 5 |
+| hi-16 | 66 | 94 | 6 -> 4 |
+| te-11 | 68 | 89 | 5 -> 3 |
+| te-14 | 84 | 78 | 5 -> 4 (1 line still unheard) |
+| te-17 | 83 | 95 | 6 -> 5 |
+
+5 of 6 recovered to 89-100; mean 80 -> 92. Caveats: N=6 and the same songs that defined the problem; a single render each (te-14 got worse, so a second attempt or a different trim could be needed); diction only. The blind pairwise judge pass (does a shorter, fully sung song beat the longer, cut-off one?) has not been run, so this shows the re-render fixes *diction*, not that listeners prefer it. Cost model holds: GBP 0.05 on about 12% of songs (6 of 50).
