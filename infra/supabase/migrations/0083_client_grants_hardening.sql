@@ -1,10 +1,20 @@
--- 0074_client_grants_hardening.sql  (number provisional: pending lead assignment)
+-- 0083_client_grants_hardening.sql
 -- Threat-model issue #41 (docs/SECURITY-THREAT-MODEL.md, "Supabase hardening").
 --
 -- Supabase's default grants give anon and authenticated INSERT/UPDATE/DELETE/TRUNCATE on every public table and
 -- view; RLS (with no write policy) was the only barrier. Strip those, then grant back exactly the writes the live
 -- RLS policies allow, so a future policy mistake no longer exposes a table to client writes.
 -- SELECT grants are unchanged. service_role and the worker roles are untouched. public.users is handled by 0070.
+
+-- Idempotent (REVOKE/GRANT/ALTER FUNCTION SET only; no rewrites) and short-locking. Sections 1-4 are independent, so
+-- they can be applied separately.
+set local lock_timeout = '3s';
+
+-- App audit (client = the signed-in user's Supabase session, not service role): the only direct client writes are
+--   songs/[id] DELETE jobs; songs/[id]/feedback INSERT feedback_events; me/taste UPSERT consents, DELETE
+--   feedback_events + taste_profiles. Everything else writes through SECURITY DEFINER RPCs or the service role
+--   (report, remix lineage, account, admin, agent pipeline). Section 3 grants back exactly those plus the other
+--   live write policies. infra/supabase/tests/client_grants.sql asserts the resulting matrix.
 
 -- 1. Views: no client writes (security_invoker views obey base-table RLS, but there is no reason to allow them).
 revoke all on public.orphan_jobs from anon, authenticated;
