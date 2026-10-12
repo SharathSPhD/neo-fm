@@ -1,3 +1,4 @@
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
 import Link from "next/link";
 
@@ -28,6 +29,7 @@ const DIFFERENT = [
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <FunnelBeacon event="landing_view" />
       <Hero />
       <ListenFirst />
       <HowItWorks />

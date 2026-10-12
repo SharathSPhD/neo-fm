@@ -69,6 +69,9 @@ describe("pickRule (auth, report, method-awareness)", () => {
       expect(rule).toBeNull();
     }
   });
+  it("caps browser error reports at 10/min", () => {
+    expect(pickRule("/api/client-errors", "POST")).toEqual({ bucket: "anon:client-errors", limit: 10 });
+  });
   it("limits events and native-review (api + page)", () => {
     expect(pickRule("/api/events", "POST")).toEqual({ bucket: "anon:events", limit: 20 });
     expect(pickRule("/api/native-review/tok123/ratings", "POST")).toEqual({ bucket: "review:rate", limit: 30 });

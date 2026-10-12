@@ -10,7 +10,7 @@ export default function OfflinePage() {
       <h1 className="text-3xl font-medium tracking-tight">You&apos;re offline</h1>
       <p className="text-sm text-foreground/60">
         neo-fm needs an internet connection to generate songs.
-        Cached songs in your library will still play.
+       
       </p>
       <a
         href="/"
