@@ -7,7 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Sanscript from "@indic-transliteration/sanscript";
 
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { generateMusic, type SpendGuard } from "../../../../lib/agent/lyria";
 import { charErrorRate } from "../../../../lib/diction";
 import { transcribeSung } from "../../../../lib/diction/gemini";
@@ -20,7 +20,7 @@ const noGuard: SpendGuard = { reserve: async () => true, release: async () => {}
 const roman = (t: string, scheme: string) => Sanscript.t(t, scheme, "itrans").replace(/[èé]/g, "e");
 
 export async function POST(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const key = process.env.GEMINI_API_KEY;
   if (!key) return NextResponse.json({ error: "no_gemini_key" }, { status: 503 });

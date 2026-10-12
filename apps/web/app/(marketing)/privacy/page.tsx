@@ -12,6 +12,7 @@ const SECTIONS: { h: string; body: string[] }[] = [
     "Account data: email address, display name or handle, and your sign-in method (email/password or Google). We never see your Google password.",
     "Content you create: the briefs you type, the lyrics and songs generated for you, and your library, likes and share settings.",
     "Usage and safety data: request logs, quota counters and the outcome of our automated safety checks, kept to protect the service and other users.",
+    "Anonymous page counts: we count visits to our landing, pricing, sign-up and shared-song pages as a daily total. No cookie, IP address, device or account identifier is stored with the count, and we skip it entirely if your browser sends Do Not Track or Global Privacy Control.",
     "Payment data: handled by Stripe. We receive your plan status and a customer reference, never your card number." ] },
   { h: "Why we use it", body: ["To make songs for you, run your account, enforce fair-use limits, keep the service safe, and bill paid plans. We do not sell personal data and do not use your private songs to train models."] },
   { h: "Who processes it", body: [
