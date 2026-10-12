@@ -59,7 +59,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopNav user={user} active={active} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
         {children}
       </div>
       <MobileBottomNav active={active} />
@@ -127,7 +127,7 @@ async function MobileBottomNav({ active }: { active?: string }) {
   return (
     <nav
       aria-label="Primary mobile"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 backdrop-blur-md sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
     >
       <ul className="mx-auto flex max-w-6xl items-stretch justify-around">
         {BOTTOM_NAV_LINKS.map((l) => {
