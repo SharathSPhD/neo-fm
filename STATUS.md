@@ -1,5 +1,7 @@
 # neo-fm status
 
+> **Current handoff: [docs/HANDOFF.md](docs/HANDOFF.md)** (2026-10-12). Parts of this file predate it; where they disagree, HANDOFF.md wins.
+
 *Updated 2026-10-12, against `main` at 4ea78a5. Claims come from the code and docs in this repo; nothing here was re-measured against production.*
 
 ## Product

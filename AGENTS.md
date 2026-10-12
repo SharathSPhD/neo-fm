@@ -1,6 +1,6 @@
 # AGENTS.md: rules for agents working in neo-fm
 
-Read this first. Applies to every agent (human or AI) committing to this repository. For what the product is and how it is built, read [README.md](README.md) and [STATUS.md](STATUS.md).
+Read this first, then [docs/HANDOFF.md](docs/HANDOFF.md) for the current state and runbook. Applies to every agent (human or AI) committing to this repository. For what the product is and how it is built, read [README.md](README.md) and [STATUS.md](STATUS.md).
 
 ## Merge contract
 
