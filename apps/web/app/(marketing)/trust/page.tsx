@@ -62,13 +62,19 @@ export default function TrustPage() {
           </li>
         ))}
       </ul>
-      <p className="mt-12 text-sm text-foreground/60">
-        Found something that breaks these rules, or need a track taken down?{" "}
-        <Link href="/feedback" className="underline">
-          Tell us
-        </Link>
-        . We review reports promptly.
-      </p>
+      <section className="mt-12 rounded-lg border border-muted/30 p-5" aria-labelledby="grievance-heading">
+        <h2 id="grievance-heading" className="text-lg font-medium">Reports, takedowns and grievances</h2>
+        <p className="mt-2 text-sm text-foreground/70">
+          Every public song has a <strong>Report this song</strong> link. You can also write to our Grievance Officer at{" "}
+          <a className="underline" href="mailto:grievance@neo-fm.com">grievance@neo-fm.com</a> (Technektar). We acknowledge complaints within 24 hours,
+          remove content that is unlawful, impersonates a real person, is sexual content involving minors, or infringes copyright within 36 hours of a valid
+          notice, and resolve other grievances within 15 days.
+        </p>
+        <p className="mt-2 text-sm text-foreground/60">
+          Not a report?{" "}
+          <Link href="/feedback" className="underline">Send us feedback</Link>.
+        </p>
+      </section>
     </main>
   );
 }
