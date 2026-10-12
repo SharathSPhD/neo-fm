@@ -153,3 +153,51 @@ const HINTS: Record<string, string> = {
 export function dictionHints(language: string): string {
   return HINTS[language.trim().toLowerCase()] ?? "";
 }
+
+/**
+ * Order-insensitive variant of scoreTranscript. A singer (Lyria) may sing sections in a different order than written,
+ * which the in-order scorer reads as failure (a reordered Tamil song scored 51 where its content matched ~91).
+ * Each intended line takes its best window anywhere in the transcript, but a stretch of transcript can only vouch for
+ * one line (greedy by lowest CER, windows may overlap used text by at most 30%), so a single sung hook cannot score
+ * a hook that appears twice in the lyric. Lines left without a window count as fully wrong.
+ */
+export function scoreTranscriptUnordered(intended: string, transcript: string, threshold = 0.35): DictionScore {
+  const want = intended.split(/\n+/).map((l) => l.replace(/\[[^\]]*\]/g, "").trim()).filter((l) => norm(l).length > 0);
+  const heard = Array.from(norm(transcript));
+  const cands: { cer: number; li: number; s: number; e: number }[] = [];
+  want.forEach((line, li) => {
+    const len = Array.from(norm(line)).length;
+    for (let s = 0; s < heard.length; s++) {
+      for (const w of [Math.floor(len * 0.8), len, Math.ceil(len * 1.2)]) {
+        const e = Math.min(heard.length, s + w);
+        if (e <= s) continue;
+        cands.push({ cer: charErrorRate(line, heard.slice(s, e).join("")), li, s, e });
+      }
+    }
+  });
+  cands.sort((a, b) => a.cer - b.cer);
+  const used = new Array<boolean>(heard.length).fill(false);
+  const pick = new Map<number, { cer: number; s: number; e: number }>();
+  for (const c of cands) {
+    if (pick.has(c.li)) continue;
+    let overlap = 0;
+    for (let i = c.s; i < c.e; i++) if (used[i]) overlap++;
+    if (overlap > 0.3 * (c.e - c.s)) continue;
+    pick.set(c.li, c);
+    for (let i = c.s; i < c.e; i++) used[i] = true;
+    if (pick.size === want.length) break;
+  }
+  const lines: LineScore[] = want.map((intendedLine, li) => {
+    const p = pick.get(li);
+    return p
+      ? { intended: intendedLine, heard: heard.slice(p.s, p.e).join(""), cer: p.cer, flagged: p.cer > threshold }
+      : { intended: intendedLine, heard: "", cer: 1, flagged: true };
+  });
+  const overall = lines.length ? lines.reduce((s, l) => s + l.cer, 0) / lines.length : 0;
+  return { lines, overall, matchPct: Math.round((1 - overall) * 100) };
+}
+
+/** Both scores, for reporting: `ordered` is what production stores today; `unordered` ignores section order. */
+export function scoreBoth(intended: string, transcript: string): { ordered: number; unordered: number } {
+  return { ordered: scoreTranscript(intended, transcript).matchPct, unordered: scoreTranscriptUnordered(intended, transcript).matchPct };
+}

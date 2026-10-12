@@ -5,7 +5,7 @@
  *   GEMINI_API_KEY=... npx tsx scripts/quality/diction-sweep.ts --class clip --n 10 --cap-gbp 3 --out quality/clip.jsonl
  *   ... --report quality/clip.jsonl   # summary table only, no spend
  *
- * Lyrics: scripts/quality/lyrics-fullB-n10.json (PCE fullB outputs, first 10 briefs per language, trimmed to 8 lines).
+ * Lyrics: --lyrics <file> (default scripts/quality/lyrics-fullB-n10.json: PCE fullB outputs, first 10 briefs per language, trimmed to 8 lines).
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
@@ -15,7 +15,7 @@ import { auditDiction } from "../../apps/web/lib/diction/gemini";
 import { estimatedCostGbp, generateMusic, type DurationClass, type SpendGuard } from "../../apps/web/lib/agent/lyria";
 
 interface Item { id: string; language: string; lyrics: string }
-interface Rec { id: string; language: string; cls: DurationClass; matchPct: number | null; tailMissing?: number; lineCount?: number; flagged: { line: string; heard: string; cer: number }[]; transcript?: string; error?: string }
+interface Rec { id: string; language: string; cls: DurationClass; matchPct: number | null; unorderedPct?: number; tailMissing?: number; lineCount?: number; flagged: { line: string; heard: string; cer: number }[]; transcript?: string; error?: string }
 
 const arg = (k: string, d?: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : d; };
 const LABEL = /^(hook|verse|chorus|bridge|pallavi|anupallavi|charanam|mukhda|antara|[ऀ-ॿঀ-৿஀-௿ఀ-౿ಀ-೿]{1,12}\s*[\d१-९১-৯]?)\s*(\(.*\))?\s*[:]?$/i;
@@ -51,19 +51,19 @@ const STYLE: Record<string, string> = {
 const pct = (xs: number[], p: number) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : NaN; };
 
 export function report(recs: Rec[]): string {
-  const rows = ["| Language | Class | N | Median | p10 | Mean | Failures (<60 or error) |", "|---|---|---|---|---|---|---|"];
+  const rows = ["| Language | Class | N | Median | p10 | Mean | Failures (<60 or error) | Median order-free |", "|---|---|---|---|---|---|---|---|"];
   const keys = [...new Set(recs.map((r) => `${r.language}|${r.cls}`))].sort();
   for (const k of keys) {
     const [lang, cls] = k.split("|");
     const rs = recs.filter((r) => r.language === lang && r.cls === cls);
     const ok = rs.filter((r) => r.matchPct !== null).map((r) => r.matchPct as number);
     const fail = rs.length - ok.filter((m) => m >= 60).length;
-    rows.push(`| ${lang} | ${cls === "clip" ? "30 s" : "60 s"} | ${rs.length} | ${pct(ok, 0.5)} | ${pct(ok, 0.1)} | ${ok.length ? Math.round(ok.reduce((a, b) => a + b, 0) / ok.length) : "-"} | ${fail} |`);
+    rows.push(`| ${lang} | ${cls === "clip" ? "30 s" : "60 s"} | ${rs.length} | ${pct(ok, 0.5)} | ${pct(ok, 0.1)} | ${ok.length ? Math.round(ok.reduce((a, b) => a + b, 0) / ok.length) : "-"} | ${fail} | ${pct(rs.map((r) => r.unorderedPct ?? r.matchPct).filter((x): x is number => x !== null), 0.5)} |`);
   }
   return rows.join("\n");
 }
 
-import { scoreTranscript } from "../../apps/web/lib/diction";
+import { scoreTranscript, scoreTranscriptUnordered } from "../../apps/web/lib/diction";
 
 /** Re-score stored transcripts offline (no spend) with the current header filter; adds tail-truncation stats. */
 function rescore(recs: Rec[], items: Item[]): Rec[] {
@@ -73,7 +73,7 @@ function rescore(recs: Rec[], items: Item[]): Rec[] {
     if (!it || r.transcript === undefined) return r;
     const sc = scoreTranscript(singable(it.lyrics), r.transcript);
     let tail = 0; for (let i = sc.lines.length - 1; i >= 0 && sc.lines[i].flagged; i--) tail++;
-    return { ...r, matchPct: sc.matchPct, tailMissing: tail, lineCount: sc.lines.length, flagged: sc.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })) };
+    return { ...r, matchPct: sc.matchPct, unorderedPct: scoreTranscriptUnordered(singable(it.lyrics), r.transcript).matchPct, tailMissing: tail, lineCount: sc.lines.length, flagged: sc.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })) };
   });
 }
 
@@ -101,7 +101,7 @@ async function main() {
   const perLangCap = arg("per-language");
   mkdirSync(dirname(out), { recursive: true });
   const done = new Set(load(out).filter((r) => r.matchPct !== null).map((r) => r.id));
-  const all = JSON.parse(readFileSync(new URL("./lyrics-fullB-n10.json", import.meta.url), "utf8")) as Item[];
+  const all = JSON.parse(readFileSync(new URL(arg("lyrics", "./lyrics-fullB-n10.json")!, import.meta.url), "utf8")) as Item[];
   const perLang = new Map<string, number>();
   const work = all.filter((it) => {
     if (langs && !langs.includes(it.language)) return false;
