@@ -47,3 +47,19 @@ test("sign-in/up forms cannot submit credentials natively before hydration (no p
   }
   await ctx.close();
 });
+
+import { expectNoSeriousA11yViolations } from "./helpers/axe";
+
+for (const path of ["/pricing", "/trust", "/privacy", "/terms", "/discover", "/sign-in", "/sign-up"]) {
+  test(`no serious a11y violations on ${path}`, async ({ page }) => {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+    await expectNoSeriousA11yViolations(page, path);
+  });
+}
+
+test("a public song page offers Report this song", async ({ page }) => {
+  await page.goto("/discover");
+  await page.locator('a[href^="/s/"]').first().click();
+  await expect(page.getByRole("button", { name: /report this song/i })).toBeVisible();
+});
