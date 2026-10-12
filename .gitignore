@@ -103,3 +103,4 @@ docs/contracts/*
 voice-tts.md
 review/
 apps/web/tests/e2e/.share-state.json
+apps/web/tests/e2e/.screens/
