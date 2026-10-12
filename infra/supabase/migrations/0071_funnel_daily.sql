@@ -16,7 +16,7 @@ create or replace function public.bump_funnel(p_event text)
 returns void
 language sql
 security definer
-set search_path = public
+set search_path = ''
 as $$
   insert into public.funnel_daily(event, n) values (p_event, 1)
   on conflict (day, event) do update set n = public.funnel_daily.n + 1;
