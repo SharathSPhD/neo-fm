@@ -15,6 +15,9 @@ import Link from "next/link";
 
 import { CoverArt } from "@/components/cover-art";
 import { ProCta } from "@/components/pro-cta";
+import { SongOfTheDay } from "@/components/song-of-the-day";
+import { TopThisWeek } from "@/components/top-this-week";
+import { normalizeChartLang } from "@/lib/charts/pick";
 import { ForYou } from "./for-you";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
@@ -47,7 +50,7 @@ const ALLOWED_STYLES = new Set(
   STYLE_OPTIONS.map((o) => o.value).filter(Boolean),
 );
 
-type SearchParams = { style?: string; page?: string };
+type SearchParams = { style?: string; page?: string; chart?: string };
 
 export const metadata: Metadata = {
   alternates: { canonical: "/discover" },
@@ -209,7 +212,13 @@ export default async function DiscoverPage({
 
       <ProCta compact />
 
-      {page === 1 && !style ? <ForYou /> : null}
+      {page === 1 && !style ? (
+        <>
+          <SongOfTheDay />
+          <TopThisWeek lang={normalizeChartLang(searchParams.chart)} />
+          <ForYou />
+        </>
+      ) : null}
 
       <nav
         aria-label="Style filter"

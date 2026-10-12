@@ -34,6 +34,7 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 import { LikeButton } from "@/components/like-button";
+import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
@@ -350,6 +351,7 @@ export default async function PublicSongPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
+            feedbackSongId={currentUserId ? data.id : undefined}
           />
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton
@@ -358,6 +360,10 @@ export default async function PublicSongPage({
               initialLiked={initiallyLiked}
               initialCount={likeCount}
               signedIn={!!currentUserId}
+            />
+            <PublicShareButton
+              title={displayTitle}
+              feedbackSongId={currentUserId ? data.id : undefined}
             />
             <VariationButton
               songId={data.id}

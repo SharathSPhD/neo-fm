@@ -5,6 +5,7 @@ import { SocialProof } from "@/components/landing/social-proof";
 import { ListenFirst } from "@/components/listen-first";
 import { loadLanguageSamples } from "@/lib/landing/samples";
 import type { Metadata } from "next";
+import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
@@ -52,6 +53,9 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
+      <div className="mx-auto max-w-6xl px-6 pt-12">
+        <SongOfTheDay />
+      </div>
       <ListenFirst />
       <HowItWorks />
       <SocialProof />
