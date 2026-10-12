@@ -109,7 +109,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "done") {
         const cascade = await finalize(db, job.id);
         const qa = await qaDiction(db, job.id, doc.language, geminiKey);
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-2.5-flash", embedder: process.env.EMBED_URL ? "service" : "none" });
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none" });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -214,7 +214,7 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     if (!blob) return null;
     const audio = new Uint8Array(await blob.arrayBuffer());
     const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
-    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-2.5-flash" } }).eq("job_id", jobId);
+    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash" } }).eq("job_id", jobId);
     return { matchPct: qa.matchPct };
   } catch (e) {
     /* QA is advisory, but leave the reason visible instead of failing silently */

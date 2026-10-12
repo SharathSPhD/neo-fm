@@ -28,7 +28,7 @@ select 'pipeline',
     'aspect_cosine_hit', 0.15,
     'k_free', 3, 'k_pro', 6,
     'free_model', 'claude-haiku-5-5', 'pro_model', 'claude-sonnet-5-5', 'polisher', 'claude-opus-5-5',
-    'qa_model', 'gemini-2.5-flash'),
+    'qa_model', 'gemini-3.8-flash'),
   'live', 'bootstrap'
 where not exists (select 1 from public.config_versions where kind = 'pipeline' and status = 'live');
 
