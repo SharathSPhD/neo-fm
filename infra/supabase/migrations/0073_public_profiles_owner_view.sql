@@ -1,4 +1,4 @@
--- 0071_public_profiles_owner_view.sql  (number provisional, pending lead confirmation)
+-- 0073_public_profiles_owner_view.sql  (number assigned from the lead registry)
 -- Threat-model fix T-RLS-3 (docs/SECURITY-THREAT-MODEL.md, issue #38).
 --
 -- Before: policy users_select_public_handle exposed every row with a handle to anon AND authenticated, and
