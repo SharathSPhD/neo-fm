@@ -12,3 +12,13 @@ describe("embed token", () => {
     expect(t).not.toContain("master-secret");
   });
 });
+
+describe("job-bound embed token", () => {
+  it("is v2.<exp>.<scope>.<sig> and falls back to v1 for an invalid scope", () => {
+    const t = mintEmbedToken("master-secret", 600, 1_000_000_000_000, "job-123");
+    const [v, exp, scope, sig] = t.split(".");
+    expect([v, exp, scope]).toEqual(["v2", String(1_000_000_000 + 600), "job-123"]);
+    expect(sig).toMatch(/^[0-9a-f]{64}$/);
+    expect(mintEmbedToken("m", 60, 0, "bad.scope!").startsWith("v1.")).toBe(true);
+  });
+});

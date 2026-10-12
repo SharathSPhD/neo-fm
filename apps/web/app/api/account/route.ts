@@ -37,16 +37,24 @@ export async function DELETE() {
 
   const admin = createServiceRoleClient();
 
-  // DPDP/GDPR erasure must reach everything we hold, not just rows: (1) stop billing, (2) delete stored audio.
+  // DPDP/GDPR erasure must reach everything we hold, not just rows: (1) stop billing and erase the Stripe customer,
+  // (2) delete stored audio and cover art, (3) delete free-text feedback. Any failure stops before the auth user is
+  // deleted, so the user can retry; deleting first would orphan data we could no longer attribute to them.
   const steps: Record<string, string> = {};
   try {
     if (getBillingConfigOrNull()) {
-      const { data: bill } = await admin.from("user_billing").select("stripe_subscription_id").eq("user_id", user.id).maybeSingle();
-      const subId = (bill as { stripe_subscription_id: string | null } | null)?.stripe_subscription_id;
-      if (subId) {
-        const { getStripe } = await import("@/lib/billing/stripe");
-        await getStripe().subscriptions.cancel(subId);
+      const { data: bill } = await admin.from("user_billing").select("stripe_customer_id, stripe_subscription_id").eq("user_id", user.id).maybeSingle();
+      const b = bill as { stripe_customer_id: string | null; stripe_subscription_id: string | null } | null;
+      const { getStripe } = await import("@/lib/billing/stripe");
+      const stripe = getStripe();
+      if (b?.stripe_subscription_id) {
+        await ignoreMissing(() => stripe.subscriptions.cancel(b.stripe_subscription_id as string));
         steps.subscription = "cancelled";
+      }
+      if (b?.stripe_customer_id) {
+        // Deleting the customer also removes saved payment methods; Stripe keeps invoices it must retain by law.
+        await ignoreMissing(() => stripe.customers.del(b.stripe_customer_id as string));
+        steps.stripe_customer = "deleted";
       }
     }
   } catch (e) {
@@ -54,16 +62,24 @@ export async function DELETE() {
     return NextResponse.json({ error: "subscription_cancel_failed", details: String((e as Error).message).slice(0, 200) }, { status: 502 });
   }
   try {
-    const { data: jobs } = await admin.from("jobs").select("id").eq("user_id", user.id);
-    const bucket = admin.storage.from("tracks");
+    const { data: jobs, error: jobsErr } = await admin.from("jobs").select("id").eq("user_id", user.id);
+    if (jobsErr) throw new Error(jobsErr.message);
     let removed = 0;
     for (const j of (jobs ?? []) as { id: string }[]) {
-      const { data: files } = await bucket.list(j.id);
-      const paths = (files ?? []).map((f) => `${j.id}/${f.name}`);
-      if (paths.length) { await bucket.remove(paths); removed += paths.length; }
+      removed += await removeTree(admin.storage.from("tracks"), j.id);
     }
+    removed += await removeTree(admin.storage.from("cover-art"), user.id);
+    removed += await removeTree(admin.storage.from("avatars"), user.id);
     steps.audio_files_removed = String(removed);
-  } catch { steps.audio_files_removed = "partial"; }
+  } catch (e) {
+    return NextResponse.json({ error: "storage_delete_failed", details: String((e as Error).message).slice(0, 200) }, { status: 502 });
+  }
+  // feedback.user_id is ON DELETE SET NULL, which would keep the free text after erasure.
+  const fb = await admin.from("feedback").delete().eq("user_id", user.id);
+  if (fb.error) {
+    return NextResponse.json({ error: "feedback_delete_failed", details: fb.error.message }, { status: 500 });
+  }
+  steps.feedback = "deleted";
 
   const deleteAuth = await admin.auth.admin.deleteUser(user.id);
   if (deleteAuth.error) {
@@ -76,4 +92,36 @@ export async function DELETE() {
     );
   }
   return NextResponse.json({ deleted: true, steps });
+}
+
+async function ignoreMissing(fn: () => Promise<unknown>): Promise<void> {
+  try {
+    await fn();
+  } catch (e) {
+    // Already cancelled/deleted on a previous (partially failed) attempt: that is the state we want.
+    if ((e as { code?: string }).code !== "resource_missing") throw e;
+  }
+}
+
+type StorageBucket = {
+  list: (path: string) => Promise<{ data: { id: string | null; name: string }[] | null; error: { message: string } | null }>;
+  remove: (paths: string[]) => Promise<{ error: { message: string } | null }>;
+};
+
+/** Removes every object under `prefix`, descending into sub-folders (Storage lists folders with a null id). */
+async function removeTree(bucket: StorageBucket, prefix: string): Promise<number> {
+  const { data, error } = await bucket.list(prefix);
+  if (error) throw new Error(`storage list ${prefix}: ${error.message}`);
+  let removed = 0;
+  const files: string[] = [];
+  for (const entry of data ?? []) {
+    if (entry.id === null) removed += await removeTree(bucket, `${prefix}/${entry.name}`);
+    else files.push(`${prefix}/${entry.name}`);
+  }
+  if (files.length) {
+    const res = await bucket.remove(files);
+    if (res.error) throw new Error(`storage remove ${prefix}: ${res.error.message}`);
+    removed += files.length;
+  }
+  return removed;
 }

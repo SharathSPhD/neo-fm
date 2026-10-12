@@ -198,6 +198,24 @@ export default async function SongDetailPage({
     }
   }
 
+  // Own query, tolerant of a missing column (deploy before migration 0074).
+  const dedicationRow = await (
+    supabase.from("jobs") as unknown as {
+      select: (c: string) => {
+        eq: (k: string, v: string) => {
+          maybeSingle: () => Promise<{
+            data: { dedication_to: string | null; dedication_message: string | null } | null;
+          }>;
+        };
+      };
+    }
+  )
+    .select("dedication_to, dedication_message")
+    .eq("id", data.id)
+    .maybeSingle()
+    .then((r) => r.data)
+    .catch(() => null);
+
   const doc = data.song_documents?.document_json;
   const title =
     data.song_documents?.title ??
@@ -222,6 +240,16 @@ export default async function SongDetailPage({
     try {
       const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("diction_qa").eq("job_id" as never, data.id as never).limit(1);
       dictionQa = ((runs ?? []) as { diction_qa: typeof dictionQa }[])[0]?.diction_qa ?? null;
+    } catch { /* optional */ }
+  }
+
+  // Heard per-line lyric times (separate query: the column may not exist yet
+  // on older databases, and that must not take the diction audit down too).
+  let lineTimings: unknown = null;
+  if (data.status === "completed") {
+    try {
+      const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("line_timings").eq("job_id" as never, data.id as never).limit(1);
+      lineTimings = ((runs ?? []) as { line_timings: unknown }[])[0]?.line_timings ?? null;
     } catch { /* optional */ }
   }
 
@@ -264,6 +292,11 @@ export default async function SongDetailPage({
             songId={data.id}
             initialVisibility={data.published_visibility}
             initialPublicId={data.public_id}
+            title={title}
+            initialDedication={{
+              to: dedicationRow?.dedication_to ?? "",
+              message: dedicationRow?.dedication_message ?? "",
+            }}
             canShare={data.status === "completed"}
           />
           {data.status === "completed" ? (
@@ -329,6 +362,8 @@ export default async function SongDetailPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack?.duration_seconds ?? null}
             format={latestTrack?.format ?? "wav"}
+            title={title}
+            subtitle={doc ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)}` : undefined}
           />
           {data.song_documents?.document_json &&
           (data.song_documents.document_json as SongDocumentView)?.sections
@@ -337,6 +372,8 @@ export default async function SongDetailPage({
               sections={
                 (data.song_documents.document_json as SongDocumentView).sections
               }
+              durationSeconds={latestTrack?.duration_seconds ?? null}
+              lineTimings={lineTimings}
             />
           ) : null}
           <StemsPanel songId={data.id} />
@@ -355,7 +392,7 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label="Retry" />
         </div>
       ) : (
-        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
+        <JobProgress songId={data.id} createdAt={data.created_at} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
 
       <DictionCheck qa={dictionQa} />

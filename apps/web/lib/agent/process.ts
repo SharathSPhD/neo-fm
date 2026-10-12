@@ -3,6 +3,7 @@
  * by the song poll route so a job moves as soon as its owner is watching it.
  */
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
+import { lyriaBreaker } from "./circuit-breaker";
 import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
@@ -12,7 +13,7 @@ import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
-import { mintEmbedToken } from "./embed-token";
+import { embedEngine, safeEmbedUrl } from "./embed-url";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -22,7 +23,27 @@ export function isTransient(status: number | undefined, msg: string): boolean {
   return /overloaded|ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network/i.test(msg);
 }
 
-const MAX_CLAIM = 3;
+const MAX_CLAIM = 12;
+/** Sliding pool: a slow render no longer holds back jobs queued behind it (was fixed batches of 4). */
+export const POOL_SIZE = 8;
+/** Fleet-wide ceiling on jobs being worked at once (ticks overlap, so POOL_SIZE alone is per tick). */
+export const GLOBAL_MAX = 10;
+/** A job is not started this late in a tick: the function is killed at ~300 s and the lease would be held for nothing. */
+export const START_DEADLINE_MS = 200_000;
+export const TIER_WEIGHT: Record<string, number> = { pro: 3, developer: 3, creator: 2, free: 1 };
+
+/** Weighted aging: score = minutes waited x tier weight, highest first, so paying tiers go first but nobody starves. */
+export function prioritise<T extends { started_at?: string | null }>(jobs: T[], weightOf: (j: T) => number, now = Date.now()): T[] {
+  const score = (j: T) => Math.max(1, (now - (j.started_at ? new Date(j.started_at).getTime() : now)) / 60_000 + 1) * weightOf(j);
+  return [...jobs].sort((a, b) => score(b) - score(a));
+}
+
+/** Run `fn` over `items` with at most `size` in flight, starting the next as soon as any finishes. */
+export async function runPool<T>(items: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i] as T); } };
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+}
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
 export type ProcessEnv = { environmentId: string; geminiKey: string };
@@ -59,16 +80,22 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
 
   // Plain queries (no PostgREST embeds): embed resolution depends on the schema cache
   // and failed silently once; errors are surfaced instead of swallowed.
-  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at").eq("status", "processing");
+  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at,agent_lease_until").eq("status", "processing");
   const { data: active, error: activeErr } = await (onlyJobId ? activeQuery.eq("id", onlyJobId) : activeQuery);
   if (activeErr) throw new Error(`jobs_query_failed: ${activeErr.message}`);
 
   const results: Record<string, string> = {};
   const trace: string[] = [];
-  // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
-  const CONCURRENCY = 4;
-  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
+  // Renders take ~30s+ each, so jobs run in a sliding parallel pool, highest weighted-age first.
+  const tickStart = Date.now();
+  const allActive = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null; agent_lease_until?: string | null }[];
+  const nowMs = Date.now();
+  const live = allActive.filter((j) => j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs).length;
+  // Jobs another tick holds are skipped, and new work is capped so overlapping ticks cannot exceed GLOBAL_MAX renders.
+  const free = allActive.filter((j) => !(j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs));
+  const room = onlyJobId ? free.length : Math.max(0, GLOBAL_MAX - live);
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
+    if (Date.now() - tickStart > START_DEADLINE_MS) { results[job.id] = "deferred"; return; }
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
@@ -80,7 +107,15 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
-      const outcome = await advance(job.id, {
+      // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
+      const stages: Record<string, number> = {};
+      const timed = async <T,>(name: string, fn: () => Promise<T>): Promise<T> => {
+        const t0 = Date.now();
+        try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
+      };
+      let postRenderFrom = 0;
+      let rendered = false; // a render was just answered: the agent only needs one more turn to finish, so don't wait a cron minute
+      const runAdvance = () => advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
         log: (m) => trace.push(m.slice(0, 600)),
@@ -90,17 +125,19 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
           tasteCard: tasteCard || undefined,
-          engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
+          engine: embedEngine(job.id),
         },
         music: async (a0) => {
           let a = a0;
+          // Time from the job starting to the agent asking for a render (tick granularity: +-1 cron minute).
+          if (job.started_at && stages.agent_draft === undefined) stages.agent_draft = Math.max(0, Date.now() - new Date(job.started_at).getTime());
           // Last gate before spend: the agent's own output is untrusted too.
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
-          if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
+          if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
             try {
-              a = { ...a, lyrics: await polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db)) };
+              a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
               if (!v2.allowed) throw new SafetyRefusal(v2.reason);
               await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
@@ -109,22 +146,34 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
           const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
           const sung = ss?.romanized ? ss.text : a.lyrics;
-          return generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
+          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
         },
+        gate: () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; },
+        gateRelease: () => lyriaBreaker.release(),
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
           const path = `${jobId}/${n}.mp3`;
-          const { error } = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });
+          const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
           if (error) throw new Error(error.message);
+          rendered = true;
+          postRenderFrom = Date.now();
           return path;
         },
       });
+      let outcome = await runAdvance();
+      // Handoff latency: after answering generate_music the agent finishes within seconds. Re-advance in this tick
+      // (bounded) instead of leaving the finished song waiting for the next cron minute.
+      for (let i = 0; i < 6 && rendered && outcome === "waiting" && Date.now() - tickStart < 200_000; i++) {
+        await new Promise((r) => setTimeout(r, 5_000));
+        outcome = await runAdvance();
+      }
+      if (outcome === "done" && postRenderFrom) stages.post_render = Date.now() - postRenderFrom;
       results[job.id] = outcome;
       if (outcome === "started") await assignConfig(db, job.id);
       if (outcome === "done") {
-        const cascade = await finalize(db, job.id);
-        const qa = await qaDiction(db, job.id, doc.language, geminiKey);
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none" });
+        const cascade = await timed("finalize", () => finalize(db, job.id));
+        const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: safeEmbedUrl(process.env.EMBED_URL) ? "service" : "none", stages_ms: stages });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -143,9 +192,12 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       await releaseLease(db, job.id);
     }
   };
-  for (let i = 0; i < work.length; i += CONCURRENCY) {
-    await Promise.all(work.slice(i, i + CONCURRENCY).map(runJob));
+  const tiers = new Map<string, string>();
+  if (free.length > 1) {
+    const { data: us } = await db.from("users").select("id,tier").in("id", [...new Set(free.map((w) => w.user_id))]);
+    for (const u of (us ?? []) as { id: string; tier: string | null }[]) tiers.set(u.id, u.tier ?? "free");
   }
+  await runPool(prioritise(free, (j) => TIER_WEIGHT[tiers.get(j.user_id) ?? "free"] ?? 1).slice(0, room), POOL_SIZE, runJob);
   return { results, trace };
 }
 
@@ -268,8 +320,9 @@ async function assignConfig(db: ReturnType<typeof serviceClient>, jobId: string)
 async function recordTelemetry(db: ReturnType<typeof serviceClient>, jobId: string, extra: Record<string, unknown>) {
   try {
     const { data: runs } = await db.from("agent_runs").select("lyria_calls").eq("job_id", jobId).limit(1);
-    const { data: jobs } = await db.from("jobs").select("started_at,finished_at").eq("id", jobId).limit(1);
-    const j = ((jobs ?? [])[0] ?? {}) as { started_at?: string; finished_at?: string };
+    const { data: jobs } = await db.from("jobs").select("created_at,started_at,finished_at").eq("id", jobId).limit(1);
+    const j = ((jobs ?? [])[0] ?? {}) as { created_at?: string; started_at?: string; finished_at?: string };
+    if (j.created_at && j.started_at && extra.stages_ms && typeof extra.stages_ms === "object") (extra.stages_ms as Record<string, number>).queue_wait = Math.max(0, new Date(j.started_at).getTime() - new Date(j.created_at).getTime());
     const latency_ms = j.started_at && j.finished_at ? new Date(j.finished_at).getTime() - new Date(j.started_at).getTime() : null;
     const lyria_calls = Number(((runs ?? [])[0] as { lyria_calls?: number } | undefined)?.lyria_calls ?? 0);
     await db.from("job_telemetry").upsert({ job_id: jobId, config_version_id: await liveConfigId(db), metrics: { ...extra, latency_ms, lyria_calls } }, { onConflict: "job_id" });

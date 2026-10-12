@@ -7,7 +7,9 @@
 // Migration 0043 wires the trigger that enqueues these messages.
 //
 // Required env (set on the Supabase project secrets):
-//   RESEND_API_KEY               -- Resend account API key (required in prod)
+//   RESEND_API_KEY               -- Resend account API key. While unset the
+//                                   function is a no-op: messages stay queued
+//                                   (and expire unsent after 24h).
 //   RESEND_FROM                  -- verified sender, defaults to neo-fm <no-reply@neo-fm.app>
 //   APP_URL                      -- e.g. https://neo-fm.app -- used in the email link
 //   SUPABASE_URL                 -- injected automatically
@@ -29,6 +31,7 @@ interface EmailQueueMessage {
   song_title: string | null;
   status: "completed" | "failed";
   public_id: string | null;
+  language?: string | null;
 }
 
 interface PgmqReadRow {
@@ -42,6 +45,9 @@ interface PgmqReadRow {
 const QUEUE_NAME = "email_notifications";
 const BATCH_SIZE = 5;
 const VISIBILITY_TIMEOUT_SECS = 30;
+// Messages older than this are archived unsent, so adding the Resend key
+// later does not blast users with stale "your song is ready" emails.
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 const APP_URL =
   Deno.env.get("APP_URL") ??
@@ -66,61 +72,225 @@ export interface RenderOptions {
   songTitle: string | null;
   status: "completed" | "failed";
   appUrl: string;
+  language?: string | null;
+}
+
+export interface Copy {
+  lang: string;
+  fallbackTitle: string;
+  subjectReady: (t: string) => string;
+  subjectFailed: string;
+  readyHeading: string;
+  readyBody: (t: string) => string;
+  listen: string;
+  readyFooter: string;
+  failedHeading: string;
+  failedBody: (t: string) => string;
+  retry: string;
+  failedFooter: string;
+  textReady: (t: string) => string;
+  textFailed: (t: string) => string;
+}
+
+const EN: Copy = {
+  lang: "en",
+  fallbackTitle: "Your neo-fm song",
+  subjectReady: (t) => `Your song "${t}" is ready 🎵`,
+  subjectFailed: "Song generation failed",
+  readyHeading: "Your song is ready to play",
+  readyBody: (t) => `We just finished generating ${t}.`,
+  listen: "Listen now",
+  readyFooter:
+    "neo-fm &mdash; India-first AI music. If you didn't request this song you can safely ignore this email.",
+  failedHeading: "Sorry, your generation failed",
+  failedBody: (t) =>
+    `We hit a snag trying to render ${t}. No credit was charged.`,
+  retry: "Try again",
+  failedFooter:
+    "neo-fm &mdash; If this keeps happening, reply to this email and we'll take a look.",
+  textReady: (t) => `${t} is ready to play.`,
+  textFailed: (t) => `Sorry, generation for "${t}" failed.`,
+};
+
+// Localised copy for the launch languages. Anything else falls back to EN.
+const COPY: Record<string, Copy> = {
+  en: EN,
+  hi: {
+    lang: "hi",
+    fallbackTitle: "आपका neo-fm गीत",
+    subjectReady: (t) => `आपका गीत "${t}" तैयार है 🎵`,
+    subjectFailed: "गीत बनाना सफल नहीं हुआ",
+    readyHeading: "आपका गीत सुनने के लिए तैयार है",
+    readyBody: (t) => `हमने अभी ${t} बनाना पूरा किया है।`,
+    listen: "अभी सुनें",
+    readyFooter:
+      "neo-fm &mdash; भारत के लिए AI संगीत। अगर आपने यह गीत नहीं बनवाया, तो इस ईमेल को अनदेखा करें।",
+    failedHeading: "क्षमा करें, गीत नहीं बन पाया",
+    failedBody: (t) =>
+      `${t} बनाते समय कोई समस्या आ गई। आपका कोई क्रेडिट नहीं कटा।`,
+    retry: "फिर से कोशिश करें",
+    failedFooter:
+      "neo-fm &mdash; अगर यह बार-बार हो, तो इस ईमेल का जवाब दें, हम देखेंगे।",
+    textReady: (t) => `${t} सुनने के लिए तैयार है।`,
+    textFailed: (t) => `क्षमा करें, "${t}" नहीं बन पाया।`,
+  },
+  ta: {
+    lang: "ta",
+    fallbackTitle: "உங்கள் neo-fm பாடல்",
+    subjectReady: (t) => `உங்கள் பாடல் "${t}" தயார் 🎵`,
+    subjectFailed: "பாடலை உருவாக்க முடியவில்லை",
+    readyHeading: "உங்கள் பாடல் கேட்கத் தயார்",
+    readyBody: (t) => `${t} பாடலை இப்போதுதான் உருவாக்கி முடித்தோம்.`,
+    listen: "இப்போது கேளுங்கள்",
+    readyFooter:
+      "neo-fm &mdash; இந்தியாவுக்கான AI இசை. இந்தப் பாடலை நீங்கள் கேட்கவில்லை என்றால் இந்த மின்னஞ்சலைப் புறக்கணிக்கலாம்.",
+    failedHeading: "மன்னிக்கவும், பாடல் உருவாகவில்லை",
+    failedBody: (t) =>
+      `${t} உருவாக்கும்போது சிக்கல் ஏற்பட்டது. உங்கள் கிரெடிட் கழிக்கப்படவில்லை.`,
+    retry: "மீண்டும் முயலுங்கள்",
+    failedFooter:
+      "neo-fm &mdash; இது தொடர்ந்தால் இந்த மின்னஞ்சலுக்குப் பதிலளியுங்கள், நாங்கள் பார்க்கிறோம்.",
+    textReady: (t) => `${t} கேட்கத் தயார்.`,
+    textFailed: (t) => `மன்னிக்கவும், "${t}" உருவாகவில்லை.`,
+  },
+  te: {
+    lang: "te",
+    fallbackTitle: "మీ neo-fm పాట",
+    subjectReady: (t) => `మీ పాట "${t}" సిద్ధంగా ఉంది 🎵`,
+    subjectFailed: "పాటను రూపొందించడం విఫలమైంది",
+    readyHeading: "మీ పాట వినడానికి సిద్ధంగా ఉంది",
+    readyBody: (t) => `${t} పాటను ఇప్పుడే రూపొందించడం పూర్తి చేశాం.`,
+    listen: "ఇప్పుడే వినండి",
+    readyFooter:
+      "neo-fm &mdash; భారతదేశానికి AI సంగీతం. మీరు ఈ పాటను అడగకపోతే ఈ ఇమెయిల్‌ను విస్మరించవచ్చు.",
+    failedHeading: "క్షమించండి, పాట రూపొందలేదు",
+    failedBody: (t) =>
+      `${t} రూపొందిస్తుండగా సమస్య వచ్చింది. మీ క్రెడిట్ తగ్గలేదు.`,
+    retry: "మళ్ళీ ప్రయత్నించండి",
+    failedFooter:
+      "neo-fm &mdash; ఇది మళ్ళీ మళ్ళీ జరిగితే ఈ ఇమెయిల్‌కు సమాధానం ఇవ్వండి, మేము చూస్తాం.",
+    textReady: (t) => `${t} వినడానికి సిద్ధంగా ఉంది.`,
+    textFailed: (t) => `క్షమించండి, "${t}" రూపొందలేదు.`,
+  },
+  kn: {
+    lang: "kn",
+    fallbackTitle: "ನಿಮ್ಮ neo-fm ಹಾಡು",
+    subjectReady: (t) => `ನಿಮ್ಮ ಹಾಡು "${t}" ಸಿದ್ಧವಾಗಿದೆ 🎵`,
+    subjectFailed: "ಹಾಡು ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ",
+    readyHeading: "ನಿಮ್ಮ ಹಾಡು ಕೇಳಲು ಸಿದ್ಧವಾಗಿದೆ",
+    readyBody: (t) => `${t} ಹಾಡನ್ನು ಈಗಷ್ಟೇ ರಚಿಸಿ ಮುಗಿಸಿದ್ದೇವೆ.`,
+    listen: "ಈಗ ಕೇಳಿ",
+    readyFooter:
+      "neo-fm &mdash; ಭಾರತಕ್ಕಾಗಿ AI ಸಂಗೀತ. ನೀವು ಈ ಹಾಡನ್ನು ಕೇಳಿಲ್ಲದಿದ್ದರೆ ಈ ಇಮೇಲ್ ಅನ್ನು ನಿರ್ಲಕ್ಷಿಸಬಹುದು.",
+    failedHeading: "ಕ್ಷಮಿಸಿ, ಹಾಡು ರಚನೆಯಾಗಲಿಲ್ಲ",
+    failedBody: (t) =>
+      `${t} ರಚಿಸುವಾಗ ಸಮಸ್ಯೆ ಎದುರಾಯಿತು. ನಿಮ್ಮ ಕ್ರೆಡಿಟ್ ಕಡಿತವಾಗಿಲ್ಲ.`,
+    retry: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+    failedFooter:
+      "neo-fm &mdash; ಇದು ಪದೇ ಪದೇ ಆದರೆ ಈ ಇಮೇಲ್‌ಗೆ ಉತ್ತರಿಸಿ, ನಾವು ನೋಡುತ್ತೇವೆ.",
+    textReady: (t) => `${t} ಕೇಳಲು ಸಿದ್ಧವಾಗಿದೆ.`,
+    textFailed: (t) => `ಕ್ಷಮಿಸಿ, "${t}" ರಚನೆಯಾಗಲಿಲ್ಲ.`,
+  },
+  bn: {
+    lang: "bn",
+    fallbackTitle: "আপনার neo-fm গান",
+    subjectReady: (t) => `আপনার গান "${t}" তৈরি 🎵`,
+    subjectFailed: "গান তৈরি করা যায়নি",
+    readyHeading: "আপনার গান শোনার জন্য তৈরি",
+    readyBody: (t) => `আমরা এইমাত্র ${t} তৈরি করা শেষ করেছি।`,
+    listen: "এখনই শুনুন",
+    readyFooter:
+      "neo-fm &mdash; ভারতের জন্য AI সংগীত। আপনি এই গান না চেয়ে থাকলে এই ইমেলটি উপেক্ষা করতে পারেন।",
+    failedHeading: "দুঃখিত, গান তৈরি হয়নি",
+    failedBody: (t) =>
+      `${t} তৈরি করতে গিয়ে সমস্যা হয়েছে। আপনার ক্রেডিট কাটা হয়নি।`,
+    retry: "আবার চেষ্টা করুন",
+    failedFooter:
+      "neo-fm &mdash; বারবার হলে এই ইমেলের উত্তর দিন, আমরা দেখব।",
+    textReady: (t) => `${t} শোনার জন্য তৈরি।`,
+    textFailed: (t) => `দুঃখিত, "${t}" তৈরি হয়নি।`,
+  },
+};
+
+export function copyFor(language: string | null | undefined): Copy {
+  return COPY[(language ?? "").toLowerCase()] ?? EN;
 }
 
 export function renderEmailSubject(opts: RenderOptions): string {
-  const title = (opts.songTitle ?? "").trim() || "Your neo-fm song";
-  if (opts.status === "completed") {
-    return `Your song "${title}" is ready 🎵`;
-  }
-  return `Song generation failed`;
+  const c = copyFor(opts.language);
+  const title = (opts.songTitle ?? "").trim() || c.fallbackTitle;
+  return opts.status === "completed" ? c.subjectReady(title) : c.subjectFailed;
 }
 
 export function renderEmailHtml(opts: RenderOptions): string {
-  const title = (opts.songTitle ?? "").trim() || "Your neo-fm song";
-  // public_id is the share slug; if present, the public page is nicer
-  // than the owner-only /songs/<uuid> route. The task spec asks for
-  // /songs/${job_id}, which is the canonical owner path we already
-  // expose, so we stick with that.
+  const c = copyFor(opts.language);
+  const title = (opts.songTitle ?? "").trim() || c.fallbackTitle;
+  // /songs/<job_id> is the canonical owner route.
   const songUrl = `${opts.appUrl}/songs/${opts.jobId}`;
   const retryUrl = `${opts.appUrl}/songs/new`;
+  const bold = `<strong style="color:#fef7ea;">${escapeHtml(title)}</strong>`;
   if (opts.status === "completed") {
-    return completedHtml({ title, songUrl });
+    return layout(c, {
+      title: c.readyHeading,
+      heading: c.readyHeading,
+      body: c.readyBody(bold),
+      cta: c.listen,
+      href: songUrl,
+      footer: c.readyFooter,
+    });
   }
-  return failedHtml({ title, retryUrl });
+  return layout(c, {
+    title: c.failedHeading,
+    heading: c.failedHeading,
+    body: c.failedBody(bold),
+    cta: c.retry,
+    href: retryUrl,
+    footer: c.failedFooter,
+  });
 }
 
 export function renderEmailText(opts: RenderOptions): string {
-  const title = (opts.songTitle ?? "").trim() || "Your neo-fm song";
-  const songUrl = `${opts.appUrl}/songs/${opts.jobId}`;
-  const retryUrl = `${opts.appUrl}/songs/new`;
+  const c = copyFor(opts.language);
+  const title = (opts.songTitle ?? "").trim() || c.fallbackTitle;
   if (opts.status === "completed") {
     return (
-      `${title} is ready to play.\n\n` +
-      `Listen now: ${songUrl}\n\n` +
+      `${c.textReady(title)}\n\n` +
+      `${c.listen}: ${opts.appUrl}/songs/${opts.jobId}\n\n` +
       `--\nneo-fm`
     );
   }
   return (
-    `Sorry, generation for "${title}" failed.\n\n` +
-    `Try again: ${retryUrl}\n\n` +
+    `${c.textFailed(title)}\n\n` +
+    `${c.retry}: ${opts.appUrl}/songs/new\n\n` +
     `--\nneo-fm`
   );
 }
 
-function completedHtml(opts: { title: string; songUrl: string }): string {
+// One shared dark-theme layout; Indic system fonts are listed so clients
+// that ship them render Devanagari/Tamil/Telugu/Kannada/Bengali cleanly.
+function layout(
+  c: Copy,
+  o: {
+    title: string;
+    heading: string;
+    body: string;
+    cta: string;
+    href: string;
+    footer: string;
+  },
+): string {
   return `<!doctype html>
-<html lang="en">
+<html lang="${c.lang}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Your song is ready</title>
+  <title>${escapeHtml(o.title)}</title>
 </head>
 <body style="margin:0;padding:0;background:#0a0612;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0612;">
     <tr>
       <td align="center" style="padding:32px 16px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#0a0612;color:#fef7ea;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#0a0612;color:#fef7ea;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI','Noto Sans','Noto Sans Devanagari','Noto Sans Tamil','Noto Sans Telugu','Noto Sans Kannada','Noto Sans Bengali',sans-serif;line-height:1.6;">
           <tr>
             <td style="padding:0 0 24px 0;">
               <span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;color:#fef7ea;">neo&middot;fm</span>
@@ -129,82 +299,28 @@ function completedHtml(opts: { title: string; songUrl: string }): string {
           <tr>
             <td style="padding:0 0 16px 0;">
               <h1 style="margin:0;font-size:24px;font-weight:500;letter-spacing:-0.02em;color:#fef7ea;">
-                Your song is ready to play
+                ${escapeHtml(o.heading)}
               </h1>
             </td>
           </tr>
           <tr>
             <td style="padding:0 0 24px 0;">
               <p style="margin:0;font-size:16px;color:#d9d2c4;">
-                We just finished generating <strong style="color:#fef7ea;">${escapeHtml(opts.title)}</strong>.
+                ${o.body}
               </p>
             </td>
           </tr>
           <tr>
             <td style="padding:0 0 32px 0;">
-              <a href="${opts.songUrl}" style="display:inline-block;padding:14px 24px;background:#321656;color:#fef7ea;border-radius:8px;text-decoration:none;font-weight:500;font-size:15px;">
-                Listen now
+              <a href="${o.href}" style="display:inline-block;padding:14px 24px;background:#321656;color:#fef7ea;border-radius:8px;text-decoration:none;font-weight:500;font-size:15px;">
+                ${escapeHtml(o.cta)}
               </a>
             </td>
           </tr>
           <tr>
             <td style="padding:32px 0 0 0;border-top:1px solid #1f1631;">
               <p style="margin:0;font-size:12px;color:#8b8294;">
-                neo-fm &mdash; India-first AI music. If you didn't request this song you can safely ignore this email.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
-}
-
-function failedHtml(opts: { title: string; retryUrl: string }): string {
-  return `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Generation failed</title>
-</head>
-<body style="margin:0;padding:0;background:#0a0612;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0612;">
-    <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background:#0a0612;color:#fef7ea;font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;">
-          <tr>
-            <td style="padding:0 0 24px 0;">
-              <span style="font-size:18px;font-weight:600;letter-spacing:-0.02em;color:#fef7ea;">neo&middot;fm</span>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 16px 0;">
-              <h1 style="margin:0;font-size:24px;font-weight:500;letter-spacing:-0.02em;color:#fef7ea;">
-                Sorry, your generation failed
-              </h1>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 24px 0;">
-              <p style="margin:0;font-size:16px;color:#d9d2c4;">
-                We hit a snag trying to render <strong style="color:#fef7ea;">${escapeHtml(opts.title)}</strong>. No credit was charged.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 0 32px 0;">
-              <a href="${opts.retryUrl}" style="display:inline-block;padding:14px 24px;background:#321656;color:#fef7ea;border-radius:8px;text-decoration:none;font-weight:500;font-size:15px;">
-                Try again
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:32px 0 0 0;border-top:1px solid #1f1631;">
-              <p style="margin:0;font-size:12px;color:#8b8294;">
-                neo-fm &mdash; If this keeps happening, reply to this email and we'll take a look.
+                ${o.footer}
               </p>
             </td>
           </tr>
@@ -248,6 +364,7 @@ export function buildResendRequest(
     songTitle: msg.song_title,
     status: msg.status,
     appUrl: cfg.appUrl,
+    language: msg.language ?? null,
   };
   return {
     from: cfg.from,
@@ -319,15 +436,6 @@ async function pgmqArchive(msgId: number): Promise<void> {
 }
 
 async function sendViaResend(body: ResendRequestBody): Promise<void> {
-  if (!RESEND_API_KEY) {
-    // Dry-run mode: log intent and treat as a successful send so the
-    // message archives. Same contract as the 0029-era handler.
-    console.log("[notify-job-complete] dry-run (no RESEND_API_KEY)", {
-      to: body.to,
-      subject: body.subject,
-    });
-    return;
-  }
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -352,13 +460,24 @@ export interface DrainDeps {
   send: (body: ResendRequestBody) => Promise<void>;
   appUrl: string;
   from: string;
+  now?: () => number;
 }
 
 export async function drainQueue(deps: DrainDeps): Promise<number> {
   const rows = await deps.read();
+  const now = deps.now ? deps.now() : Date.now();
   let sent = 0;
   for (const row of rows) {
     const msg = row.message;
+    const age = now - Date.parse(row.enqueued_at);
+    if (Number.isFinite(age) && age > MAX_AGE_MS) {
+      console.log("[notify-job-complete] stale message, archiving unsent", {
+        msgId: row.msg_id,
+        jobId: msg.job_id,
+      });
+      await deps.archive(row.msg_id);
+      continue;
+    }
     const body = buildResendRequest(msg, {
       appUrl: deps.appUrl,
       from: deps.from,
@@ -405,6 +524,14 @@ export async function drainQueue(deps: DrainDeps): Promise<number> {
     if (got !== WEBHOOK_SECRET) {
       return new Response("forbidden", { status: 403 });
     }
+  }
+  // No Resend key yet: leave every message queued (nothing is read, so
+  // nothing is lost or retried) and report a clean no-op.
+  if (!RESEND_API_KEY) {
+    return new Response(JSON.stringify({ processed: 0, skipped: "no_resend_key" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
   }
   try {
     const processed = await drainQueue({
