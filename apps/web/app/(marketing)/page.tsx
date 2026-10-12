@@ -1,3 +1,4 @@
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -47,6 +48,7 @@ export default async function Page() {
   return (
     <main className="min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
+      <FunnelBeacon event="landing_view" />
       <Hero />
       <ListenFirst />
       <HowItWorks />

@@ -18,7 +18,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { anthropicClient, serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkCronOrAdminBearer } from "../../../../lib/agent/auth";
 import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
 import { DEFAULT_POLISH_TEMPLATE, polishLyrics, validatePolishTemplate } from "../../../../lib/lyrics/polish";
 
@@ -37,7 +37,7 @@ async function liveTemplate(db: ReturnType<typeof serviceClient>): Promise<{ id:
 }
 
 export async function POST(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkCronOrAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const action = req.nextUrl.searchParams.get("action");
   const db = serviceClient(); const client = anthropicClient();

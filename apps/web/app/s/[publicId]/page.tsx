@@ -16,6 +16,7 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
@@ -302,6 +303,7 @@ export default async function PublicSongPage({
       {recordingLd ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(recordingLd) }} />
       ) : null}
+      <FunnelBeacon event="share_view" />
       <header className="flex flex-col gap-2">
         <Link
           href="/"

@@ -7,7 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../../lib/agent/auth";
 import { resendMailer } from "../../../../../lib/email/moderation";
 import { resolveJobReports, type ResolveAction } from "../../../../../lib/moderation/reports";
 
@@ -17,7 +17,7 @@ const ACTIONS: readonly string[] = ["takedown", "dismiss", "reinstate"];
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
-  if (!checkBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!checkAdminBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   let body: { job_id?: unknown; action?: unknown; note?: unknown };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "invalid_json" }, { status: 400 }); }
   if (typeof body.job_id !== "string" || !UUID.test(body.job_id) || typeof body.action !== "string" || !ACTIONS.includes(body.action)) {
