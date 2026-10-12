@@ -1,5 +1,5 @@
 /**
- * /api/admin/ui-review -- operator side of the UI translation review (Bearer CRON_SECRET / AGENT_TICK_SECRET).
+ * /api/admin/ui-review -- operator side of the UI translation review (Bearer ADMIN_SECRET).
  *   POST ?action=token&lang=kn[&alias=Kannada reviewer A][&days=14]   mint a reviewer link; the token is shown once
  *   POST ?action=revoke&id=<token id>   or   ?action=revoke&alias=<alias>
  *   GET  ?action=report                   per-language progress (approved, edited, not yet reviewed)
@@ -8,7 +8,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 import {
   buildPatch, clampDays, hashToken, isReviewLang, newToken, patchMarkdown, REVIEW_LANGS,
 } from "../../../../lib/ui-review/core";
@@ -21,7 +21,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const deny = () => NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
 export async function POST(req: NextRequest) {
-  if (!checkBearer(req.headers.get("authorization")).ok) return deny();
+  if (!checkAdminBearer(req.headers.get("authorization")).ok) return deny();
   const p = req.nextUrl.searchParams;
   const action = p.get("action");
   const db = serviceClient();
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!checkBearer(req.headers.get("authorization")).ok) return deny();
+  if (!checkAdminBearer(req.headers.get("authorization")).ok) return deny();
   const p = req.nextUrl.searchParams;
   const action = p.get("action");
 
