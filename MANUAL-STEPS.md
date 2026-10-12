@@ -62,10 +62,17 @@ Endpoint created, signing secret saved in Vercel, and Claude verified a real che
 Resend domain, API key and Supabase secret are in place. Claude deployed the song-ready function, added the queue wrappers (migration 0087) and a 2-minute schedule, and checked that it reads the queue. Finished songs now email their owner.
 
 ### 5.5 Forward `grievance@neo-fm.com` to `info@technektar.com`: ⏳
-The domain has no mailbox, so this is a forward. Pick one:
-- **GoDaddy (if your plan shows it):** https://dcc.godaddy.com/control/portfolio/neo-fm.com/settings → open the **Email** or **Forwarding** tab → Add forward → `grievance` → `info@technektar.com`. If GoDaddy only offers paid Microsoft 365 mailboxes, use the free option below.
-- **Free forwarding with ImprovMX:** sign up at https://improvmx.com → Add domain `neo-fm.com` → alias `grievance` → `info@technektar.com`. Then in GoDaddy DNS (https://dcc.godaddy.com/control/portfolio/neo-fm.com/settings?tab=dns) add two MX records for `@`: `mx1.improvmx.com` priority 10 and `mx2.improvmx.com` priority 20, and a TXT record for `@` with `v=spf1 include:spf.improvmx.com ~all`. Keep every other record. The Resend records live on `send`, so they do not conflict. Click Verify in ImprovMX.
-After either, send a test mail to `grievance@neo-fm.com` and tell Claude "done: 5.5".
+Free forwarding with ImprovMX, no GoDaddy mailbox needed. The only GoDaddy part is adding three DNS records (DNS is where the domain already lives).
+1. Open https://improvmx.com → sign up → Add domain `neo-fm.com`.
+2. Add an alias: `grievance` → `info@technektar.com`.
+3. Open https://dcc.godaddy.com/control/portfolio/neo-fm.com/settings?tab=dns and add:
+   - MX, Name `@`, Value `mx1.improvmx.com`, Priority 10
+   - MX, Name `@`, Value `mx2.improvmx.com`, Priority 20
+   - TXT, Name `@`, Value `v=spf1 include:spf.improvmx.com ~all`
+   Keep every other record. The Resend records are on the `send` name, so they do not conflict.
+4. Back in ImprovMX click Verify (it can take a few minutes).
+5. Send a test mail to `grievance@neo-fm.com` from another address, and check it arrives at `info@technektar.com`. Then tell Claude "done: 5.5".
+To reply as `grievance@neo-fm.com` later, ImprovMX has a free SMTP sender; ask Claude if you need it.
 
 ## 6. Replace CRON_SECRET with a random value: ⏳
 1. In a terminal run `openssl rand -hex 32` and copy the output.
