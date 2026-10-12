@@ -20,6 +20,8 @@
  *   - /auth/*, /sign-out      : 30
  *   - /sign-in, /sign-up (POST): 10
  *   - /api/report              : 5
+ *   - /api/events              : 20
+ *   - native-review ratings API and /native-review/<token> page : 30
  *   - /api/songs (POST)         : 6
  *   - /api/songs/.../publish    : 30
  *   - /api/songs/.../regenerate : 6
@@ -81,6 +83,18 @@ export function pickRule(
   }
   if (pathname === "/sign-in" || pathname === "/sign-up") {
     return isRead ? null : { bucket: "auth:submit", limit: 10 };
+  }
+  // Anonymous client telemetry: cheap per call but unauthenticated.
+  if (/^\/api\/events\/?$/.test(pathname)) {
+    return { bucket: "anon:events", limit: 20 };
+  }
+  // Native-review links are token-gated, not login-gated, so cap both the
+  // rating writes and the page itself to blunt token guessing.
+  if (/^\/api\/native-review\/[^/]+\/ratings\/?$/.test(pathname)) {
+    return { bucket: "review:rate", limit: 30 };
+  }
+  if (/^\/native-review\/[^/]+\/?$/.test(pathname)) {
+    return { bucket: "review:page", limit: 30 };
   }
   // Public abuse reports are anonymous writes into a moderation queue.
   if (/^\/api\/report\/?$/.test(pathname)) {
