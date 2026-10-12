@@ -2,6 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { buildFunnel, type FunnelRow, type FunnelSummary } from "./funnel";
+import { lyriaBudgetGbp } from "./spend-cap";
 import { summarize, type DictionRow, type HealthSummary, type JobRow } from "./health-summary";
 
 const JOB_CAP = 2000;
@@ -32,7 +33,7 @@ export async function loadHealthSummary(db: SupabaseClient, hours: number, env =
       // Same ceiling spendGuard() enforces (lib/agent/adapters.ts); only Lyria has one.
       global: (ledger.data ?? []).map((r) => ({
         provider: String(r.provider), reserved_gbp: Number(r.reserved_gbp),
-        ...(r.provider === "lyria" ? { cap_gbp: Number(env.LYRIA_BUDGET_GBP ?? "3") } : {}),
+        ...(r.provider === "lyria" ? { cap_gbp: lyriaBudgetGbp(env) } : {}),
       })),
       topUsersThisMonth: (users.data ?? []).map((r) => ({ user_id: String(r.user_id), reserved_gbp: Number(r.reserved_gbp) })),
     },
