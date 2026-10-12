@@ -10,8 +10,8 @@
 //   RESEND_API_KEY               -- Resend account API key. While unset the
 //                                   function is a no-op: messages stay queued
 //                                   (and expire unsent after 24h).
-//   RESEND_FROM                  -- verified sender, defaults to neo-fm <no-reply@neo-fm.app>
-//   APP_URL                      -- e.g. https://neo-fm.app -- used in the email link
+//   RESEND_FROM                  -- verified sender, defaults to neo-fm <noreply@neo-fm.com>
+//   APP_URL                      -- e.g. https://www.neo-fm.com -- used in the email link
 //   SUPABASE_URL                 -- injected automatically
 //   SUPABASE_SERVICE_ROLE_KEY    -- injected automatically
 //   NEO_FM_WEBHOOK_SECRET        -- optional; if set, callers must echo it
@@ -52,10 +52,10 @@ const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const APP_URL =
   Deno.env.get("APP_URL") ??
   Deno.env.get("NEO_FM_PUBLIC_APP_URL") ??
-  "https://neo-fm.app";
+  "https://www.neo-fm.com";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const RESEND_FROM =
-  Deno.env.get("RESEND_FROM") ?? "neo-fm <no-reply@neo-fm.app>";
+  Deno.env.get("RESEND_FROM") ?? "neo-fm <noreply@neo-fm.com>";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
