@@ -355,7 +355,7 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label="Retry" />
         </div>
       ) : (
-        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
+        <JobProgress songId={data.id} createdAt={data.created_at} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
 
       <DictionCheck qa={dictionQa} />

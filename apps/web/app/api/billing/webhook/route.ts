@@ -14,9 +14,11 @@
  * All of these resolve to one DB call: `apply_stripe_subscription_state()`
  * with the latest subscription state we observe. The RPC is idempotent.
  *
- * Anti-replay: Stripe sign the body with a timestamp + nonce; verifying
- * the signature already gives us replay protection within Stripe's
- * tolerance window. We don't keep our own nonce table.
+ * Idempotency: Stripe delivers at-least-once, so each event id is claimed in
+ * `stripe_webhook_events` (migration 0065) before it is applied. A duplicate
+ * delivery is acknowledged without re-applying; a concurrent in-flight one
+ * gets 409 so Stripe retries; a failed apply releases the claim so the retry
+ * can run. The signature check still guards authenticity and replay window.
  *
  * IMPORTANT: this route must NOT use the user-bound supabase client.
  * We act on behalf of the platform, not the user, so we use the
@@ -86,13 +88,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, handled: false });
   }
 
+  const admin = createServiceRoleClient();
+  const claim = await admin.rpc("claim_stripe_event", {
+    p_event_id: event.id,
+    p_event_type: event.type,
+  });
+  if (claim.error) {
+    return NextResponse.json(
+      { error: "claim_failed", details: claim.error.message },
+      { status: 500 },
+    );
+  }
+  if (claim.data === "duplicate") {
+    return NextResponse.json({ received: true, handled: true, duplicate: true });
+  }
+  if (claim.data === "in_flight") {
+    return NextResponse.json({ error: "event_in_flight" }, { status: 409 });
+  }
+
   try {
     const apply = await applyEvent(event, cfg.prices);
+    await admin.rpc("complete_stripe_event", { p_event_id: event.id });
     return NextResponse.json({ received: true, handled: true, ...apply });
   } catch (err) {
+    await admin.rpc("release_stripe_event", { p_event_id: event.id });
     // Returning 500 makes Stripe retry. That's what we want for transient
     // DB issues; we accept the cost of a (rare) duplicate retry because
-    // the apply RPC is idempotent.
+    // the apply RPC is idempotent. The claim is released above so the retry isn't seen as in-flight.
     return NextResponse.json(
       {
         error: "apply_failed",
@@ -193,6 +215,10 @@ async function applyEvent(
     p_pro_price_id: prices.pro,
   });
   if (error) {
+    // FK violation: the account was erased (DELETE /api/account) before this event arrived. Retrying can never succeed.
+    if ((error as { code?: string }).code === "23503") {
+      return { skipped: "user_deleted" };
+    }
     throw new Error(`apply_stripe_subscription_state: ${error.message}`);
   }
   return { user_id: resolvedUserId, status };

@@ -20,7 +20,7 @@ export async function GET() {
   if (authed instanceof NextResponse) return authed;
   const { user, supabase } = authed;
 
-  const [{ data: profile }, { data: jobs }] = await Promise.all([
+  const [{ data: profile, error: profile_error }, { data: jobs, error: jobs_error }] = await Promise.all([
     supabase
       .from("users")
       .select("id, email, tier, created_at")
@@ -45,22 +45,36 @@ export async function GET() {
         )
       `,
       )
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
 
   // v2 personal data (service role, strictly filtered to this user): consent records, taste profile, feedback signals,
   // lyrics as sung, billing mirror. Internal telemetry carries no personal content and is omitted.
   const admin = serviceClient(); // untyped client: v2 tables are not in the generated Database types
-  const [consents, taste, feedback, billing, runs] = await Promise.all([
+  const [consents, taste, feedback, billing, runs, presets, likes, follows, prefs, freeText] = await Promise.all([
     admin.from("consents").select("*").eq("user_id", user.id),
     admin.from("taste_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     admin.from("feedback_events").select("*").eq("user_id", user.id),
     admin.from("user_billing").select("tier, status, current_period_end, created_at").eq("user_id", user.id).maybeSingle(),
-    admin.from("agent_runs").select("job_id, lyrics, polished_lyrics, diction_qa, created_at").in("job_id", ((jobs ?? []) as { id: string }[]).map((j) => j.id)),
+    admin.from("agent_runs").select("job_id, lyrics, polished_lyrics, diction_qa, updated_at").in("job_id", ((jobs ?? []) as { id: string }[]).map((j) => j.id)),
+    admin.from("user_presets").select("*").eq("user_id", user.id),
+    admin.from("song_likes").select("*").eq("user_id", user.id),
+    admin.from("follows").select("*").eq("follower_id", user.id),
+    admin.from("preference_pairs").select("*").eq("user_id", user.id),
+    admin.from("feedback").select("*").eq("user_id", user.id),
   ]);
 
+  // A failed query would otherwise yield a silently incomplete export, which is worse than an error for a DPDP request.
+  const failed = [profile_error, jobs_error, consents, taste, feedback, billing, runs, presets, likes, follows, prefs, freeText]
+    .map((r) => (r as { error?: { message: string } | null } | null)?.error)
+    .find(Boolean);
+  if (failed) {
+    return NextResponse.json({ error: "export_failed", details: failed.message }, { status: 500 });
+  }
+
   const payload = {
-    export_version: 2,
+    export_version: 3,
     exported_at: new Date().toISOString(),
     user: profile ?? { id: user.id, email: user.email ?? null },
     songs: jobs ?? [],
@@ -69,6 +83,11 @@ export async function GET() {
     feedback_events: feedback.data ?? [],
     billing: billing.data ?? null,
     lyrics_and_pronunciation_checks: runs.data ?? [],
+    presets: presets.data ?? [],
+    likes: likes.data ?? [],
+    follows: follows.data ?? [],
+    preference_pairs: prefs.data ?? [],
+    feedback: freeText.data ?? [],
   };
 
   const body = JSON.stringify(payload, null, 2);
