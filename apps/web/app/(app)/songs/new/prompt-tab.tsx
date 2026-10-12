@@ -60,15 +60,16 @@ const PROMPT_MAX_CHARS = 500;
 
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false }: { showGuide?: boolean }) {
+export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: boolean; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
-  const [guideOpen, setGuideOpen] = useState(showGuide);
+  // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
+  const [guideOpen, setGuideOpen] = useState(showGuide && !initialIdea);
   const [pending, startTransition] = useTransition();
-  const [prompt, setPrompt] = useState("");
-  const [styleFamily, setStyleFamily] = useState<StyleFamily>(DEFAULT_STYLE.hi);
+  const [prompt, setPrompt] = useState(initialIdea?.prompt ?? "");
+  const [styleFamily, setStyleFamily] = useState<StyleFamily>(DEFAULT_STYLE[initialIdea?.language ?? "hi"]);
   const [styleTouched, setStyleTouched] = useState(false);
-  const [language, setLanguage] = useState<Language>("hi");
+  const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -85,7 +86,7 @@ export function PromptTab({ showGuide = false }: { showGuide?: boolean }) {
   // Seed the song language from the saved UI language the first time the
   // guide mounts, so a returning visitor who chose Tamil lands on Tamil.
   useEffect(() => {
-    if (showGuide && isUiLang(uiLang) && uiLang !== "en") {
+    if (showGuide && !initialIdea && isUiLang(uiLang) && uiLang !== "en") {
       setLanguage(uiLang);
       if (!styleTouched) setStyleFamily(DEFAULT_STYLE[uiLang]);
     }
