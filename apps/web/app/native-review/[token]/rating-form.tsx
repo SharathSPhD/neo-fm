@@ -64,7 +64,7 @@ export function RatingForm({ token, itemId, initial }: { token: string; itemId: 
         </div>
       </fieldset>
       <label className="block text-sm">
-        Anything we should fix? (optional, up to 500 characters)
+        Anything we should fix? (optional, up to 500 characters; please do not include personal details)
         <textarea
           className="mt-1 w-full rounded-md border border-muted/30 bg-transparent p-2"
           rows={3}

@@ -106,6 +106,11 @@ export function applySecurityHeaders(
     "Content-Security-Policy",
     csp({ supabaseHost: opts.supabaseHost, isEmbed }),
   );
+  // Reviewer links carry a secret token in the URL: never leak it via Referer, never cache the page.
+  if (/^\/(api\/)?native-review\//.test(opts.pathname)) {
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("Cache-Control", "no-store");
+  }
   return response;
 }
 

@@ -29,3 +29,27 @@ describe("review kit", () => {
     expect(s[1]).toMatchObject({ ratings: 2, reviewers: 2, soundsNativeShare: 0.5, mean: { prosody: 3 } });
   });
 });
+
+describe("token expiry and headers", () => {
+  it("clamps link lifetime to 1-60 days, default 14", async () => {
+    const { clampDays } = await import("../lib/native-review/kit");
+    expect(clampDays(null)).toBe(14);
+    expect(clampDays("abc")).toBe(14);
+    expect(clampDays("0")).toBe(14);
+    expect(clampDays("7")).toBe(7);
+    expect(clampDays("999")).toBe(60);
+  });
+
+  it("sets no-referrer and no-store on review token routes only", async () => {
+    const { NextResponse } = await import("next/server");
+    const { applySecurityHeaders } = await import("../lib/security-headers");
+    const on = applySecurityHeaders(NextResponse.next(), { pathname: "/native-review/abc", supabaseHost: null });
+    expect(on.headers.get("Referrer-Policy")).toBe("no-referrer");
+    expect(on.headers.get("Cache-Control")).toBe("no-store");
+    const api = applySecurityHeaders(NextResponse.next(), { pathname: "/api/native-review/abc/ratings", supabaseHost: null });
+    expect(api.headers.get("Referrer-Policy")).toBe("no-referrer");
+    const off = applySecurityHeaders(NextResponse.next(), { pathname: "/pricing", supabaseHost: null });
+    expect(off.headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(off.headers.get("Cache-Control")).toBeNull();
+  });
+});

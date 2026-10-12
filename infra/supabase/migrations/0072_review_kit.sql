@@ -16,9 +16,12 @@ create table if not exists public.review_tokens (
   token_hash text not null unique,
   language text not null check (language in ('hi','kn','ta','te','bn')),
   alias text check (alias is null or char_length(alias) <= 60),
-  revoked boolean not null default false,
   created_at timestamptz not null default now(),
-  last_used_at timestamptz
+  -- Links expire (default 14 days) and can be revoked by the operator.
+  expires_at timestamptz not null default (now() + interval '14 days'),
+  revoked_at timestamptz,
+  last_used_at timestamptz,
+  check (expires_at > created_at)
 );
 
 create table if not exists public.review_ratings (
@@ -39,4 +42,5 @@ create table if not exists public.review_ratings (
 alter table public.review_items enable row level security;
 alter table public.review_tokens enable row level security;
 alter table public.review_ratings enable row level security;
--- service role only (no policies)
+-- Service role only: RLS with no policies, and Supabase grants ALL on new public tables by default, so revoke that too.
+revoke all on public.review_items, public.review_tokens, public.review_ratings from anon, authenticated, public;

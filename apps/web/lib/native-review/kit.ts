@@ -85,3 +85,13 @@ export function summarize(rows: readonly RatingRow[]): LanguageSummary[] {
       };
     });
 }
+
+export const DEFAULT_TOKEN_DAYS = 14;
+export const MAX_TOKEN_DAYS = 60;
+
+/** Reviewer links expire; the operator may shorten or lengthen within bounds. */
+export function clampDays(v: string | null): number {
+  const n = Number(v);
+  if (!v || !Number.isFinite(n) || n < 1) return DEFAULT_TOKEN_DAYS;
+  return Math.min(Math.floor(n), MAX_TOKEN_DAYS);
+}

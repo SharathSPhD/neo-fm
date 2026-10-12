@@ -15,7 +15,13 @@ export async function POST(req: NextRequest, { params }: { params: { token: stri
   const { item_id, comment, ...scores } = parsed.data;
   const db = serviceClient();
   // The item must belong to this reviewer's language, so a token cannot rate other languages' songs.
-  const { data: item } = await db.from("review_items").select("id").eq("id", item_id).eq("language", reviewer.language).maybeSingle();
+  const { data: item } = await db
+    .from("review_items")
+    .select("id, jobs!inner(id)")
+    .eq("id", item_id)
+    .eq("language", reviewer.language)
+    .in("jobs.published_visibility", ["public", "unlisted"])
+    .maybeSingle();
   if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
   const { error } = await db.from("review_ratings").upsert(
     { token_id: reviewer.id, item_id, ...scores, comment: comment || null, updated_at: new Date().toISOString() },
