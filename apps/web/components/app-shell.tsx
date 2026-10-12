@@ -25,6 +25,7 @@ type NavUser = {
 const TOP_NAV_LINKS = [
   { href: "/library", label: "Library", icon: "▲" },
   { href: "/discover", label: "Discover", icon: "◎" },
+  { href: "/collections", label: "Collections", icon: "☰" },
 ] as const;
 
 type BottomLink = {

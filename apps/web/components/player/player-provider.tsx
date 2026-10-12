@@ -40,6 +40,24 @@ export interface PlayerTrack {
   artwork?: string | null;
   url: string;
   durationHint?: number | null;
+  /** Endpoint that mints a fresh signed URL; defaults to the owner route for songId. */
+  refreshPath?: string;
+}
+
+/** A queued song; its signed URL is minted when it is about to play. */
+export interface QueueItem {
+  songId: string;
+  title: string;
+  subtitle?: string;
+  artwork?: string | null;
+  /** Public slug: used for songs the listener doesn't own. */
+  publicId?: string | null;
+}
+
+export function queueAudioUrlPath(q: Pick<QueueItem, "songId" | "publicId">, owned: boolean): string {
+  return !owned && q.publicId
+    ? `/api/p/${encodeURIComponent(q.publicId)}/audio-url`
+    : `/api/songs/${encodeURIComponent(q.songId)}/audio-url`;
 }
 
 interface PlayerContextValue {
@@ -54,6 +72,14 @@ interface PlayerContextValue {
   setDataSaverPref(p: DataSaverPref): void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
   load(track: PlayerTrack): void;
+  /** Play `items` in order starting at `start`; each song's URL is fetched as it comes up. */
+  playQueue(items: (QueueItem & { refreshPath: string })[], start?: number): void;
+  next(): void;
+  previous(): void;
+  hasNext: boolean;
+  hasPrevious: boolean;
+  queueLength: number;
+  queueIndex: number;
   toggle(): void;
   seekTo(seconds: number): void;
   seekBy(delta: number): void;
@@ -86,6 +112,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const queueRef = useRef<(QueueItem & { refreshPath: string })[]>([]);
+  const [queueState, setQueueState] = useState({ length: 0, index: -1 });
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [pref, setPref] = useState<DataSaverPref>("auto");
@@ -142,6 +170,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setTrack(trackRef.current);
       return;
     }
+    queueRef.current = [];
+    setQueueState({ length: 0, index: -1 });
     sentFraction.current = 0;
     starts.current = 0;
     trackRef.current = next;
@@ -154,6 +184,74 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       el.load();
     }
   }, []);
+
+  // Resolve a queue entry's signed URL and start it. Called from a user
+  // gesture or from `ended` of the previous track, both of which keep
+  // autoplay permission; a failed lookup skips to the next song once.
+  const startQueueIndex = useCallback(async (index: number) => {
+    const item = queueRef.current[index];
+    if (!item) return;
+    setQueueState({ length: queueRef.current.length, index });
+    try {
+      const res = await fetch(item.refreshPath, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const body = (await res.json()) as { url: string; duration_seconds?: number | null };
+      if (queueRef.current[index] !== item) return; // queue replaced meanwhile
+      const el = audioRef.current;
+      sentFraction.current = 0;
+      starts.current = 0;
+      const t: PlayerTrack = {
+        songId: item.songId,
+        title: item.title,
+        subtitle: item.subtitle,
+        artwork: item.artwork,
+        url: body.url,
+        durationHint: body.duration_seconds ?? null,
+        refreshPath: item.refreshPath,
+      };
+      trackRef.current = t;
+      setTrack(t);
+      setCurrentTime(0);
+      setDuration(t.durationHint ?? 0);
+      setRefreshError(null);
+      if (el) {
+        el.src = t.url;
+        el.load();
+        void el.play().catch(() => undefined);
+      }
+    } catch {
+      if (queueRef.current[index] === item && index + 1 < queueRef.current.length) {
+        void startQueueIndex(index + 1);
+      } else {
+        setRefreshError("queue_unavailable");
+      }
+    }
+  }, []);
+
+  const playQueue = useCallback(
+    (items: (QueueItem & { refreshPath: string })[], start = 0) => {
+      if (items.length === 0) return;
+      queueRef.current = items;
+      void startQueueIndex(Math.min(Math.max(0, start), items.length - 1));
+    },
+    [startQueueIndex],
+  );
+
+  const next = useCallback(() => {
+    const i = queueState.index;
+    if (i >= 0 && i + 1 < queueRef.current.length) void startQueueIndex(i + 1);
+  }, [queueState.index, startQueueIndex]);
+
+  const previous = useCallback(() => {
+    const el = audioRef.current;
+    // Like most players: past the first few seconds, "previous" restarts the song.
+    if (el && el.currentTime > 3) {
+      el.currentTime = 0;
+      return;
+    }
+    const i = queueState.index;
+    if (i > 0) void startQueueIndex(i - 1);
+  }, [queueState.index, startQueueIndex]);
 
   const toggle = useCallback(() => {
     const el = audioRef.current;
@@ -185,6 +283,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       el.removeAttribute("src");
       el.load();
     }
+    queueRef.current = [];
+    setQueueState({ length: 0, index: -1 });
     trackRef.current = null;
     setTrack(null);
     setPlaying(false);
@@ -203,7 +303,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const resumeAt = lastPosition.current;
     const wasPlaying = !el.paused;
     try {
-      const res = await fetch(`/api/songs/${encodeURIComponent(t.songId)}/audio-url`, {
+      const res = await fetch(t.refreshPath ?? `/api/songs/${encodeURIComponent(t.songId)}/audio-url`, {
         cache: "no-store",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -245,8 +345,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       seekBy,
       seekTo,
       stop: close,
+      next: queueState.index >= 0 && queueState.index + 1 < queueState.length ? next : undefined,
+      previous: queueState.index > 0 ? previous : undefined,
     });
-  }, [track, seekBy, seekTo, close]);
+  }, [track, seekBy, seekTo, close, next, previous, queueState]);
 
   useEffect(() => {
     setMediaPlaybackState(playing);
@@ -265,12 +367,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setDataSaverPref,
       audioRef,
       load,
+      playQueue,
+      next,
+      previous,
+      hasNext: queueState.index >= 0 && queueState.index + 1 < queueState.length,
+      hasPrevious: queueState.index > 0,
+      queueLength: queueState.length,
+      queueIndex: queueState.index,
       toggle,
       seekTo,
       seekBy,
       close,
     }),
-    [track, playing, currentTime, duration, refreshing, refreshError, dataSaver, pref, setDataSaverPref, load, toggle, seekTo, seekBy, close],
+    [track, playing, currentTime, duration, refreshing, refreshError, dataSaver, pref, setDataSaverPref, load, playQueue, next, previous, queueState, toggle, seekTo, seekBy, close],
   );
 
   return (
@@ -296,6 +405,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         onEnded={() => {
           setPlaying(false);
           reportPlay();
+          // Continuous play through a collection.
+          if (queueState.index >= 0 && queueState.index + 1 < queueRef.current.length) {
+            void startQueueIndex(queueState.index + 1);
+          }
         }}
         onTimeUpdate={(e) => {
           const el = e.currentTarget;

@@ -26,6 +26,7 @@ import {
   createServerClient,
   createServiceRoleClient,
 } from "@/lib/supabase/server";
+import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { LikeButton } from "@/components/like-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
@@ -295,6 +296,11 @@ export default async function PublicSongPage({
               initialLiked={initiallyLiked}
               initialCount={likeCount}
               signedIn={!!currentUserId}
+            />
+            <AddToCollectionButton
+              jobId={data.id}
+              signedIn={!!currentUserId}
+              nextPath={`/s/${data.public_id}`}
             />
             <VariationButton
               songId={data.id}

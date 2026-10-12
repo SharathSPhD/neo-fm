@@ -50,6 +50,17 @@ export function MiniPlayer() {
               {track.subtitle ? ` · ${track.subtitle}` : ""}
             </span>
           </Link>
+          {p.queueLength > 1 ? (
+            <button
+              type="button"
+              onClick={p.previous}
+              disabled={!p.hasPrevious && p.currentTime <= 3}
+              aria-label={t("player.previous")}
+              className="inline-flex h-11 w-9 flex-none items-center justify-center rounded-full text-foreground/70 hover:text-foreground disabled:opacity-30"
+            >
+              <span aria-hidden>⏮</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={p.toggle}
@@ -58,6 +69,17 @@ export function MiniPlayer() {
           >
             <span aria-hidden>{p.playing ? "❚❚" : "▶"}</span>
           </button>
+          {p.queueLength > 1 ? (
+            <button
+              type="button"
+              onClick={p.next}
+              disabled={!p.hasNext}
+              aria-label={t("player.next")}
+              className="inline-flex h-11 w-9 flex-none items-center justify-center rounded-full text-foreground/70 hover:text-foreground disabled:opacity-30"
+            >
+              <span aria-hidden>⏭</span>
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={p.close}
