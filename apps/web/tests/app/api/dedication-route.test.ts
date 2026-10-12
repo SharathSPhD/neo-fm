@@ -50,13 +50,13 @@ describe("PUT /api/songs/[id]/dedication", () => {
     (requireUser as ReturnType<typeof vi.fn>).mockResolvedValue(
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
-    const res = await PUT(req({ to: "Amma" }), { params: { id: JOB } });
+    const res = await PUT(req({ to: "Amma" }), { params: Promise.resolve({ id: JOB }) });
     expect(res.status).toBe(401);
   });
 
   it("blocked text never reaches the database", async () => {
     const { svcRpc, userRpc } = setup({ allowed: false });
-    const res = await PUT(req({ to: "Amma", message: "bad" }), { params: { id: JOB } });
+    const res = await PUT(req({ to: "Amma", message: "bad" }), { params: Promise.resolve({ id: JOB }) });
     expect(res.status).toBe(422);
     expect(svcRpc).not.toHaveBeenCalled();
     expect(userRpc).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe("PUT /api/songs/[id]/dedication", () => {
 
   it("moderated text is written via the service client with the caller as owner", async () => {
     const { svcRpc, userRpc } = setup({ allowed: true });
-    const res = await PUT(req({ to: " Amma ", message: "Happy birthday" }), { params: { id: JOB } });
+    const res = await PUT(req({ to: " Amma ", message: "Happy birthday" }), { params: Promise.resolve({ id: JOB }) });
     expect(res.status).toBe(200);
     expect(userRpc).not.toHaveBeenCalled();
     expect(svcRpc).toHaveBeenCalledWith("set_dedication", {
@@ -77,7 +77,7 @@ describe("PUT /api/songs/[id]/dedication", () => {
 
   it("clearing skips moderation and maps a non-owner to 403", async () => {
     const { svcRpc } = setup({ allowed: true, rpcError: { code: "42501" } });
-    const res = await PUT(req({ to: null, message: null }), { params: { id: JOB } });
+    const res = await PUT(req({ to: null, message: null }), { params: Promise.resolve({ id: JOB }) });
     expect(screenRequest).not.toHaveBeenCalled();
     expect(svcRpc).toHaveBeenCalled();
     expect(res.status).toBe(403);

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     "Answers to the most-asked questions about neo-fm: how generation works, what we support, quota, ownership, and getting help.",
 };
 
-type TFn = ReturnType<typeof serverI18n>["t"];
+type TFn = Awaited<ReturnType<typeof serverI18n>>["t"];
 
 interface FaqEntry {
   q: UiKey;
@@ -69,8 +69,8 @@ const FAQ: readonly FaqEntry[] = [
   },
 ];
 
-export default function HelpPage() {
-  const { t } = serverI18n();
+export default async function HelpPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3">

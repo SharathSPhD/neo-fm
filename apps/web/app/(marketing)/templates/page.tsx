@@ -54,8 +54,8 @@ const STYLE_TONE: Record<string, string> = {
   western: "from-rose-500/10 via-rose-500/5 to-transparent border-rose-500/25",
 };
 
-export default function TemplatesPage() {
-  const { t } = serverI18n();
+export default async function TemplatesPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16">
       <header className="flex flex-col gap-3">

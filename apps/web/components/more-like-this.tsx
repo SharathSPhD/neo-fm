@@ -35,7 +35,7 @@ export async function MoreLikeThis({
   // style/language come from stored documents and are interpolated into a
   // PostgREST .or() filter below; only real enum values get through (an
   // unknown enum value makes Postgres reject the whole query).
-  const { t: tr } = serverI18n();
+  const { t: tr } = await serverI18n();
   const orFilter = similarOrFilter(style, language);
   if (!orFilter) return null;
   try {

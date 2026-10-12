@@ -85,7 +85,7 @@ export default async function Page() {
 }
 
 async function Hero() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const samples = await loadLanguageSamples();
   return (
     <section className="relative overflow-hidden border-b border-muted/30" aria-labelledby="hero-heading">
@@ -115,8 +115,8 @@ async function Hero() {
   );
 }
 
-function HowItWorks() {
-  const { t } = serverI18n();
+async function HowItWorks() {
+  const { t } = await serverI18n();
   return (
     <section className="border-t border-muted/30" aria-labelledby="how-heading">
       <div className="mx-auto max-w-6xl px-6 py-16">
@@ -136,8 +136,8 @@ function HowItWorks() {
   );
 }
 
-function Different() {
-  const { t } = serverI18n();
+async function Different() {
+  const { t } = await serverI18n();
   return (
     <section className="border-t border-muted/30" aria-labelledby="diff-heading">
       <div className="mx-auto max-w-6xl px-6 py-16">
@@ -155,8 +155,8 @@ function Different() {
   );
 }
 
-function PricingTeaser() {
-  const { t } = serverI18n();
+async function PricingTeaser() {
+  const { t } = await serverI18n();
   return (
     <section className="border-t border-muted/30" aria-labelledby="price-heading">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
@@ -170,8 +170,8 @@ function PricingTeaser() {
   );
 }
 
-function Footer() {
-  const { t } = serverI18n();
+async function Footer() {
+  const { t } = await serverI18n();
   return (
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
       <nav aria-label="Songs by language" className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">

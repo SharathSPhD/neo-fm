@@ -24,8 +24,8 @@ const COMMITMENTS: readonly { title: UiKey; body: UiKey }[] = [
   { title: "trust.c6.title", body: "trust.c6.body" },
 ];
 
-export default function TrustPage() {
-  const { t } = serverI18n();
+export default async function TrustPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">{t("trust.title")}</h1>

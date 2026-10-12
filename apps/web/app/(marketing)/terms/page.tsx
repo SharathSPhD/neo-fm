@@ -24,8 +24,8 @@ const SECTIONS: { h: string; body: string[] }[] = [
   { h: "Law", body: ["These terms are governed by the laws of India; courts in Bengaluru have jurisdiction, subject to any mandatory consumer rights you have where you live."] },
 ];
 
-export default function TermsPage() {
-  const { t } = serverI18n();
+export default async function TermsPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">{t("legal.terms.title")}</h1>

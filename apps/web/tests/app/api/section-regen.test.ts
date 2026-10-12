@@ -52,7 +52,7 @@ it("returns 401 when unauthenticated", async () => {
   );
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(401);
 });
@@ -62,7 +62,7 @@ it("returns 400 for an invalid song id", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: "not-a-uuid", sectionId: SECTION_ID },
+    params: Promise.resolve({ id: "not-a-uuid", sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(400);
 });
@@ -83,7 +83,7 @@ it("happy path: 202 + RPC called with the right args", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(202);
   const body = await res.json();
@@ -111,7 +111,7 @@ it("translates parent_job_not_found -> 404", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(404);
 });
@@ -125,7 +125,7 @@ it("translates parent_job_not_completed -> 409", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(409);
 });
@@ -139,7 +139,7 @@ it("translates section_not_in_document -> 400", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(400);
 });
@@ -153,7 +153,7 @@ it("translates quota_exceeded -> 429", async () => {
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
   const res = await POST(req, {
-    params: { id: PARENT_ID, sectionId: SECTION_ID },
+    params: Promise.resolve({ id: PARENT_ID, sectionId: SECTION_ID }),
   });
   expect(res.status).toBe(429);
 });

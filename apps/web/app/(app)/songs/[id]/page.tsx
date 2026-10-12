@@ -90,12 +90,13 @@ interface RegenChildView {
   created_at: string;
 }
 
-export default async function SongDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { t } = serverI18n();
+export default async function SongDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
@@ -457,8 +458,8 @@ export default async function SongDetailPage({
   );
 }
 
-function SongMetadata({ doc }: { doc: SongDocumentView }) {
-  const { t } = serverI18n();
+async function SongMetadata({ doc }: { doc: SongDocumentView }) {
+  const { t } = await serverI18n();
   const rows: { label: string; value: string }[] = [];
   if (doc.tempo_bpm) rows.push({ label: t("songmeta.tempo"), value: `${doc.tempo_bpm} BPM` });
   if (doc.time_signature)
@@ -510,7 +511,7 @@ function SongMetadata({ doc }: { doc: SongDocumentView }) {
   );
 }
 
-function SectionsView({
+async function SectionsView({
   songId,
   doc,
   regenChildren,
@@ -521,7 +522,7 @@ function SectionsView({
   regenChildren: RegenChildView[];
   canRegen: boolean;
 }) {
-  const { t: tr } = serverI18n();
+  const { t: tr } = await serverI18n();
   const inFlightSections = new Set(
     regenChildren
       .filter((c) => c.status === "queued" || c.status === "processing")

@@ -35,10 +35,11 @@ export const dynamic = "force-dynamic";
 const MAX_SONGS = 200;
 
 type Props = {
-  params: { handle: string };
+  params: Promise<{ handle: string }>;
 };
 
-export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ handle: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const handle = params.handle.toLowerCase();
   const title = `@${handle} on neo-fm`;
   const data = await loadProfile(handle);
@@ -148,8 +149,9 @@ function Count({ text, n }: { text: string; n: number }) {
   );
 }
 
-export default async function ProfilePage({ params }: Props) {
-  const { t } = serverI18n();
+export default async function ProfilePage(props: Props) {
+  const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const handle = params.handle.toLowerCase();
 

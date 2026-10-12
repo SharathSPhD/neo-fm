@@ -13,7 +13,8 @@ export const alt = "neo-fm playlist";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OgImage({ params }: { params: { publicId: string } }) {
+export default async function OgImage(props: { params: Promise<{ publicId: string }> }) {
+  const params = await props.params;
   let title = "neo-fm";
   let songTitles: string[] = [];
   let count = 0;

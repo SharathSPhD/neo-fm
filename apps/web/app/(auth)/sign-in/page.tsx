@@ -6,12 +6,13 @@ import { createServerClient } from "@/lib/supabase/server";
 import { SignInForm } from "./sign-in-form";
 import { serverI18n } from "@/lib/i18n/server";
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams?: { next?: string; error?: string; error_description?: string };
-}) {
-  const { t } = serverI18n();
+export default async function SignInPage(
+  props: {
+    searchParams?: Promise<{ next?: string; error?: string; error_description?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data } = await supabase.auth.getUser();
   if (data?.user) {

@@ -10,7 +10,7 @@ type Row = { public_id: string; song_documents: { title: string | null; language
 
 /** "For you": public songs ranked by the listener's own (consented, deletable) taste weights. Renders nothing without consent or signal. */
 export async function ForYou() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: u } = await supabase.auth.getUser();
   const userId = u?.user?.id;

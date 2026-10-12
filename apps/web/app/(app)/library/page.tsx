@@ -86,12 +86,13 @@ const ALLOWED_SORTS = new Set([
   "favorites",
 ]);
 
-export default async function LibraryPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const { t } = serverI18n();
+export default async function LibraryPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) redirect("/sign-in?next=/library");

@@ -7,8 +7,9 @@ import { createServerClient } from "@/lib/supabase/server";
 
 import { CreationCanvas } from "./creation-canvas";
 
-export default async function NewSongPage({ searchParams }: { searchParams?: { idea?: string } }) {
-  const { t } = serverI18n();
+export default async function NewSongPage(props: { searchParams?: Promise<{ idea?: string }> }) {
+  const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   // `?idea=<id>` comes from the /ideas gallery. Only known catalog ids are honoured; the prompt text never travels in the URL.
   const idea = ideaById(searchParams?.idea);
   const supabase = createServerClient();

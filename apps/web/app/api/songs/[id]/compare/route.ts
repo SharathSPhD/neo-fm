@@ -27,10 +27,8 @@ const CompareBodySchema = z.object({
   choice: z.enum(["A", "B", "tie"]),
 });
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;

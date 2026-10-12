@@ -55,7 +55,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(401);
   });
@@ -69,7 +69,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: "not-a-uuid" } },
+      { params: Promise.resolve({ id: "not-a-uuid" }) },
     );
     expect(res.status).toBe(400);
   });
@@ -78,7 +78,7 @@ describe("POST /api/songs/[id]/compare", () => {
     const s = makeFakeSupabase();
     authed(s);
     const res = await POST(makeReq({ choice: "A" }), {
-      params: { id: JOB_ID },
+      params: Promise.resolve({ id: JOB_ID }),
     });
     expect(res.status).toBe(400);
   });
@@ -92,7 +92,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "neither",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(400);
   });
@@ -106,7 +106,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_A,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(422);
   });
@@ -125,7 +125,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(200);
     expect(received).not.toBeNull();
@@ -149,7 +149,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "tie",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(200);
     expect(
@@ -170,7 +170,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(403);
   });
@@ -188,7 +188,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(404);
   });
@@ -206,7 +206,7 @@ describe("POST /api/songs/[id]/compare", () => {
         loser_track_id: TRACK_B,
         choice: "A",
       }),
-      { params: { id: JOB_ID } },
+      { params: Promise.resolve({ id: JOB_ID }) },
     );
     expect(res.status).toBe(422);
   });

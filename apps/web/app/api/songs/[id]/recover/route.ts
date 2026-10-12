@@ -25,10 +25,8 @@ import { requireUser } from "../../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;

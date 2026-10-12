@@ -16,11 +16,10 @@ export const alt = "neo-fm song";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OgImage({
-  params,
-}: {
-  params: { publicId: string };
+export default async function OgImage(props: {
+  params: Promise<{ publicId: string }>;
 }) {
+  const params = await props.params;
   const song = await loadShareSong(params.publicId);
   if (!song) {
     return renderShareCard({
