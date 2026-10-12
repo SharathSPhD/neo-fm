@@ -120,10 +120,12 @@ const FAQ: readonly FaqEntry[] = [
     a: (
       <p>
         Go to <Link href="/account">/account</Link> and use the
-        <em> Delete account</em> button at the bottom. We anonymise your
-        songs (the audio stays in the share index if you published it)
-        and remove your PII within 30 days. Reach out before deleting if
-        you&apos;d also like a data export.
+        <em> Delete account</em> button at the bottom. This cancels any
+        subscription and permanently deletes your account, your songs
+        (including published ones, so shared links stop working), audio,
+        cover art and feedback. Use <em>Export my data</em> first if you
+        want a copy. Copies in provider backups expire on their own
+        schedule.
       </p>
     ),
   },

@@ -21,6 +21,12 @@ export default async function SignUpPage() {
       </header>
       <GoogleButton />
       <SignUpForm />
+      <p className="text-xs text-foreground/60">
+        By creating an account you confirm you are 18 or older and accept our{" "}
+        <Link className="underline" href="/terms">Terms</Link> and{" "}
+        <Link className="underline" href="/privacy">Privacy notice</Link>, which explain what we collect, why, who processes it,
+        and your rights. Questions: grievance@neo-fm.com.
+      </p>
       <footer className="text-sm text-foreground/60">
         Already signed up?{" "}
         <Link className="underline" href="/sign-in">

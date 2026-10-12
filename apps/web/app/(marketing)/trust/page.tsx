@@ -71,6 +71,9 @@ export default function TrustPage() {
           notice, and resolve other grievances within 15 days.
         </p>
         <p className="mt-2 text-sm text-foreground/60">
+          The rules are in our <Link href="/content-policy" className="underline">Content policy</Link>; to appeal a takedown, write to the same address with the song link.
+        </p>
+        <p className="mt-2 text-sm text-foreground/60">
           Not a report?{" "}
           <Link href="/feedback" className="underline">Send us feedback</Link>.
         </p>
