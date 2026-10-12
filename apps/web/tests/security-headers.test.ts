@@ -63,6 +63,14 @@ describe("report-only strict CSP", () => {
     expect(h.get("Reporting-Endpoints")).toBe('csp-endpoint="/api/csp-report"');
     expect(h.get("Content-Security-Policy")).toContain("'unsafe-inline'");
   });
+  it("carries the nonce in the enforced header's first script-src* directive so Next can stamp its scripts", async () => {
+    const h = withNonce("/library");
+    const first = h.get("Content-Security-Policy")!.split(";").map((d) => d.trim()).find((d) => d.startsWith("script-src"))!;
+    expect(first).toBe("script-src-attr 'nonce-n0nce'");
+    const { getScriptNonceFromHeader } = await import("next/dist/server/app-render/get-script-nonce-from-header");
+    expect(getScriptNonceFromHeader(h.get("Content-Security-Policy")!)).toBe("n0nce");
+    expect(getScriptNonceFromHeader(h.get("Content-Security-Policy-Report-Only")!)).toBe("n0nce");
+  });
   it("keeps the embed route framable in the report-only policy too", () => {
     expect(withNonce("/s/abc123/embed").get("Content-Security-Policy-Report-Only")).toContain("frame-ancestors *");
   });

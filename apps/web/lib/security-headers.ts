@@ -71,9 +71,11 @@ export const CSP_REPORT_PATH = "/api/csp-report";
 function csp({
   supabaseHost,
   isEmbed,
+  nonce,
 }: {
   supabaseHost: string | null;
   isEmbed: boolean;
+  nonce?: string;
 }): string {
   const connect = connectSources(supabaseHost);
   const frameAncestors = isEmbed ? "*" : "'self'";
@@ -82,6 +84,11 @@ function csp({
   // nonces in the App Router edge runtime. Tracking nonces /
   // strict-dynamic in v1.2 (ADR 0021 follow-up).
   return [
+    // Next.js finds the per-request nonce by taking the first `script-src*` directive of the request's
+    // Content-Security-Policy header, and middleware response headers are copied onto that request, so the ENFORCED
+    // header must carry it for the report-only strict policy to get nonce-stamped scripts. `script-src-attr` is the
+    // harmless carrier: a nonce never matches inline event-handler attributes, so this only forbids them (React emits none).
+    ...(nonce ? [`script-src-attr 'nonce-${nonce}'`] : []),
     "default-src 'self'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -170,7 +177,7 @@ export function applySecurityHeaders(
   }
   response.headers.set(
     "Content-Security-Policy",
-    csp({ supabaseHost: opts.supabaseHost, isEmbed }),
+    csp({ supabaseHost: opts.supabaseHost, isEmbed, nonce: opts.nonce }),
   );
   return response;
 }
