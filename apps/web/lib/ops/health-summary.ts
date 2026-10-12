@@ -12,7 +12,7 @@ export interface DictionRow {
   diction_qa: { matchPct?: number; error?: string } | null;
 }
 export interface SpendInput {
-  global: { provider: string; reserved_gbp: number }[];
+  global: { provider: string; reserved_gbp: number; cap_gbp?: number }[];
   topUsersThisMonth: { user_id: string; reserved_gbp: number }[];
 }
 
@@ -28,7 +28,7 @@ export interface HealthSummary {
   alerts: string[];
 }
 
-export const THRESHOLDS = { queuedAgeS: 600, failureRate: 0.2, minJobsForRate: 5, p90S: 900 };
+export const THRESHOLDS = { queuedAgeS: 600, failureRate: 0.2, minJobsForRate: 5, p90S: 900, spendRatio: 0.8 };
 
 export function percentile(sorted: number[], p: number): number | null {
   if (sorted.length === 0) return null;
@@ -53,6 +53,11 @@ export function buildAlerts(s: Omit<HealthSummary, "alerts">): string[] {
   const total = Object.values(s.counts).reduce((a, b) => a + b, 0);
   if (total >= THRESHOLDS.minJobsForRate && failed / total > THRESHOLDS.failureRate) {
     out.push(`failure rate ${Math.round((failed / total) * 100)}% (${failed}/${total}) in last ${s.window_hours}h`);
+  }
+  for (const g of s.spend.global) {
+    if (g.cap_gbp && g.reserved_gbp / g.cap_gbp >= THRESHOLDS.spendRatio) {
+      out.push(`${g.provider} spend ${Math.round((g.reserved_gbp / g.cap_gbp) * 100)}% of cap (${g.reserved_gbp.toFixed(2)}/${g.cap_gbp})`);
+    }
   }
   if (s.latency_s.p90 !== null && s.latency_s.p90 > THRESHOLDS.p90S) {
     out.push(`p90 latency ${Math.round(s.latency_s.p90 / 60)} min over ${s.latency_s.n} songs`);
