@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FunnelSummary } from "../../../lib/ops/funnel";
 import type { ErrorGroup } from "../../../lib/obs/group-errors";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
+import type { TrendPoint } from "../../../lib/ops/snapshot";
 
 const KEY = "neo-fm-ops-secret";
 const mins = (s: number | null) => (s === null ? "-" : `${(s / 60).toFixed(1)} min`);
@@ -17,11 +18,13 @@ export default function HealthPage() {
   const [secret, setSecret] = useState("");
   const [hours, setHours] = useState(24);
   const [data, setData] = useState<(HealthSummary & { truncated?: boolean }) | null>(null);
+  const [trend, setTrend] = useState<TrendPoint[] | null>(null);
+  const [trendDays, setTrendDays] = useState(7);
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ groups: ErrorGroup[]; total: number; truncated: boolean } | null>(null);
 
-  const load = useCallback(async (s: string, h: number) => {
+  const load = useCallback(async (s: string, h: number, td: number) => {
     setErr(null);
     try {
       const r = await fetch(`/api/admin/health-summary?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
@@ -30,6 +33,8 @@ export default function HealthPage() {
       // Funnel is secondary: a missing migration should not hide the health numbers.
       const f = await fetch(`/api/admin/funnel?days=${Math.max(1, Math.round(h / 24))}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       setFunnel(f.ok ? await f.json() : null);
+      const t = await fetch(`/api/admin/health-trends?days=${td}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setTrend(t.ok ? (await t.json()).points : null);
     } catch (e) {
       setData(null);
       setErr((e as Error).message);
@@ -46,14 +51,14 @@ export default function HealthPage() {
   useEffect(() => {
     try {
       const saved = sessionStorage.getItem(KEY);
-      if (saved) { setSecret(saved); void load(saved, 24); }
+      if (saved) { setSecret(saved); void load(saved, 24, 7); }
     } catch { /* storage unavailable: the operator just pastes the secret again */ }
   }, [load]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     try { sessionStorage.setItem(KEY, secret); } catch { /* see above */ }
-    void load(secret, hours);
+    void load(secret, hours, trendDays);
   };
 
   return (
@@ -75,10 +80,13 @@ export default function HealthPage() {
       {err && <p role="alert" className="text-sm text-red-600">{err}</p>}
       {data && (
         <>
-          <p role="status" className={`rounded border p-3 text-sm ${data.alerts.length ? "border-red-500" : "border-green-600"}`}>
-            {data.alerts.length ? data.alerts.join(" · ") : "No alerts"}
-            {data.truncated ? " (job list truncated; counts are a floor)" : ""}
-          </p>
+          <div
+            role={data.alerts.length ? "alert" : "status"}
+            className={`sticky top-0 z-10 rounded border p-3 text-sm ${data.alerts.length ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100" : "border-green-600"}`}
+          >
+            {data.alerts.length ? <ul className="list-disc pl-5">{data.alerts.map((a) => <li key={a}>{a}</li>)}</ul> : "No alerts"}
+            {data.truncated ? <p>Job list truncated; counts are a floor.</p> : null}
+          </div>
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {["queued", "processing", "completed", "failed"].map((k) => (
               <div key={k} className="rounded border p-3"><div className="text-xs uppercase opacity-70">{k}</div><div className="text-2xl">{data.counts[k] ?? 0}</div></div>
@@ -112,8 +120,28 @@ export default function HealthPage() {
               ["Songs shared", String(funnel.songs_shared), ""],
               ["Shared-song views", String(funnel.views.share_view), ""],
               ["Pricing views", String(funnel.views.pricing_view), ""],
+              ["Upgrade clicks (checkout started)", String(funnel.views.checkout_started), pct(funnel.conversion.pricing_view_to_checkout)],
             ]} />
           )}
+          <section>
+            <div className="mb-2 flex items-center gap-3">
+              <h2 className="font-medium">Trends</h2>
+              {[7, 30].map((d) => (
+                <button key={d} type="button" aria-pressed={trendDays === d} className={`rounded border px-2 text-xs ${trendDays === d ? "font-semibold" : "opacity-70"}`}
+                  onClick={() => { setTrendDays(d); void load(secret, hours, d); }}>{d}d</button>
+              ))}
+            </div>
+            {!trend || trend.length === 0 ? (
+              <p className="text-sm opacity-70">No daily snapshots yet. They are stored once a day at 08:40 UTC.</p>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Spark title="Failure rate" unit="%" values={trend.map((p) => (p.failure_rate === null ? null : p.failure_rate * 100))} />
+                <Spark title="p90 latency" unit=" min" values={trend.map((p) => (p.p90_s === null ? null : p.p90_s / 60))} />
+                <Spark title="Lyria reserved" unit="£" values={trend.map((p) => p.lyria_reserved_gbp)} />
+                <Spark title="Sign-ups" unit="" values={trend.map((p) => p.signups)} />
+              </div>
+            )}
+          </section>
           <section>
             <h2 className="mb-2 font-medium">Recent errors</h2>
             {!errors ? <p className="text-sm opacity-70">Error reports unavailable.</p> : errors.groups.length === 0 ? (
@@ -160,5 +188,22 @@ function Table({ title, head, rows }: { title: string; head: string[]; rows: str
         </table>
       )}
     </section>
+  );
+}
+
+function Spark({ title, unit, values }: { title: string; unit: string; values: (number | null)[] }) {
+  const pts = values.map((v, i) => ({ v, i })).filter((p): p is { v: number; i: number } => p.v !== null);
+  const last = pts.length ? pts[pts.length - 1]!.v : null;
+  const max = Math.max(1e-9, ...pts.map((p) => p.v));
+  const x = (i: number) => (values.length > 1 ? (i / (values.length - 1)) * 100 : 50);
+  const path = pts.map((p, n) => `${n ? "L" : "M"}${x(p.i).toFixed(1)},${(28 - (p.v / max) * 26).toFixed(1)}`).join(" ");
+  return (
+    <div className="rounded border p-3">
+      <div className="text-xs uppercase opacity-70">{title}</div>
+      <div className="text-lg">{last === null ? "-" : unit === "£" ? `£${last.toFixed(2)}` : `${Math.round(last * 10) / 10}${unit}`}</div>
+      <svg viewBox="0 0 100 30" className="h-8 w-full" role="img" aria-label={`${title} over ${values.length} days`}>
+        <path d={path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      </svg>
+    </div>
   );
 }
