@@ -6,8 +6,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { anthropicClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
-import { mintEmbedToken } from "../../../../lib/agent/embed-token";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { embedEngine } from "../../../../lib/agent/embed-url";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +31,7 @@ const CHECKS = [
 ];
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   const client = anthropicClient();
   const existing = req.nextUrl.searchParams.get("session");
@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
   const env = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
   const s = await client.beta.sessions.create({ agent: agentIdFor("free"), environment_id: env, title: "sandbox probe" });
   await client.beta.sessions.events.send(s.id, {
-    events: [{ type: "user.message", content: [{ type: "text", text: "Diagnostic request from the operator. Run each of these shell commands exactly once with the bash tool, in order, and then reply with the raw output of each (no commentary):\n" + [...(process.env.EMBED_URL && process.env.EMBED_TOKEN ? engineChecks(process.env.EMBED_URL.trim(), mintEmbedToken(process.env.EMBED_TOKEN.trim(), 300)) : []), ...CHECKS].join("\n") }] }],
+    events: [{ type: "user.message", content: [{ type: "text", text: "Diagnostic request from the operator. Run each of these shell commands exactly once with the bash tool, in order, and then reply with the raw output of each (no commentary):\n" + [...(() => { const e = embedEngine("ma-sandbox", 300); return e ? engineChecks(e.url, e.token) : []; })(), ...CHECKS].join("\n") }] }],
   });
   const confirmed = new Set<string>();
   const t0 = Date.now();

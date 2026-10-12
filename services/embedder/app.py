@@ -75,6 +75,13 @@ def _authorized(given: str) -> bool:
     if hmac.compare_digest(given.encode(), master.encode()):
         return True
     parts = given.split(".")
+    if len(parts) == 4 and parts[0] == "v2":
+        # v2.<exp>.<scope>.<sig>: same as v1 but bound to a scope (job id) so a leaked token is attributable.
+        _, exp, scope, sig = parts
+        if not exp.isdigit() or int(exp) < time.time() or not scope.replace("-", "").replace("_", "").isalnum():
+            return False
+        want = hmac.new(master.encode(), f"v2.{exp}.{scope}".encode(), hashlib.sha256).hexdigest()
+        return hmac.compare_digest(sig.encode(), want.encode())
     if len(parts) != 3 or parts[0] != "v1" or not parts[1].isdigit() or int(parts[1]) < time.time():
         return False
     want = hmac.new(master.encode(), f"v1.{parts[1]}".encode(), hashlib.sha256).hexdigest()
