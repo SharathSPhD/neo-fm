@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const TABLES = new Set([
   "jobs", "agent_runs", "tracks", "song_documents", "eval_runs", "eval_judgments", "job_telemetry", "job_assignments",
-  "feedback_events", "config_versions", "song_reports", "user_spend", "user_billing", "users",
+  "feedback_events", "config_versions", "song_reports", "user_spend", "spend_ledger", "user_billing", "users",
 ]);
 const COL = /^[a-z_][a-z0-9_]*$/i;
 const SELECT = /^[a-z0-9_,()*:>.\- ]+$/i;

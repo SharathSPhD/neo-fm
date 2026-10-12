@@ -264,6 +264,7 @@ export default async function SongDetailPage({
             songId={data.id}
             initialVisibility={data.published_visibility}
             initialPublicId={data.public_id}
+            title={title}
             canShare={data.status === "completed"}
           />
           {data.status === "completed" ? (
@@ -337,6 +338,7 @@ export default async function SongDetailPage({
               sections={
                 (data.song_documents.document_json as SongDocumentView).sections
               }
+              durationSeconds={latestTrack?.duration_seconds ?? null}
             />
           ) : null}
           <StemsPanel songId={data.id} />
@@ -355,7 +357,7 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label="Retry" />
         </div>
       ) : (
-        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
+        <JobProgress songId={data.id} createdAt={data.created_at} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
 
       <DictionCheck qa={dictionQa} />

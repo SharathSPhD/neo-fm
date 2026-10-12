@@ -12,9 +12,9 @@ export function EmptyState({
   cta,
   icon,
 }: {
-  title: string;
-  body?: string;
-  cta?: { href: string; label: string };
+  title: React.ReactNode;
+  body?: React.ReactNode;
+  cta?: { href: string; label: React.ReactNode };
   icon?: React.ReactNode;
 }) {
   return (
