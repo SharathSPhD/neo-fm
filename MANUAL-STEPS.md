@@ -10,13 +10,13 @@ Status as of 2026-10-12: ✅ done · ⏳ still needs you · ➖ optional.
 | # | Step | Status |
 |---|------|--------|
 | 1 | Production on the neo-fm-prod Supabase project | ✅ done |
-| 2 | Supabase auth settings, Google sign-in | ✅ done (old URLs); ⏳ add the new domain URLs (2a below) |
-| 3 | Stripe test webhook | ✅ done, verified working; ⏳ point it at the new domain (3a below) |
+| 2 | Supabase auth settings, Google sign-in | ✅ done, including the new domain (2a) |
+| 3 | Stripe test webhook | ✅ done, including the new domain (3a) |
 | 4 | Domain neo-fm.com | ✅ done: DNS, Vercel domains, `NEXT_PUBLIC_APP_URL` |
 | 5 | Email (Resend) | ✅ done and live (songs email on completion); ⏳ only 5.5, the grievance@ mailbox forward |
-| 6 | Replace CRON_SECRET | ⏳ |
+| 6 | Replace CRON_SECRET | ✅ done (rotated, live after redeploy) |
 | 7 | Before public launch | ⏳ |
-| 8 | Rate limiting store (Upstash) | ⏳ health still reports `upstash: missing` |
+| 8 | Rate limiting store (Upstash) | ✅ done, `/api/health` reports upstash ok |
 | 9 | Re-run agent setup (removes web_fetch from the Pro agent) | ⏳ |
 
 ## Do these next, in this order
@@ -36,7 +36,7 @@ Verified by Claude. Redeployed.
 ## 2. Supabase Auth settings: ✅ DONE (original URLs)
 Done and checked: Site URL and redirect URL for `https://neo-fm-web.vercel.app`, Google OAuth client and provider, Pro plan.
 
-### 2a. Add the new domain: ⏳
+### 2a. Add the new domain: ✅ DONE
 1. Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/url-configuration
    - Site URL: `https://www.neo-fm.com`
    - Redirect URLs: add `https://www.neo-fm.com/**` (keep the vercel.app one too)
@@ -47,7 +47,7 @@ Done and checked: Site URL and redirect URL for `https://neo-fm-web.vercel.app`,
 ## 3. Stripe webhook (test mode): ✅ DONE
 Endpoint created, signing secret saved in Vercel, and Claude verified a real checkout reaching the webhook and updating the plan.
 
-### 3a. Point the webhook at the new domain: ⏳
+### 3a. Point the webhook at the new domain: ✅ DONE
 1. Open https://dashboard.stripe.com/test/webhooks → your endpoint → ⋯ → Update details.
 2. Endpoint URL: `https://www.neo-fm.com/api/billing/webhook` → Save. The signing secret does not change.
 3. Tell Claude "done: 3a". Claude runs a checkout test again.
@@ -74,7 +74,7 @@ Free forwarding with ImprovMX, no GoDaddy mailbox needed. The only GoDaddy part 
 5. Send a test mail to `grievance@neo-fm.com` from another address, and check it arrives at `info@technektar.com`. Then tell Claude "done: 5.5".
 To reply as `grievance@neo-fm.com` later, ImprovMX has a free SMTP sender; ask Claude if you need it.
 
-## 6. Replace CRON_SECRET with a random value: ⏳
+## 6. Replace CRON_SECRET with a random value: ✅ DONE
 1. In a terminal run `openssl rand -hex 32` and copy the output.
 2. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables → `CRON_SECRET` → Edit → paste → Production → Save.
 3. Redeploy: https://vercel.com/ss-projects-f08e52ab/neo-fm-web/deployments → latest Production row → ⋯ → Redeploy.
@@ -87,7 +87,7 @@ To reply as `grievance@neo-fm.com` later, ImprovMX has a free SMTP sender; ask C
 4. Ask a native speaker for each language to review a few songs and the translated screens.
 5. Have counsel review the Terms and Privacy pages (the list of questions is in `docs/LEGAL-REVIEW.md` once PR #76 is merged).
 
-## 8. Rate limiting store (Upstash Redis, free tier): ⏳
+## 8. Rate limiting store (Upstash Redis, free tier): ✅ DONE
 Why: without it, per-IP rate limits live in memory on each serverless instance, so abuse protection is weak. `https://www.neo-fm.com/api/health` shows `upstash: missing` until this is set.
 1. Open https://console.upstash.com/redis → Create database → region `ap-south-1` (Mumbai) → Free.
 2. On the database page copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
@@ -95,11 +95,15 @@ Why: without it, per-IP rate limits live in memory on each serverless instance, 
 (Alternative: install the Upstash integration from https://vercel.com/marketplace/upstash, which adds both variables for you.)
 
 ## 9. Re-run agent setup: ⏳
-Why: a security change removed web access (`web_fetch`) from the Pro agent. The change only takes effect when the agent definitions are re-published. Claude cannot send the CRON_SECRET, so run this once from your own terminal (replace `YOUR_CRON_SECRET`; do not paste it in chat):
+Why: a security change removed web access (`web_fetch`) from the Pro agent. It only takes effect when the agent definitions are re-published. Claude cannot send your `CRON_SECRET`, so run this once from any terminal with internet (your Mac is fine; it does not run on the server). Use the NEW secret from step 6, and run it only after the site has redeployed with that secret (it has):
 ```
-curl -X POST -H "Authorization: Bearer YOUR_CRON_SECRET" "https://www.neo-fm.com/api/admin/ma-setup?upgrade=1"
+read -s CRON_SECRET
+curl -i --max-time 120 -X POST -H "Authorization: Bearer $CRON_SECRET" "https://www.neo-fm.com/api/admin/ma-setup?upgrade=1"
 ```
-A JSON reply listing the agents means it worked. Tell Claude "done: 9".
+`read -s` waits for you to paste the secret, then press Enter; nothing is echoed or kept in history. `-i` shows the status line, so you always see something.
+- `200` plus JSON listing agents: worked. Tell Claude "done: 9".
+- `401`: wrong secret, or the old secret. Paste the new one.
+- `504` or a timeout: run it again. It takes up to a minute and never duplicates anything.
 
 ## Decisions Claude is waiting for in chat (not dashboard steps)
 - Paid test renders: 3 Pro 60 s songs (about £0.75) for the latency measurement, and the full-length 60 s re-run (about £3.75) for the quality report. Neither has run. Approve in chat and Claude starts them.
