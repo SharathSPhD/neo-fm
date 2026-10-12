@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { FunnelSummary } from "../../../lib/ops/funnel";
+import type { ErrorGroup } from "../../../lib/obs/group-errors";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
 import type { TrendPoint } from "../../../lib/ops/snapshot";
 
@@ -21,6 +22,7 @@ export default function HealthPage() {
   const [trendDays, setTrendDays] = useState(7);
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [errors, setErrors] = useState<{ groups: ErrorGroup[]; total: number; truncated: boolean } | null>(null);
 
   const load = useCallback(async (s: string, h: number, td: number) => {
     setErr(null);
@@ -36,6 +38,13 @@ export default function HealthPage() {
     } catch (e) {
       setData(null);
       setErr((e as Error).message);
+    }
+    // Independent of the job summary: a failure here must not hide the rest of the dashboard.
+    try {
+      const r = await fetch(`/api/admin/client-errors?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setErrors(r.ok ? await r.json() : null);
+    } catch {
+      setErrors(null);
     }
   }, []);
 
@@ -131,6 +140,28 @@ export default function HealthPage() {
                 <Spark title="Sign-ups" unit="" values={trend.map((p) => p.signups)} />
               </div>
             )}
+          </section>
+          <section>
+            <h2 className="mb-2 font-medium">Recent errors</h2>
+            {!errors ? <p className="text-sm opacity-70">Error reports unavailable.</p> : errors.groups.length === 0 ? (
+              <p className="text-sm opacity-70">No browser errors reported in this window.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead><tr>{["Count", "Error", "Page", "Last seen", "Request"].map((h) => <th key={h} className="text-left font-normal opacity-70">{h}</th>)}</tr></thead>
+                <tbody>
+                  {errors.groups.map((g) => (
+                    <tr key={g.fingerprint} className="align-top">
+                      <td>{g.count}</td>
+                      <td className="break-words"><span className="font-medium">{g.name}</span>: {g.message}</td>
+                      <td className="break-all">{g.route || "-"}</td>
+                      <td>{g.last_seen.slice(5, 16).replace("T", " ")}</td>
+                      <td className="break-all font-mono text-xs">{g.sample_request_id?.slice(0, 8) ?? "-"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {errors?.truncated ? <p className="mt-1 text-xs opacity-60">Showing the newest {errors.total} reports; counts are a floor.</p> : null}
           </section>
           <p className="text-xs opacity-60">Generated {data.generated_at}</p>
         </>

@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  __resetRateLimitState,
   enforceRateLimit,
   pickRule,
   type RateLimitRule,
@@ -39,9 +40,91 @@ describe("pickRule", () => {
     ["/api/lyrics", "api:default", 60],
     ["/api/me", "api:default", 60],
   ])("picks rule for %s", (p, bucket, limit) => {
-    const rule = pickRule(p);
+    const rule = pickRule(p)!;
     expect(rule.bucket).toBe(bucket);
     expect(rule.limit).toBe(limit);
+  });
+});
+
+describe("pickRule (auth, report, method-awareness)", () => {
+  it("limits the auth surface", () => {
+    expect(pickRule("/auth/callback", "GET")).toEqual({ bucket: "auth:flow", limit: 30 });
+    expect(pickRule("/sign-out", "POST")?.bucket).toBe("auth:flow");
+    expect(pickRule("/sign-in", "POST")).toEqual({ bucket: "auth:submit", limit: 10 });
+    expect(pickRule("/sign-up", "POST")?.bucket).toBe("auth:submit");
+  });
+  it("does not limit GET views of the sign-in/up pages", () => {
+    expect(pickRule("/sign-in", "GET")).toBeNull();
+    expect(pickRule("/sign-up", "GET")).toBeNull();
+  });
+  it.each(["/", "/pricing", "/library", "/songs/abc", "/songs/new", "/discover", "/s/abc"])(
+    "does not limit page route %s",
+    (p) => {
+      expect(pickRule(p, "GET")).toBeNull();
+    },
+  );
+  it("never throttles repeated page views", async () => {
+    for (let i = 0; i < 200; i++) {
+      const rule = pickRule("/", "GET");
+      expect(rule).toBeNull();
+    }
+  });
+  it("caps browser error reports at 10/min", () => {
+    expect(pickRule("/api/client-errors", "POST")).toEqual({ bucket: "anon:client-errors", limit: 10 });
+  });
+  it("limits events and native-review (api + page)", () => {
+    expect(pickRule("/api/events", "POST")).toEqual({ bucket: "anon:events", limit: 20 });
+    expect(pickRule("/api/native-review/tok123/ratings", "POST")).toEqual({ bucket: "review:rate", limit: 30 });
+    expect(pickRule("/native-review/tok123", "GET")).toEqual({ bucket: "review:page", limit: 30 });
+  });
+  it("gives /api/report a tight anonymous-write budget", () => {
+    expect(pickRule("/api/report", "POST")).toEqual({ bucket: "anon:report", limit: 5 });
+  });
+  it("only charges the generation budget for POST /api/songs", () => {
+    expect(pickRule("/api/songs", "POST")?.bucket).toBe("songs:create");
+    expect(pickRule("/api/songs", "GET")?.bucket).toBe("api:default");
+  });
+});
+
+describe("enforceRateLimit (upstash)", () => {
+  const rule: RateLimitRule = { bucket: "up", limit: 2 };
+  beforeEach(() => {
+    __resetRateLimitState();
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "https://example.upstash.io");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "tok");
+  });
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("uses Upstash counts when reachable", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify([{ result: 3 }, { result: 0 }, { result: 42 }])),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const r = await enforceRateLimit(mkReq({ ip: "9.9.9.9" }), rule);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(r.ok).toBe(false);
+    expect(r.resetSeconds).toBe(42);
+  });
+
+  it("falls back to memory and trips the breaker on failure", async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new Error("down"));
+    vi.stubGlobal("fetch", fetchMock);
+    const a = await enforceRateLimit(mkReq({ ip: "8.8.8.8" }), rule);
+    const b = await enforceRateLimit(mkReq({ ip: "8.8.8.8" }), rule);
+    const c = await enforceRateLimit(mkReq({ ip: "8.8.8.8" }), rule);
+    expect([a.ok, b.ok, c.ok]).toEqual([true, true, false]);
+    // Breaker open: only the first request attempted Upstash.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to memory on a non-OK Upstash response", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("no", { status: 500 })));
+    const r = await enforceRateLimit(mkReq({ ip: "7.7.7.7" }), rule);
+    expect(r.ok).toBe(true);
+    expect(r.remaining).toBe(1);
   });
 });
 

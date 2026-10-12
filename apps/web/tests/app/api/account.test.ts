@@ -141,6 +141,13 @@ describe("GET /api/account/export", () => {
     expect(cols.length).toBeGreaterThan(0);
     expect(cols.filter((c) => !PROD_AGENT_RUNS.includes(c))).toEqual([]);
   });
+  it("user_billing select uses only production columns (it has no tier column)", async () => {
+    const PROD_USER_BILLING = ["user_id", "stripe_customer_id", "stripe_subscription_id", "stripe_price_id", "status", "current_period_end", "cancel_at_period_end", "created_at", "updated_at"];
+    await GET();
+    const cols = db.selects.find((x) => x.table === "user_billing")?.cols.split(",").map((c) => c.trim()) ?? [];
+    expect(cols.length).toBeGreaterThan(0);
+    expect(cols.filter((c) => !PROD_USER_BILLING.includes(c))).toEqual([]);
+  });
   it("fails instead of returning a silently incomplete export", async () => {
     db.tables.song_likes = { data: null, error: { message: "db down" } };
     expect((await GET()).status).toBe(500);
