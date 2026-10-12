@@ -42,6 +42,10 @@ import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
+
 import { PublicSongAudio } from "./public-song-audio";
 
 export const dynamic = "force-dynamic";
@@ -288,6 +292,10 @@ export default async function PublicSongPage(
     initiallyLiked = !!probe.data;
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    publishedOnly: true,
+    viewerId: currentUserId,
+  });
   // Structured data only where the page is indexable: public and not dedicated (a dedication names a person).
   const recordingLd =
     doc && data.published_visibility === "public" && !dedication
@@ -334,6 +342,7 @@ export default async function PublicSongPage(
           ) : null}
         </p>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
 
       {dedication ? (
         <section
@@ -369,6 +378,22 @@ export default async function PublicSongPage(
               initialCount={likeCount}
               signedIn={!!currentUserId}
             />
+            {data.status === "completed" && data.song_documents ? (
+              <MakeInLanguageButton
+                songId={data.id}
+                title={displayTitle}
+                sourceLanguage={data.song_documents.language}
+                sourceStyle={data.song_documents.style_family}
+                durationSeconds={
+                  ([30, 60, 90, 180].includes(doc?.target_duration_seconds ?? 0)
+                    ? doc?.target_duration_seconds
+                    : 60) as 30 | 60 | 90 | 180
+                }
+                existingLanguages={versionSiblings.map((v) => v.language)}
+                signedIn={!!currentUserId}
+                nextPath={`/s/${data.public_id}`}
+              />
+            ) : null}
             <AddToCollectionButton
               jobId={data.id}
               signedIn={!!currentUserId}

@@ -26,6 +26,9 @@ import { createServerClient } from "@/lib/supabase/server";
 import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { RemixButton } from "./remix-button";
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
 import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
@@ -248,6 +251,11 @@ export default async function SongDetailPage(
     } catch { /* optional */ }
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    viewerId: userData.user.id,
+  });
+  const originalBrief =
+    typeof doc?.metadata?.prompt === "string" ? doc.metadata.prompt : null;
   // Heard per-line lyric times (separate query: the column may not exist yet
   // on older databases, and that must not take the diction audit down too).
   let lineTimings: unknown = null;
@@ -304,6 +312,17 @@ export default async function SongDetailPage(
             }}
             canShare={data.status === "completed"}
           />
+          {data.status === "completed" && doc && data.song_documents ? (
+            <MakeInLanguageButton
+              songId={data.id}
+              title={title}
+              sourceLanguage={data.song_documents.language}
+              sourceStyle={data.song_documents.style_family}
+              durationSeconds={doc.target_duration_seconds as 30 | 60 | 90 | 180}
+              originalBrief={originalBrief}
+              existingLanguages={versionSiblings.map((v) => v.language)}
+            />
+          ) : null}
           {data.status === "completed" ? <AddToCollectionButton jobId={data.id} /> : null}
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
@@ -351,6 +370,7 @@ export default async function SongDetailPage(
           ) : null}
         </div>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
 
       {data.error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
