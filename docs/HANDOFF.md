@@ -75,16 +75,21 @@ Known weak spots: prosody (behind baseline), Kannada evidence is thinnest, Lyria
 
 ## 8. Merge queue and open work at closure
 
-Filled in at the end of the session; see section 11. Items that were still open when this was written:
+Merged this session (all on `main`, production deploys from it): #74 language versions (0084), #80 notifications (0085), #85 recap, #87 Next 15.5 / React 19, #104 line timings (0077), #105 and #106 and #107 and #113 quality work (diction gate runs in shadow mode only), #110 manual steps closed, #114 RLS audit CI plus best-effort embedder, #94 a11y polish, and the area handoff notes in `docs/handoff/`.
 
-| Item | State |
-|---|---|
-| #74 language versions | Migration 0084 already applied to prod. Waiting on CI then merge. |
-| #80 notifications | Needs migration 0085 applied to prod before merge. Web push stays dormant. |
-| #85 recap | Waiting on #74/#80 order. |
-| #105, #106, #107, #113 | Quality thread: results docs, synced-lyrics matching fix, diction gate in shadow mode (touches `lib/agent`), miss analysis (no live change). |
-| #114 | RLS audit CI job (keep); its MANUAL-STEPS step 11 is to be removed. |
-| #62 listener insights (0078), #56 lyric meanings (0076), #54, #60, #36, #27, #46, #76 legal, #94, #83 visual regression | Not landed. Anything not merged by closure is closed with a note; reopen deliberately. |
+Still open, deliberately not merged (decide one by one; none is needed for the live product):
+
+| PR | What | Why not merged |
+|---|---|---|
+| #45 | Billing hardening (no double subscription, usage meter) | Last to land; merge when CI is green (see closure log). Test-mode billing only. |
+| #76 | Legal/DPDP copy pack (draft) | Merge conflicts; needs counsel review anyway. |
+| #62 | Creator insights (migration 0078) | Needs migration applied and a privacy check on play counts. |
+| #88 | Native-review page (migration 0086, draft) | Needs migration applied; only useful once native reviewers exist. |
+| #46 | Review kit (migration 0072, draft) | Same. |
+| #56 | Lyrics meaning toggle (migration 0076, draft) | Needs migration applied first. |
+| #83 | Visual regression suite | Advisory; regenerate baselines after UI settles. |
+| #36, #54, #27, #60, #123 | Prosody experiment, FAQ rewrite, trust evidence, docs nits, quality handoff (drafts) | Not needed for the live product. |
+| Dependabot PRs | tailwind 4, typescript 7, vitest 5, actions, docker, python bumps | Major bumps need their own migration work; minor ones are safe to take. |
 
 ## 9. Backlog worth doing next (in order)
 
@@ -108,4 +113,7 @@ Filled in at the end of the session; see section 11. Items that were still open 
 
 ## 11. Closure log
 
-Appended at the end of the session with the final merged PR list, migrations applied to prod, and anything closed unmerged.
+- Migrations applied to `neo-fm-prod` this session: 0069 through 0075, 0077, 0079 through 0085, 0087 and 0088 (see `infra/supabase/migrations`). Not applied: 0072, 0076, 0078, 0086 (their PRs are open).
+- Production verified after the last merge: `/api/health` ok (Supabase and Upstash), sign-in works on Next 15, `/account/notifications` renders.
+- The RLS audit job (`scripts/rls-audit.sh`) needs every new table or view classified in `infra/supabase/tests/rls_audit.sql`; migration 0085's tables were added after #114 merged.
+- Test accounts to delete before launch: `lat-bot@neo-fm.test` (Pro, latency tests), `e2e-bot@neo-fm.test`, showcase users.
