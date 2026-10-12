@@ -75,17 +75,20 @@ export function alignLines(lines: string[], segments: Segment[], durationS: numb
       }
     }
     if (best.cer > maxCer) return;
-    const endT = best.e < chars.length ? times[best.e] : durationS;
-    Object.assign(out[i], { startS: times[best.s], endS: Math.max(endT, times[best.s]), cer: best.cer, sung: true });
+    const target = out[i];
+    const startT = times[best.s];
+    if (!target || startT === undefined) return;
+    const endT = times[best.e] ?? durationS;
+    Object.assign(target, { startS: startT, endS: Math.max(endT, startT), cer: best.cer, sung: true });
     cursor = best.e;
   });
-  for (let i = 0; i < out.length; i++) {
-    if (out[i].sung) continue;
+  out.forEach((line, i) => {
+    if (line.sung) return;
     const prev = out.slice(0, i).reverse().find((l) => Number.isFinite(l.endS));
     const nxt = out.slice(i + 1).find((l) => l.sung);
-    out[i].startS = prev?.endS ?? 0;
-    out[i].endS = Math.max(out[i].startS, nxt?.startS ?? durationS);
-  }
+    line.startS = prev?.endS ?? 0;
+    line.endS = Math.max(line.startS, nxt?.startS ?? durationS);
+  });
   return out;
 }
 
