@@ -51,22 +51,29 @@ export async function POST(req: NextRequest) {
   const baseline = req.nextUrl.searchParams.get("baseline") === "best6" ? "best6" : "single";
   const polish = req.nextUrl.searchParams.get("polish") === "1"; // apply the Sonnet meter/diction polish to reused PCE lyrics
   const reuse = req.nextUrl.searchParams.get("reuse"); // copy finished PCE arms from another batch (no re-run)
-  for (const b of pool.slice(offset, offset + n)) {
+  const one = async (b: (typeof pool)[number]) => {
     const base = { batch, brief_id: b.id, language: b.language, style_family: b.style, brief: b.text, config_version_id: configId };
     try {
-      const text = baseline === "best6" ? await bestOfSix(client, b.language, b.style, b.text) : await singleShot(client, b.language, b.style, b.text);
-      await db.from("eval_runs").upsert({ ...base, arm: "single", status: "done", lyrics: text }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+      const { data: have } = await db.from("eval_runs").select("id").eq("batch", batch).eq("brief_id", b.id).eq("arm", "single").maybeSingle();
+      if (!have) {
+        const text = baseline === "best6" ? await bestOfSix(client, b.language, b.style, b.text) : await singleShot(client, b.language, b.style, b.text);
+        await db.from("eval_runs").upsert({ ...base, arm: "single", status: "done", lyrics: text }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+      }
       if (reuse) {
         const { data: prev } = await db.from("eval_runs").select("lyrics,session_id").eq("batch", reuse).eq("brief_id", b.id).eq("arm", "pce").eq("status", "done").maybeSingle();
-        if (prev?.lyrics) { await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "done", lyrics: polish ? await polishLyrics(client, { language: b.language, style: b.style, brief: b.text, lyrics: prev.lyrics }) : prev.lyrics, session_id: prev.session_id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true }); out.push(`${b.id}: reused`); continue; }
+        if (prev?.lyrics) { await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "done", lyrics: polish ? await polishLyrics(client, { language: b.language, style: b.style, brief: b.text, lyrics: prev.lyrics }) : prev.lyrics, session_id: prev.session_id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true }); out.push(`${b.id}: reused`); return; }
       }
+      const { data: haveP } = await db.from("eval_runs").select("id").eq("batch", batch).eq("brief_id", b.id).eq("arm", "pce").maybeSingle();
+      if (haveP) { out.push(`${b.id}: exists`); return; }
       const s = await sessions.create({ agentId: agentIdFor("free"), environmentId: envId, title: `eval ${batch} ${b.id}` });
       const engine = process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim(), 3600) } : undefined;
       await sessions.sendOutcome(s.id, { description: briefText({ language: b.language, styleFamily: b.style, targetSeconds: 30, prompt: b.text, engine }) + LYRICS_ONLY, rubric: "- lyrics.md exists, in the target language and script, sectioned for singing", maxIterations: 1 });
       await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "running", session_id: s.id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
       out.push(`${b.id}: queued`);
     } catch (e) { out.push(`${b.id}: ${String((e as Error).message).slice(0, 120)}`); }
-  }
+  };
+  const todo = pool.slice(offset, offset + n);
+  for (let i = 0; i < todo.length; i += 5) await Promise.all(todo.slice(i, i + 5).map(one));
   return NextResponse.json({ batch, out });
 }
 
@@ -77,6 +84,29 @@ export async function GET(req: NextRequest) {
   const action = req.nextUrl.searchParams.get("action") ?? "report";
   if (!batch) return NextResponse.json({ error: "batch required" }, { status: 400 });
   const db = serviceClient(); const client = anthropicClient(); const sessions = sessionApi();
+
+  if (action === "polishcopy") {
+    // Copy a finished batch into `to`, polishing the PCE arm (the product path); the baseline arm is copied unchanged.
+    const to = req.nextUrl.searchParams.get("to");
+    const off = Number(req.nextUrl.searchParams.get("offset") ?? 0); const cnt = Number(req.nextUrl.searchParams.get("n") ?? 15);
+    if (!to) return NextResponse.json({ error: "to required" }, { status: 400 });
+    const { data: src } = await db.from("eval_runs").select("*").eq("batch", batch).eq("status", "done").order("brief_id").order("arm");
+    const rows = (src ?? []) as { brief_id: string; arm: string; language: string; style_family: string; brief: string; lyrics: string; session_id: string | null; config_version_id: string | null }[];
+    const ids = [...new Set(rows.map((r) => r.brief_id))].slice(off, off + cnt);
+    const log: string[] = [];
+    await Promise.all(ids.map(async (id) => {
+      const pce = rows.find((r) => r.brief_id === id && r.arm === "pce"); const one = rows.find((r) => r.brief_id === id && r.arm === "single");
+      if (!pce || !one) return;
+      try {
+        const keep = { batch: to, brief_id: id, language: pce.language, style_family: pce.style_family, brief: pce.brief, config_version_id: pce.config_version_id, status: "done" };
+        await db.from("eval_runs").upsert({ ...keep, arm: "single", lyrics: one.lyrics }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+        const { data: ex } = await db.from("eval_runs").select("id").eq("batch", to).eq("brief_id", id).eq("arm", "pce").maybeSingle();
+        if (!ex) await db.from("eval_runs").upsert({ ...keep, arm: "pce", session_id: pce.session_id, lyrics: await polishLyrics(client, { language: pce.language, style: pce.style_family, brief: pce.brief, lyrics: pce.lyrics }) }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+        log.push(`${id}: ok`);
+      } catch (e) { log.push(`${id}: ${String((e as Error).message).slice(0, 80)}`); }
+    }));
+    return NextResponse.json({ batch, to, log, total: [...new Set(rows.map((r) => r.brief_id))].length });
+  }
 
   if (action === "events") {
     const sid = req.nextUrl.searchParams.get("session");
@@ -115,7 +145,7 @@ export async function GET(req: NextRequest) {
     const { data: judged } = await db.from("eval_judgments").select("brief_id").eq("batch", batch);
     const have = new Set(((judged ?? []) as { brief_id: string }[]).map((j) => j.brief_id));
     const rows = (all ?? []) as { brief_id: string; arm: string; status: string; lyrics: string | null; language: string; brief: string }[];
-    let budget = 3; // keep each advance call well inside maxDuration
+    let budget = 8; // keep each advance call well inside maxDuration
     for (const id of new Set(rows.map((r) => r.brief_id))) {
       if (have.has(id) || budget <= 0) continue;
       const pce = rows.find((r) => r.brief_id === id && r.arm === "pce"); const one = rows.find((r) => r.brief_id === id && r.arm === "single");
@@ -130,12 +160,23 @@ export async function GET(req: NextRequest) {
   }
 
   const { data: j } = await db.from("eval_judgments").select("brief_id,winner,detail").eq("batch", batch);
-  const { data: runs } = await db.from("eval_runs").select("brief_id,arm,status").eq("batch", batch);
-  const judgments = (j ?? []) as { brief_id: string; winner: string }[];
-  const count = (w: string) => judgments.filter((x) => x.winner === w).length;
+  const { data: runs } = await db.from("eval_runs").select("brief_id,arm,status,language").eq("batch", batch);
+  const judgments = (j ?? []) as { brief_id: string; winner: string; detail: { dim_diff?: Record<string, number> } }[];
+  const lang = new Map(((runs ?? []) as { brief_id: string; language: string }[]).map((r) => [r.brief_id, r.language]));
+  const count = (w: string, list = judgments) => list.filter((x) => x.winner === w).length;
+  const by_language: Record<string, { pce: number; other: number; tie: number }> = {};
+  for (const x of judgments) { const l = lang.get(x.brief_id) ?? "?"; const e = (by_language[l] ??= { pce: 0, other: 0, tie: 0 }); if (x.winner === "pce") e.pce++; else if (x.winner === "single") e.other++; else e.tie++; }
+  const dims: Record<string, number[]> = {};
+  for (const x of judgments) for (const [k, v] of Object.entries(x.detail?.dim_diff ?? {})) (dims[k] ??= []).push(v);
+  const mean_dim_diff = Object.fromEntries(Object.entries(dims).map(([k, v]) => [k, Math.round((v.reduce((a, b) => a + b, 0) / v.length) * 100) / 100]));
+  // two-sided exact sign test on non-tied pairs (PCE vs other)
+  const w = count("pce"), l = count("single"), nn = w + l;
+  let p = 1;
+  if (nn > 0) { const k = Math.max(w, l); let tail = 0; let c = 1; for (let i = 0; i <= nn; i++) { if (i > 0) c = (c * (nn - i + 1)) / i; if (i >= k) tail += c; } p = Math.min(1, (2 * tail) / 2 ** nn); }
   return NextResponse.json({
-    batch, judged: judgments.length, pce_wins: count("pce"), single_wins: count("single"), ties: count("tie"),
+    batch, judged: judgments.length, pce_wins: w, single_wins: l, ties: count("tie"), sign_test_p: Math.round(p * 1000) / 1000,
+    by_language, mean_dim_diff,
     pending_runs: ((runs ?? []) as { status: string }[]).filter((r) => r.status === "running").length,
-    per_brief: judgments,
+    per_brief: judgments.map((x) => ({ brief_id: x.brief_id, winner: x.winner })),
   });
 }
