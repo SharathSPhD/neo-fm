@@ -11,18 +11,26 @@
  *   4. Bypass for Supabase storage (signed URLs are time-bound; we
  *      never want a stale URL served from cache).
  */
-const CACHE_VERSION = "neo-fm-v1";
+const CACHE_VERSION = "neo-fm-v2";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
+const MAX_PAGES = 20;
 
+// Only what is identical for every visitor. Signed-in pages (/library,
+// /songs/...) are deliberately NOT precached or runtime-cached: they are
+// per-user, and a shared device must never serve one user's HTML to the
+// next. Offline navigations to those fall back to /offline.
 const SHELL_ROUTES = [
-  "/",
-  "/library",
   "/offline",
   "/manifest.webmanifest",
   "/icon-192.png",
   "/icon-512.png",
+  "/icon-maskable-192.png",
+  "/icon-maskable-512.png",
 ];
+
+// Public marketing pages that are safe to serve from cache when offline.
+const CACHEABLE_PAGES = new Set(["/", "/discover", "/pricing", "/trust", "/help", "/templates"]);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -91,13 +99,9 @@ self.addEventListener("fetch", (event) => {
         const cache = await caches.open(STATIC_CACHE);
         const hit = await cache.match(req);
         if (hit) return hit;
-        try {
-          const res = await fetch(req);
-          if (res.ok) cache.put(req, res.clone());
-          return res;
-        } catch (e) {
-          throw e;
-        }
+        const res = await fetch(req);
+        if (res.ok) cache.put(req, res.clone());
+        return res;
       })(),
     );
     return;
@@ -113,10 +117,15 @@ self.addEventListener("fetch", (event) => {
           if (
             res.ok &&
             !res.redirected &&
+            CACHEABLE_PAGES.has(url.pathname) &&
             res.headers.get("content-type")?.includes("text/html")
           ) {
             const cache = await caches.open(SHELL_CACHE);
-            cache.put(req, res.clone());
+            await cache.put(req, res.clone());
+            const keys = await cache.keys();
+            if (keys.length > MAX_PAGES + SHELL_ROUTES.length) {
+              await cache.delete(keys[SHELL_ROUTES.length]);
+            }
           }
           return res;
         } catch {
@@ -140,7 +149,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // API + everything else: network only, with cache as fallback.
+  // API + everything else: network only. Never answer /api from cache.
+  if (url.pathname.startsWith("/api/")) return;
   event.respondWith(
     (async () => {
       try {
