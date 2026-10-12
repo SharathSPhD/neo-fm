@@ -17,7 +17,7 @@ export async function singleShot(client: Anthropic, language: string, style: str
 
 async function once(client: Anthropic, language: string, brief: string, a: string, b: string): Promise<"A" | "B" | "tie"> {
   const res = await client.messages.create({
-    model: JUDGE_MODEL, max_tokens: 300, thinking: { type: "disabled" }, system: RUBRIC,
+    model: JUDGE_MODEL, max_tokens: 300, system: RUBRIC,
     messages: [{ role: "user", content: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}` }],
   });
   const text = res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("");
