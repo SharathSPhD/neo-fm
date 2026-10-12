@@ -421,6 +421,18 @@ function Footer() {
             Trust &amp; safety
           </Link>
           <Link
+            href="/privacy"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/terms"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Terms
+          </Link>
+          <Link
             href="/help"
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >

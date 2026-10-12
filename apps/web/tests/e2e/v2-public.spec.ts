@@ -27,3 +27,12 @@ test("trust page states the responsible-AI commitments", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByText(/Technektar/i).first()).toBeVisible();
 });
+
+test("privacy and terms pages exist and are linked from the footer", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("link", { name: "Privacy" }).first()).toBeVisible();
+  await page.goto("/privacy");
+  await expect(page.getByRole("heading", { level: 1, name: /privacy/i })).toBeVisible();
+  await page.goto("/terms");
+  await expect(page.getByRole("heading", { level: 1, name: /terms/i })).toBeVisible();
+});
