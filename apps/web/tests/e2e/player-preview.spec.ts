@@ -70,3 +70,21 @@ test("manifest is installable and its icons resolve", async ({ page, request }) 
   expect(m.icons.some((i: { purpose: string }) => i.purpose === "maskable")).toBe(true);
   void page;
 });
+
+test("a failing audio URL is retried a bounded number of times, then shows an error", async ({ page }) => {
+  let refreshCalls = 0;
+  await page.route("**/api/songs/demo/audio-url", (route) => {
+    refreshCalls += 1;
+    return route.fulfill({ status: 404, contentType: "application/json", body: '{"error":"not_found"}' });
+  });
+  await page.evaluate(() => {
+    const a = document.querySelector<HTMLAudioElement>("audio[data-global-player]")!;
+    a.src = "/definitely-missing.mp3";
+    a.load();
+  });
+  await expect(page.getByRole("alert").filter({ hasText: /couldn.t play/i }).first()).toBeVisible({ timeout: 15_000 });
+  const settled = refreshCalls;
+  await page.waitForTimeout(5000);
+  expect(refreshCalls).toBe(settled);
+  expect(settled).toBeLessThanOrEqual(2);
+});
