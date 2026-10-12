@@ -15,6 +15,7 @@ import Link from "next/link";
 
 import { CoverArt } from "@/components/cover-art";
 import { ProCta } from "@/components/pro-cta";
+import { ForYou } from "./for-you";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
@@ -185,6 +186,8 @@ export default async function DiscoverPage({
       </header>
 
       <ProCta compact />
+
+      {page === 1 && !style ? <ForYou /> : null}
 
       <nav
         aria-label="Style filter"
