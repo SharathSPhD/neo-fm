@@ -61,6 +61,8 @@ const en = {
   "error.retry": "Try again",
   "error.library": "Go to library",
   "error.report": "Report a problem",
+  "error.home": "Go home",
+  "error.ref": "Reference",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -105,6 +107,8 @@ const hi: Dict = {
   "error.retry": "फिर कोशिश करें",
   "error.library": "लाइब्रेरी पर जाएँ",
   "error.report": "समस्या बताएँ",
+  "error.home": "होम पर जाएँ",
+  "error.ref": "संदर्भ",
 };
 
 const ta: Dict = {
@@ -146,6 +150,8 @@ const ta: Dict = {
   "error.retry": "மீண்டும் முயல்க",
   "error.library": "நூலகத்திற்குச் செல்",
   "error.report": "சிக்கலைத் தெரிவிக்க",
+  "error.home": "முகப்புக்குச் செல்",
+  "error.ref": "குறிப்பு எண்",
 };
 
 const te: Dict = {
@@ -187,6 +193,8 @@ const te: Dict = {
   "error.retry": "మళ్లీ ప్రయత్నించండి",
   "error.library": "లైబ్రరీకి వెళ్లండి",
   "error.report": "సమస్యను తెలియజేయండి",
+  "error.home": "హోమ్‌కు వెళ్లండి",
+  "error.ref": "రిఫరెన్స్",
 };
 
 const kn: Dict = {
@@ -228,6 +236,8 @@ const kn: Dict = {
   "error.retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
   "error.library": "ಲೈಬ್ರರಿಗೆ ಹೋಗಿ",
   "error.report": "ಸಮಸ್ಯೆ ತಿಳಿಸಿ",
+  "error.home": "ಮುಖಪುಟಕ್ಕೆ ಹೋಗಿ",
+  "error.ref": "ಉಲ್ಲೇಖ",
 };
 
 const bn: Dict = {
@@ -269,6 +279,8 @@ const bn: Dict = {
   "error.retry": "আবার চেষ্টা করুন",
   "error.library": "লাইব্রেরিতে যান",
   "error.report": "সমস্যা জানান",
+  "error.home": "হোমে যান",
+  "error.ref": "রেফারেন্স",
 };
 
 export const UI_STRINGS: Record<UiLang, Dict> = { en, hi, ta, te, kn, bn };

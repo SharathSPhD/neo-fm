@@ -22,6 +22,7 @@
  * `frame-ancestors *` and no `X-Frame-Options`. Everything else
  * gets `frame-ancestors 'self'` and `X-Frame-Options: DENY`.
  */
+import { REQUEST_ID_HEADER } from "./obs/request-id";
 import type { NextResponse } from "next/server";
 
 const HSTS = "max-age=63072000; includeSubDomains; preload";
@@ -94,9 +95,10 @@ export function isEmbedPath(pathname: string): boolean {
 
 export function applySecurityHeaders(
   response: NextResponse,
-  opts: { pathname: string; supabaseHost: string | null },
+  opts: { pathname: string; supabaseHost: string | null; requestId?: string },
 ): NextResponse {
   const isEmbed = isEmbedPath(opts.pathname);
+  if (opts.requestId) response.headers.set(REQUEST_ID_HEADER, opts.requestId);
   response.headers.set("Strict-Transport-Security", HSTS);
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
