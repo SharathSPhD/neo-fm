@@ -6,26 +6,31 @@
  */
 import { useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
 type Mode = "original" | "roman" | "english";
 interface Line { section_id: string; original: string; roman: string; english: string }
-interface Payload { lines: Line[]; disclaimer: string }
+interface Payload { lines: Line[] }
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: "original", label: "Original" },
-  { id: "roman", label: "Romanised" },
-  { id: "english", label: "English meaning" },
+const MODES: { id: Mode; label: UiKey }[] = [
+  { id: "original", label: "meaning.original" },
+  { id: "roman", label: "meaning.roman" },
+  { id: "english", label: "meaning.english" },
 ];
 
 export function LyricsMeaning({ songId }: { songId: string }) {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("english");
   const [data, setData] = useState<Payload | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "error">("idle");
+  const [state, setState] = useState<"idle" | "loading" | "error" | "limit">("idle");
 
   async function load() {
     setState("loading");
     try {
       const res = await fetch(`/api/songs/${songId}/meaning`, { cache: "no-store" });
+      if (res.status === 429) { setState("limit"); return; }
       if (!res.ok) throw new Error(String(res.status));
       setData((await res.json()) as Payload);
       setState("idle");
@@ -41,19 +46,19 @@ export function LyricsMeaning({ songId }: { songId: string }) {
   }
 
   return (
-    <section aria-label="Lyrics meaning" className="rounded-md border border-muted/20 bg-muted/5 px-3 py-3 sm:px-4">
+    <section aria-label={t("meaning.heading")} className="rounded-md border border-muted/20 bg-muted/5 px-3 py-3 sm:px-4">
       <button
         type="button"
         onClick={toggle}
         aria-expanded={open}
         className="flex min-h-[44px] w-full items-center justify-between text-left text-[11px] uppercase tracking-widest text-foreground/60"
       >
-        <span>Lyrics meaning</span>
+        <span>{t("meaning.heading")}</span>
         <span aria-hidden>{open ? "−" : "+"}</span>
       </button>
       {open ? (
         <div className="mt-2 flex flex-col gap-3">
-          <div role="radiogroup" aria-label="Lyrics view" className="flex flex-wrap gap-2">
+          <div role="radiogroup" aria-label={t("meaning.heading")} className="flex flex-wrap gap-2">
             {MODES.map((m) => (
               <button
                 key={m.id}
@@ -66,20 +71,21 @@ export function LyricsMeaning({ songId }: { songId: string }) {
                   mode === m.id ? "border-accent bg-accent/15 text-foreground" : "border-muted/30 text-foreground/70 hover:text-foreground",
                 ].join(" ")}
               >
-                {m.label}
+                {t(m.label)}
               </button>
             ))}
           </div>
           {mode === "english" ? (
             <p className="text-xs text-foreground/60" data-testid="meaning-disclaimer">
-              {data?.disclaimer ?? "English meaning is an AI machine translation. It conveys the sense, not the poetry, and may miss cultural nuance."}
+              {t("meaning.disclaimer")}
             </p>
           ) : null}
-          {state === "loading" ? <p className="text-sm text-foreground/60" role="status">Preparing the meaning…</p> : null}
+          {state === "loading" ? <p className="text-sm text-foreground/60" role="status">{t("meaning.loading")}</p> : null}
+          {state === "limit" ? <p className="text-sm text-foreground/70" role="status">{t("meaning.limit")}</p> : null}
           {state === "error" ? (
             <p className="text-sm text-foreground/70" role="alert">
-              Couldn&apos;t load the meaning right now.{" "}
-              <button type="button" onClick={() => void load()} className="underline">Try again</button>
+              {t("meaning.error")}{" "}
+              <button type="button" onClick={() => void load()} className="underline">{t("meaning.retry")}</button>
             </p>
           ) : null}
           {data ? (
