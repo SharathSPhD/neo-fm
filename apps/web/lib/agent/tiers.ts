@@ -1,7 +1,7 @@
 /**
  * Tier -> Managed Agent mapping. Free users get the single-thread Haiku producer
  * (K=3, one render); paying tiers get the Sonnet coordinator with Haiku drafters,
- * an Opus polish pass and a draft+final render. Agent IDs come from
+ * an Opus polish pass and one full render. Agent IDs come from
  * `ant apply` (managed-agents/claude-lock.json) and are injected via env.
  */
 export type UserTier = "free" | "creator" | "pro" | "developer";
@@ -15,8 +15,9 @@ export interface TierPlan {
 }
 
 const PLANS: Record<AgentKey, TierPlan> = {
-  free: { agent: "free", maxLyriaCalls: 1, maxOutcomeIterations: 2 },
-  pro: { agent: "pro", maxLyriaCalls: 2, maxOutcomeIterations: 3 },
+  free: { agent: "free", maxLyriaCalls: 1, maxOutcomeIterations: 1 },
+  // One full render: a throwaway clip-then-full pair doubled Lyria cost and added serial latency.
+  pro: { agent: "pro", maxLyriaCalls: 1, maxOutcomeIterations: 1 },
 };
 
 export function planForTier(tier: UserTier | null | undefined, override?: string | null): TierPlan {

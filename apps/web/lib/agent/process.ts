@@ -12,6 +12,11 @@ import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
 
+export function isTransient(status: number | undefined, msg: string): boolean {
+  if (status === 429 || (status !== undefined && status >= 500)) return true;
+  return /overloaded|ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network/i.test(msg);
+}
+
 const MAX_CLAIM = 3;
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
@@ -50,7 +55,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
 
   // Plain queries (no PostgREST embeds): embed resolution depends on the schema cache
   // and failed silently once; errors are surfaced instead of swallowed.
-  const activeQuery = db.from("jobs").select("id,user_id,song_document_id").eq("status", "processing");
+  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at").eq("status", "processing");
   const { data: active, error: activeErr } = await (onlyJobId ? activeQuery.eq("id", onlyJobId) : activeQuery);
   if (activeErr) throw new Error(`jobs_query_failed: ${activeErr.message}`);
 
@@ -58,8 +63,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
   const trace: string[] = [];
   // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
   const CONCURRENCY = 4;
-  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string }[];
-  const runJob = async (job: { id: string; user_id: string; song_document_id: string }) => {
+  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
+  const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
@@ -100,7 +105,13 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
       results[job.id] = `error: ${msg}`;
       // Infrastructure hiccups (our own DB) are retried on the next tick; everything else fails the job.
-      if (!/^agent_runs |song_document lookup/.test(msg)) {
+      // Transient provider/network errors (429, 5xx, overloaded, resets) are retried on the next advance for up to 30 minutes.
+      const status = (e as { status?: number }).status;
+      const transient = isTransient(status, msg);
+      const ageMs = job.started_at ? Date.now() - new Date(job.started_at).getTime() : 0;
+      if (transient && ageMs < 30 * 60_000) {
+        results[job.id] = `retry: ${msg}`;
+      } else if (!/^agent_runs |song_document lookup/.test(msg)) {
         await db.from("jobs").update({ status: "failed", error: msg, finished_at: new Date().toISOString() }).eq("id", job.id);
       }
     } finally {
