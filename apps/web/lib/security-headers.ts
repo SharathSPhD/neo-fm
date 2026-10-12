@@ -45,13 +45,7 @@ const PERMISSIONS = [
   "fullscreen=(self)",
 ].join(", ");
 
-function csp({
-  supabaseHost,
-  isEmbed,
-}: {
-  supabaseHost: string | null;
-  isEmbed: boolean;
-}): string {
+function connectSources(supabaseHost: string | null): string[] {
   const supabase = supabaseHost
     ? [`https://${supabaseHost}`, `wss://${supabaseHost}`]
     : [];
@@ -60,7 +54,7 @@ function csp({
   if (supabaseHost && process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http://")) {
     supabase.push(`http://${supabaseHost}`);
   }
-  const connect = [
+  return [
     "'self'",
     ...supabase,
     "https://*.upstash.io",
@@ -69,6 +63,18 @@ function csp({
     "https://vitals.vercel-insights.com",
     "https://vercel.live",
   ];
+}
+
+export const CSP_REPORT_PATH = "/api/csp-report";
+
+function csp({
+  supabaseHost,
+  isEmbed,
+}: {
+  supabaseHost: string | null;
+  isEmbed: boolean;
+}): string {
+  const connect = connectSources(supabaseHost);
   const frameAncestors = isEmbed ? "*" : "'self'";
   // 'unsafe-inline' for scripts is regrettable but Next.js still
   // emits inline RSC payloads + chunked hydration code without
@@ -97,9 +103,49 @@ export function isEmbedPath(pathname: string): boolean {
   return pathname.startsWith("/embed/") || /^\/s\/[^/]+\/embed\/?$/.test(pathname);
 }
 
+/**
+ * Strict nonce-based policy, shipped Report-Only next to the enforced one above. It drops 'unsafe-inline' and
+ * 'unsafe-eval' for scripts; violations are POSTed to CSP_REPORT_PATH so we can see what would break before
+ * enforcing it. Once the reports are quiet, promote this string to Content-Security-Policy.
+ */
+export function strictCsp({
+  supabaseHost,
+  isEmbed,
+  nonce,
+}: {
+  supabaseHost: string | null;
+  isEmbed: boolean;
+  nonce: string;
+}): string {
+  return [
+    "default-src 'self'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    `frame-ancestors ${isEmbed ? "*" : "'none'"}`,
+    "object-src 'none'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connectSources(supabaseHost).join(" ")}`,
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    `report-uri ${CSP_REPORT_PATH}`,
+    "report-to csp-endpoint",
+  ].join("; ");
+}
+
+/** 128 random bits, base64. Works in the edge runtime and in node (vitest). */
+export function newNonce(): string {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b));
+}
+
 export function applySecurityHeaders(
   response: NextResponse,
-  opts: { pathname: string; supabaseHost: string | null },
+  opts: { pathname: string; supabaseHost: string | null; nonce?: string },
 ): NextResponse {
   const isEmbed = isEmbedPath(opts.pathname);
   response.headers.set("Strict-Transport-Security", HSTS);
@@ -107,6 +153,14 @@ export function applySecurityHeaders(
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("Permissions-Policy", PERMISSIONS);
   response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
+  response.headers.set("Reporting-Endpoints", `csp-endpoint="${CSP_REPORT_PATH}"`);
+  if (opts.nonce) {
+    response.headers.set(
+      "Content-Security-Policy-Report-Only",
+      strictCsp({ supabaseHost: opts.supabaseHost, isEmbed, nonce: opts.nonce }),
+    );
+  }
   if (!isEmbed) {
     response.headers.set("X-Frame-Options", "DENY");
   } else {
