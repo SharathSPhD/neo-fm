@@ -12,6 +12,8 @@ import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHints } from "../diction";
+import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
+import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { embedEngine, safeEmbedUrl } from "./embed-url";
@@ -175,6 +177,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "done") {
         const cascade = await timed("finalize", () => finalize(db, job.id));
         const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey, cost.qa));
+        await timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, doc.document_json.target_duration_seconds ?? 30));
         await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: safeEmbedUrl(process.env.EMBED_URL) ? "service" : "none", stages_ms: stages }, cost);
       }
     } catch (e) {
@@ -299,6 +302,29 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     console.error("diction qa failed", jobId, msg);
     try { await db.from("agent_runs").update({ diction_qa: { error: msg } }).eq("job_id", jobId); } catch { /* ignore */ }
     return null;
+  }
+}
+
+/** Best-effort synced-lyrics timings (agent_runs.line_timings). One retry on an empty reply; never fails the job. */
+export async function qaLineTimings(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string, targetS: number): Promise<boolean> {
+  try {
+    const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,line_timings").eq("job_id", jobId).limit(1);
+    const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; line_timings: unknown } | undefined;
+    if (!r?.audio_path || !r.lyrics || r.line_timings) return false;
+    const lines = singableLines(r.lyrics);
+    if (!lines.length) return false;
+    const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
+    if (!blob) return false;
+    const audio = new Uint8Array(await blob.arrayBuffer());
+    let segs = await transcribeTimed(audio, blob.type || "audio/mpeg", language, geminiKey);
+    if (!segs.length) segs = await transcribeTimed(audio, blob.type || "audio/mpeg", language, geminiKey);
+    if (!segs.length) return false;
+    const durationS = Math.max(targetS, ...segs.map((s) => s.startS));
+    await db.from("agent_runs").update({ line_timings: toPayload(alignLines(lines, segs, durationS), durationS) }).eq("job_id", jobId);
+    return true;
+  } catch (e) {
+    console.error("line timings failed", jobId, String((e as Error)?.message ?? e).slice(0, 240));
+    return false;
   }
 }
 

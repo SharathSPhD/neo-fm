@@ -3,15 +3,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
 import { avatarUrl } from "@/lib/profile/avatar-url";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { ProfileForm } from "./profile-form";
 
-export const metadata: Metadata = { title: "Edit profile -- neo-fm", robots: { index: false } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await serverI18n();
+  return { title: `${t("profedit.title")} -- neo-fm`, robots: { index: false } };
+}
 export const dynamic = "force-dynamic";
 
 export default async function EditProfilePage() {
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account/profile");
@@ -27,9 +32,9 @@ export default async function EditProfilePage() {
   return (
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-12">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-medium tracking-tight">Edit profile</h1>
+        <h1 className="text-3xl font-medium tracking-tight">{t("profedit.title")}</h1>
         <p className="text-sm text-foreground/60">
-          This is what people see on{" "}
+          {t("profedit.intro")}{" "}
           <Link href={`/u/${row.handle}`} className="underline">
             /u/{row.handle}
           </Link>

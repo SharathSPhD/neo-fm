@@ -42,7 +42,7 @@ Prod backend: Supabase project **neo-fm-prod** (`kgxltxvjlsnbwomklwox`, ap-south
 2. **Resend API key → Supabase Edge secrets** (`RESEND_API_KEY`, `RESEND_FROM=neo-fm <no-reply@neo-fm.com>`, `APP_URL=https://neo-fm.com`) and the same key into Vercel as `RESEND_API_KEY` (Sensitive). I then deploy `notify-job-complete`, repoint trigger 0029 and test the song-ready email.
 3. **Stripe**: confirm test-mode launch is acceptable, or give live keys later. I create the webhook endpoint; the signing secret goes into Vercel (Sensitive).
 4. **GoDaddy**: nameservers -> `ns1.vercel-dns.com` / `ns2.vercel-dns.com` (or add the A/CNAME records I give you).
-5. **Mailboxes**: forward `grievance@neo-fm.com` (statutory grievance contact shown on /trust) and `support@neo-fm.com` to a monitored inbox; name the Grievance Officer so I can add it to /trust and /privacy.
+5. **Mailboxes**: forward `info@technektar.com` (statutory grievance contact shown on /trust) and `support@neo-fm.com` to a monitored inbox; name the Grievance Officer so I can add it to /trust and /privacy.
 6. **Google OAuth**: add `https://neo-fm.com` as an authorised JavaScript origin and `https://kgxltxvjlsnbwomklwox.supabase.co/auth/v1/callback` stays the redirect URI.
 
 ## Launch gate (advisor-checked, must all be true)

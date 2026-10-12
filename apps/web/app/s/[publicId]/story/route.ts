@@ -11,10 +11,8 @@ import { loadShareSong } from "@/lib/share/load";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { publicId: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ publicId: string }> }) {
+  const params = await props.params;
   const song = await loadShareSong(params.publicId);
   if (!song) return new NextResponse("Not found", { status: 404 });
 

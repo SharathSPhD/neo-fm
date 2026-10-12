@@ -6,6 +6,8 @@ import type { StylePreset } from "@neo-fm/style-presets";
 import { useRouter } from "next/navigation";
 import { useMemo, useRef, useState, useTransition } from "react";
 
+import type { UiKey } from "@/lib/i18n/ui-strings";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 import {
@@ -37,27 +39,27 @@ type StyleFamily =
   | "telugu-keerthana";
 type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 
-const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
-  { value: "carnatic", label: "Carnatic" },
-  { value: "hindustani", label: "Hindustani" },
-  { value: "kannada-light-classical", label: "Kannada light-classical" },
-  { value: "kannada-folk", label: "Kannada folk" },
-  { value: "tamil-folk", label: "Tamil folk" },
-  { value: "bollywood-ballad", label: "Bollywood ballad" },
-  { value: "bengali-rabindrasangeet", label: "Bengali Rabindrasangeet" },
-  { value: "telugu-keerthana", label: "Telugu keerthana" },
-  { value: "sanskrit-shloka", label: "Sanskrit shloka" },
-  { value: "western", label: "Western" },
+const STYLE_OPTIONS: { value: StyleFamily; label: UiKey }[] = [
+  { value: "carnatic", label: "create.style.carnatic" },
+  { value: "hindustani", label: "create.style.hindustani" },
+  { value: "kannada-light-classical", label: "create.style.kannadaLight" },
+  { value: "kannada-folk", label: "create.style.kannadaFolk" },
+  { value: "tamil-folk", label: "create.style.tamilFolk" },
+  { value: "bollywood-ballad", label: "create.style.bollywood" },
+  { value: "bengali-rabindrasangeet", label: "create.style.rabindra" },
+  { value: "telugu-keerthana", label: "create.style.keerthana" },
+  { value: "sanskrit-shloka", label: "create.style.shloka" },
+  { value: "western", label: "create.style.western" },
 ];
 
-const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
-  { value: "hi", label: "Hindi" },
-  { value: "kn", label: "Kannada" },
-  { value: "ta", label: "Tamil" },
-  { value: "bn", label: "Bengali" },
-  { value: "te", label: "Telugu" },
-  { value: "sa", label: "Sanskrit" },
-  { value: "en", label: "English" },
+const LANGUAGE_OPTIONS: { value: Language; label: UiKey }[] = [
+  { value: "hi", label: "create.lang.hi" },
+  { value: "kn", label: "create.lang.kn" },
+  { value: "ta", label: "create.lang.ta" },
+  { value: "bn", label: "create.lang.bn" },
+  { value: "te", label: "create.lang.te" },
+  { value: "sa", label: "create.lang.sa" },
+  { value: "en", label: "create.lang.en" },
 ];
 
 const DURATION_OPTIONS = [30, 60, 90, 180] as const;
@@ -97,8 +99,9 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
 
 type CreationMode = "compose" | "describe";
 
-export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
+export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: boolean; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
   const router = useRouter();
+  const { t } = useUiLang();
   const [creationMode, setCreationMode] = useState<CreationMode>("describe");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
@@ -172,7 +175,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
     // their own. Preserves user edits if they already entered one.
     if (!title.trim()) setTitle(p.title);
     setError(null);
-    setStatus(`Loaded preset: ${p.title}`);
+    setStatus(t("create.loadedPreset", { title: p.title }));
 
     // Skip scroll/focus when the user re-clicks an already-active card so
     // the page does not feel jumpy on small screens.
@@ -244,11 +247,11 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
         }),
       });
       if (res.status === 401) {
-        setSaveStatus("Sign in to save personal presets.");
+        setSaveStatus(t("create.saveSignIn"));
         return;
       }
       if (res.status === 409) {
-        setSaveStatus("You've hit the 20-preset cap. Delete one to save more.");
+        setSaveStatus(t("create.saveCap"));
         return;
       }
       if (res.status === 422) {
@@ -260,22 +263,24 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
           : null;
         setSaveStatus(
           firstField
-            ? `Preset rejected (${firstField} invalid).`
-            : "Preset rejected (validation failed).",
+            ? t("create.saveRejectedField", { field: firstField })
+            : t("create.saveRejected"),
         );
         return;
       }
       if (!res.ok) {
-        const t = await res.text();
-        setSaveStatus(`Save failed: ${res.status} ${t.slice(0, 120)}`);
+        const detail = await res.text();
+        setSaveStatus(
+          t("create.saveFailedHttp", { status: res.status, detail: detail.slice(0, 120) }),
+        );
         return;
       }
       const body = (await res.json().catch(() => null)) as
         | { title?: string }
         | null;
-      setSaveStatus(`Saved as "${body?.title ?? "preset"}".`);
+      setSaveStatus(t("create.savedAs", { title: body?.title ?? t("create.presetWord") }));
     } catch (e) {
-      setSaveStatus(`Save failed: ${(e as Error).message}`);
+      setSaveStatus(t("create.saveFailedErr", { message: (e as Error).message }));
     } finally {
       setSavePending(false);
     }
@@ -287,9 +292,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
     setStatus(null);
 
     if (lyricsOverallCap) {
-      setError(
-        `Total lyrics exceed ${TOTAL_LYRIC_MAX_CHARS} characters. Trim before submitting.`,
-      );
+      setError(t("create.errLyricsCap", { max: TOTAL_LYRIC_MAX_CHARS }));
       return;
     }
 
@@ -306,11 +309,11 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
     const supabase = createBrowserSupabase();
     const { data } = await supabase.auth.getUser();
     if (!data?.user) {
-      setError("Session expired. Please sign in again.");
+      setError(t("prompt.errSession"));
       return;
     }
 
-    setStatus("Enqueueing job...");
+    setStatus(t("create.enqueueing"));
     const res = await fetch("/api/songs", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -324,20 +327,20 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
       const reason = body?.reason ?? "quota";
       setError(
         reason === "storage_bytes"
-          ? "You're over your storage quota for the month."
-          : "You've hit your monthly song quota. Wait until next month or upgrade.",
+          ? t("prompt.errStorage")
+          : t("prompt.errQuota"),
       );
       return;
     }
     if (!res.ok) {
       const body = await res.text();
-      setError(`Server returned ${res.status}: ${body || "(no body)"}`);
+      setError(t("create.errServer", { status: res.status, body: body || t("create.noBody") }));
       return;
     }
-    setStatus("Queued. Redirecting to library...");
+    setStatus(t("prompt.queued"));
     startTransition(() => {
       router.replace("/library");
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 
@@ -346,7 +349,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
       {/* Tab switcher — v1.5 PWM prompt branch */}
       <div
         role="tablist"
-        aria-label="Song creation mode"
+        aria-label={t("create.modeLabel")}
         className="flex gap-1 rounded-lg border border-muted/20 bg-muted/10 p-1 mb-4"
       >
         {(["compose", "describe"] as const).map((mode) => (
@@ -363,13 +366,13 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
                 : "text-foreground/50 hover:text-foreground/80",
             ].join(" ")}
           >
-            {mode === "compose" ? "Write my own lyrics" : "Describe with AI"}
+            {mode === "compose" ? t("create.mode.compose") : t("create.mode.describe")}
           </button>
         ))}
       </div>
 
       {creationMode === "describe" ? (
-        <PromptTab showGuide={firstRun} />
+        <PromptTab showGuide={firstRun} initialIdea={initialIdea} />
       ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
@@ -377,7 +380,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
           activeId={activePreset?.id ?? null}
         />
 
-        <Field name="title" label="Title">
+        <Field name="title" label={t("create.title")}>
           <input
             id="title"
             ref={titleInputRef}
@@ -386,16 +389,16 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
             value={title}
             maxLength={SONG_TITLE_MAX_CHARS}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="e.g. Morning Rain in Saveri"
+            placeholder={t("create.titlePlaceholder")}
             className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
           />
           <span className="text-[10px] text-foreground/40">
-            Optional. {SONG_TITLE_MAX_CHARS - title.length} characters left.
+            {t("create.titleHint", { n: SONG_TITLE_MAX_CHARS - title.length })}
           </span>
         </Field>
 
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field name="style_family" label="Style">
+          <Field name="style_family" label={t("prompt.style")}>
             <select
               name="style_family"
               value={form.style_family}
@@ -404,12 +407,12 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
             >
               {STYLE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.label)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field name="language" label="Language">
+          <Field name="language" label={t("prompt.language")}>
             <select
               name="language"
               value={form.language}
@@ -418,14 +421,14 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
             >
               {LANGUAGE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {t(o.label)}
                 </option>
               ))}
             </select>
           </Field>
         </div>
 
-        <Field name="target_duration_seconds" label="Length">
+        <Field name="target_duration_seconds" label={t("prompt.length")}>
           <select
             name="target_duration_seconds"
             value={form.target_duration_seconds}
@@ -434,7 +437,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s} seconds
+                {s} {t("prompt.seconds")}
               </option>
             ))}
           </select>
@@ -460,7 +463,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
         <section className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs uppercase tracking-widest text-foreground/50">
-              Lyrics
+              {t("create.lyrics")}
             </span>
             <span
               className={
@@ -469,7 +472,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
                   : "text-[10px] text-foreground/40"
               }
             >
-              {totalLyricChars}/{TOTAL_LYRIC_MAX_CHARS} chars total
+              {t("create.lyricsTotal", { n: totalLyricChars, max: TOTAL_LYRIC_MAX_CHARS })}
             </span>
           </div>
           {sections.map((s, idx) => (
@@ -485,9 +488,8 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
 
         {activePreset ? (
           <p className="rounded-md border border-accent/20 bg-accent/5 px-3 py-2 text-xs text-foreground/70">
-            Using preset <strong>{activePreset.title}</strong>. The composer will
-            fill in raga, tala and instrumentation from the preset; you can
-            still change style/language/length and edit lyrics per section above.
+            {t("create.usingPreset.pre")}<strong>{activePreset.title}</strong>
+            {t("create.usingPreset.post")}
           </p>
         ) : null}
 
@@ -507,7 +509,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
           disabled={pending || lyricsOverallCap}
           className="self-start rounded-md border border-accent/40 bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
         >
-          {pending ? "Queueing..." : "Queue song"}
+          {pending ? t("prompt.queueing") : t("create.queue")}
         </button>
       </form>
       )}

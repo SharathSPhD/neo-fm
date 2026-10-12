@@ -44,7 +44,7 @@ it("returns 401 when unauthenticated", async () => {
     NextResponse.json({ error: "unauthorized" }, { status: 401 }),
   );
   const req = new NextRequest("http://localhost/x");
-  const res = await GET(req, { params: { id: SONG_ID } });
+  const res = await GET(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(401);
 });
 
@@ -52,7 +52,7 @@ it("returns 400 for invalid id", async () => {
   const s = makeFakeSupabase();
   authed(s);
   const req = new NextRequest("http://localhost/x");
-  const res = await GET(req, { params: { id: "not-a-uuid" } });
+  const res = await GET(req, { params: Promise.resolve({ id: "not-a-uuid" }) });
   expect(res.status).toBe(400);
 });
 
@@ -61,7 +61,7 @@ it("returns 404 when RLS hides the row", async () => {
   // jobs maybeSingle returns null by default.
   authed(s);
   const req = new NextRequest("http://localhost/x");
-  const res = await GET(req, { params: { id: SONG_ID } });
+  const res = await GET(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(404);
 });
 
@@ -74,7 +74,7 @@ it("returns 404 with no_track when row exists but status is processing", async (
   };
   authed(s);
   const req = new NextRequest("http://localhost/x");
-  const res = await GET(req, { params: { id: SONG_ID } });
+  const res = await GET(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(404);
   const body = (await res.json()) as { error: string; status?: string };
   expect(body.error).toBe("no_track");
@@ -100,7 +100,7 @@ it("happy path: returns a signed URL with no-store cache control", async () => {
   s.__state.signed_url = "https://signed.example.com/refreshed.wav";
   authed(s);
   const req = new NextRequest("http://localhost/x");
-  const res = await GET(req, { params: { id: SONG_ID } });
+  const res = await GET(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(200);
   expect(res.headers.get("cache-control")).toBe("no-store");
   const body = (await res.json()) as {

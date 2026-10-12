@@ -24,6 +24,8 @@
  *     feature is discoverable without docs.
  */
 import { Command } from "cmdk";
+
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -57,6 +59,7 @@ function isMac(): boolean {
 }
 
 export function CommandPalette() {
+  const { t } = useUiLang();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [recent, setRecent] = useState<RecentSong[] | null>(null);
@@ -130,7 +133,7 @@ export function CommandPalette() {
     <Command.Dialog
       open={open}
       onOpenChange={setOpen}
-      label="Command palette"
+      label={t("palette.title")}
       title="Command palette"
       shouldFilter
       className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 p-4 backdrop-blur-sm sm:pt-24"
@@ -148,7 +151,7 @@ export function CommandPalette() {
             ▸
           </span>
           <Command.Input
-            placeholder="Search or jump to…"
+            placeholder={t("palette.placeholder")}
             className="w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
           />
           <kbd className="rounded border border-muted/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">
@@ -157,23 +160,23 @@ export function CommandPalette() {
         </div>
         <Command.List className="max-h-[50vh] overflow-y-auto p-2">
           <Command.Empty className="px-3 py-6 text-center text-sm text-foreground/55">
-            No matches. Press {shortcutHint} again to close.
+            {t("palette.noMatches", { key: shortcutHint })}
           </Command.Empty>
 
-          <Command.Group heading="Navigate" className="text-xs uppercase tracking-wider text-foreground/50">
-            <PaletteItem onSelect={() => go("/library")} label="Library" hint="L" />
-            <PaletteItem onSelect={() => go("/discover")} label="Discover" hint="D" />
-            <PaletteItem onSelect={() => go("/songs/new")} label="New song" hint="N" />
-            <PaletteItem onSelect={() => go("/pricing")} label="Pricing" hint="P" />
-            <PaletteItem onSelect={() => go("/account")} label="Account" hint="A" />
-            <PaletteItem onSelect={() => go("/help")} label="Help" hint="?" />
+          <Command.Group heading={t("palette.navigate")} className="text-xs uppercase tracking-wider text-foreground/50">
+            <PaletteItem onSelect={() => go("/library")} label={t("nav.library")} hint="L" />
+            <PaletteItem onSelect={() => go("/discover")} label={t("nav.discover")} hint="D" />
+            <PaletteItem onSelect={() => go("/songs/new")} label={t("nav.newSong")} hint="N" />
+            <PaletteItem onSelect={() => go("/pricing")} label={t("nav.pricing")} hint="P" />
+            <PaletteItem onSelect={() => go("/account")} label={t("nav.account")} hint="A" />
+            <PaletteItem onSelect={() => go("/help")} label={t("nav.help")} hint="?" />
           </Command.Group>
 
           <Command.Group
             heading={
               recentLoading
-                ? "Recent songs (loading…)"
-                : "Recent songs"
+                ? t("palette.recentLoading")
+                : t("palette.recent")
             }
             className="mt-1 text-xs uppercase tracking-wider text-foreground/50"
           >
@@ -181,7 +184,7 @@ export function CommandPalette() {
               <PaletteItem
                 key={s.id}
                 onSelect={() => go(`/songs/${s.id}`)}
-                label={s.title?.trim() || `Song · ${s.id.slice(0, 8)}`}
+                label={s.title?.trim() || `${t("palette.song")} · ${s.id.slice(0, 8)}`}
                 sub={
                   s.style_family
                     ? `${s.status} · ${s.style_family}`
@@ -194,7 +197,7 @@ export function CommandPalette() {
                 disabled
                 className="rounded-md px-3 py-2 text-sm text-foreground/45"
               >
-                No songs yet. Hit “New song” to start.
+                {t("palette.noSongs")}
               </Command.Item>
             ) : null}
           </Command.Group>

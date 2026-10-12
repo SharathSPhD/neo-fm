@@ -24,7 +24,7 @@ export default async function AppGroupLayout({
   if (!user) {
     // Preserve the path the user originally requested so the sign-in
     // form can bounce them back after a successful auth.
-    const h = headers();
+    const h = await headers();
     const path = h.get("x-invoke-path") ?? h.get("next-url") ?? "/library";
     redirect(`/sign-in?next=${encodeURIComponent(path)}`);
   }

@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export function FollowButton({
   userId,
   initialFollowing,
@@ -11,6 +13,7 @@ export function FollowButton({
   initialFollowing: boolean;
   initialCount: number;
 }) {
+  const { t } = useUiLang();
   const [following, setFollowing] = useState(initialFollowing);
   const [count, setCount] = useState(initialCount);
   const [pending, startTransition] = useTransition();
@@ -26,7 +29,7 @@ export function FollowButton({
         setFollowing((v) => !v);
         setCount((c) => c + (following ? 1 : -1));
         const text = await res.text().catch(() => "");
-        setError(text || "Couldn't update follow.");
+        setError(text || t("pub.follow.error"));
         return;
       }
       const data = (await res.json()) as {
@@ -50,10 +53,10 @@ export function FollowButton({
             : "rounded-md border border-accent/40 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
         }
       >
-        {following ? "Following" : "Follow"}
+        {following ? t("pub.follow.following") : t("pub.follow.follow")}
       </button>
       <span className="text-[10px] text-foreground/40">
-        {count} {count === 1 ? "follower" : "followers"}
+        {count === 1 ? t("pub.follow.followers.one", { n: count }) : t("pub.follow.followers.other", { n: count })}
       </span>
       {error ? (
         <span className="text-[10px] text-red-300">{error}</span>

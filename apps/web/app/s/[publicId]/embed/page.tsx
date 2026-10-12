@@ -63,13 +63,14 @@ interface EmbedRow {
     | null;
 }
 
-export default async function EmbedPage({
-  params,
-  searchParams,
-}: {
-  params: { publicId: string };
-  searchParams: Record<string, string | string[] | undefined>;
-}) {
+export default async function EmbedPage(
+  props: {
+    params: Promise<{ publicId: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
   const { layout, theme } = parseEmbedOptions(searchParams);

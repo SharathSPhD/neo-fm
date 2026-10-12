@@ -51,10 +51,8 @@ type SongWithRelations = {
     | null;
 };
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;
@@ -212,10 +210,8 @@ export async function GET(
  * a Supabase Edge cron, so we don't block the request on the bucket
  * delete; users see the row vanish instantly.
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;

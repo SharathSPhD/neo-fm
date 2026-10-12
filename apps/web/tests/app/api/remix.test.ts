@@ -134,7 +134,7 @@ it("returns 401 when unauthenticated", async () => {
     NextResponse.json({ error: "unauthorized" }, { status: 401 }),
   );
   const req = new NextRequest("http://localhost/x", { method: "POST" });
-  const res = await POST(req, { params: { id: PARENT_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
   expect(res.status).toBe(401);
 });
 
@@ -142,7 +142,7 @@ it("returns 400 for an invalid id", async () => {
   const s = makeFakeSupabase();
   authed(s);
   const req = new NextRequest("http://localhost/x", { method: "POST" });
-  const res = await POST(req, { params: { id: "not-a-uuid" } });
+  const res = await POST(req, { params: Promise.resolve({ id: "not-a-uuid" }) });
   expect(res.status).toBe(400);
 });
 
@@ -151,7 +151,7 @@ it("returns 404 when the parent isn't visible", async () => {
   authed(s);
   // No select_singles seeded for `jobs` -> maybeSingle returns null.
   const req = new NextRequest("http://localhost/x", { method: "POST" });
-  const res = await POST(req, { params: { id: PARENT_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
   expect(res.status).toBe(404);
 });
 
@@ -166,7 +166,7 @@ describe("happy path", () => {
     });
 
     const req = new NextRequest("http://localhost/x", { method: "POST" });
-    const res = await POST(req, { params: { id: PARENT_ID } });
+    const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
     expect(res.status).toBe(202);
     const body = await res.json();
     expect(body).toMatchObject({
@@ -236,7 +236,7 @@ describe("happy path", () => {
       error: null,
     });
     const req = new NextRequest("http://localhost/x", { method: "POST" });
-    const res = await POST(req, { params: { id: PARENT_ID } });
+    const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
     expect(res.status).toBe(202);
     const args = s.__state.rpc_calls.find(
       (c) => c.name === "create_song_job",
@@ -254,7 +254,7 @@ it("surfaces quota_exceeded as 429", async () => {
     error: { message: "quota_exceeded: rows_per_month" },
   });
   const req = new NextRequest("http://localhost/x", { method: "POST" });
-  const res = await POST(req, { params: { id: PARENT_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
   expect(res.status).toBe(429);
 });
 
@@ -267,6 +267,6 @@ it("surfaces concurrent_cap_exceeded as 429", async () => {
     error: { message: "concurrent_cap_exceeded" },
   });
   const req = new NextRequest("http://localhost/x", { method: "POST" });
-  const res = await POST(req, { params: { id: PARENT_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: PARENT_ID }) });
   expect(res.status).toBe(429);
 });

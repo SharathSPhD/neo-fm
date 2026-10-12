@@ -17,6 +17,9 @@ export interface MediaSessionHandlers {
   seekBy(deltaSeconds: number): void;
   seekTo(seconds: number): void;
   stop(): void;
+  /** Queue navigation; omit when there is nothing to skip to (the control is hidden). */
+  next?(): void;
+  previous?(): void;
 }
 
 const DEFAULT_ARTWORK = "/icon-512.png";
@@ -62,6 +65,8 @@ export function setMediaHandlers(h: MediaSessionHandlers): void {
   set("play", () => h.play());
   set("pause", () => h.pause());
   set("stop", () => h.stop());
+  set("nexttrack", h.next ? () => h.next?.() : null);
+  set("previoustrack", h.previous ? () => h.previous?.() : null);
   set("seekbackward", (d) => h.seekBy(-(d?.seekOffset ?? SEEK_STEP)));
   set("seekforward", (d) => h.seekBy(d?.seekOffset ?? SEEK_STEP));
   set("seekto", (d) => {
