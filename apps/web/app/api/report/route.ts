@@ -6,6 +6,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "@/lib/agent/adapters";
+import { getLogger } from "@/lib/obs/log";
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -34,6 +35,9 @@ export async function POST(req: NextRequest) {
     if ((dup ?? []).length) return NextResponse.json({ ok: true });
   }
   const { error } = await db.from("song_reports").insert({ job_id: jobId, reporter_id: reporter, reason: details ? `${reason}: ${details}` : reason, category: reason, details: details || null });
-  if (error) return NextResponse.json({ error: "report_failed" }, { status: 500 });
+  if (error) {
+    getLogger("/api/report", req).error("report_insert_failed", { detail: error.message });
+    return NextResponse.json({ error: "report_failed" }, { status: 500 });
+  }
   return NextResponse.json({ ok: true });
 }

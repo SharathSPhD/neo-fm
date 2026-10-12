@@ -19,6 +19,10 @@ interface PublicSongAudioProps {
   format: string;
   /** Set for signed-in listeners: finished listens feed the weekly chart. */
   feedbackSongId?: string;
+  /** Called with the playhead (seconds) as it moves; used by the embed's synced lyrics. */
+  onTime?: (seconds: number) => void;
+  /** Hide the spectrogram and the footer line (compact embed). */
+  minimal?: boolean;
 }
 
 export function PublicSongAudio({
@@ -27,6 +31,8 @@ export function PublicSongAudio({
   durationSeconds,
   format,
   feedbackSongId,
+  onTime,
+  minimal = false,
 }: PublicSongAudioProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
@@ -99,11 +105,15 @@ export function PublicSongAudio({
         onError={onError}
         onPause={reportPlay}
         onEnded={reportPlay}
+        onTimeUpdate={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
+        onSeeked={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
         crossOrigin="anonymous"
         className="w-full"
       />
-      <AudioSpectrogram audioRef={audioRef} height={72} />
-      <div className="flex items-center justify-between gap-2 text-[10px] text-foreground/40">
+      {minimal ? null : <AudioSpectrogram audioRef={audioRef} height={72} />}
+      <div
+        className={`items-center justify-between gap-2 text-[10px] text-foreground/60 ${minimal && !refreshing && !error ? "hidden" : "flex"}`}
+      >
         <span>
           {durationSeconds ? `${durationSeconds}s · ` : ""}
           {format.toUpperCase()}
