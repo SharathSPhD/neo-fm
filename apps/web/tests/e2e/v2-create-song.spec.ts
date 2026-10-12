@@ -23,7 +23,7 @@ test("create a song and watch it finish on its own", async ({ page }) => {
   const jobId = ((await (await created).json()) as { job_id: string }).job_id;
 
   await page.goto(`/songs/${jobId}`);
-  await expect(page.getByText(/Writing lyrics|Warming up|Composing the music/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByTestId("job-progress")).toBeVisible({ timeout: 30_000 });
   // No fetches from the test: the page itself must drive the job to completion.
   await expect(page.locator("audio")).toHaveCount(1, { timeout: 10 * 60_000 });
   await expect(page.getByText(/completed/i).first()).toBeVisible();

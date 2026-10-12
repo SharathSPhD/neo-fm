@@ -54,7 +54,7 @@ export function JobProgress({ songId, initialStage = "queued" }: { songId: strin
 
   const current = Math.max(0, STEPS.findIndex((s) => s.key.includes(stage)));
   return (
-    <section aria-live="polite" className="rounded-lg border border-muted/20 bg-muted/5 p-5">
+    <section data-testid="job-progress" aria-live="polite" className="rounded-lg border border-muted/20 bg-muted/5 p-5">
       <ol className="flex flex-col gap-3">
         {STEPS.map((s, i) => {
           const state = i < current ? "done" : i === current ? "active" : "todo";
