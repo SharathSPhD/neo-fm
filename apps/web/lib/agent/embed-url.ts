@@ -26,3 +26,15 @@ export function embedEngine(scope?: string, ttlSeconds?: number, env = process.e
   if (!url || !master) return undefined;
   return { url, token: mintEmbedToken(master, ttlSeconds, Date.now(), scope) };
 }
+
+/**
+ * What to record as the embedder used for a finished song. The embedder is best-effort: if the service refuses the
+ * job token (for example an embedder build that predates v2 job-bound tokens) or is down, the engine falls back to
+ * its lexical embedder and the song still completes; telemetry then says "none" instead of claiming "service".
+ */
+export function embedderUsed(configured: boolean, cascade: { embedder?: unknown } | null | undefined): "service" | "none" {
+  if (!configured) return "none";
+  const used = cascade?.embedder;
+  if (typeof used === "string" && !used.endsWith("@service")) return "none";
+  return "service";
+}

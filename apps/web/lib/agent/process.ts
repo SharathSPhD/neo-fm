@@ -16,7 +16,7 @@ import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
-import { embedEngine, safeEmbedUrl } from "./embed-url";
+import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -177,7 +177,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const cascade = await timed("finalize", () => finalize(db, job.id));
         const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
         await timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, doc.document_json.target_duration_seconds ?? 30));
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: safeEmbedUrl(process.env.EMBED_URL) ? "service" : "none", stages_ms: stages });
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: embedderUsed(!!safeEmbedUrl(process.env.EMBED_URL), cascade), stages_ms: stages });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -223,8 +223,8 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
     const auditText = await read("cascade_audit.json");
     let cascade: Record<string, unknown> | null = null;
     try {
-      const a = auditText ? (JSON.parse(auditText) as { committed?: string; vimarsa_event?: boolean; vimarsa_novelty?: number; embedder?: string; posterior?: number[]; audit?: { audit?: Record<string, unknown> } }) : null;
-      if (a) cascade = { committed: a.committed, vimarsa_event: a.vimarsa_event, novelty: a.vimarsa_novelty, embedder: a.embedder, k: a.posterior?.length, delta_F: a.audit?.audit?.delta_F, two_pass: a.audit?.audit?.two_pass };
+      const a = auditText ? (JSON.parse(auditText) as { committed?: string; vimarsa_event?: boolean; vimarsa_novelty?: number; embedder?: string; embedder_fallback?: string | null; posterior?: number[]; audit?: { audit?: Record<string, unknown> } }) : null;
+      if (a) cascade = { committed: a.committed, vimarsa_event: a.vimarsa_event, novelty: a.vimarsa_novelty, embedder: a.embedder, embedder_fallback: a.embedder_fallback ?? undefined, k: a.posterior?.length, delta_F: a.audit?.audit?.delta_F, two_pass: a.audit?.audit?.two_pass };
     } catch { cascade = null; }
     let agentDoc: unknown = null;
     try { agentDoc = docText ? JSON.parse(docText) : null; } catch { agentDoc = null; }

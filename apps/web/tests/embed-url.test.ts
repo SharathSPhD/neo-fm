@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { embedEngine, safeEmbedUrl } from "../lib/agent/embed-url";
+import { embedEngine, embedderUsed, safeEmbedUrl } from "../lib/agent/embed-url";
 
 describe("safeEmbedUrl", () => {
   it("accepts a public https service and normalises it", () => {
@@ -28,5 +28,16 @@ describe("safeEmbedUrl", () => {
     expect(embedEngine("job-1", 60, env)?.token.startsWith("v2.")).toBe(true);
     expect(embedEngine("job-1", 60, { ...env, EMBED_URL: "http://e.example.com" } as unknown as NodeJS.ProcessEnv)).toBeUndefined();
     expect(embedEngine("job-1", 60, { EMBED_URL: "https://e.example.com" } as unknown as NodeJS.ProcessEnv)).toBeUndefined();
+  });
+});
+
+describe("embedderUsed (best-effort embedding)", () => {
+  it("is none when no embedder is configured", () => expect(embedderUsed(false, null)).toBe("none"));
+  it("is service when the cascade used the service, or ran without a cascade audit", () => {
+    expect(embedderUsed(true, { embedder: "multilingual-embedding@service" })).toBe("service");
+    expect(embedderUsed(true, null)).toBe("service");
+  });
+  it("is none when the service refused the token or was down and the engine fell back to the lexical embedder", () => {
+    expect(embedderUsed(true, { embedder: "hash-ngram-512" })).toBe("none");
   });
 });
