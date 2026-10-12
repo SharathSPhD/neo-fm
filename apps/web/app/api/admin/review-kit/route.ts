@@ -11,7 +11,7 @@ import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkBearer } from "../../../../lib/agent/auth";
 import {
   hashToken, isReviewLanguage, newToken, SONGS_PER_LANGUAGE, summarize, type RatingRow,
-} from "../../../../lib/review/kit";
+} from "../../../../lib/native-review/kit";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const token = newToken();
     const { error } = await db.from("review_tokens").insert({ token_hash: hashToken(token), language: lang, alias });
     if (error) return NextResponse.json({ error: "insert_failed", detail: error.message }, { status: 500 });
-    return NextResponse.json({ ok: true, language: lang, alias, path: `/review/${token}`, note: "token is not stored; copy the link now" });
+    return NextResponse.json({ ok: true, language: lang, alias, path: `/native-review/${token}`, note: "token is not stored; copy the link now" });
   }
 
   if (action === "seed") {
