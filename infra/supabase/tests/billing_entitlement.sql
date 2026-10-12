@@ -33,3 +33,6 @@ select pg_temp.apply('sub_B', 'price_c', 'active');           select pg_temp.exp
 select pg_temp.apply('sub_A', 'price_p', 'canceled');         select pg_temp.expect('late event for old sub is ignored', 'creator', 'sub_B');
 select pg_temp.apply('sub_A', 'price_p', 'incomplete_expired'); select pg_temp.expect('stale expired old sub ignored', 'creator', 'sub_B');
 select pg_temp.apply('sub_B', 'price_c', 'canceled');         select pg_temp.expect('current sub cancelled -> free', 'free', 'sub_B');
+-- mid cancel-at-period-end, then Stripe fires customer.subscription.deleted at period end
+select pg_temp.apply('sub_C', 'price_p', 'active', true);     select pg_temp.expect('cancelling sub keeps pro until period end', 'pro', 'sub_C');
+select pg_temp.apply('sub_C', 'price_p', 'canceled', true);   select pg_temp.expect('deleted at period end -> free', 'free', 'sub_C');

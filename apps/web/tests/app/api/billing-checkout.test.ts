@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const create = vi.fn();
-vi.mock("../../../lib/billing/stripe", () => ({ getStripe: () => ({ checkout: { sessions: { create } } }) }));
+const listSubs = vi.fn(async () => ({ data: [] }));
+vi.mock("../../../lib/billing/stripe", () => ({ getStripe: () => ({ checkout: { sessions: { create } }, subscriptions: { list: listSubs } }) }));
 vi.mock("../../../lib/supabase/auth", async () => {
   const mod = await vi.importActual<typeof import("../../../lib/supabase/auth")>("../../../lib/supabase/auth");
   return { ...mod, requireUser: vi.fn() };
