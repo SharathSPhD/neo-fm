@@ -18,6 +18,7 @@ const SECTIONS: { h: string; body: string[] }[] = [
     "Anthropic (Claude) writes and reviews lyrics from your brief. Google (Gemini and Lyria) renders and checks the audio. Supabase stores data. Vercel hosts the app. Stripe processes payments. Each receives only what it needs to do its job.",
     "Your brief and lyrics are sent to these processors to produce your song; audio you share publicly is visible to anyone with its link." ] },
   { h: "Public songs", body: ["Songs you publish are public (or unlisted) and may appear on Discover. Unpublish any time from the song page. Private songs are only visible to you."] },
+  { h: "Listener counts on public songs", body: ["When someone plays a public or unlisted song, we add one to that song's play count and note the language their browser prefers (for example \"hi\" for Hindi). We do not record who they are, their IP address or their device, and we do not record anything if their browser sends Do Not Track or Global Privacy Control. Creators see only totals for their own songs, and a language breakdown only once a song collection has at least five plays."] },
   { h: "Your choices", body: ["You can access, correct, export or delete your data, withdraw consent, and nominate someone to exercise these rights, by writing to us through the Contact page. Deleting your account removes your songs and audio, subject to short backup retention and legal obligations."] },
   { h: "Children", body: ["neo-fm is not for people under 18. We do not knowingly collect data from children; if you believe a child has signed up, tell us and we will remove the account."] },
   { h: "Security and retention", body: ["Data is encrypted in transit and at rest with our providers, access is limited by row-level security, and secrets never reach the browser. We keep data while your account is active and delete it within a reasonable period after you ask."] },
@@ -28,7 +29,7 @@ export default function PrivacyPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Privacy</h1>
-      <p className="mt-3 text-sm text-foreground/60">Last updated: October 2026</p>
+      <p className="mt-3 text-sm text-foreground/60">Last updated: 12 October 2026</p>
       <div className="mt-8 space-y-8">
         {SECTIONS.map((s) => (
           <section key={s.h}>
