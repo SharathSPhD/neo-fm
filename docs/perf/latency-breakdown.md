@@ -16,6 +16,10 @@ Status: baseline from total job latency only (per-stage timings land with the le
 - Pro runs 4 to 6 minutes slower than Free at the same target length. Pro adds K=6, the Sonnet coordinator, the Opus/Sonnet polish pass, and the Gemini diction QA.
 - The burst cohort is a throughput problem, not a per-job one: jobs serialise behind `CONCURRENCY`, the 280 s lease, and a once-a-minute cron.
 
+## Stage definitions (from the lead's PR #28, `metrics.stages_ms`, flat milliseconds)
+
+`queue_wait` (created to started), `agent_draft` (start to the tick that first sees `generate_music`; tick granularity, so plus or minus 60 s), `polish`, `lyria` (wall time incl. retries), `upload`, `post_render` (render answered to agent idle), `finalize`, `qa`. Stages not observed are omitted. The view and script are key-agnostic, so they pick these up unchanged.
+
 ## Where the time can go (hypotheses to confirm with `stages_ms`)
 
 1. Tick granularity. `advance()` is called once per cron minute (`vercel.json`) or by the song poll route. Each state change (session start, tool call answered, outcome graded) can wait up to a minute. A pipeline with ~6 hand-offs loses ~3 min here regardless of model speed.
