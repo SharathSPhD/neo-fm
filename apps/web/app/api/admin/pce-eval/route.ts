@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
   const configId = ((cfg ?? [])[0] as { id: string } | undefined)?.id ?? null;
   const out: string[] = [];
   const baseline = req.nextUrl.searchParams.get("baseline") === "best6" ? "best6" : "single";
+  const polish = req.nextUrl.searchParams.get("polish") === "1"; // apply the Sonnet meter/diction polish to reused PCE lyrics
   const reuse = req.nextUrl.searchParams.get("reuse"); // copy finished PCE arms from another batch (no re-run)
   for (const b of PILOT_BRIEFS.slice(0, n)) {
     const base = { batch, brief_id: b.id, language: b.language, style_family: b.style, brief: b.text, config_version_id: configId };
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       await db.from("eval_runs").upsert({ ...base, arm: "single", status: "done", lyrics: text }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
       if (reuse) {
         const { data: prev } = await db.from("eval_runs").select("lyrics,session_id").eq("batch", reuse).eq("brief_id", b.id).eq("arm", "pce").eq("status", "done").maybeSingle();
-        if (prev?.lyrics) { await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "done", lyrics: prev.lyrics, session_id: prev.session_id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true }); out.push(`${b.id}: reused`); continue; }
+        if (prev?.lyrics) { await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "done", lyrics: polish ? await polishLyrics(client, { language: b.language, style: b.style, brief: b.text, lyrics: prev.lyrics }) : prev.lyrics, session_id: prev.session_id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true }); out.push(`${b.id}: reused`); continue; }
       }
       const s = await sessions.create({ agentId: agentIdFor("free"), environmentId: envId, title: `eval ${batch} ${b.id}` });
       const engine = process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim(), 3600) } : undefined;
