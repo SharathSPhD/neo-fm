@@ -15,7 +15,8 @@ vi.mock("../../../lib/agent/adapters", () => ({
   serviceClient: () => ({
     from: (table: string) => {
       adminState.table = table;
-      if (table === "song_reports") return { insert: async (row: unknown) => { inserted.push({ table, row }); return { error: reportInsertError }; } };
+      // select() is the signed-in duplicate-report lookup (eq job, eq reporter, eq status, limit): nothing open yet.
+      if (table === "song_reports") return { select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ limit: async () => ({ data: [] }) }) }) }) }), insert: async (row: unknown) => { inserted.push({ table, row }); return { error: reportInsertError }; } };
       if (table === "jobs" && adminState.calls.length === 0 && reportMode) return { select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: reportJob }) }) }) }) };
       return qb();
     },
