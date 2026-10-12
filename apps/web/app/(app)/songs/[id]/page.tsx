@@ -201,6 +201,24 @@ export default async function SongDetailPage({
     }
   }
 
+  // Own query, tolerant of a missing column (deploy before migration 0074).
+  const dedicationRow = await (
+    supabase.from("jobs") as unknown as {
+      select: (c: string) => {
+        eq: (k: string, v: string) => {
+          maybeSingle: () => Promise<{
+            data: { dedication_to: string | null; dedication_message: string | null } | null;
+          }>;
+        };
+      };
+    }
+  )
+    .select("dedication_to, dedication_message")
+    .eq("id", data.id)
+    .maybeSingle()
+    .then((r) => r.data)
+    .catch(() => null);
+
   const doc = data.song_documents?.document_json;
   const title =
     data.song_documents?.title ??
@@ -277,6 +295,11 @@ export default async function SongDetailPage({
             songId={data.id}
             initialVisibility={data.published_visibility}
             initialPublicId={data.public_id}
+            title={title}
+            initialDedication={{
+              to: dedicationRow?.dedication_to ?? "",
+              message: dedicationRow?.dedication_message ?? "",
+            }}
             canShare={data.status === "completed"}
           />
           {data.status === "completed" ? (
@@ -371,7 +394,7 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label={t("song.retry")} />
         </div>
       ) : (
-        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
+        <JobProgress songId={data.id} createdAt={data.created_at} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
 
       <DictionCheck qa={dictionQa} />

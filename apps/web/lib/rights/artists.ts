@@ -1,0 +1,60 @@
+/**
+ * Real artists a brief must not target. Aliases are matched after normaliseText(): Latin as whole words, Indic as
+ * substrings. This is a starter list, not a registry: extend it as new names show up in blocked briefs.
+ */
+import { normaliseText } from "./normalise";
+
+const RAW: Record<string, string[]> = {
+  "A. R. Rahman": ["a r rahman", "ar rahman", "ए आर रहमान", "ஏ ஆர் ரஹ்மான்", "ఎ ఆర్ రెహమాన్", "ಎ ಆರ್ ರೆಹಮಾನ್", "এ আর রহমান"],
+  "Arijit Singh": ["arijit singh", "arijit", "अरिजीत सिंह", "অরিজিৎ সিং", "அரிஜித் சிங்", "అరిజిత్ సింగ్", "ಅರಿಜಿತ್ ಸಿಂಗ್"],
+  "Lata Mangeshkar": ["lata mangeshkar", "लता मंगेशकर", "লতা মঙ্গেশকর", "லதா மங்கேஷ்கர்", "లతా మంగేష్కర్", "ಲತಾ ಮಂಗೇಶ್ಕರ್"],
+  "Asha Bhosle": ["asha bhosle", "आशा भोसले", "আশা ভোঁসলে"],
+  "Kishore Kumar": ["kishore kumar", "किशोर कुमार", "কিশোর কুমার"],
+  "Mohammed Rafi": ["mohammed rafi", "mohammad rafi", "मोहम्मद रफी", "মোহাম্মদ রফি"],
+  "Shreya Ghoshal": ["shreya ghoshal", "श्रेया घोषाल", "শ্রেয়া ঘোষাল", "ஷ்ரேயா கோஷல்", "శ్రేయా ఘోషల్", "ಶ್ರೇಯಾ ಘೋಷಾಲ್"],
+  "Sonu Nigam": ["sonu nigam", "सोनू निगम", "সোনু নিগম"],
+  "Kumar Sanu": ["kumar sanu", "कुमार सानू", "কুমার শানু"],
+  "Udit Narayan": ["udit narayan", "उदित नारायण"],
+  "Alka Yagnik": ["alka yagnik", "अलका याज्ञिक"],
+  "Sunidhi Chauhan": ["sunidhi chauhan", "सुनिधि चौहान"],
+  "Shankar Mahadevan": ["shankar mahadevan", "शंकर महादेवन"],
+  "Atif Aslam": ["atif aslam", "आतिफ असलम"],
+  "Rahat Fateh Ali Khan": ["rahat fateh ali khan", "राहत फतेह अली खान"],
+  "Nusrat Fateh Ali Khan": ["nusrat fateh ali khan", "नुसरत फतेह अली खान"],
+  "Jubin Nautiyal": ["jubin nautiyal", "जुबिन नौटियाल"],
+  "Neha Kakkar": ["neha kakkar", "नेहा कक्कड़"],
+  "Badshah": ["badshah"],
+  "Honey Singh": ["honey singh", "yo yo honey singh"],
+  "Diljit Dosanjh": ["diljit dosanjh", "दिलजीत दोसांझ"],
+  "S. P. Balasubrahmanyam": ["s p balasubrahmanyam", "sp balasubrahmanyam", "spb", "எஸ் பி பாலசுப்ரமணியம்", "ఎస్పీ బాలసుబ్రహ్మణ్యం", "ಎಸ್ ಪಿ ಬಾಲಸುಬ್ರಹ್ಮಣ್ಯಂ"],
+  "Ilaiyaraaja": ["ilaiyaraaja", "ilayaraja", "இளையராஜா", "ఇళయరాజా", "ಇಳಯರಾಜ", "इलैयाराजा"],
+  "K. J. Yesudas": ["yesudas", "येसुदास", "யேசுதாஸ்", "యేసుదాస్", "ಯೇಸುದಾಸ್"],
+  "K. S. Chithra": ["k s chithra", "ks chithra", "கே எஸ் சித்ரா", "ಕೆ ಎಸ್ ಚಿತ್ರಾ"],
+  "S. Janaki": ["s janaki", "எஸ் ஜானகி", "ఎస్ జానకి"],
+  "Sid Sriram": ["sid sriram", "சித் ஸ்ரீராம்", "సిద్ శ్రీరామ్"],
+  "Anirudh Ravichander": ["anirudh ravichander", "அனிருத்"],
+  "Yuvan Shankar Raja": ["yuvan shankar raja", "யுவன் சங்கர் ராஜா"],
+  "Dr. Rajkumar": ["dr rajkumar", "ಡಾ ರಾಜ್‌ಕುಮಾರ್", "ಡಾ ರಾಜ್ಕುಮಾರ್", "ರಾಜ್‌ಕುಮಾರ್"],
+  "Hemanta Mukherjee": ["hemanta mukherjee", "hemanta mukhopadhyay", "হেমন্ত মুখোপাধ্যায়"],
+  "Manna Dey": ["manna dey", "মান্না দে", "मन्ना डे"],
+  "Taylor Swift": ["taylor swift"],
+  "Drake": ["drake"],
+  "Beyoncé": ["beyonce"],
+  "Rihanna": ["rihanna"],
+  "Adele": ["adele"],
+  "Ed Sheeran": ["ed sheeran"],
+  "Billie Eilish": ["billie eilish"],
+  "The Weeknd": ["the weeknd"],
+  "Eminem": ["eminem"],
+  "Michael Jackson": ["michael jackson"],
+  "Elvis Presley": ["elvis presley", "elvis"],
+  "Bob Dylan": ["bob dylan"],
+  "Ariana Grande": ["ariana grande"],
+  "Justin Bieber": ["justin bieber"],
+  "Dua Lipa": ["dua lipa"],
+  "Bad Bunny": ["bad bunny"],
+  "BTS": ["bts"],
+};
+
+export interface ArtistAlias { artist: string; alias: string }
+export const ARTIST_ALIASES: ArtistAlias[] = Object.entries(RAW).flatMap(([artist, aliases]) => aliases.map((a) => ({ artist, alias: normaliseText(a) })));

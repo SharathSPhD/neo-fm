@@ -1,6 +1,18 @@
 # Manual steps to finish the neo-fm v2 launch
 
+Only things Claude cannot do for you (they need your logins, money or DNS). Everything else, including model work (Opus, Sonnet, Haiku, Gemini), tests, PRs, deploys, migrations and production checks, is done by Claude and the project sessions without asking you.
 Tell Claude "done: N" after each step. Never paste secret values in chat; paste them straight into the page named in the step.
+
+## What Resend is for (answering your question)
+Resend would send one email: "your song is ready" when a song finishes (and later password/receipt style mail). It is optional for launch: songs work without it and the user sees completion in the app. The code is being written to do nothing if the key is absent. Do step 5 only when you want that email. Also, `delivered@resend.dev` in the test-user list is just Resend's test inbox address, not a service we depend on.
+
+## Needs you, in priority order
+1. Step 2 (Supabase auth URLs, Pro plan): confirm done.
+2. Step 3 (Stripe webhook): in Stripe, send a test webhook and confirm it shows 200.
+3. Step 4 (domain neo-fm.com): needed to launch publicly.
+4. Step 8 (Upstash, free): real rate limiting; the code already waits for it.
+5. Step 6 (rotate CRON_SECRET), step 7 (go-live).
+6. Step 5 (Resend): optional.
 
 ## 1. Switch production to the neo-fm-prod Supabase project: DONE
 Verified by Claude. Redeployed.
@@ -51,3 +63,10 @@ Verified by Claude. Redeployed.
 3. Retire the old production Supabase project once nothing uses it: https://supabase.com/dashboard/projects → old project → Settings → General → Pause or Delete.
 4. Ask a native speaker for each language to review a few songs.
 5. Have counsel review the Terms and Privacy pages.
+
+## 8. Rate limiting store (Upstash Redis, free tier)
+Why: without it, per-IP rate limits live in memory on each serverless instance, so abuse protection is weak. Code (PR "Upstash-backed rate limiting") falls back safely until this is set.
+1. Open https://console.upstash.com/redis → Create database → region `ap-south-1` (Mumbai) → Free.
+2. On the database page copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+3. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables → add both for Production (Sensitive) → Save → redeploy as in step 3.4.
+(If you prefer, install the Upstash integration from https://vercel.com/marketplace/upstash, which adds both variables for you.)
