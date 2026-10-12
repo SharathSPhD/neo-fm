@@ -7,6 +7,7 @@
  */
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
@@ -74,7 +75,7 @@ type SongRow = {
 };
 
 /** Profile row plus public songs (with like counts), or null for an unknown handle. */
-async function loadProfile(handle: string) {
+const loadProfile = cache(async function loadProfile(handle: string) {
   const supabase = createServerClient();
   const lookup = await (
     supabase.from("public_profiles" as never) as unknown as {
@@ -103,16 +104,14 @@ async function loadProfile(handle: string) {
     .returns<SongRow[]>();
   const rows = (songsRes.data ?? []).filter((r) => r.song_documents);
 
-  // song_likes is readable by everyone (policy song_likes_select_all); count per song in JS.
-  const likeCounts = new Map<string, number>();
+  // One head-count query instead of fetching like rows; song_likes is readable by everyone (policy song_likes_select_all).
+  let totalLikes = 0;
   if (rows.length > 0) {
     const likes = await supabase
       .from("song_likes")
-      .select("job_id")
+      .select("job_id", { count: "exact", head: true })
       .in("job_id", rows.map((r) => r.id));
-    for (const l of (likes.data ?? []) as { job_id: string }[]) {
-      likeCounts.set(l.job_id, (likeCounts.get(l.job_id) ?? 0) + 1);
-    }
+    totalLikes = likes.count ?? 0;
   }
 
   const songs: ProfileSong[] = rows.map((r) => ({
@@ -122,10 +121,10 @@ async function loadProfile(handle: string) {
     title: r.song_documents?.title ?? null,
     language: r.song_documents?.language ?? "en",
     style_family: r.song_documents?.style_family ?? "western",
-    like_count: likeCounts.get(r.id) ?? 0,
+    like_count: 0,
   }));
-  return { profile, songs };
-}
+  return { profile, songs, totalLikes };
+});
 
 export default async function ProfilePage({ params }: Props) {
   const supabase = createServerClient();
@@ -133,7 +132,7 @@ export default async function ProfilePage({ params }: Props) {
 
   const loaded = await loadProfile(handle);
   if (!loaded) notFound();
-  const { profile, songs } = loaded;
+  const { profile, songs, totalLikes } = loaded;
 
   const [followerCountRes, authRes] = await Promise.all([
     (
@@ -169,7 +168,7 @@ export default async function ProfilePage({ params }: Props) {
     isFollowing = Boolean(probe.data);
   }
 
-  const stats = profileStats(songs);
+  const stats = { ...profileStats(songs), likes: totalLikes };
   const groups = groupByLanguage(songs);
   const shareText = profileBlurb(
     profile.handle,
@@ -278,7 +277,6 @@ export default async function ProfilePage({ params }: Props) {
                           <p className="line-clamp-2 text-base font-medium group-hover:text-accent">{title}</p>
                           <p className="mt-0.5 text-xs text-foreground/60">
                             {prettyStyle(song.style_family)}
-                            {song.like_count > 0 ? ` · ♥ ${song.like_count}` : ""}
                           </p>
                           {song.published_at ? (
                             <p className="text-[11px] text-foreground/50">
