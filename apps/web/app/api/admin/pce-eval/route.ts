@@ -16,6 +16,7 @@ import { allEvalBriefs } from "../../../../lib/eval/briefs-gen";
 
 const PILOT_BRIEFS = allEvalBriefs();
 import { polishLyrics } from "../../../../lib/lyrics/polish";
+import { polishVariant } from "../../../../lib/lyrics/prosody-experiments";
 import { bestOfSix, judgePair, judgePairGemini, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +91,10 @@ export async function GET(req: NextRequest) {
     const to = req.nextUrl.searchParams.get("to");
     const off = Number(req.nextUrl.searchParams.get("offset") ?? 0); const cnt = Number(req.nextUrl.searchParams.get("n") ?? 15);
     if (!to) return NextResponse.json({ error: "to required" }, { status: 400 });
+    // Optional offline experiment: &variant=<id> polishes with a candidate template from prosody-experiments.ts instead of the live one. Eval batches only.
+    const variantId = req.nextUrl.searchParams.get("variant");
+    const variant = polishVariant(variantId);
+    if (variantId && !variant) return NextResponse.json({ error: "unknown variant" }, { status: 400 });
     const { data: src } = await db.from("eval_runs").select("*").eq("batch", batch).eq("status", "done").order("brief_id").order("arm");
     const rows = (src ?? []) as { brief_id: string; arm: string; language: string; style_family: string; brief: string; lyrics: string; session_id: string | null; config_version_id: string | null }[];
     const ids = [...new Set(rows.map((r) => r.brief_id))].slice(off, off + cnt);
@@ -101,7 +106,7 @@ export async function GET(req: NextRequest) {
         const keep = { batch: to, brief_id: id, language: pce.language, style_family: pce.style_family, brief: pce.brief, config_version_id: pce.config_version_id, status: "done" };
         await db.from("eval_runs").upsert({ ...keep, arm: "single", lyrics: one.lyrics }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
         const { data: ex } = await db.from("eval_runs").select("id").eq("batch", to).eq("brief_id", id).eq("arm", "pce").maybeSingle();
-        if (!ex) await db.from("eval_runs").upsert({ ...keep, arm: "pce", session_id: pce.session_id, lyrics: await polishLyrics(client, { language: pce.language, style: pce.style_family, brief: pce.brief, lyrics: pce.lyrics }) }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+        if (!ex) await db.from("eval_runs").upsert({ ...keep, arm: "pce", session_id: pce.session_id, lyrics: await polishLyrics(client, { language: pce.language, style: pce.style_family, brief: pce.brief, lyrics: pce.lyrics }, variant?.template) }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
         log.push(`${id}: ok`);
       } catch (e) { log.push(`${id}: ${String((e as Error).message).slice(0, 80)}`); }
     }));
