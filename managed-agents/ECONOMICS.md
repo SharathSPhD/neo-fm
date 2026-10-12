@@ -12,3 +12,12 @@ Price points (value-led, India-first; GST 18% and ~3% gateway fee ⇒ INR 299 ne
 - Credit packs INR 99 (12 credits).
 Guard rails: per-user daily render cap · per-job token ceiling · blended-margin alert < 60% · India-vs-intl pricing by billing country with card-country check.
 Stripe India caveat: Indian issuers may decline cross-border recurring cards (RBI e-mandate); validate with an Indian card in live mode; keep Razorpay UPI AutoPay as fallback.
+
+## Decision log - tier envelopes (2026-10-12, advisor-checked)
+Ledger unit cost: ~GBP 0.25 per full Lyria render, ~0.05 per clip; Claude+infra ~GBP 0.10 per paid song.
+| Tier | Price (net of GST/fees) | Monthly Lyria envelope | Worst-case songs | Worst-case margin |
+|---|---|---|---|---|
+| Free | 0 | GBP 0.30 | 1 | n/a (acquisition cost) |
+| Creator | INR 299 (~GBP 2.2) | GBP 0.75 | 3 full | ~50% |
+| Pro | INR 799 (~GBP 5.8) | GBP 2.00 | 8 full | ~52% |
+Envelopes are enforced atomically per user (`reserve_user_spend`) under the global monthly ceiling. If measured Lyria billing is lower than the ledger (secondary sources suggest ~USD 0.08 per full), raise songs-per-tier proportionally rather than cutting price. Marketing copy must say "up to N full songs a month", never "unlimited".

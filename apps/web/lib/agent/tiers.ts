@@ -22,11 +22,17 @@ const PLANS: Record<AgentKey, TierPlan> = {
   pro: { agent: "pro", maxLyriaCalls: 1, maxOutcomeIterations: 1, userLyriaCapGbp: 3 },
 };
 
+/**
+ * Monthly Lyria envelope by paid tier (GBP, ledger units: ~0.25 per full render). Sized so that at 100% use a Creator
+ * (INR 299, net ~GBP 2.2) still clears ~50% margin after Claude + infra (~GBP 0.1/song): 0.75 => 3 full songs + clips.
+ * Pro (INR 799, net ~GBP 5.8): 2.0 => ~8 full songs. Re-tune from measured Lyria billing (managed-agents/ECONOMICS.md).
+ */
+export const TIER_LYRIA_CAP_GBP: Record<UserTier, number> = { free: 0.3, creator: 0.75, pro: 2, developer: 3 };
+
 export function planForTier(tier: UserTier | null | undefined, override?: string | null): TierPlan {
   if (override === "free" || override === "pro") return PLANS[override];
-  return tier === "creator" || tier === "pro" || tier === "developer"
-    ? PLANS.pro
-    : PLANS.free;
+  if (tier === "creator" || tier === "pro" || tier === "developer") return { ...PLANS.pro, userLyriaCapGbp: TIER_LYRIA_CAP_GBP[tier] };
+  return PLANS.free;
 }
 
 /** Dashboard-pasted IDs often carry whitespace or wrapping quotes; strip them. */
