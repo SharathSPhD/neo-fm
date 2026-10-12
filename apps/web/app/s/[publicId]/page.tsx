@@ -22,6 +22,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
 
+import { requestOrigin } from "@/lib/embed/origin";
+
 import {
   createServerClient,
   createServiceRoleClient,
@@ -152,10 +154,17 @@ export async function generateMetadata({
     data.published_visibility === "unlisted"
       ? { index: false, follow: false }
       : { index: true, follow: true };
+  // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
+  // WordPress etc. turn a pasted link into the embedded player.
+  const origin = requestOrigin();
+  const oembed = origin
+    ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
+    : null;
   return {
     title,
     description,
     robots,
+    alternates: oembed ? { types: { "application/json+oembed": oembed } } : undefined,
     openGraph: {
       title,
       description,

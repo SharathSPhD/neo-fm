@@ -131,7 +131,7 @@ export function pickRule(
     return { bucket: "songs:gen-aux", limit: 6 };
   }
   // Public share-surface reads.
-  if (pathname.startsWith("/api/p/")) {
+  if (pathname.startsWith("/api/p/") || pathname === "/api/oembed") {
     return { bucket: "public:read", limit: 120 };
   }
   // Lyric / preview / library + everything else under /api. Pages, RSC
