@@ -19,8 +19,25 @@ Measurement only. No prod prompt, pipeline or `apps/web/lib/agent/*` change. Har
 
 Raw per-sample rows: `managed-agents/quality/clip-30s.jsonl` (transcripts and flagged lines included). Reproduce the table with `npx tsx scripts/quality/diction-sweep.ts --report managed-agents/quality/clip-30s.jsonl` (no spend).
 
-## Results, 60 s songs, N=3 per language (2026-10-12, GBP 3.75)
-Same method, `lyria-3.5` with "exactly 60 seconds". **Correction to an earlier draft of this section:** the run was meant to use the full PCE lyrics plus a repeated hook, but a script bug (the `--lyrics` flag was only honoured by the `--report` path) made it render and score the same trimmed 5-6 line lyrics as the 30 s sweep (fixed in `diction-sweep.ts`). So this measures "30 s-sized lyrics asked to fill 60 s", not songs with 60 s-sized lyrics; `lyrics-fullB-60s-n3.json` is prepared for a proper re-run (about GBP 3.75, not yet approved). N=3: a smoke test, not a distribution.
+## Results, 60 s songs with full-length lyrics, N=3 per language (2026-10-12, GBP 3.75)
+The proper re-run the section below asked for: `lyria-3.5` with "exactly 60 seconds", the 9-12 line PCE lyrics in `lyrics-fullB-60s-n3.json` (hook repeat appended where needed), scored on the lines actually sent. Raw rows: `managed-agents/quality/full-60s-fulllyrics.jsonl`; audio in `/mnt/project-files/quality/audio-60s-full/`. Approved by S for up to GBP 4.50; spend about GBP 3.75 (estimate at GBP 0.25 per render), so the thread's total is about GBP 11.2.
+
+| Language | N | Median | Mean | Scores | Failures (<60) |
+|---|---|---|---|---|---|
+| Bengali | 3 | 93 | 77 | 100, 93, 37 | 1 |
+| Hindi | 3 | 92 | 93 | 97, 90, 92 | 0 |
+| Kannada | 3 | 91 | 92 | 98, 88, 91 | 0 |
+| Tamil | 3 | 96 | 95 | 96, 98, 92 | 0 |
+| Telugu | 3 | 96 | 96 | 96, 94, 98 | 0 |
+
+- **Length control holds with longer lyrics:** 15 of 15 files are 61.4-67.1 s (ffprobe).
+- **Diction at 60 s with real lyrics is in the same range as 30 s** (medians 91-96 against 98-99 at 30 s; N=3 is a smoke test, not a distribution). Slightly lower is expected: more lines per song gives more places to deviate.
+- **The one failure is real:** Bengali bn-10 (37) sang the lines in a scrambled order and garbled several of them (7 flagged lines, CER 0.5-0.8); order-free scoring does not rescue it. The Bengali median is 93, but one in three Bengali songs failing is the number to watch at higher N.
+- **Tail truncation is not the issue at 60 s:** the full lyrics were reached in 14 of 15 songs.
+- Caveat on the numbers: a later rescore from the stored file (without the appended hook repeat) gives higher medians for Hindi, Kannada and Tamil (95, 98, 97); the table above uses the lines Lyria was actually given.
+
+## Results, 60 s smoke test with trimmed lyrics, N=3 per language (superseded by the section above)
+Same method, `lyria-3.5` with "exactly 60 seconds". **Correction to an earlier draft of this section:** the run was meant to use the full PCE lyrics plus a repeated hook, but a script bug (the `--lyrics` flag was only honoured by the `--report` path) made it render and score the same trimmed 5-6 line lyrics as the 30 s sweep (fixed in `diction-sweep.ts`). So this measures "30 s-sized lyrics asked to fill 60 s", not songs with 60 s-sized lyrics; the proper re-run with full lyrics is the section above. N=3: a smoke test, not a distribution.
 
 | Language | N | Median (in order) | Median (order-free) | In-order scores | Order-free scores |
 |---|---|---|---|---|---|
