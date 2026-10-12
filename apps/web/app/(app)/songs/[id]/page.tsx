@@ -243,6 +243,16 @@ export default async function SongDetailPage({
     } catch { /* optional */ }
   }
 
+  // Heard per-line lyric times (separate query: the column may not exist yet
+  // on older databases, and that must not take the diction audit down too).
+  let lineTimings: unknown = null;
+  if (data.status === "completed") {
+    try {
+      const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("line_timings").eq("job_id" as never, data.id as never).limit(1);
+      lineTimings = ((runs ?? []) as { line_timings: unknown }[])[0]?.line_timings ?? null;
+    } catch { /* optional */ }
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
@@ -352,6 +362,8 @@ export default async function SongDetailPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack?.duration_seconds ?? null}
             format={latestTrack?.format ?? "wav"}
+            title={title}
+            subtitle={doc ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)}` : undefined}
           />
           {data.song_documents?.document_json &&
           (data.song_documents.document_json as SongDocumentView)?.sections
@@ -361,6 +373,7 @@ export default async function SongDetailPage({
                 (data.song_documents.document_json as SongDocumentView).sections
               }
               durationSeconds={latestTrack?.duration_seconds ?? null}
+              lineTimings={lineTimings}
             />
           ) : null}
           <StemsPanel songId={data.id} />
