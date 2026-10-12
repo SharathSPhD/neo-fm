@@ -25,6 +25,8 @@ async function fetchLyrics(sessionId: string): Promise<string | null> {
   const client = anthropicClient();
   const files: { id: string; filename: string }[] = [];
   for await (const f of client.beta.files.list({ scope_id: sessionId, betas: ["managed-agents-2026-04-01"] })) files.push({ id: f.id, filename: f.filename });
+  // Only count runs that actually executed the PCE engine (cascade_audit.json is its receipt).
+  if (!files.some((x) => x.filename.endsWith("cascade_audit.json"))) return null;
   const f = files.find((x) => x.filename.endsWith("lyrics.md"));
   return f ? await (await client.beta.files.download(f.id)).text() : null;
 }
@@ -62,6 +64,15 @@ export async function GET(req: NextRequest) {
   const action = req.nextUrl.searchParams.get("action") ?? "report";
   if (!batch) return NextResponse.json({ error: "batch required" }, { status: 400 });
   const db = serviceClient(); const client = anthropicClient(); const sessions = sessionApi();
+
+  if (action === "events") {
+    const sid = req.nextUrl.searchParams.get("session");
+    if (!sid) return NextResponse.json({ error: "session required" }, { status: 400 });
+    const events = await sessions.listEvents(sid);
+    const files: string[] = [];
+    for await (const f of client.beta.files.list({ scope_id: sid, betas: ["managed-agents-2026-04-01"] })) files.push(f.filename);
+    return NextResponse.json({ n: events.length, files, tail: events.slice(-12).map((e) => JSON.stringify(e).slice(0, 400)) });
+  }
 
   if (action === "advance") {
     const { data: running } = await db.from("eval_runs").select("*").eq("batch", batch).eq("arm", "pce").eq("status", "running");
