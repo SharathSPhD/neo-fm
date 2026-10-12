@@ -13,6 +13,8 @@ import { SongIdSchema } from "../../../../lib/api/song-schemas";
 import { waitUntil } from "@vercel/functions";
 
 import { processJobs } from "../../../../lib/agent/process";
+import { deriveStage, etaFromHistory, type Eta, type JobStage } from "../../../../lib/progress/job-progress";
+import { planForTier, type UserTier } from "../../../../lib/agent/tiers";
 import { requireUser } from "../../../../lib/supabase/auth";
 import { createServiceRoleClient } from "../../../../lib/supabase/server";
 
@@ -141,23 +143,46 @@ export async function GET(
   }
 
   // Coarse progress stage for the live timeline (agent_runs has no RLS policies, so read it with the service role
-  // only after RLS has already proven this user owns the job).
-  let stage: "queued" | "starting" | "writing" | "rendering" | "finishing" | "done" = "queued";
+  // only after RLS has already proven this user owns the job). Lyrics are revealed once polish has passed the safety screen.
+  let stage: JobStage = "queued";
+  let lyrics: string | undefined;
+  let eta: Eta | null = null;
   if (data.status === "completed") stage = "done";
   else if (data.status === "processing") {
     stage = "starting";
     try {
-      const { data: runs } = await createServiceRoleClient()
+      const svc = createServiceRoleClient();
+      const { data: runs } = await svc
         .from("agent_runs" as never)
-        .select("session_id,lyria_calls,audio_path")
+        .select("session_id,lyria_calls,audio_path,polished_lyrics")
         .eq("job_id" as never, data.id as never)
         .limit(1);
-      const run = ((runs ?? []) as { session_id: string | null; lyria_calls: number; audio_path: string | null }[])[0];
-      if (run?.audio_path) stage = "finishing";
-      else if (run && run.lyria_calls > 0) stage = "rendering";
-      else if (run?.session_id) stage = "writing";
+      const run = ((runs ?? []) as { session_id: string | null; lyria_calls: number; audio_path: string | null; polished_lyrics: string | null }[])[0];
+      stage = deriveStage(run);
+      if (run?.polished_lyrics) lyrics = run.polished_lyrics;
     } catch {
       /* stage is cosmetic */
+    }
+  }
+  if (data.status === "queued" || data.status === "processing") {
+    try {
+      // Typical time for songs of the same length class; job_telemetry holds total latency for finished jobs.
+      const target = (data.song_documents?.document_json as { target_duration_seconds?: number } | null)?.target_duration_seconds ?? null;
+      const svc = createServiceRoleClient();
+      const { data: u } = await svc.from("users" as never).select("*").eq("id" as never, authed.user.id as never).limit(1);
+      const urow = ((u ?? []) as { tier?: UserTier; agent_plan?: string | null }[])[0];
+      const plan = planForTier(urow?.tier ?? "free", urow?.agent_plan).agent;
+      const { data: hist } = await svc
+        .from("job_telemetry" as never)
+        .select("metrics")
+        .order("created_at" as never, { ascending: false })
+        .limit(80);
+      const rows = ((hist ?? []) as { metrics: { plan?: string; target_s?: number | null; latency_ms?: number } | null }[]).map((r) => r.metrics);
+      // Same plan and song length; widen to the plan alone when that leaves too little history.
+      const samePlan = rows.filter((m) => m?.plan === plan);
+      eta = etaFromHistory(samePlan.filter((m) => m?.target_s === target).map((m) => m?.latency_ms)) ?? etaFromHistory(samePlan.map((m) => m?.latency_ms));
+    } catch {
+      /* ETA is cosmetic */
     }
   }
 
@@ -165,6 +190,8 @@ export async function GET(
     id: data.id,
     status: data.status,
     stage,
+    lyrics,
+    eta,
     error: data.error,
     created_at: data.created_at,
     finished_at: data.finished_at,
@@ -210,6 +237,15 @@ export async function DELETE(
   }
   if (!count) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
+  }
+  // The job row (and its track rows) are gone; remove the audio too so deleted songs do not leave paid-for orphans.
+  // Only reached when RLS let the delete through, i.e. the caller owns the job. Best-effort: never fails the delete.
+  try {
+    const storage = createServiceRoleClient().storage.from("tracks");
+    const { data: files } = await storage.list(parsed.data, { limit: 100 });
+    if (files && files.length > 0) await storage.remove(files.map((f) => `${parsed.data}/${f.name}`));
+  } catch (e) {
+    console.error("song delete: audio cleanup failed", parsed.data, String((e as Error)?.message ?? e));
   }
   return NextResponse.json({ deleted: true });
 }
