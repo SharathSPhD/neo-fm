@@ -191,13 +191,20 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
   }
 }
 
+/** Machine-readable failure code shown to users as friendly copy (components/job-progress.tsx); the raw reason stays in agent_runs.render_error. */
+export function failureCode(renderError?: string | null): string {
+  if (renderError && /spend cap/i.test(renderError)) return "allowance_reached";
+  if (renderError && /content policy|safety/i.test(renderError)) return "content_policy";
+  return renderError ? "render_failed" : "agent finished without audio";
+}
+
 async function finalize(db: ReturnType<typeof serviceClient>, jobId: string): Promise<Record<string, unknown> | null> {
-  const { data: runRows } = await db.from("agent_runs").select("audio_path,status,session_id").eq("job_id", jobId).limit(1);
-  const run = (runRows ?? [])[0] as { audio_path: string | null; status: string; session_id: string | null } | undefined;
+  const { data: runRows } = await db.from("agent_runs").select("audio_path,status,session_id,render_error").eq("job_id", jobId).limit(1);
+  const run = (runRows ?? [])[0] as { audio_path: string | null; status: string; session_id: string | null; render_error?: string | null } | undefined;
   const cascade = run?.session_id ? await persistOutputs(db, jobId, run.session_id) : null;
   const now = new Date().toISOString();
   if (!run?.audio_path || run.status === "failed") {
-    await db.from("jobs").update({ status: "failed", error: "agent finished without audio", finished_at: now }).eq("id", jobId);
+    await db.from("jobs").update({ status: "failed", error: failureCode(run?.render_error), finished_at: now }).eq("id", jobId);
     return cascade;
   }
   // One attempt per job: reuse the stored attempt_id so a repeated finalize can never insert a second track.
