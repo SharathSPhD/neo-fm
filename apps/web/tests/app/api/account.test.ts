@@ -11,6 +11,7 @@ const db = vi.hoisted(() => ({
   removed: [] as string[],
   listing: {} as Record<string, { id: string | null; name: string }[]>,
   removeError: null as { message: string } | null,
+  selects: [] as { table: string; cols: string }[],
   deleteUser: vi.fn(),
   cancel: vi.fn(),
   delCustomer: vi.fn(),
@@ -19,7 +20,8 @@ const db = vi.hoisted(() => ({
 function chain(table: string) {
   const result = () => db.tables[table] ?? { data: [], error: null };
   const q: Record<string, unknown> = {};
-  for (const m of ["select", "eq", "in", "order"]) q[m] = () => q;
+  for (const m of ["eq", "in", "order"]) q[m] = () => q;
+  q.select = (cols: string) => { db.selects.push({ table, cols }); return q; };
   q.maybeSingle = async () => result();
   q.delete = () => ({ eq: async () => { db.deleted.push(table); return { error: db.tables[`${table}:delete`]?.error ?? null }; } });
   q.then = (res: (v: unknown) => unknown) => res(result());
@@ -47,7 +49,7 @@ import { DELETE } from "../../../app/api/account/route";
 import { GET } from "../../../app/api/account/export/route";
 
 beforeEach(() => {
-  db.tables = {}; db.deleted = []; db.removed = []; db.listing = {}; db.removeError = null;
+  db.tables = {}; db.selects = []; db.deleted = []; db.removed = []; db.listing = {}; db.removeError = null;
   db.deleteUser.mockReset().mockResolvedValue({ error: null });
   db.cancel.mockReset().mockResolvedValue({}); db.delCustomer.mockReset().mockResolvedValue({});
   vi.mocked(requireUser).mockReset().mockResolvedValue({ user: USER, supabase: admin() } as never);
@@ -131,6 +133,13 @@ describe("GET /api/account/export", () => {
       consents: [{ kind: "training" }],
     });
     expect(res.headers.get("cache-control")).toBe("no-store");
+  });
+  it("only selects columns that exist in production (agent_runs has updated_at, not created_at)", async () => {
+    const PROD_AGENT_RUNS = ["job_id", "session_id", "agent_key", "status", "lyria_calls", "audio_path", "lyrics", "agent_song_document", "updated_at", "diction_qa", "polished_lyrics", "render_error"];
+    await GET();
+    const cols = db.selects.find((x) => x.table === "agent_runs")?.cols.split(",").map((c) => c.trim()) ?? [];
+    expect(cols.length).toBeGreaterThan(0);
+    expect(cols.filter((c) => !PROD_AGENT_RUNS.includes(c))).toEqual([]);
   });
   it("fails instead of returning a silently incomplete export", async () => {
     db.tables.song_likes = { data: null, error: { message: "db down" } };
