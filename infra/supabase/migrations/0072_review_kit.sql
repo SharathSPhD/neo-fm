@@ -1,4 +1,4 @@
--- 0065_review_kit.sql (number provisional until the lead session confirms)
+-- 0072_review_kit.sql
 -- Native-speaker review kit: a fixed set of songs per language, token-link reviewers, 1-5 ratings.
 -- No PII: reviewers are identified only by an opaque token and an optional alias the operator chooses
 -- (e.g. "Kannada reviewer A"). Tokens are stored as SHA-256 hashes. Service role only (no policies).
