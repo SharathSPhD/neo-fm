@@ -1,4 +1,5 @@
 import { serverI18n } from "@/lib/i18n/server";
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
 import Link from "next/link";
 
@@ -46,6 +47,7 @@ function Accented({ text }: { text: string }) {
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <FunnelBeacon event="landing_view" />
       <Hero />
       <ListenFirst />
       <HowItWorks />

@@ -3,10 +3,14 @@
  *
  * Aimed at Substack / Notion / blogs that embed via `<iframe>`. Strips
  * navigation and metadata; keeps only the title strip + the audio
- * player + a small "Play on neo-fm" link. Same ADR 0013 / RLS gate as
+ * player + a "Made with neo-fm" link. Same ADR 0013 / RLS gate as
  * the full /s/[publicId] page.
+ *
+ * Query: ?layout=compact|full (default full), ?theme=light|dark|auto
+ * (default auto). Private and taken-down songs fall through to
+ * ./not-found.tsx.
  */
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -15,11 +19,15 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 
-import { serverI18n } from "@/lib/i18n/server";
+import { parseEmbedOptions } from "@/lib/embed/options";
+import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
-import { PublicSongAudio } from "../public-song-audio";
+import { EmbedPlayer } from "./embed-player";
 
 export const dynamic = "force-dynamic";
+
+// The player is a widget, not a destination: the song page is what should rank.
+export const metadata: Metadata = { title: "neo-fm player", robots: { index: false, follow: false } };
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -38,6 +46,7 @@ interface EmbedRow {
       language: string;
       target_duration_seconds: number;
       raga?: { name: string };
+      sections?: { id: string; type: string; target_seconds: number; lyrics?: string }[];
     };
     language: string;
     style_family: string;
@@ -56,12 +65,15 @@ interface EmbedRow {
 
 export default async function EmbedPage({
   params,
+  searchParams,
 }: {
   params: { publicId: string };
+  searchParams: Record<string, string | string[] | undefined>;
 }) {
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
-
+  const { layout, theme } = parseEmbedOptions(searchParams);
+  const compact = layout === "compact";
   const supabase = createServerClient();
   const { data } = await supabase
     .from("jobs")
@@ -81,7 +93,6 @@ export default async function EmbedPage({
     .maybeSingle<EmbedRow>();
 
   if (!data) notFound();
-  const { t } = serverI18n();
   const doc = data.song_documents?.document_json;
 
   const tracks = (data.tracks ?? [])
@@ -99,56 +110,66 @@ export default async function EmbedPage({
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  const title = data.song_documents?.title?.trim()?.length
+    ? data.song_documents.title
+    : doc
+      ? prettyStyle(doc.style_family)
+      : "Song";
+  const colorScheme = theme === "auto" ? "light dark" : theme;
+
   return (
-    <main className="flex h-full min-h-[160px] flex-col gap-3 bg-background px-4 py-4">
-      <header className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-sm font-medium" title={data.song_documents?.title ?? undefined}>
-          {data.song_documents?.title?.trim()?.length
-            ? data.song_documents.title
-            : doc
-              ? prettyStyle(doc.style_family, t)
-              : t("song.song")}
-          <span className="ml-2 text-xs text-foreground/50">
-            {doc ? prettyLanguage(doc.language, t) : ""}
+    <main
+      className={`embed-root flex min-h-screen flex-col justify-between gap-3 px-4 py-3`}
+      data-embed-theme={theme}
+      style={{ colorScheme }}
+    >
+      <div className="flex min-h-0 flex-col gap-3">
+        <header className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium" title={title ?? undefined}>
+            {title}
+            {!compact && doc ? (
+              <span className="ml-2 text-xs text-foreground/60">{prettyLanguage(doc.language)}</span>
+            ) : null}
           </span>
-        </span>
-        <Link
+          {compact ? (
+            <a
+              href={`/s/${data.public_id}`}
+              target="_top"
+              rel="noopener"
+              className="shrink-0 text-[10px] uppercase tracking-widest text-foreground/60 hover:text-foreground"
+            >
+              Made with neo-fm ↗
+            </a>
+          ) : null}
+        </header>
+        {signedUrl && latestTrack ? (
+          <EmbedPlayer
+            publicId={data.public_id}
+            initialUrl={signedUrl}
+            durationSeconds={latestTrack.duration_seconds}
+            format={latestTrack.format}
+            sections={doc?.sections ?? []}
+            layout={layout}
+            language={doc?.language ?? "en"}
+          />
+        ) : (
+          <p className="text-xs text-foreground/70">
+            {data.status === "queued" || data.status === "processing"
+              ? "Rendering now."
+              : "Audio preview not available."}
+          </p>
+        )}
+      </div>
+      {compact ? null : (
+        <a
           href={`/s/${data.public_id}`}
           target="_top"
-          className="text-[10px] uppercase tracking-widest text-foreground/40 hover:text-foreground/70"
+          rel="noopener"
+          className="self-end text-[10px] uppercase tracking-widest text-foreground/60 hover:text-foreground"
         >
-          neo-fm ↗
-        </Link>
-      </header>
-      {signedUrl && latestTrack ? (
-        <PublicSongAudio
-          publicId={data.public_id}
-          initialUrl={signedUrl}
-          durationSeconds={latestTrack.duration_seconds}
-          format={latestTrack.format}
-        />
-      ) : (
-        <p className="text-xs text-amber-200">
-          {data.status === "queued" || data.status === "processing"
-            ? t("pub.embed.rendering")
-            : t("pub.embed.noPreview")}
-        </p>
+          Made with neo-fm ↗
+        </a>
       )}
     </main>
   );
-}
-
-type TFn = ReturnType<typeof serverI18n>["t"];
-function prettyStyle(s: string, t: TFn): string {
-  if (s === "western") return t("pub.style.western");
-  if (s === "carnatic") return t("pub.style.carnatic");
-  if (s === "hindustani") return t("pub.style.hindustani");
-  if (s === "kannada-folk") return t("pub.style.kannadaFolk");
-  return s;
-}
-function prettyLanguage(l: string, t: TFn): string {
-  if (l === "en") return t("pub.lang.en");
-  if (l === "hi") return t("pub.lang.hi");
-  if (l === "kn") return t("pub.lang.kn");
-  return l;
 }
