@@ -11,8 +11,8 @@ import type { Metadata } from "next";
 import { FeedbackForm } from "./feedback-form";
 import { serverI18n } from "@/lib/i18n/server";
 
-export function generateMetadata(): Metadata {
-  const { t } = serverI18n();
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await serverI18n();
   return {
     alternates: { canonical: "/feedback" },
     title: t("feedback.meta.title"),
@@ -20,8 +20,8 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default function FeedbackPage() {
-  const { t } = serverI18n();
+export default async function FeedbackPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-3">

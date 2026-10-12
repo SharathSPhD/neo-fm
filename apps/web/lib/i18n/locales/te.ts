@@ -652,7 +652,7 @@ export const te: Dict = {
   "pub.report.sexual": "లైంగిక కంటెంట్ లేదా మైనర్లకు సంబంధించినది",
   "pub.report.copyright": "ఒకరి కాపీరైట్ రచనను కాపీ చేస్తోంది",
   "pub.report.other": "ఇంకేదో",
-  "pub.report.thanks": "ధన్యవాదాలు — ఈ నివేదికను సమీక్షిస్తాము. అత్యవసరమా? grievance@neo-fm.com కు రాయండి.",
+  "pub.report.thanks": "ధన్యవాదాలు — ఈ నివేదికను సమీక్షిస్తాము. అత్యవసరమా? info@technektar.com కు రాయండి.",
   "pub.report.open": "ఈ పాటను రిపోర్ట్ చేయండి",
   "pub.report.why": "మీరు దీన్ని ఎందుకు రిపోర్ట్ చేస్తున్నారు?",
   "pub.report.details": "వివరాలు (ఐచ్ఛికం)",

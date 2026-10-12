@@ -9,10 +9,14 @@ updates:
       npm-minor-patch:
         update-types: [minor, patch]
     ignore:
-      # Major bumps are planned work (Next 15 migration is tracked in an issue).
+      # Next/React majors are planned migrations, not weekly noise.
       - dependency-name: next
         update-types: [version-update:semver-major]
       - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
         update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions

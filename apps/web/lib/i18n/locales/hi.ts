@@ -652,7 +652,7 @@ export const hi: Dict = {
   "pub.report.sexual": "यौन सामग्री या नाबालिगों से जुड़ा",
   "pub.report.copyright": "किसी के कॉपीराइट वाले काम की नकल करता है",
   "pub.report.other": "कुछ और",
-  "pub.report.thanks": "धन्यवाद — हम इस रिपोर्ट की समीक्षा करेंगे। ज़रूरी है? grievance@neo-fm.com पर लिखें।",
+  "pub.report.thanks": "धन्यवाद — हम इस रिपोर्ट की समीक्षा करेंगे। ज़रूरी है? info@technektar.com पर लिखें।",
   "pub.report.open": "इस गाने की रिपोर्ट करें",
   "pub.report.why": "आप इसकी रिपोर्ट क्यों कर रहे हैं?",
   "pub.report.details": "विवरण (वैकल्पिक)",

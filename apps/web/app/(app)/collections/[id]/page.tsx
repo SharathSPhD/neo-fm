@@ -11,7 +11,8 @@ export const dynamic = "force-dynamic";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export default async function CollectionPage({ params }: { params: { id: string } }) {
+export default async function CollectionPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!UUID_RE.test(params.id)) notFound();
   const { data: auth } = await createServerClient().auth.getUser();
   if (!auth.user) redirect(`/sign-in?next=/collections/${params.id}`);

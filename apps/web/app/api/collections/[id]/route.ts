@@ -14,7 +14,8 @@ export const dynamic = "force-dynamic";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   if (!UUID_RE.test(params.id)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
@@ -62,7 +63,8 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   return NextResponse.json({ collection: data });
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   if (!UUID_RE.test(params.id)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });

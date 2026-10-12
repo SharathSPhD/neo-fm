@@ -74,14 +74,14 @@ it("returns 401 when unauthenticated", async () => {
   vi.mocked(requireUser).mockResolvedValue(
     NextResponse.json({ error: "unauthorized" }, { status: 401 }),
   );
-  const res = await POST(makeReq(), { params: { id: PARENT_ID } });
+  const res = await POST(makeReq(), { params: Promise.resolve({ id: PARENT_ID }) });
   expect(res.status).toBe(401);
 });
 
 it("returns 400 for an invalid id", async () => {
   const s = makeFakeSupabase();
   authed(s);
-  const res = await POST(makeReq(), { params: { id: "not-a-uuid" } });
+  const res = await POST(makeReq(), { params: Promise.resolve({ id: "not-a-uuid" }) });
   expect(res.status).toBe(400);
 });
 
@@ -90,7 +90,7 @@ it("returns 422 for a malformed body (distance > 100)", async () => {
   authed(s);
   seedParent(s);
   const res = await POST(makeReq({ distance: 9999 }), {
-    params: { id: PARENT_ID },
+    params: Promise.resolve({ id: PARENT_ID }),
   });
   expect(res.status).toBe(422);
 });
@@ -104,7 +104,7 @@ describe("happy path", () => {
       data: [{ job_id: CHILD_ID, song_id: "doc-2", status: "queued" }],
       error: null,
     });
-    const res = await POST(makeReq(), { params: { id: PARENT_ID } });
+    const res = await POST(makeReq(), { params: Promise.resolve({ id: PARENT_ID }) });
     expect(res.status).toBe(202);
     const body = await res.json();
     expect(body).toMatchObject({ job_id: CHILD_ID, distance: 25 });
@@ -135,7 +135,7 @@ describe("happy path", () => {
     });
     const res = await POST(
       makeReq({ tempo_bpm: 140, title: "Streetlights at noon", distance: 80 }),
-      { params: { id: PARENT_ID } },
+      { params: Promise.resolve({ id: PARENT_ID }) },
     );
     expect(res.status).toBe(202);
     const args = s.__state.rpc_calls.find(
@@ -155,7 +155,7 @@ describe("happy path", () => {
       makeReq({
         raga_override: { name: "yaman", system: "hindustani" },
       }),
-      { params: { id: PARENT_ID } },
+      { params: Promise.resolve({ id: PARENT_ID }) },
     );
     expect(res.status).toBe(422);
   });

@@ -13,6 +13,8 @@ export default function OfflinePage() {
       <p className="text-sm text-foreground/60">
         <T k="misc.offline.desc" />
       </p>
+      {/* Plain anchor on purpose: a full reload is how the user retries once back online. */}
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
       <a
         href="/"
         className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm text-accent"

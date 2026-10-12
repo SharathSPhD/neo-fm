@@ -89,7 +89,7 @@ const TIERS: readonly Tier[] = [
 ];
 
 export default async function PricingPage() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   // Server-side check so we don't bundle the Stripe client when billing
   // is off. `isBillingEnabled()` is also called inside /api/billing/*
   // so dummy mode always returns 503, never an undefined-key crash.

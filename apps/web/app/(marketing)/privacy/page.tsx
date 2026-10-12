@@ -28,8 +28,8 @@ const SECTIONS: { h: string; body: string[] }[] = [
   { h: "Changes", body: ["We will post material changes here and, for paying users, notify you by email."] },
 ];
 
-export default function PrivacyPage() {
-  const { t } = serverI18n();
+export default async function PrivacyPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">{t("legal.privacy.title")}</h1>

@@ -14,11 +14,10 @@ import { PublicIdSchema } from "@/lib/collections/schema";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { publicId: string };
+export async function generateMetadata(props: {
+  params: Promise<{ publicId: string }>;
 }): Promise<Metadata> {
+  const params = await props.params;
   const check = PublicIdSchema.safeParse(params.publicId);
   const found = check.success ? await loadPublicCollection(check.data).catch(() => null) : null;
   if (!found) return { title: "neo-fm" };
@@ -38,7 +37,8 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicCollectionPage({ params }: { params: { publicId: string } }) {
+export default async function PublicCollectionPage(props: { params: Promise<{ publicId: string }> }) {
+  const params = await props.params;
   const check = PublicIdSchema.safeParse(params.publicId);
   if (!check.success) notFound();
   const found = await loadPublicCollection(check.data);

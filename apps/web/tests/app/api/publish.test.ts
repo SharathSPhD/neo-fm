@@ -55,7 +55,7 @@ it("returns 401 when unauthenticated", async () => {
     body: JSON.stringify({ visibility: "unlisted" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(401);
 });
 
@@ -67,7 +67,7 @@ it("returns 400 for invalid song id", async () => {
     body: JSON.stringify({ visibility: "unlisted" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: "not-a-uuid" } });
+  const res = await POST(req, { params: Promise.resolve({ id: "not-a-uuid" }) });
   expect(res.status).toBe(400);
 });
 
@@ -79,7 +79,7 @@ it("returns 400 for invalid body", async () => {
     body: JSON.stringify({ visibility: "world-readable" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(400);
 });
 
@@ -102,7 +102,7 @@ it("happy path: returns public_id, visibility, public_url", async () => {
     body: JSON.stringify({ visibility: "unlisted" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(200);
   const body = await res.json();
   expect(body.public_id).toBe("abc123pqrs");
@@ -129,7 +129,7 @@ it("private visibility returns null public_url", async () => {
     body: JSON.stringify({ visibility: "private" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(200);
   const body = await res.json();
   expect(body.visibility).toBe("private");
@@ -148,7 +148,7 @@ it("translates SQLSTATE 42501 -> 403", async () => {
     body: JSON.stringify({ visibility: "public" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(403);
 });
 
@@ -164,7 +164,7 @@ it("translates SQLSTATE P0002 -> 404", async () => {
     body: JSON.stringify({ visibility: "public" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(404);
 });
 
@@ -183,6 +183,6 @@ it("translates SQLSTATE 22023 (not completed) -> 422", async () => {
     body: JSON.stringify({ visibility: "public" }),
     headers: { "content-type": "application/json" },
   });
-  const res = await POST(req, { params: { id: SONG_ID } });
+  const res = await POST(req, { params: Promise.resolve({ id: SONG_ID }) });
   expect(res.status).toBe(422);
 });

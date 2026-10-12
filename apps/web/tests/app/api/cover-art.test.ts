@@ -42,7 +42,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
   it("returns 400 for invalid song id", async () => {
     const s = makeFakeSupabase();
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: "nope" } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "nope" }) });
     expect(res.status).toBe(400);
   });
 
@@ -50,7 +50,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
     vi.mocked(requireUser).mockResolvedValue(
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
-    const res = await POST(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(401);
   });
 
@@ -58,7 +58,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
     const s = makeFakeSupabase();
     s.__state.select_singles["jobs"] = null;
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -93,7 +93,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
       };
     };
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(202);
     const body = await res.json();
     expect(body.status).toBe("queued");
@@ -112,7 +112,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
       error: { message: "not_owner" } as never,
     });
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -127,7 +127,7 @@ describe("POST /api/songs/[id]/cover-art", () => {
       error: { message: "unauthenticated" } as never,
     });
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(401);
   });
 });
@@ -136,14 +136,14 @@ describe("GET /api/songs/[id]/cover-art", () => {
   it("returns 400 for invalid song id", async () => {
     const s = makeFakeSupabase();
     authed(s);
-    const res = await GET(new Request("http://x"), { params: { id: "bad" } });
+    const res = await GET(new Request("http://x"), { params: Promise.resolve({ id: "bad" }) });
     expect(res.status).toBe(400);
   });
 
   it("returns { url: null, attempt: null } when nothing exists", async () => {
     const s = makeFakeSupabase();
     authed(s);
-    const res = await GET(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await GET(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toBeNull();
@@ -169,7 +169,7 @@ describe("GET /api/songs/[id]/cover-art", () => {
       created_at: "2026-05-15T22:00:00Z",
     };
     authed(s);
-    const res = await GET(new Request("http://x"), { params: { id: SONG_ID } });
+    const res = await GET(new Request("http://x"), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toBe("https://signed.example.com/track.mp3");
