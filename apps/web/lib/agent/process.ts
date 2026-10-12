@@ -67,6 +67,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
   const trace: string[] = [];
   // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
   const CONCURRENCY = 4;
+  const tickStart = Date.now();
   const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
@@ -80,7 +81,15 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
-      const outcome = await advance(job.id, {
+      // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
+      const stages: Record<string, number> = {};
+      const timed = async <T,>(name: string, fn: () => Promise<T>): Promise<T> => {
+        const t0 = Date.now();
+        try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
+      };
+      let postRenderFrom = 0;
+      let rendered = false; // a render was just answered: the agent only needs one more turn to finish, so don't wait a cron minute
+      const runAdvance = () => advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
         log: (m) => trace.push(m.slice(0, 600)),
@@ -94,13 +103,15 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         },
         music: async (a0) => {
           let a = a0;
+          // Time from the job starting to the agent asking for a render (tick granularity: +-1 cron minute).
+          if (job.started_at && stages.agent_draft === undefined) stages.agent_draft = Math.max(0, Date.now() - new Date(job.started_at).getTime());
           // Last gate before spend: the agent's own output is untrusted too.
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
           if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
             try {
-              a = { ...a, lyrics: await polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db)) };
+              a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
               if (!v2.allowed) throw new SafetyRefusal(v2.reason);
               await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
@@ -109,22 +120,32 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
           const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
           const sung = ss?.romanized ? ss.text : a.lyrics;
-          return generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
+          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey }));
         },
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
           const path = `${jobId}/${n}.mp3`;
-          const { error } = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });
+          const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
           if (error) throw new Error(error.message);
+          rendered = true;
+          postRenderFrom = Date.now();
           return path;
         },
       });
+      let outcome = await runAdvance();
+      // Handoff latency: after answering generate_music the agent finishes within seconds. Re-advance in this tick
+      // (bounded) instead of leaving the finished song waiting for the next cron minute.
+      for (let i = 0; i < 6 && rendered && outcome === "waiting" && Date.now() - tickStart < 200_000; i++) {
+        await new Promise((r) => setTimeout(r, 5_000));
+        outcome = await runAdvance();
+      }
+      if (outcome === "done" && postRenderFrom) stages.post_render = Date.now() - postRenderFrom;
       results[job.id] = outcome;
       if (outcome === "started") await assignConfig(db, job.id);
       if (outcome === "done") {
-        const cascade = await finalize(db, job.id);
-        const qa = await qaDiction(db, job.id, doc.language, geminiKey);
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none" });
+        const cascade = await timed("finalize", () => finalize(db, job.id));
+        const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none", stages_ms: stages });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -268,8 +289,9 @@ async function assignConfig(db: ReturnType<typeof serviceClient>, jobId: string)
 async function recordTelemetry(db: ReturnType<typeof serviceClient>, jobId: string, extra: Record<string, unknown>) {
   try {
     const { data: runs } = await db.from("agent_runs").select("lyria_calls").eq("job_id", jobId).limit(1);
-    const { data: jobs } = await db.from("jobs").select("started_at,finished_at").eq("id", jobId).limit(1);
-    const j = ((jobs ?? [])[0] ?? {}) as { started_at?: string; finished_at?: string };
+    const { data: jobs } = await db.from("jobs").select("created_at,started_at,finished_at").eq("id", jobId).limit(1);
+    const j = ((jobs ?? [])[0] ?? {}) as { created_at?: string; started_at?: string; finished_at?: string };
+    if (j.created_at && j.started_at && extra.stages_ms && typeof extra.stages_ms === "object") (extra.stages_ms as Record<string, number>).queue_wait = Math.max(0, new Date(j.started_at).getTime() - new Date(j.created_at).getTime());
     const latency_ms = j.started_at && j.finished_at ? new Date(j.finished_at).getTime() - new Date(j.started_at).getTime() : null;
     const lyria_calls = Number(((runs ?? [])[0] as { lyria_calls?: number } | undefined)?.lyria_calls ?? 0);
     await db.from("job_telemetry").upsert({ job_id: jobId, config_version_id: await liveConfigId(db), metrics: { ...extra, latency_ms, lyria_calls } }, { onConflict: "job_id" });
