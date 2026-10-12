@@ -11,12 +11,12 @@ function qb() {
 const inserted: { table: string; row: unknown }[] = [];
 let reportJob: { id: string } | null = null;
 let reportInsertError: unknown = null;
+let openDupes: unknown[] = [];
 vi.mock("../../../lib/agent/adapters", () => ({
   serviceClient: () => ({
     from: (table: string) => {
       adminState.table = table;
-      // select() is the signed-in duplicate-report lookup (eq job, eq reporter, eq status, limit): nothing open yet.
-      if (table === "song_reports") return { select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ limit: async () => ({ data: [] }) }) }) }) }), insert: async (row: unknown) => { inserted.push({ table, row }); return { error: reportInsertError }; } };
+      if (table === "song_reports") return { select: () => { const c: Record<string, unknown> = {}; c.eq = () => c; c.limit = async () => ({ data: openDupes }); return c; }, insert: async (row: unknown) => { inserted.push({ table, row }); return { error: reportInsertError }; } };
       if (table === "jobs" && adminState.calls.length === 0 && reportMode) return { select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: reportJob }) }) }) }) };
       return qb();
     },
@@ -30,7 +30,7 @@ import { NextRequest } from "next/server";
 import { POST as report } from "../../../app/api/report/route";
 import { GET as adminQ } from "../../../app/api/admin/q/route";
 
-beforeEach(() => { inserted.length = 0; adminState.calls = []; adminState.rows = []; adminState.error = null; reportJob = { id: "job-1" }; reportInsertError = null; reporterId = null; reportMode = true; process.env.CRON_SECRET = "s3cret"; delete process.env.AGENT_TICK_SECRET; });
+beforeEach(() => { inserted.length = 0; adminState.calls = []; adminState.rows = []; adminState.error = null; reportJob = { id: "job-1" }; reportInsertError = null; openDupes = []; reporterId = null; reportMode = true; process.env.CRON_SECRET = "s3cret"; delete process.env.AGENT_TICK_SECRET; });
 afterEach(() => { delete process.env.CRON_SECRET; });
 
 const rpt = (b: unknown) => new NextRequest("http://x/api/report", { method: "POST", body: typeof b === "string" ? b : JSON.stringify(b) });
@@ -60,6 +60,16 @@ describe("POST /api/report", () => {
     await report(rpt({ public_id: "p1", reason: "other" }));
     expect((inserted[0]!.row as { reporter_id: string }).reporter_id).toBe("user-7");
     expect((inserted[0]!.row as { reason: string }).reason).toBe("other");
+  });
+  it("a signed-in re-report of a song with an open report adds nothing", async () => {
+    reporterId = "user-7"; openDupes = [{ id: "r1" }];
+    const res = await report(rpt({ public_id: "p1", reason: "other" }));
+    expect(res.status).toBe(200);
+    expect(inserted).toHaveLength(0);
+  });
+  it("stores category and details alongside the legacy reason text", async () => {
+    await report(rpt({ public_id: "p1", reason: "copyright", details: "same chorus" }));
+    expect(inserted[0]!.row).toMatchObject({ reason: "copyright: same chorus", category: "copyright", details: "same chorus" });
   });
   it("500s with report_failed when the insert fails", async () => {
     reportInsertError = { message: "db" };
