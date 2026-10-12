@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hashToken, isWellFormedToken, newToken, RatingSchema, summarize } from "../lib/review/kit";
+import { hashToken, isWellFormedToken, newToken, RatingSchema, summarize } from "../lib/native-review/kit";
 
 describe("review kit", () => {
   it("mints well-formed, unique tokens and hashes them deterministically", () => {
