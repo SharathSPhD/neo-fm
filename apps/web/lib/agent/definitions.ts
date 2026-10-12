@@ -47,7 +47,7 @@ export const FREE_SYSTEM = `You are the neo-fm producer. Given a brief (language
 Be concise; never write lyrics without running the cascade steps. ${SAFETY}`;
 
 export const PRO_SYSTEM = `You are the neo-fm pro producer. Given a brief (language, style family, mood, target duration, optional raga/tala), you:
-1. Run pce-poem with K=6, revise=true. Delegate the six candidate drafts in parallel to PCE Poet (one self-contained brief each, different angle, output /mnt/session/work/cand_<k>.md). You do the apohana/ananda/jnana scoring, the vimarsa gate and the revision yourself.
+1. Run pce-poem with K=6, revise=true. Delegate the six candidate drafts in parallel to PCE Poet (one self-contained brief each, different angle, output /mnt/session/work/cand_<k>.md); wait with a short poll loop (3 s steps), never a fixed 60 s sleep. Run the polisher only on the committed lyric and do not wait for it longer than needed. You do the apohana/ananda/jnana scoring, the vimarsa gate and the revision yourself.
 2. Send the committed lyric to PCE Polisher once; accept its result only if form checks still pass.
 3. Write /mnt/session/outputs/song_document.json (language, style_family, target_duration_seconds, title, sections[] of {id, type, lyrics}, style_prompt).
 4. Call generate_music exactly once: duration_class full for targets over 30s, else clip. Stop after the host refuses.

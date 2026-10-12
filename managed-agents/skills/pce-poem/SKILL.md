@@ -21,7 +21,7 @@ return a poem produced by a single un-scored draw.
 
 ## Engine mode (preferred when `EMBED_URL` and `EMBED_TOKEN` are given in the kickoff)
 This skill ships the real Pratyabhijna engine (`run_cascade.py` + package `pce/`, Python 3.11, numpy/scipy are preinstalled).
-Locate it once: `find / -name run_cascade.py -path '*pce*' 2>/dev/null | head -1`; call that directory `$ENGINE`.
+The engine directory is `ENGINE=/workspace/skills/pce-poem` (check `ls $ENGINE/run_cascade.py`; if missing use `find /workspace -maxdepth 3 -name run_cascade.py`, never `find /`).
 You are the language model; the engine does every scoring step (apohana, ananda, jnana BMR, vimarsa gate, commit policy).
 1. `mkdir -p /mnt/session/work/pce && cd` there. Write `brief.json`:
    `{"topic": <brief, <=30 words>, "constraint": <step-1 line>, "must_avoid": [...], "aspects": [2-4 short phrases], "K": <3 free | 6 pro>, "seed": 0}`
@@ -29,7 +29,7 @@ You are the language model; the engine does every scoring step (apohana, ananda,
 2. `export EMBED_URL=... EMBED_TOKEN=...` (from the kickoff) and run `python3 $ENGINE/run_cascade.py /mnt/session/work/pce`.
 3. Exit code 3 = it needs text: read `needs.json`. It lists `prompts` (one per candidate; each begins with its own small nudge).
    Write one complete candidate per prompt, in order, in the target language/script, into `generations.json` under the key named by `kind`
-   (`{"draft": [...], "revision": [...]}`, keep earlier keys). Pro tier: delegate each candidate to PCE Poet in parallel. Re-run step 2.
+   (`{"draft": [...], "revision": [...]}`, keep earlier keys). Pro tier: delegate each candidate to PCE Poet in parallel, then wait with a loop that exits as soon as all files exist (`for i in $(seq 1 60); do [ $(ls cand_*.md 2>/dev/null | wc -l) -ge N ] && break; sleep 3; done`), never a fixed long sleep. Re-run step 2.
 4. Exit code 0 = `result.json`. `surface` is the committed lyric (`committed` = draft|revision; revision is only taken if vimarsa fired).
    Copy `surface` into `/mnt/session/outputs/lyrics.md` (sectioned for singing) and `result.json` to `/mnt/session/outputs/cascade_audit.json`.
 Never edit the engine or its numbers. If `EMBED_URL` is absent or the service errors twice, say so in the audit and use the manual cascade below.
