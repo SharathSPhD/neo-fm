@@ -35,8 +35,8 @@ for (const r of rows) {
     if (!dl.ok) { out[r.job_id] = { error: `audio ${dl.status}` }; continue; }
     const audio = new Uint8Array(await dl.arrayBuffer());
     const lines = singable(r.lyrics).split("\n");
-    let segs = await transcribeTimed(audio, dl.headers.get("content-type") ?? "audio/mpeg", "the song's", gem);
-    if (!segs.length) segs = await transcribeTimed(audio, "audio/mpeg", "the song's", gem);
+    let segs = await transcribeTimed(audio, dl.headers.get("content-type") ?? "audio/mpeg", "Indian-language", gem);
+    if (!segs.length) segs = await transcribeTimed(audio, "audio/mpeg", "Indian-language", gem);
     const last = segs.length ? Math.max(...segs.map((s) => s.startS)) : 0;
     const dur = Number(arg("duration") ?? Math.ceil(last + 6));
     out[r.job_id] = toPayload(alignLines(lines, segs, dur), dur);
