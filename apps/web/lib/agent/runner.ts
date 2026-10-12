@@ -91,6 +91,8 @@ export interface AdvanceDeps {
   log?: (message: string) => void;
   music: (a: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number }) => Promise<LyriaResult>;
   saveAudio: (jobId: string, n: number, r: LyriaResult) => Promise<string>;
+  /** Checked before a render slot is taken; a reason means "provider is down, leave the call pending and retry next tick". */
+  gate?: () => string | null;
 }
 
 /** Sandbox-only tools an unattended run may use. Anything else that pauses for approval is denied. */
@@ -141,6 +143,12 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   }
 
   for (const call of pending) {
+    // Provider outage: do not consume the tier's only render slot or reserve spend; the call stays pending for the next tick.
+    const blocked = d.gate?.();
+    if (blocked) {
+      d.log?.(`render deferred: ${blocked}`);
+      continue;
+    }
     const inp = call.input as { style_prompt?: string; lyrics?: string; duration_class?: DurationClass };
     if (!inp?.style_prompt || !inp.lyrics || (inp.duration_class !== "clip" && inp.duration_class !== "full")) {
       await d.sessions.sendToolResult(sid, call.id, "Invalid input: style_prompt, lyrics and duration_class (clip|full) are required.", true);
