@@ -15,6 +15,7 @@
  */
 import type { Metadata } from "next";
 
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { isBillingEnabled } from "@/lib/billing/config";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
@@ -100,6 +101,7 @@ export default async function PricingPage() {
   }
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
+      <FunnelBeacon event="pricing_view" />
       <header className="flex flex-col gap-3 text-center">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
           {t("pricing.eyebrow")}
