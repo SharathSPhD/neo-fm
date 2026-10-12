@@ -17,7 +17,7 @@
  * caller doesn't burn a different user's /api/lyrics budget.
  *
  * Per-route limits (per IP, per minute):
- *   - /auth/*, /sign-out      : 20
+ *   - /auth/*, /sign-out      : 30
  *   - /sign-in, /sign-up (POST): 10
  *   - /api/report              : 5
  *   - /api/songs (POST)         : 6
@@ -77,7 +77,7 @@ export function pickRule(
   // /api, so they need explicit coverage. Tight enough to blunt code
   // guessing and mail-bombing, loose enough for a shared NAT.
   if (/^\/auth\//.test(pathname) || pathname === "/sign-out") {
-    return { bucket: "auth:flow", limit: 20 };
+    return { bucket: "auth:flow", limit: 30 };
   }
   if (pathname === "/sign-in" || pathname === "/sign-up") {
     return isRead ? null : { bucket: "auth:submit", limit: 10 };
@@ -120,8 +120,10 @@ export function pickRule(
   if (pathname.startsWith("/api/p/")) {
     return { bucket: "public:read", limit: 120 };
   }
-  // Lyric / preview / library + everything else.
-  return { bucket: "api:default", limit: 60 };
+  // Lyric / preview / library + everything else under /api. Pages, RSC
+  // payloads and prefetches (any non-/api path) are not limited here: one
+  // navigation fires several requests and would exhaust a shared budget.
+  return pathname.startsWith("/api/") ? { bucket: "api:default", limit: 60 } : null;
 }
 
 async function upstashIncrement(

@@ -48,7 +48,7 @@ describe("pickRule", () => {
 
 describe("pickRule (auth, report, method-awareness)", () => {
   it("limits the auth surface", () => {
-    expect(pickRule("/auth/callback", "GET")).toEqual({ bucket: "auth:flow", limit: 20 });
+    expect(pickRule("/auth/callback", "GET")).toEqual({ bucket: "auth:flow", limit: 30 });
     expect(pickRule("/sign-out", "POST")?.bucket).toBe("auth:flow");
     expect(pickRule("/sign-in", "POST")).toEqual({ bucket: "auth:submit", limit: 10 });
     expect(pickRule("/sign-up", "POST")?.bucket).toBe("auth:submit");
@@ -56,6 +56,18 @@ describe("pickRule (auth, report, method-awareness)", () => {
   it("does not limit GET views of the sign-in/up pages", () => {
     expect(pickRule("/sign-in", "GET")).toBeNull();
     expect(pickRule("/sign-up", "GET")).toBeNull();
+  });
+  it.each(["/", "/pricing", "/library", "/songs/abc", "/songs/new", "/discover", "/s/abc"])(
+    "does not limit page route %s",
+    (p) => {
+      expect(pickRule(p, "GET")).toBeNull();
+    },
+  );
+  it("never throttles repeated page views", async () => {
+    for (let i = 0; i < 200; i++) {
+      const rule = pickRule("/", "GET");
+      expect(rule).toBeNull();
+    }
   });
   it("gives /api/report a tight anonymous-write budget", () => {
     expect(pickRule("/api/report", "POST")).toEqual({ bucket: "anon:report", limit: 5 });
