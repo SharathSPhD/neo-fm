@@ -24,6 +24,9 @@ describe("agent definitions", () => {
     const pro = proProducerParams("s", "a", "b");
     const proTools = pro.tools[0] as { configs: { name: string; enabled: boolean }[] };
     expect(proTools.configs.map((c) => c.name).sort()).toEqual(["web_fetch", "web_search"]);
+    // web_fetch is an open egress channel (not bound by sandbox networking): search only.
+    expect(proTools.configs.find((c) => c.name === "web_fetch")?.enabled).toBe(false);
+    expect(proTools.configs.find((c) => c.name === "web_search")?.enabled).toBe(true);
     expect(pro.system).toMatch(/never copy or paraphrase lyrics/);
     for (const p of [freeProducerParams("s"), pro]) expect(p.system).toMatch(/never reproduce|Safety rules/);
   });
