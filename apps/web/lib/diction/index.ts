@@ -112,7 +112,8 @@ export interface DictionScore { lines: LineScore[]; overall: number; matchPct: n
  * flags lines whose CER exceeds `threshold`.
  */
 export function scoreTranscript(intended: string, transcript: string, threshold = 0.35): DictionScore {
-  const want = intended.split(/\n+/).map((l) => l.trim()).filter((l) => norm(l).length > 0);
+  // Section tags like [Pallavi] / [Chorus] are structure, not sung words.
+  const want = intended.split(/\n+/).map((l) => l.replace(/\[[^\]]*\]/g, "").trim()).filter((l) => norm(l).length > 0);
   const heardChars = Array.from(norm(transcript));
   const lines: LineScore[] = [];
   let cursor = 0;

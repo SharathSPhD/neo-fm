@@ -89,3 +89,11 @@ describe("gemini diction audit", () => {
     await expect(auditDiction("a", new Uint8Array(), "audio/mpeg", "x", "k", bad)).rejects.toThrow(/gemini qa 500/);
   });
 });
+
+describe("section tags", () => {
+  it("are not scored as sung lines", () => {
+    const r = scoreTranscript("[Pallavi]\nalpha beta\n[Chorus]\ngamma delta", "alpha beta gamma delta");
+    expect(r.lines).toHaveLength(2);
+    expect(r.matchPct).toBe(100);
+  });
+});
