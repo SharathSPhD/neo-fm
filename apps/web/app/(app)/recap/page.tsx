@@ -10,13 +10,14 @@ import { RecapView } from "./recap-view";
 
 export const dynamic = "force-dynamic";
 
-export default async function RecapPage({ searchParams }: { searchParams?: { month?: string } }) {
+export default async function RecapPage({ searchParams }: { searchParams?: Promise<{ month?: string }> }) {
+  const sp = (await searchParams) ?? {};
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/recap");
 
   const now = currentMonth();
-  const range = monthRange(searchParams?.month ?? now) ?? monthRange(now)!;
+  const range = monthRange(sp.month ?? now) ?? monthRange(now)!;
   const prev = previousMonth(range.month);
   const prevOk = prev ? monthRange(prev) : null;
   const next = range.month === now ? null : (() => {
