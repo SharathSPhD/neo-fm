@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/help" },
   title: "Help -- neo-fm",
   description:
     "Answers to the most-asked questions about neo-fm: how generation works, what we support, quota, ownership, and getting help.",

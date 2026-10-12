@@ -1,7 +1,11 @@
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
+import type { Metadata } from "next";
 import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
+
+import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
+import { jsonLdString } from "@/lib/seo/jsonld";
 
 /**
  * v2 landing. Everything claimed here is something the product does today:
@@ -27,9 +31,24 @@ const DIFFERENT = [
   { title: "Honest about AI", body: "Every song is labelled AI-generated. Our safety checks run before anything is rendered, and there is a clear way to report a song." },
 ] as const;
 
+export const metadata: Metadata = {
+  title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
+  alternates: { canonical: "/", languages: hreflangPaths() },
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "neo-fm",
+  description: "AI songs in Indian languages with native lyrics and a pronunciation check.",
+  inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
+  publisher: { "@type": "Organization", name: "Technektar" },
+};
+
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
       <div className="mx-auto max-w-6xl px-6 pt-12">
@@ -131,6 +150,19 @@ function PricingTeaser() {
 function Footer() {
   return (
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
+      <nav aria-label="Songs by language" className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        {LANGUAGE_PAGES.map((l) => (
+          <Link
+            key={l.code}
+            href={languagePagePath(l)}
+            hrefLang={l.code}
+            lang={l.code}
+            className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            {l.native}
+          </Link>
+        ))}
+      </nav>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p>
           © {new Date().getFullYear()} neo-fm · AI songs in Indian languages ·{" "}
