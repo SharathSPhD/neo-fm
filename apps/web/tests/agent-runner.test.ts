@@ -89,3 +89,13 @@ describe("advance", () => {
     expect(await advance("j1", h.deps)).toBe("waiting");
   });
 });
+
+describe("briefText lyric length", () => {
+  it("scales the requested number of lines with the target duration", async () => {
+    const { briefText } = await import("../lib/agent/runner");
+    const mk = (s: number) => briefText({ language: "Telugu", styleFamily: "carnatic", targetSeconds: s, prompt: "x" });
+    expect(mk(30)).toContain("about 8 short lines");
+    expect(mk(60)).toContain("about 16 short lines");
+    expect(mk(90)).toContain("about 24 short lines");
+  });
+});
