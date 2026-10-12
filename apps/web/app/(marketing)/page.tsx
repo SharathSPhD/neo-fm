@@ -1,6 +1,7 @@
 import { serverI18n } from "@/lib/i18n/server";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 /**
@@ -44,9 +45,24 @@ function Accented({ text }: { text: string }) {
   );
 }
 
+export const metadata: Metadata = {
+  title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
+  alternates: { canonical: "/" },
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "neo-fm",
+  description: "AI songs in Indian languages with native lyrics and a pronunciation check.",
+  inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
+  publisher: { "@type": "Organization", name: "Technektar" },
+};
+
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
       <ListenFirst />

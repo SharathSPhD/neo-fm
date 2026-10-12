@@ -171,7 +171,10 @@ export async function generateMetadata({
       ? dedication.message.slice(0, 160)
       : description,
     robots,
-    alternates: oembed ? { types: { "application/json+oembed": oembed } } : undefined,
+    alternates: {
+      canonical: `/s/${idCheck.data}`,
+      ...(oembed ? { types: { "application/json+oembed": oembed } } : {}),
+    },
     openGraph: {
       title,
       description,
@@ -408,6 +411,7 @@ export default async function PublicSongPage({
                 </div>
                 {s.lyrics ? (
                   <pre
+                    lang={doc?.language}
                     className={`whitespace-pre-wrap rounded-md bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground/85 ${
                       s.script === "devanagari" || s.script === "kannada"
                         ? "font-sans"

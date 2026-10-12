@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/terms" },
   title: "Terms -- neo-fm",
   description: "The rules for using neo-fm: your songs, acceptable use, plans and refunds.",
 };

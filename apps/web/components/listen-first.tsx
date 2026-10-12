@@ -1,29 +1,43 @@
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 
 import { serverI18n } from "@/lib/i18n/server";
 import { ProCta } from "@/components/pro-cta";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 type Row = {
   public_id: string;
   song_documents: { title: string | null; language: string; style_family: string } | null;
 };
 
+/**
+ * The strip shows only `public` songs, identical for every visitor, so it is
+ * cached for a minute instead of costing every landing view a database round
+ * trip. The service client is safe here: the query itself restricts to
+ * completed, public songs and selects no private columns.
+ */
+const loadPublicStrip = unstable_cache(
+  async (): Promise<Row[]> => {
+    const { data } = await createServiceRoleClient()
+      .from("jobs")
+      .select("public_id, song_documents!inner ( title, language, style_family ), tracks!inner ( id )")
+      .eq("status", "completed")
+      .eq("published_visibility", "public")
+      .not("public_id", "is", null)
+      .order("published_at", { ascending: false, nullsFirst: false })
+      .limit(8)
+      .returns<Row[]>();
+    return data ?? [];
+  },
+  ["landing-listen-first"],
+  { revalidate: 60 },
+);
+
 /** Landing-page strip: the newest community songs, playable without an account. */
 export async function ListenFirst() {
   const { t } = serverI18n();
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from("jobs")
-    .select("public_id, song_documents!inner ( title, language, style_family ), tracks!inner ( id )")
-    .eq("status", "completed")
-    .eq("published_visibility", "public")
-    .not("public_id", "is", null)
-    .order("published_at", { ascending: false, nullsFirst: false })
-    .limit(8)
-    .returns<Row[]>();
-  const rows = data ?? [];
+  const rows = await loadPublicStrip().catch(() => [] as Row[]);
   if (rows.length === 0) return null;
   return (
     <section aria-labelledby="listen-first" className="mx-auto max-w-6xl px-6 py-12">
