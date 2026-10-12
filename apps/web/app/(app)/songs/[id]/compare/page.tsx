@@ -11,6 +11,7 @@
  */
 import { redirect, notFound } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { CompareForm } from "./compare-form";
@@ -55,6 +56,7 @@ export default async function ComparePage(
   }
 ) {
   const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) redirect(`/sign-in?next=/songs/${params.id}/compare`);
@@ -81,12 +83,11 @@ export default async function ComparePage(
   if (!pair) {
     return (
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-12">
-        <h1 className="text-2xl font-medium">Compare candidates</h1>
+        <h1 className="text-2xl font-medium">{t("compare.title")}</h1>
         <p className="rounded-md border border-dashed border-muted/30 px-4 py-6 text-sm text-foreground/65">
-          This song was rendered with a single candidate. Compare mode needs
-          at least two candidate tracks. Re-render with{" "}
-          <code>top_n_candidates &gt; 1</code> (Sprint 16) to enable
-          pairwise preference collection.
+          {t("compare.single")}{" "}
+          <code>top_n_candidates &gt; 1</code>{" "}
+          {t("compare.singleTail")}
         </p>
       </main>
     );
@@ -109,17 +110,16 @@ export default async function ComparePage(
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-12">
       <header className="flex flex-col gap-1">
         <h1 className="text-2xl font-medium tracking-tight">
-          {jobRow.song_documents?.title ?? "Compare candidates"}
+          {jobRow.song_documents?.title ?? t("compare.title")}
         </h1>
         <p className="text-sm text-foreground/65">
-          Listen to both. Pick the one that sounds better. Your vote trains
-          the v1.4 reranker.
+          {t("compare.intro")}
         </p>
       </header>
       <CompareForm
         jobId={jobRow.id}
-        a={{ trackId: trackA.id, label: "Candidate A", url: signedA?.url ?? null }}
-        b={{ trackId: trackB.id, label: "Candidate B", url: signedB?.url ?? null }}
+        a={{ trackId: trackA.id, label: t("compare.candidateA"), url: signedA?.url ?? null }}
+        b={{ trackId: trackB.id, label: t("compare.candidateB"), url: signedB?.url ?? null }}
       />
     </main>
   );

@@ -2,12 +2,14 @@ import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ideaById } from "@/lib/ideas/catalog";
+import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { CreationCanvas } from "./creation-canvas";
 
 export default async function NewSongPage(props: { searchParams?: Promise<{ idea?: string }> }) {
   const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   // `?idea=<id>` comes from the /ideas gallery. Only known catalog ids are honoured; the prompt text never travels in the URL.
   const idea = ideaById(searchParams?.idea);
   const supabase = createServerClient();
@@ -25,13 +27,12 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
-        items={[{ href: "/library", label: "Library" }, { label: "New song" }]}
+        items={[{ href: "/library", label: t("nav.library") }, { label: t("nav.newSong") }]}
       />
       <header className="flex flex-col gap-1.5">
-        <h1 className="text-3xl font-medium tracking-tight">New song</h1>
+        <h1 className="text-3xl font-medium tracking-tight">{t("nav.newSong")}</h1>
         <p className="text-sm text-foreground/60">
-          Describe the song you want. We&apos;ll render it on our engine
-          and stream status updates back here.
+          {t("create.intro")}
         </p>
       </header>
       <CreationCanvas firstRun={firstRun} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />

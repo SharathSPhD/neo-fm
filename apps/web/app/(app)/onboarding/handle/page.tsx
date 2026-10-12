@@ -13,15 +13,20 @@ import type { Metadata } from "next";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { HandleForm } from "./handle-form";
+import { serverI18n } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Pick a handle -- neo-fm",
-  description: "Choose a public handle so people can find your songs.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await serverI18n();
+  return {
+    title: t("handle.meta.title"),
+    description: t("handle.meta.description"),
+  };
+}
 
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingHandlePage() {
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/onboarding/handle");
@@ -39,14 +44,14 @@ export default async function OnboardingHandlePage() {
     <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-12">
       <header className="flex flex-col gap-2">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
-          onboarding
+          {t("handle.eyebrow")}
         </p>
         <h1 className="text-3xl font-medium tracking-tight">
-          {current ? "Change your handle" : "Pick a handle"}
+          {current ? t("handle.title.change") : t("handle.title.pick")}
         </h1>
         <p className="text-sm text-foreground/60">
-          Your handle is your public name on neo-fm. It shows up on{" "}
-          <code>/u/yourhandle</code> and on every song you publish.
+          {t("handle.intro.before")}{" "}
+          <code>/u/yourhandle</code> {t("handle.intro.after")}
         </p>
       </header>
       <HandleForm initial={current ?? ""} />

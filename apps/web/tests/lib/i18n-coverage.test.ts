@@ -28,7 +28,9 @@ function walk(dir: string, out: string[] = []): string[] {
 const keys = Object.keys(UI_STRINGS.en);
 const keySet = new Set(keys);
 const files = SCAN_DIRS.flatMap((d) => walk(join(ROOT, d)));
-const source = files.map((f) => readFileSync(f, "utf8")).join("\n");
+// Comments are stripped so prose like "auth.users.id" is not mistaken for a key.
+const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/.*$/gm, "$1");
+const source = files.map((f) => stripComments(readFileSync(f, "utf8"))).join("\n");
 
 // Anything shaped like a dotted i18n key inside a string literal.
 // File names such as "lyrics.md" are not keys.

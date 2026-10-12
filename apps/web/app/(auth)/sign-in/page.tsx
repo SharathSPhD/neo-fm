@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { SignInForm } from "./sign-in-form";
+import { serverI18n } from "@/lib/i18n/server";
 
 export default async function SignInPage(
   props: {
@@ -11,6 +12,7 @@ export default async function SignInPage(
   }
 ) {
   const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data } = await supabase.auth.getUser();
   if (data?.user) {
@@ -27,16 +29,16 @@ export default async function SignInPage(
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 px-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-medium tracking-tight">Sign in</h1>
+        <h1 className="text-3xl font-medium tracking-tight">{t("auth.signIn.title")}</h1>
         <p className="text-sm text-foreground/60">
-          Email + password. We don&apos;t store any third-party tokens yet.
+          {t("auth.signIn.subtitle")}
         </p>
       </header>
       <SignInForm next={searchParams?.next} initialError={initialError} />
       <footer className="text-sm text-foreground/60">
-        No account?{" "}
+        {t("auth.signIn.noAccount")}{" "}
         <Link className="underline" href="/sign-up">
-          Create one
+          {t("auth.signIn.createOne")}
         </Link>
         .
       </footer>

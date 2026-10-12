@@ -11,6 +11,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AudioSpectrogram } from "@/components/audio-spectrogram";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 interface PublicSongAudioProps {
   publicId: string;
@@ -34,6 +35,7 @@ export function PublicSongAudio({
   onTime,
   minimal = false,
 }: PublicSongAudioProps) {
+  const { t } = useUiLang();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
   const [refreshing, setRefreshing] = useState(false);
@@ -69,12 +71,12 @@ export function PublicSongAudio({
         cache: "no-store",
       });
       if (!res.ok) {
-        setError(`refresh failed (${res.status})`);
+        setError(t("pub.audio.refreshFailed", { status: res.status }));
         return;
       }
       const payload = (await res.json()) as { url?: string };
       if (!payload.url) {
-        setError("refresh returned no url");
+        setError(t("pub.audio.noUrl"));
         return;
       }
       setSrc(payload.url);
@@ -89,7 +91,7 @@ export function PublicSongAudio({
         }
       }
     } catch (e) {
-      setError(`refresh failed: ${(e as Error).message}`);
+      setError(t("pub.audio.refreshFailedMsg", { message: (e as Error).message }));
     } finally {
       setRefreshing(false);
     }
@@ -119,7 +121,7 @@ export function PublicSongAudio({
           {durationSeconds ? `${durationSeconds}s · ` : ""}
           {format.toUpperCase()}
         </span>
-        {refreshing ? <span>refreshing signed URL…</span> : null}
+        {refreshing ? <span>{t("pub.audio.refreshing")}</span> : null}
         {error ? <span className="text-red-300">{error}</span> : null}
       </div>
     </div>

@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 export function AccountActions({ email }: { email: string }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState<{
@@ -27,7 +29,7 @@ export function AccountActions({ email }: { email: string }) {
       }
       setMessage({
         kind: "ok",
-        text: "Password reset email sent. Check your inbox.",
+        text: t("acct.resetSent"),
       });
     });
   }
@@ -39,7 +41,7 @@ export function AccountActions({ email }: { email: string }) {
       if (!res.ok) {
         setMessage({
           kind: "err",
-          text: "Couldn't build export. Try again in a minute.",
+          text: t("acct.exportFail"),
         });
         return;
       }
@@ -52,14 +54,12 @@ export function AccountActions({ email }: { email: string }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      setMessage({ kind: "ok", text: "Export downloaded." });
+      setMessage({ kind: "ok", text: t("acct.exportDone") });
     });
   }
 
   function deleteAccount() {
-    const confirmed = window.confirm(
-      "This will anonymise your songs and remove your account. There is no undo. Continue?",
-    );
+    const confirmed = window.confirm(t("acct.confirmDelete"));
     if (!confirmed) return;
     setMessage(null);
     startTransition(async () => {
@@ -68,7 +68,7 @@ export function AccountActions({ email }: { email: string }) {
         const text = await res.text().catch(() => "");
         setMessage({
           kind: "err",
-          text: text || "Couldn't delete the account.",
+          text: text || t("acct.deleteFail"),
         });
         return;
       }
@@ -82,33 +82,33 @@ export function AccountActions({ email }: { email: string }) {
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Account actions
+        {t("acct.actions")}
       </h2>
       <div className="flex flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
         <ActionRow
-          title="Change password"
-          subtitle="We'll email you a Supabase reset link."
-          buttonLabel="Send reset email"
+          title={t("acct.pw.title")}
+          subtitle={t("acct.pw.sub")}
+          buttonLabel={t("acct.pw.btn")}
           onClick={sendPasswordReset}
           disabled={pending}
         />
         <ActionRow
-          title="Export my data"
-          subtitle="Downloads a JSON dump of your songs and metadata."
-          buttonLabel="Download .json"
+          title={t("acct.export.title")}
+          subtitle={t("acct.export.sub")}
+          buttonLabel={t("acct.export.btn")}
           onClick={exportData}
           disabled={pending}
         />
       </div>
 
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Danger zone
+        {t("acct.danger")}
       </h2>
       <div className="flex flex-col gap-3 rounded-md border border-red-400/30 bg-red-400/5 px-5 py-4">
         <ActionRow
-          title="Delete account"
-          subtitle="Removes your sign-in. Songs you've published stay live but become anonymous."
-          buttonLabel="Delete account"
+          title={t("acct.del.title")}
+          subtitle={t("acct.del.sub")}
+          buttonLabel={t("acct.del.title")}
           onClick={deleteAccount}
           disabled={pending}
           variant="danger"

@@ -6,6 +6,7 @@ import { useEffect, useState, useTransition } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 import { GoogleButton } from "../google-button";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 export function SignInForm({
   next,
@@ -15,6 +16,7 @@ export function SignInForm({
   initialError?: string;
 }) {
   const router = useRouter();
+  const { t } = useUiLang();
   const [error, setError] = useState<string | null>(initialError ?? null);
   const [pending, startTransition] = useTransition();
   // Until hydration the native form would submit credentials as a GET query string; keep submit disabled until JS owns the form.
@@ -48,7 +50,7 @@ export function SignInForm({
     <form method="post" className="flex flex-col gap-4" onSubmit={onSubmit}>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Email
+          {t("auth.email")}
         </span>
         <input
           name="email"
@@ -60,7 +62,7 @@ export function SignInForm({
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Password
+          {t("auth.password")}
         </span>
         <input
           name="password"
@@ -81,7 +83,7 @@ export function SignInForm({
         disabled={pending || !ready}
         className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
       >
-        {pending ? "Signing in..." : "Sign in"}
+        {pending ? t("auth.signIn.pending") : t("auth.signIn.title")}
       </button>
     </form>
     </div>
