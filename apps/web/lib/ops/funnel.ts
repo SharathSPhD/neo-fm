@@ -1,6 +1,6 @@
 /** Funnel definitions shared by the beacon route, the admin read route and the dashboard. */
 
-export const FUNNEL_EVENTS = ["landing_view", "pricing_view", "signup_view", "share_view"] as const;
+export const FUNNEL_EVENTS = ["landing_view", "pricing_view", "signup_view", "share_view", "checkout_started"] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
 
 export function isFunnelEvent(v: unknown): v is FunnelEvent {
@@ -21,7 +21,11 @@ export interface FunnelSummary {
   first_song_users: number;
   songs_shared: number;
   /** Each step as a share of the previous one; null when the previous step is zero. */
-  conversion: { landing_to_signup_view: number | null; signup_view_to_signup: number | null; signup_to_first_song: number | null };
+  conversion: {
+    landing_to_signup_view: number | null; signup_view_to_signup: number | null; signup_to_first_song: number | null;
+    /** Upgrade clicks as a share of pricing views. */
+    pricing_view_to_checkout: number | null;
+  };
   by_day: Record<string, Partial<Record<FunnelEvent, number>>>;
 }
 
@@ -30,7 +34,7 @@ const ratio = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 10
 export function buildFunnel(
   rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number }, windowDays: number,
 ): FunnelSummary {
-  const views = { landing_view: 0, pricing_view: 0, signup_view: 0, share_view: 0 } as Record<FunnelEvent, number>;
+  const views = { landing_view: 0, pricing_view: 0, signup_view: 0, share_view: 0, checkout_started: 0 } as Record<FunnelEvent, number>;
   const byDay: FunnelSummary["by_day"] = {};
   for (const r of rows) {
     if (!isFunnelEvent(r.event)) continue;
@@ -47,6 +51,7 @@ export function buildFunnel(
       landing_to_signup_view: ratio(views.signup_view, views.landing_view),
       signup_view_to_signup: ratio(derived.signups, views.signup_view),
       signup_to_first_song: ratio(derived.firstSongUsers, derived.signups),
+      pricing_view_to_checkout: ratio(views.checkout_started, views.pricing_view),
     },
     by_day: byDay,
   };
