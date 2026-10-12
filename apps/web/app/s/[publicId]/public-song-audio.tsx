@@ -74,6 +74,7 @@ export function PublicSongAudio({
       <audio
         ref={audioRef}
         controls
+        aria-label="Song audio player"
         preload="metadata"
         src={src}
         onError={onError}

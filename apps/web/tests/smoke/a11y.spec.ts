@@ -1,7 +1,7 @@
 /**
- * PR-time axe gate: WCAG 2.1 A/AA on the public pages, in both themes,
- * with colour-contrast ENABLED (the nightly e2e helper disables it).
- * Fails on any critical or serious violation.
+ * PR-time axe gate, run by the smoke job against the local build and fake backend (no network):
+ * WCAG 2.1 A/AA on the public pages, in both themes, with colour-contrast ENABLED (the nightly
+ * e2e helper disables it). Fails on any critical or serious violation.
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";

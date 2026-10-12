@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:a11y": "playwright test -c playwright.a11y.config.ts"
+    "test:smoke": "node scripts/smoke-local.mjs",
+    "test:a11y": "node scripts/smoke-local.mjs a11y"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
