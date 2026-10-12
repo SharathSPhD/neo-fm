@@ -1,6 +1,7 @@
 /**
  * Pure helpers for the share card (OG image) and native share button.
- * No I/O here except `loadFontsFor`, which is best-effort.
+ * Pure and client-safe (imported by the share button); server-side
+ * font/shaping work lives in ./shape.ts.
  */
 
 export interface CardSection {
@@ -30,7 +31,15 @@ export function detectScript(text: string): CardFontScript {
   return "latin";
 }
 
-const FONT_FAMILY: Record<CardFontScript, string> = {
+export const SCRIPT_FILE: Record<Exclude<CardFontScript, "latin">, string> = {
+  devanagari: "Devanagari",
+  bengali: "Bengali",
+  tamil: "Tamil",
+  telugu: "Telugu",
+  kannada: "Kannada",
+};
+
+export const FONT_FAMILY: Record<CardFontScript, string> = {
   devanagari: "Noto Sans Devanagari",
   bengali: "Noto Sans Bengali",
   tamil: "Noto Sans Tamil",
@@ -102,34 +111,6 @@ export interface CardFont {
   data: ArrayBuffer;
   weight: 400;
   style: "normal";
-}
-
-/**
- * Fetches a TTF subset of the Noto face for the given text from Google
- * Fonts (old UA => TTF, which satori requires). Returns [] on any
- * failure so the card still renders with system glyph fallback.
- */
-export async function loadFontsFor(text: string): Promise<CardFont[]> {
-  const script = detectScript(text);
-  const family = FONT_FAMILY[script];
-  const wanted = Array.from(new Set(Array.from(text))).join("");
-  try {
-    const css = await fetch(
-      `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family)}&text=${encodeURIComponent(wanted)}`,
-      {
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/534.24" },
-        signal: AbortSignal.timeout(3000),
-      },
-    ).then((r) => r.text());
-    const url = /src: url\((.+?)\) format\('(?:truetype|opentype)'\)/.exec(css)?.[1];
-    if (!url) return [];
-    const data = await fetch(url, { signal: AbortSignal.timeout(3000) }).then(
-      (r) => r.arrayBuffer(),
-    );
-    return [{ name: family, data, weight: 400, style: "normal" }];
-  } catch {
-    return [];
-  }
 }
 
 export function fontFamilyFor(text: string): string {

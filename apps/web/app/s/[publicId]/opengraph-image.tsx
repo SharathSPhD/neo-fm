@@ -12,11 +12,11 @@ import { z } from "zod";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   fontFamilyFor,
-  loadFontsFor,
   pickExcerpt,
   reorderForSatori,
   waveformBars,
 } from "@/lib/share/card";
+import { loadFontsFor, shapeLine, type ShapedLine } from "@/lib/share/shape";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,7 +72,7 @@ export default async function OgImage({
     // their lyrics rendered into a cacheable image.
     if (data?.song_documents) {
       const doc = data.song_documents.document_json;
-      excerpt = pickExcerpt(doc.sections).map(reorderForSatori);
+      excerpt = pickExcerpt(doc.sections);
       seed = data.public_id;
       const stored = data.song_documents.title?.trim();
       title =
@@ -86,7 +86,13 @@ export default async function OgImage({
   }
 
   const excerptText = excerpt.join("\n");
-  const fonts = excerptText ? await loadFontsFor(excerptText) : [];
+  // Shaped vector lines when HarfBuzz works; otherwise plain text with
+  // the bundled font (conjuncts may look off in that fallback).
+  const shaped: (ShapedLine | null)[] = await Promise.all(
+    excerpt.map((l) => shapeLine(l, 40)),
+  );
+  const allShaped = shaped.length > 0 && shaped.every((s) => s !== null);
+  const fonts = excerptText && !allShaped ? await loadFontsFor(excerptText) : [];
   const bars = waveformBars(seed);
   const excerptFamily = fontFamilyFor(excerptText);
 
@@ -153,9 +159,21 @@ export default async function OgImage({
                 color: "#fef7ea",
               }}
             >
-              {excerpt.map((line, i) => (
-                <div key={i}>{line}</div>
-              ))}
+              {excerpt.map((line, i) => {
+                const sh = shaped[i];
+                return sh ? (
+                  <svg
+                    key={i}
+                    width={sh.width}
+                    height={sh.height}
+                    viewBox={`0 0 ${sh.width} ${sh.height}`}
+                  >
+                    <path d={sh.d} fill="#fef7ea" />
+                  </svg>
+                ) : (
+                  <div key={i}>{reorderForSatori(line)}</div>
+                );
+              })}
             </div>
           ) : null}
         </div>
