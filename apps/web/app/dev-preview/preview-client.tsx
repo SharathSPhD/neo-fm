@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { KaraokeTicker } from "@/app/(app)/songs/[id]/karaoke-ticker";
+import { SongAudio } from "@/app/(app)/songs/[id]/song-audio";
 import { PromptTab } from "@/app/(app)/songs/new/prompt-tab";
 
 const SECTIONS = [
@@ -45,8 +46,9 @@ export function PreviewClient() {
       <PromptTab showGuide />
       <section className="flex flex-col gap-3">
         <h2 className="text-xs uppercase tracking-widest text-foreground/60">Playback</h2>
-        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
-        {src ? <audio controls src={src} className="w-full" /> : null}
+        {src ? (
+          <SongAudio songId="demo" initialUrl={src} durationSeconds={30} format="wav" title="बारिश की पहली बूँद" subtitle="Hindustani · Hindi" />
+        ) : null}
         {src ? <KaraokeTicker sections={SECTIONS} durationSeconds={30} /> : null}
       </section>
     </>
