@@ -3,6 +3,7 @@
  * by the song poll route so a job moves as soon as its owner is watching it.
  */
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
+import { lyriaBreaker } from "./circuit-breaker";
 import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
@@ -135,8 +136,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
           const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
           const sung = ss?.romanized ? ss.text : a.lyrics;
-          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey }));
+          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
         },
+        gate: () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; },
+        gateRelease: () => lyriaBreaker.release(),
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
           const path = `${jobId}/${n}.mp3`;

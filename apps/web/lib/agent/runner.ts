@@ -99,6 +99,10 @@ export interface AdvanceDeps {
   log?: (message: string) => void;
   music: (a: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number }) => Promise<LyriaResult>;
   saveAudio: (jobId: string, n: number, r: LyriaResult) => Promise<string>;
+  /** Checked before a render slot is taken; a reason means "provider is down, leave the call pending and retry next tick". */
+  gate?: () => string | null;
+  /** Called when a call that passed the gate exits without reaching the provider, so a half-open probe is not held for a cooldown. */
+  gateRelease?: () => void;
 }
 
 /** Sandbox-only tools an unattended run may use. Anything else that pauses for approval is denied. */
@@ -149,14 +153,22 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
   }
 
   for (const call of pending) {
+    // Provider outage: do not consume the tier's only render slot or reserve spend; the call stays pending for the next tick.
+    const blocked = d.gate?.();
+    if (blocked) {
+      d.log?.(`render deferred: ${blocked}`);
+      continue;
+    }
     const inp = call.input as { style_prompt?: string; lyrics?: string; duration_class?: DurationClass };
     if (!inp?.style_prompt || !inp.lyrics || (inp.duration_class !== "clip" && inp.duration_class !== "full")) {
+      d.gateRelease?.();
       await d.sessions.sendToolResult(sid, call.id, "Invalid input: style_prompt, lyrics and duration_class (clip|full) are required.", true);
       continue;
     }
     // The slot is taken atomically in the database before any paid call, so no read can cause an extra render.
     const slot = await d.store.claimRender(jobId, d.maxLyriaCalls);
     if (slot === null) {
+      d.gateRelease?.();
       const sent = await d.sessions.sendToolResult(sid, call.id, "Refused: render limit for this tier reached. Finish with the lyrics you have.", true);
       d.log?.(`sent refusal (limit) for ${call.id}: ${sent ?? "ok"}`);
       continue;
@@ -168,6 +180,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       const sent = await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
       d.log?.(`sent render result for ${call.id}: ${sent ?? "ok"}`);
     } catch (e) {
+      if (e instanceof SpendCapError) d.gateRelease?.();
       const msg = e instanceof SpendCapError
         ? "Refused: spend budget reached. Finish with the lyrics you have."
         : e instanceof Error && e.constructor.name === "SafetyRefusal"
