@@ -10,6 +10,7 @@ import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
 import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 import { createServerClient } from "@/lib/supabase/server";
@@ -134,6 +135,7 @@ const loadProfile = cache(async function loadProfile(handle: string) {
 });
 
 export default async function ProfilePage({ params }: Props) {
+  const { t } = serverI18n();
   const supabase = createServerClient();
   const handle = params.handle.toLowerCase();
 
@@ -222,7 +224,7 @@ export default async function ProfilePage({ params }: Props) {
           <h1 className="text-4xl font-medium tracking-tight">@{profile.handle}</h1>
           <p className="text-sm text-foreground/60">
             <span data-testid="follower-count">{followerCount}</span>{" "}
-            {followerCount === 1 ? "follower" : "followers"} · joined{" "}
+            {t(followerCount === 1 ? "profile.follower" : "profile.followers", { n: "" }).trim()} · {t("profile.joined")}{" "}
             {new Date(profile.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
           </p>
           {profile.bio ? <p className="max-w-prose whitespace-pre-line text-sm text-foreground/85">{profile.bio}</p> : null}
@@ -257,7 +259,7 @@ export default async function ProfilePage({ params }: Props) {
                 href="/account/profile"
                 className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
               >
-                Edit profile
+                {t("profile.editProfile")}
               </Link>
             ) : null}
             <ShareProfileButton handle={profile.handle} text={shareText} />
@@ -268,8 +270,8 @@ export default async function ProfilePage({ params }: Props) {
       {songs.length === 0 ? (
         <p className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/60">
           {isSelf
-            ? "You haven't published any songs yet."
-            : `@${profile.handle} hasn't published any songs yet.`}
+            ? t("profile.noneSelf")
+            : t("profile.noneOther", { handle: profile.handle })}
         </p>
       ) : (
         <>

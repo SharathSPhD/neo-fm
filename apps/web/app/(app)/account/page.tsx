@@ -20,6 +20,7 @@ import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isBillingEnabled } from "@/lib/billing/config";
+import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
@@ -52,6 +53,7 @@ interface PageProps {
 }
 
 export default async function AccountPage({ searchParams }: PageProps) {
+  const { t } = serverI18n();
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account");
@@ -99,11 +101,11 @@ export default async function AccountPage({ searchParams }: PageProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
-      <Breadcrumbs items={[{ label: "Account" }]} />
+      <Breadcrumbs items={[{ label: t("nav.account") }]} />
       <header className="flex flex-col gap-1">
-        <h1 className="text-3xl font-medium tracking-tight">Account</h1>
+        <h1 className="text-3xl font-medium tracking-tight">{t("nav.account")}</h1>
         <p className="text-sm text-foreground/60">
-          Manage your sign-in, plan, and data.
+          {t("account.subtitle")}
         </p>
       </header>
 
@@ -113,17 +115,16 @@ export default async function AccountPage({ searchParams }: PageProps) {
           className="rounded-md border border-emerald-400/30 bg-emerald-400/5 px-5 py-3 text-sm text-emerald-200"
         >
           <strong className="font-medium">
-            Welcome to {PLAN_LABEL[upgradedToTier!] ?? "your new plan"}.
+            {t("account.welcome", { plan: PLAN_LABEL[upgradedToTier!] ?? t("account.newPlan") })}
           </strong>{" "}
-          Stripe confirmed payment; your plan will update here within a
-          few seconds.
+          {t("account.upgradeNote")}
         </section>
       ) : null}
 
       <section className="flex flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-        <Row label="Email" value={auth.user.email ?? "(unknown)"} />
+        <Row label={t("account.email")} value={auth.user.email ?? t("account.unknown")} />
         <Row
-          label="Plan"
+          label={t("account.plan")}
           value={
             <span className="inline-flex items-center gap-2">
               <span className="rounded-full border border-accent/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
@@ -133,31 +134,30 @@ export default async function AccountPage({ searchParams }: PageProps) {
                 href="/pricing"
                 className="text-xs text-foreground/60 hover:text-foreground"
               >
-                Compare plans →
+                {t("account.comparePlans")}
               </a>
             </span>
           }
         />
         {billing && subscriptionStatusLabel ? (
-          <Row label="Subscription" value={subscriptionStatusLabel} />
+          <Row label={t("account.subscription")} value={subscriptionStatusLabel} />
         ) : null}
         {billing && renews ? (
           <Row
-            label={billing.cancel_at_period_end ? "Ends on" : "Renews on"}
+            label={billing.cancel_at_period_end ? t("account.endsOn") : t("account.renewsOn")}
             value={renews}
           />
         ) : null}
         {memberSince ? (
-          <Row label="Member since" value={memberSince} />
+          <Row label={t("account.memberSince")} value={memberSince} />
         ) : null}
       </section>
 
       {billing?.stripe_subscription_id ? (
         <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-          <h2 className="text-sm font-medium tracking-tight">Billing</h2>
+          <h2 className="text-sm font-medium tracking-tight">{t("account.billing")}</h2>
           <p className="text-xs text-foreground/60">
-            Open the Stripe-hosted Customer Portal to change plan, update
-            your card, cancel, or download invoices.
+            {t("account.billingBody")}
           </p>
           <ManageBillingButton />
         </section>
