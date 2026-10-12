@@ -33,3 +33,6 @@ Prod backend: Supabase project **neo-fm-prod** (`kgxltxvjlsnbwomklwox`, ap-south
 - Remove dev-only items: `dev_autoconfirm_signups` trigger (dev DB only), `AGENT_TICK_SECRET`, test users, showcase@example.com.
 - Counsel review of /privacy and /terms; DPDP deletion/export flow; per-IP rate limits.
 - Stripe live mode only after an Indian-card recurring test (RBI e-mandate).
+
+## Pinned providers (update deliberately, never via "latest")
+- Embedder: EmbeddingGemma-300M (Cloud Run), Gemini QA transcriber: `gemini-3.8-flash` (`GEMINI_QA_MODEL` overrides; `gemini-2.5-flash` is closed to new users), Lyria: `lyria-3-clip-preview` / `lyria-3.5`.
