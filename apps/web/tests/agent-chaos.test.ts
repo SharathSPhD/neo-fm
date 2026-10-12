@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { advance, type AdvanceDeps, type AgentEvent, type RunRow } from "../lib/agent/runner";
 import { generateMusic, type SpendGuard } from "../lib/agent/lyria";
 import { releaseLease, takeLease } from "../lib/agent/process";
-import { STUCK_AFTER_MS, STUCK_CODE, sweepStuckJobs, type StuckCandidate, type SweepDeps, type SweepRun } from "../lib/agent/sweeper";
+import { MIN_AGE_MS, NO_PROGRESS_MS, STUCK_CODE, sweepStuckJobs, type StuckCandidate, type SweepDeps, type SweepRun } from "../lib/agent/sweeper";
 import { friendlyJobError } from "../components/job-progress";
 
 // ---- minimal in-memory `jobs` table that honours takeLease's conditional update ----
@@ -156,28 +156,47 @@ function sweepHarness(jobs: StuckCandidate[], runs: Record<string, SweepRun | nu
   } satisfies SweepDeps;
   return d;
 }
-const job = (over: Partial<StuckCandidate> = {}): StuckCandidate => ({ id: "j1", user_id: "u1", started_at: ago(STUCK_AFTER_MS + 1000), agent_lease_until: null, target_seconds: 30, ...over });
+const job = (over: Partial<StuckCandidate> = {}): StuckCandidate => ({ id: "j1", user_id: "u1", started_at: ago(MIN_AGE_MS + 1000), agent_lease_until: null, target_seconds: 30, ...over });
 
 describe("stuck-job sweeper", () => {
-  it("fails a job stuck over 15 minutes and releases a leaked reservation", async () => {
-    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null } });
+  it("fails a job that is old and shows no progress, and releases a leaked reservation", async () => {
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     expect(await sweepStuckJobs(d)).toEqual({ j1: "failed" });
     expect(d.failJob).toHaveBeenCalledWith("j1", STUCK_CODE);
     expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.05);
     expect(d.markRunFailed).toHaveBeenCalledWith("j1");
   });
+  it("releases one estimate per taken render slot, from the stored run", async () => {
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 2, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
+    await sweepStuckJobs(d);
+    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.1);
+  });
+  it("a 40-minute-old job whose run was updated 2 minutes ago is NOT failed", async () => {
+    const d = sweepHarness([job({ started_at: ago(40 * 60_000) })], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(2 * 60_000) } });
+    expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_progressing" });
+    expect(d.failJob).not.toHaveBeenCalled();
+    expect(d.releaseSpend).not.toHaveBeenCalled();
+  });
+  it("age alone never fails a job: a 50-minute-old Pro job with a fresh run survives", async () => {
+    const d = sweepHarness([job({ started_at: ago(50 * 60_000) })], { j1: { audio_path: null, lyria_calls: 0, render_error: null, updated_at: ago(19 * 60_000) } });
+    expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_progressing" });
+  });
+  it("a job with no run row is failed only once it is old and past the no-progress window", async () => {
+    const d = sweepHarness([job({ id: "a", started_at: ago(35 * 60_000) }), job({ id: "b", started_at: ago(10 * 60_000) })], {});
+    expect(await sweepStuckJobs(d)).toEqual({ a: "failed", b: "skipped_young" });
+  });
   it("uses the full-length estimate for long songs", async () => {
-    const d = sweepHarness([job({ target_seconds: 120 })], { j1: { audio_path: null, lyria_calls: 1, render_error: null } });
+    const d = sweepHarness([job({ target_seconds: 120 })], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     await sweepStuckJobs(d);
     expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.25);
   });
   it("releases nothing when no render slot was ever taken", async () => {
-    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 0, render_error: null } });
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 0, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     await sweepStuckJobs(d);
     expect(d.releaseSpend).not.toHaveBeenCalled();
   });
   it("does not double-release when generateMusic already released (render_error set)", async () => {
-    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: "lyria 503" } });
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: "lyria 503", updated_at: ago(NO_PROGRESS_MS + 1000) } });
     await sweepStuckJobs(d);
     expect(d.failJob).toHaveBeenCalled();
     expect(d.releaseSpend).not.toHaveBeenCalled();
@@ -185,19 +204,19 @@ describe("stuck-job sweeper", () => {
   it("leaves young jobs, live leases and jobs that already have audio alone", async () => {
     const d = sweepHarness(
       [job({ id: "young", started_at: ago(60_000) }), job({ id: "leased", agent_lease_until: new Date(NOW + 5000).toISOString() }), job({ id: "audio" })],
-      { audio: { audio_path: "audio/1.mp3", lyria_calls: 1, render_error: null }, leased: null },
+      { audio: { audio_path: "audio/1.mp3", lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) }, leased: null },
     );
     expect(await sweepStuckJobs(d)).toEqual({ young: "skipped_young", leased: "skipped_leased", audio: "skipped_has_audio" });
     expect(d.failJob).not.toHaveBeenCalled();
     expect(d.releaseSpend).not.toHaveBeenCalled();
   });
   it("sweeps once: a second sweeper that loses the race neither fails nor releases", async () => {
-    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null } }, false);
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } }, false);
     expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_raced" });
     expect(d.releaseSpend).not.toHaveBeenCalled();
   });
   it("a failing run-row update does not block the spend release", async () => {
-    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null } });
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     d.markRunFailed.mockRejectedValueOnce(new Error("db"));
     await sweepStuckJobs(d);
     expect(d.releaseSpend).toHaveBeenCalledOnce();
