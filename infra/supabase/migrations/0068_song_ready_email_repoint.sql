@@ -1,4 +1,4 @@
--- 0065_song_ready_email_repoint.sql -- point the song-ready email at neo-fm-prod
+-- 0068_song_ready_email_repoint.sql -- point the song-ready email at neo-fm-prod
 --
 -- Two fixes on top of 0029 / 0043:
 --   1. 0029 hardcoded the retired Supabase project's functions URL, so the

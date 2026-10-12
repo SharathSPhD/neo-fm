@@ -11,7 +11,7 @@ message on the pgmq `email_notifications` queue when a job reaches
 minutes, see `schedule.json`) and archives a message only after Resend
 accepts it.
 
-Fast path (migration 0029, repointed by 0065): a pg_net call from the
+Fast path (migration 0029, repointed by 0068): a pg_net call from the
 `notify_job_complete` trigger nudges this function right after a job
 completes so the drain does not wait for the cron. It is a no-op until
 the vault secret `neo_fm_webhook_secret` exists. The target URL is the
