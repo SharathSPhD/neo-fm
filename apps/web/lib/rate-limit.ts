@@ -96,6 +96,14 @@ export function pickRule(
   if (/^\/native-review\/[^/]+\/?$/.test(pathname)) {
     return { bucket: "review:page", limit: 30 };
   }
+  // UI-translation review links are token-gated like native-review. A reviewer saves one verdict per string
+  // (hundreds per session), so writes get a higher cap than the page itself.
+  if (/^\/api\/ui-review\/[^/]+\/items\/?$/.test(pathname)) {
+    return { bucket: "uireview:write", limit: 120 };
+  }
+  if (/^\/ui-review\/[^/]+(\/open)?\/?$/.test(pathname)) {
+    return { bucket: "uireview:page", limit: 30 };
+  }
   // Public abuse reports are anonymous writes into a moderation queue.
   if (/^\/api\/report\/?$/.test(pathname)) {
     return { bucket: "anon:report", limit: 5 };
