@@ -12,7 +12,9 @@ import { checkBearer } from "../../../../lib/agent/auth";
 import { mintEmbedToken } from "../../../../lib/agent/embed-token";
 import { briefText } from "../../../../lib/agent/runner";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
-import { PILOT_BRIEFS } from "../../../../lib/eval/briefs";
+import { allEvalBriefs } from "../../../../lib/eval/briefs-gen";
+
+const PILOT_BRIEFS = allEvalBriefs();
 import { polishLyrics } from "../../../../lib/lyrics/polish";
 import { bestOfSix, judgePair, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
 
@@ -37,7 +39,10 @@ export async function POST(req: NextRequest) {
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const batch = req.nextUrl.searchParams.get("batch");
   if (!batch) return NextResponse.json({ error: "batch required" }, { status: 400 });
-  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? PILOT_BRIEFS.length), PILOT_BRIEFS.length);
+  const offset = Math.max(0, Number(req.nextUrl.searchParams.get("offset") ?? 0));
+  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? 10), PILOT_BRIEFS.length - offset);
+  const lang = req.nextUrl.searchParams.get("lang"); // optional language filter, e.g. Telugu
+  const pool = lang ? PILOT_BRIEFS.filter((b) => b.language.toLowerCase() === lang.toLowerCase()) : PILOT_BRIEFS;
   const db = serviceClient(); const client = anthropicClient(); const sessions = sessionApi();
   const envId = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
   const { data: cfg } = await db.from("config_versions").select("id").eq("kind", "pipeline").eq("status", "live").limit(1);
@@ -46,7 +51,7 @@ export async function POST(req: NextRequest) {
   const baseline = req.nextUrl.searchParams.get("baseline") === "best6" ? "best6" : "single";
   const polish = req.nextUrl.searchParams.get("polish") === "1"; // apply the Sonnet meter/diction polish to reused PCE lyrics
   const reuse = req.nextUrl.searchParams.get("reuse"); // copy finished PCE arms from another batch (no re-run)
-  for (const b of PILOT_BRIEFS.slice(0, n)) {
+  for (const b of pool.slice(offset, offset + n)) {
     const base = { batch, brief_id: b.id, language: b.language, style_family: b.style, brief: b.text, config_version_id: configId };
     try {
       const text = baseline === "best6" ? await bestOfSix(client, b.language, b.style, b.text) : await singleShot(client, b.language, b.style, b.text);

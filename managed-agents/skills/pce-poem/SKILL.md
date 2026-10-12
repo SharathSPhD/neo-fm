@@ -43,6 +43,14 @@ Never edit the engine or its numbers. If `EMBED_URL` is absent or the service er
 6. **vimarsa - aspect-shift gate.** Fire (event = true) iff ALL: novelty vs. the median of the other candidates >= 0.30, >= 1 aspect realised, ananda >= 0.40, and the draft's score gain over the median >= 0.05. Record `vimarsa_event` and one sentence on which aspects fired.
 7. **kriya - enactment + shadow revision.** `revise=false`: emit the selected draft verbatim. `revise=true`: always write a revision from the vimarsa brief (keep what fired, remove the nearest must-avoid, fix failed form checks), then commit the revision iff vimarsa fired, else commit the draft. Record `committed: draft|revision`.
 
+## Language prosody notes (apply when writing every candidate)
+- **Telugu**: pair lines with *prasa* (same 2nd syllable, e.g. "వేకువ / నీకు"), keep paired lines to equal matra counts, prefer spoken-literary register over Sanskritised stock words; keerthana = pallavi/anupallavi/charanam with a closing line echoing the pallavi.
+- **Tamil**: use *edugai/monai* (first-letter or 2nd-letter echo) across paired lines, avoid Sanskrit loanword padding, keep lines to 6-9 syllables for folk, longer for light-classical.
+- **Kannada**: *dvitiyakshara prasa* (2nd-letter rhyme) and balanced matra count; bhavageete lines flow in 4+4 beats.
+- **Hindi/Urdu register**: choose ONE register (khari boli vs Urdu-leaning vs Braj) and keep it; end-rhyme (antyaprasa) on paired lines, no Hinglish.
+- **Bengali**: tatsam vs tadbhava consistency; Rabindrasangeet favours *akkhor-brritto*-like even lines, folk/Baul favours repetition and refrain.
+- All: every paired line must be singable to the same tune (count syllables), never exceed ~9 short lines for a 30 s song, and no stock film-lyric pairings (moon/heart/rain) unless the brief asks.
+
 ## Output
 Write `/mnt/session/outputs/lyrics.md` (the committed surface only, sectioned for singing) and `cascade_audit.json`. Return only the lyrics plus, if vimarsa fired, one italic line naming the aspects.
 
