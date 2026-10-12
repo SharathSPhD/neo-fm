@@ -24,6 +24,31 @@ export interface SyncLine {
   text: string;
   start: number;
   end: number;
+  /** False when the time is interpolated rather than heard in the audio. */
+  sung?: boolean;
+}
+
+/** agent_runs.line_timings (version 1), produced from the diction transcription. */
+export interface LineTimings {
+  version: 1;
+  duration_s?: number;
+  source?: string;
+  lines: { i: number; text: string; start_s: number; end_s: number; sung: boolean }[];
+}
+
+export function parseLineTimings(raw: unknown): LineTimings | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Partial<LineTimings>;
+  if (r.version !== 1 || !Array.isArray(r.lines) || r.lines.length === 0) return null;
+  const ok = r.lines.every(
+    (l) =>
+      l &&
+      typeof l.text === "string" &&
+      Number.isFinite(l.start_s) &&
+      Number.isFinite(l.end_s) &&
+      l.end_s >= l.start_s,
+  );
+  return ok ? (r as LineTimings) : null;
 }
 
 function weight(text: string): number {
@@ -41,6 +66,26 @@ function weight(text: string): number {
 }
 
 export function buildLyricTimeline(
+  sections: readonly SyncSectionInput[],
+  audioSeconds?: number | null,
+  timings?: LineTimings | null,
+): SyncLine[] {
+  const paced = paceEvenly(sections, audioSeconds);
+  if (!timings) return paced;
+  // Heard timings win, but only when they describe these same lyrics: if
+  // the line count differs (lyrics edited since the audit) fall back to
+  // even pacing rather than highlight the wrong lines.
+  const heard = [...timings.lines].sort((a, b) => a.start_s - b.start_s);
+  if (heard.length !== paced.length) return paced;
+  return paced.map((line, idx) => ({
+    ...line,
+    start: heard[idx]!.start_s,
+    end: heard[idx]!.end_s,
+    sung: heard[idx]!.sung,
+  }));
+}
+
+function paceEvenly(
   sections: readonly SyncSectionInput[],
   audioSeconds?: number | null,
 ): SyncLine[] {
