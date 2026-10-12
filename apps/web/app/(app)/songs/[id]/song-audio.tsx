@@ -42,6 +42,30 @@ export function SongAudio({
     setSrc(initialUrl);
   }, [initialUrl]);
 
+  // Personalization signal: furthest play fraction, sent once when playback pauses/ends (and as a replay on 2nd start).
+  const sentRef = useRef(0);
+  const startsRef = useRef(0);
+  function reportPlay() {
+    const el = audioRef.current;
+    if (!el || !el.duration || !isFinite(el.duration)) return;
+    const pct = Math.min(1, el.currentTime / el.duration);
+    if (pct <= sentRef.current + 0.2) return;
+    sentRef.current = pct;
+    void fetch(`/api/songs/${encodeURIComponent(songId)}/feedback`, {
+      method: "POST", headers: { "content-type": "application/json" }, keepalive: true,
+      body: JSON.stringify({ kind: "play_pct", value: Number(pct.toFixed(2)) }),
+    }).catch(() => undefined);
+  }
+  function onPlay() {
+    startsRef.current += 1;
+    if (startsRef.current === 2) {
+      void fetch(`/api/songs/${encodeURIComponent(songId)}/feedback`, {
+        method: "POST", headers: { "content-type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ kind: "replay" }),
+      }).catch(() => undefined);
+    }
+  }
+
   async function onError() {
     if (refreshing) return;
     setRefreshing(true);
@@ -88,6 +112,9 @@ export function SongAudio({
         preload="metadata"
         src={src}
         onError={onError}
+        onPause={reportPlay}
+        onEnded={reportPlay}
+        onPlay={onPlay}
         crossOrigin="anonymous"
         className="w-full"
       />

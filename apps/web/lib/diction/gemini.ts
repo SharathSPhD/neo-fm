@@ -1,6 +1,6 @@
 import { scoreTranscript, type DictionScore } from "./index";
 
-const MODEL = () => process.env.GEMINI_QA_MODEL ?? "gemini-flash-latest";
+const MODEL = () => process.env.GEMINI_QA_MODEL ?? "gemini-2.5-flash";
 
 /** Gemini audio understanding: transcribe the sung audio in its original script. Cheap (~1.2k tokens per clip). */
 export async function transcribeSung(

@@ -108,7 +108,8 @@ export function runStore(db: SupabaseClient, agentKey: "free" | "pro"): RunStore
 }
 
 export function spendGuard(db: SupabaseClient, scope: { userId: string; userCapGbp: number }, env = process.env): SpendGuard {
-  const globalCap = Number(env.LYRIA_BUDGET_GBP ?? "3");
+  const globalCap = Number(env.LYRIA_BUDGET_GBP ?? "3"); // monthly ceiling across all users (migration 0057)
+  const periods: string[] = []; // period of each outstanding reservation, so a release hits the month it was made in
   // Reserve/release amounts are the same estimate used by generateMusic(). Both the shared ceiling and the
   // user's monthly envelope are checked in one atomic statement (migration 0055).
   return {
@@ -117,10 +118,12 @@ export function spendGuard(db: SupabaseClient, scope: { userId: string; userCapG
         p_user: scope.userId, p_provider: "lyria", p_amount: amount, p_user_cap: scope.userCapGbp, p_global_cap: globalCap,
       });
       if (error) throw new Error(`reserve_user_spend: ${error.message}`);
+      if (data === true) periods.push(new Date().toISOString().slice(0, 7) + "-01");
       return data === true;
     },
     async release(amount) {
-      await db.rpc("release_user_spend", { p_user: scope.userId, p_provider: "lyria", p_amount: amount });
+      const period = periods.pop() ?? new Date().toISOString().slice(0, 7) + "-01";
+      await db.rpc("release_user_spend", { p_user: scope.userId, p_provider: "lyria", p_amount: amount, p_period: period });
     },
   };
 }
