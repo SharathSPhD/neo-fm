@@ -5,22 +5,30 @@ job completes. Sprint 4 (M4 launch readiness).
 
 ## Wiring
 
-This function is invoked by a **Supabase Database Webhook**:
+Durable path (migration 0043): a trigger on `public.jobs` enqueues a
+message on the pgmq `email_notifications` queue when a job reaches
+`completed` or `failed`. This function drains the queue (cron every 2
+minutes, see `schedule.json`) and archives a message only after Resend
+accepts it.
 
-- Source: `public.jobs` UPDATE
-- HTTP method: POST
-- URL: `https://<project>.functions.supabase.co/notify-job-complete`
-- Header: `x-webhook-secret: <NEO_FM_WEBHOOK_SECRET>`
+Fast path (migration 0029, repointed by 0065): a pg_net call from the
+`notify_job_complete` trigger nudges this function right after a job
+completes so the drain does not wait for the cron. It is a no-op until
+the vault secret `neo_fm_webhook_secret` exists. The target URL is the
+vault secret `neo_fm_notify_url`, defaulting to neo-fm-prod.
 
-The function self-filters: it only sends when
-`record.status = "completed"` and `old_record.status <> "completed"`,
-so re-deliveries from the webhook layer are idempotent.
+Without `RESEND_API_KEY` the function returns 200 `{skipped:"no_resend_key"}`
+and leaves the queue untouched. Messages older than 24 h are archived
+unsent so adding the key later does not email people about old songs.
+
+The email is written in the song's language (en, hi, ta, te, kn, bn;
+anything else falls back to English).
 
 ## Required env (set on the Supabase project secrets):
 
 | Variable                    | Required           | Notes                                              |
 | --------------------------- | ------------------ | -------------------------------------------------- |
-| `RESEND_API_KEY`            | yes (in prod)      | When unset, function logs intent and returns 204.  |
+| `RESEND_API_KEY`            | yes (in prod)      | When unset, the function is a no-op (queue untouched). |
 | `RESEND_FROM`               | no                 | Defaults to `neo-fm <noreply@neo-fm.app>`.         |
 | `NEO_FM_PUBLIC_APP_URL`     | yes                | e.g. `https://neo-fm.app`. Used in the email link. |
 | `SUPABASE_URL`              | auto               | Provided by the Supabase runtime.                  |
