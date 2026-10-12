@@ -17,6 +17,7 @@ import { signIn } from "../helpers/auth";
 test("Remix dialog with voice + raga + title overrides forks and routes", async ({
   page,
 }) => {
+  test.skip(!process.env.E2E_SLOW, "creates a real job (spends budget): set E2E_SLOW=1");
   await signIn(page);
 
   await page.goto("/library?status=completed&view=list");
