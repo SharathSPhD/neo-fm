@@ -10,6 +10,7 @@ import { mergeLyrics } from "./lyrics-merge";
 import { polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
+import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { mintEmbedToken } from "./embed-token";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
@@ -105,7 +106,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
               await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
             } catch (e) { if (e instanceof SafetyRefusal) throw e; /* polish is best-effort; sing the engine's own lyrics */ }
           }
-          return generateMusic({ ...a, stylePrompt: [a.stylePrompt, dictionHints(doc.language)].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
+          // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
+          const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
+          const sung = ss?.romanized ? ss.text : a.lyrics;
+          return generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
         },
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
