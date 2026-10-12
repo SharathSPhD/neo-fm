@@ -15,6 +15,7 @@ import Link from "next/link";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
 import { UserMenu } from "./user-menu";
+import { WhatsNewLink } from "./whats-new-link";
 
 type NavUser = {
   email: string;
@@ -95,6 +96,13 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
                 </Link>
               );
             })}
+            <WhatsNewLink
+              active={active === "/whats-new"}
+              className={[
+                "rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                active === "/whats-new" ? "bg-muted/20 text-foreground" : "",
+              ].join(" ")}
+            />
           </nav>
         </div>
         <div className="flex items-center gap-2">
