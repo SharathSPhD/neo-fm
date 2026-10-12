@@ -1,5 +1,5 @@
 /**
- * POST /api/events {"event":"landing_view"} -- anonymous page-view counter (migration 0065).
+ * POST /api/events {"event":"landing_view"} -- anonymous page-view counter (migration 0071).
  * Stores only a per-day count. Requests carrying DNT or Sec-GPC are acknowledged but not counted.
  * Always answers 204 so a missing migration or a hiccup never surfaces in the visitor's browser.
  */

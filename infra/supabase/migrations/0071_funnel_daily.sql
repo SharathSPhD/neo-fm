@@ -1,4 +1,4 @@
--- 0065_funnel_daily.sql
+-- 0071_funnel_daily.sql
 -- Privacy-respecting top-of-funnel counters. One row per (day, event) holding a count: no user id, IP, user agent,
 -- cookie or referrer is ever stored, so there is nothing personal to export or delete. Later funnel steps (signup,
 -- first song, share) are derived from users/jobs and need no tracking at all.
