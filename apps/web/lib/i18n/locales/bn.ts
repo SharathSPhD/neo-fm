@@ -652,7 +652,7 @@ export const bn: Dict = {
   "pub.report.sexual": "যৌন বিষয়বস্তু বা নাবালক জড়িত",
   "pub.report.copyright": "কারও কপিরাইট করা কাজ নকল করে",
   "pub.report.other": "অন্য কিছু",
-  "pub.report.thanks": "ধন্যবাদ — আমরা এই রিপোর্টটি পর্যালোচনা করব। জরুরি? grievance@neo-fm.com-এ লিখুন।",
+  "pub.report.thanks": "ধন্যবাদ — আমরা এই রিপোর্টটি পর্যালোচনা করব। জরুরি? info@technektar.com-এ লিখুন।",
   "pub.report.open": "এই গানটি রিপোর্ট করুন",
   "pub.report.why": "আপনি কেন রিপোর্ট করছেন?",
   "pub.report.details": "বিবরণ (ঐচ্ছিক)",

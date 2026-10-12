@@ -652,7 +652,7 @@ export const ta: Dict = {
   "pub.report.sexual": "பாலியல் உள்ளடக்கம் அல்லது சிறார் தொடர்புடையது",
   "pub.report.copyright": "ஒருவரின் பதிப்புரிமை பெற்ற படைப்பை நகலெடுக்கிறது",
   "pub.report.other": "வேறு ஏதோ",
-  "pub.report.thanks": "நன்றி — இந்தப் புகாரை மதிப்பாய்வு செய்வோம். அவசரமா? grievance@neo-fm.com க்கு எழுதுங்கள்.",
+  "pub.report.thanks": "நன்றி — இந்தப் புகாரை மதிப்பாய்வு செய்வோம். அவசரமா? info@technektar.com க்கு எழுதுங்கள்.",
   "pub.report.open": "இந்தப் பாடலைப் புகாரளி",
   "pub.report.why": "ஏன் புகாரளிக்கிறீர்கள்?",
   "pub.report.details": "விவரங்கள் (விருப்பம்)",
