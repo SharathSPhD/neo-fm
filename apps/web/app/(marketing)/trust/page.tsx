@@ -5,6 +5,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { QualityEvidence } from "@/components/marketing/quality-evidence";
+
 export const metadata: Metadata = {
   title: "Trust & safety -- neo-fm",
   description:
@@ -62,6 +64,7 @@ export default function TrustPage() {
           </li>
         ))}
       </ul>
+      <QualityEvidence />
       <section className="mt-12 rounded-lg border border-muted/30 p-5" aria-labelledby="grievance-heading">
         <h2 id="grievance-heading" className="text-lg font-medium">Reports, takedowns and grievances</h2>
         <p className="mt-2 text-sm text-foreground/70">
