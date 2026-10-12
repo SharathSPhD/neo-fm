@@ -36,7 +36,7 @@ export function prioritise<T extends { started_at?: string | null }>(jobs: T[], 
 /** Run `fn` over `items` with at most `size` in flight, starting the next as soon as any finishes. */
 export async function runPool<T>(items: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {
   let next = 0;
-  const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i]); } };
+  const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i] as T); } };
   await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
 }
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
