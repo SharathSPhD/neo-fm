@@ -5,9 +5,16 @@ const { processJobs, waitUntil } = vi.hoisted(() => ({ processJobs: vi.fn(), wai
 vi.mock("../../../lib/agent/process", () => ({ processJobs }));
 vi.mock("@vercel/functions", () => ({ waitUntil }));
 let runs: unknown[] = [];
+let listed: { name: string }[] = [];
+let storageThrows = false;
+const removed: string[][] = [];
 let runsThrow = false;
 vi.mock("../../../lib/supabase/server", () => ({
   createServiceRoleClient: () => ({
+    storage: { from: () => ({
+      list: async () => { if (storageThrows) throw new Error("storage down"); return { data: listed }; },
+      remove: async (paths: string[]) => { removed.push(paths); return { data: [], error: null }; },
+    }) },
     from: () => ({ select: () => ({ eq: () => ({ limit: async () => { if (runsThrow) throw new Error("db"); return { data: runs }; } }) }) }),
   }),
 }));
@@ -42,7 +49,7 @@ const job = (over: Record<string, unknown> = {}) => ({ id: ID, status: "complete
 beforeEach(() => {
   vi.mocked(requireUser).mockReset(); processJobs.mockReset().mockResolvedValue({}); waitUntil.mockReset();
   row = job(); selectError = null; signResult = { data: { signedUrl: "https://signed/x.mp3" }, error: null }; deleteResult = { error: null, count: 1 };
-  runs = []; runsThrow = false; signed.length = 0;
+  runs = []; runsThrow = false; signed.length = 0; listed = []; storageThrows = false; removed.length = 0;
   process.env.GEMINI_API_KEY = "g"; process.env.MA_ENVIRONMENT_ID = "env_x";
 });
 afterEach(() => { delete process.env.GEMINI_API_KEY; delete process.env.MA_ENVIRONMENT_ID; });
@@ -115,8 +122,24 @@ describe("DELETE /api/songs/[id]", () => {
     authed();
     expect(await (await DELETE(req(), { params: { id: ID } })).json()).toEqual({ deleted: true });
     deleteResult = { error: null, count: 0 };
+    listed = [{ name: "1.mp3" }];
     expect((await DELETE(req(), { params: { id: ID } })).status).toBe(404);
+    expect(removed).toEqual([]); // never touch storage for a job the caller does not own
     deleteResult = { error: { message: "fk" }, count: null };
     expect((await DELETE(req(), { params: { id: ID } })).status).toBe(500);
+  });
+  it("removes the job's audio objects after a successful delete", async () => {
+    authed(); listed = [{ name: "1.mp3" }, { name: "2.mp3" }];
+    expect((await DELETE(req(), { params: { id: ID } })).status).toBe(200);
+    expect(removed).toEqual([[`${ID}/1.mp3`, `${ID}/2.mp3`]]);
+  });
+  it("a job with no audio skips the remove call, and a storage failure never fails the delete", async () => {
+    authed();
+    expect((await DELETE(req(), { params: { id: ID } })).status).toBe(200);
+    expect(removed).toEqual([]);
+    storageThrows = true;
+    const res = await DELETE(req(), { params: { id: ID } });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ deleted: true });
   });
 });
