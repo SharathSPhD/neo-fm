@@ -13,6 +13,7 @@ import { mintEmbedToken } from "../../../../lib/agent/embed-token";
 import { briefText } from "../../../../lib/agent/runner";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
 import { PILOT_BRIEFS } from "../../../../lib/eval/briefs";
+import { polishLyrics } from "../../../../lib/lyrics/polish";
 import { bestOfSix, judgePair, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
 
 export const dynamic = "force-dynamic";
