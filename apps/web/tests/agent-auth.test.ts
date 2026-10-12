@@ -82,7 +82,7 @@ describe("cron-invoked admin routes", () => {
   });
   it("the routes Vercel Cron calls use the cron-or-admin check, the rest are ADMIN_SECRET-only", () => {
     const dir = join(__dirname, "../app/api/admin");
-    const cron = new Set(["self-improve", "spend-monitor"]);
+    const cron = new Set(["health-snapshot", "self-improve", "spend-monitor"]);
     const crons = (JSON.parse(readFileSync(join(__dirname, "../vercel.json"), "utf8")).crons as { path: string }[])
       .map((c) => c.path).filter((p) => p.startsWith("/api/admin/")).map((p) => p.slice("/api/admin/".length));
     expect(new Set(crons)).toEqual(cron);

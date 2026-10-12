@@ -1,16 +1,19 @@
 import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { ideaById } from "@/lib/ideas/catalog";
 import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { CreationCanvas } from "./creation-canvas";
 
-export default async function NewSongPage() {
+export default async function NewSongPage({ searchParams }: { searchParams?: { idea?: string } }) {
   const { t } = serverI18n();
+  // `?idea=<id>` comes from the /ideas gallery. Only known catalog ids are honoured; the prompt text never travels in the URL.
+  const idea = ideaById(searchParams?.idea);
   const supabase = createServerClient();
   const { data } = await supabase.auth.getUser();
-  if (!data?.user) redirect("/sign-in?next=/songs/new");
+  if (!data?.user) redirect(idea ? `/sign-in?next=${encodeURIComponent(`/songs/new?idea=${idea.id}`)}` : "/sign-in?next=/songs/new");
 
   // First-run guide shows until the user has at least one song. A failed
   // count must not hide the form, so errors fall back to "show the guide".
@@ -31,7 +34,7 @@ export default async function NewSongPage() {
           {t("create.intro")}
         </p>
       </header>
-      <CreationCanvas firstRun={firstRun} />
+      <CreationCanvas firstRun={firstRun} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>
   );
 }
