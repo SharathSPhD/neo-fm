@@ -16,3 +16,7 @@ revoke all on function public.email_queue_read(integer, integer) from public, an
 revoke all on function public.email_queue_archive(bigint) from public, anon, authenticated;
 grant execute on function public.email_queue_read(integer, integer) to service_role;
 grant execute on function public.email_queue_archive(bigint) to service_role;
+
+-- Drain the queue every 2 minutes (replaces the job of the same name; safe to re-run).
+create extension if not exists pg_cron;
+select cron.schedule('notify-job-complete-drain', '*/2 * * * *', $$select net.http_post(url := 'https://kgxltxvjlsnbwomklwox.supabase.co/functions/v1/notify-job-complete', headers := '{"content-type":"application/json"}'::jsonb, body := '{}'::jsonb)$$);
