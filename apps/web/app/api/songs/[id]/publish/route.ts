@@ -83,6 +83,9 @@ export async function POST(
       return NextResponse.json({ error: "not_found" }, { status: 404 });
     }
     if (code === "22023") {
+      if (error.message.includes("song_taken_down")) {
+        return NextResponse.json({ error: "taken_down", details: "This song was removed after a report. Write to grievance@neo-fm.com to appeal." }, { status: 403 });
+      }
       return NextResponse.json(
         { error: "validation_failed", details: error.message },
         { status: 422 },
