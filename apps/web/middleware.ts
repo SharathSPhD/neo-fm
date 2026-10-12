@@ -22,12 +22,12 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const sbHost = supabaseHost();
 
-  // Per-IP edge rate-limit for /api/* (Sprint 4). Upstash when wired,
+  // Per-IP edge rate-limit for /api/* plus the auth surface (Sprint 4). Upstash when wired,
   // in-memory fallback otherwise. Static routes and Server Component
   // navigation are not rate-limited here -- they remain Supabase-quota
   // and DGX-worker bound at deeper layers.
-  if (pathname.startsWith("/api/")) {
-    const rule = pickRule(pathname);
+  const rule = pickRule(pathname, request.method);
+  if (rule) {
     const verdict = await enforceRateLimit(request, rule);
     if (!verdict.ok) {
       const blocked = new NextResponse(

@@ -10,6 +10,14 @@ export default async function NewSongPage() {
   const { data } = await supabase.auth.getUser();
   if (!data?.user) redirect("/sign-in?next=/songs/new");
 
+  // First-run guide shows until the user has at least one song. A failed
+  // count must not hide the form, so errors fall back to "show the guide".
+  const { count } = await supabase
+    .from("jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", data.user.id);
+  const firstRun = (count ?? 0) === 0;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
@@ -22,7 +30,7 @@ export default async function NewSongPage() {
           and stream status updates back here.
         </p>
       </header>
-      <CreationCanvas />
+      <CreationCanvas firstRun={firstRun} />
     </div>
   );
 }
