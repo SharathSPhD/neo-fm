@@ -103,4 +103,8 @@ docs/contracts/*
 voice-tts.md
 review/
 apps/web/tests/e2e/.share-state.json
+
+# smoke suite output
+apps/web/tests/smoke/.output/
+apps/web/tests/smoke/.report/
 apps/web/tests/e2e/.screens/
