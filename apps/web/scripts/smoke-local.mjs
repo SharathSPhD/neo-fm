@@ -2,6 +2,7 @@
  * Local smoke runner: builds the app against the fake Supabase (NEXT_PUBLIC_*
  * is inlined at build time), then runs the smoke suite, which boots the fake
  * backend and `next start` itself. Set SMOKE_SKIP_BUILD=1 to reuse `.next`.
+ * PW_CONFIG selects another Playwright config (the visual runner sets it).
  */
 import { spawnSync } from "node:child_process";
 
@@ -14,4 +15,4 @@ const run = (cmd, args) => {
 };
 
 if (!process.env.SMOKE_SKIP_BUILD) run("pnpm", ["exec", "next", "build"]);
-run("pnpm", ["exec", "playwright", "test", "-c", "playwright.smoke.config.ts", ...process.argv.slice(2)]);
+run("pnpm", ["exec", "playwright", "test", "-c", process.env.PW_CONFIG ?? "playwright.smoke.config.ts", ...process.argv.slice(2)]);

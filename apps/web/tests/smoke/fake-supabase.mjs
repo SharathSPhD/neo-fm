@@ -8,6 +8,8 @@
  */
 import { createServer } from "node:http";
 
+import { DEDICATED, FIXTURE_JOBS } from "./fixtures.mjs";
+
 export const PORT = Number(process.env.SMOKE_FAKE_SUPABASE_PORT ?? 54399);
 export const PUBLIC_ID = "smkpb23456"; // 10 chars; the alphabet excludes i, l, o, u
 const USER = {
@@ -103,8 +105,13 @@ const server = createServer(async (req, res) => {
   if (path === "/rest/v1/rpc/create_song_job") {
     return send(res, 200, [{ job_id: "00000000-0000-4000-8000-0000000000bb", status: "queued", song_id: "00000000-0000-4000-8000-0000000000cc" }]);
   }
-  if (req.method === "GET" && path === "/rest/v1/jobs" && url.searchParams.get("public_id") === `eq.${PUBLIC_ID}`) {
-    return rowOrEmpty(PUBLIC_JOB);
+  if (req.method === "GET" && path === "/rest/v1/jobs" && url.searchParams.get("public_id")?.startsWith("eq.")) {
+    const id = url.searchParams.get("public_id").slice(3);
+    // Dedication lives in its own query (see lib/share/load.ts).
+    if ((url.searchParams.get("select") ?? "").includes("dedication_to")) {
+      return rowOrEmpty(id === DEDICATED.publicId ? { dedication_to: DEDICATED.to, dedication_message: DEDICATED.message } : null);
+    }
+    return rowOrEmpty(id === PUBLIC_ID ? PUBLIC_JOB : (FIXTURE_JOBS[id] ?? null));
   }
   if (req.method === "GET") return rowOrEmpty(null);
   // Inserts / updates / deletes: acknowledge, recorded above.
