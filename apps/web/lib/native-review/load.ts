@@ -17,7 +17,8 @@ export async function resolveToken(token: string): Promise<ReviewerToken | null>
     .from("review_tokens")
     .select("id, language, alias")
     .eq("token_hash", hashToken(token))
-    .eq("revoked", false)
+    .is("revoked_at", null)
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle<ReviewerToken>();
   if (!data) return null;
   await db.from("review_tokens").update({ last_used_at: new Date().toISOString() }).eq("id", data.id);
@@ -49,6 +50,9 @@ export async function loadSongs(reviewer: ReviewerToken): Promise<ReviewSong[]> 
     .from("review_items")
     .select("id, jobs!inner(song_documents(title, document_json), tracks(url, created_at))")
     .eq("language", reviewer.language)
+    // Re-checked on every read: a song unpublished after seeding must disappear from the kit.
+    .eq("jobs.status", "completed")
+    .in("jobs.published_visibility", ["public", "unlisted"])
     .order("position", { ascending: true });
   const items = (data ?? []) as unknown as ItemRow[];
   const { data: mine } = await db
