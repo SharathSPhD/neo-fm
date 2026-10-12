@@ -71,6 +71,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('preference_pairs',   'owner', 'user_id', null, 'insert only through record_preference_pair()'),
   ('collections',        'owner', 'user_id', null, 'public collections are read via the service-role page loader, not PostgREST'),
   ('collection_items',   'owner', null,      null, 'via collections'),
+  ('notifications',      'owner', 'user_id', null, 'owner reads own rows; every write goes through notify_user() with the service role'),
+  ('notification_prefs', 'owner', 'user_id', null, 'owner reads own rows; writes go through the API with the service role'),
   -- social graph, readable by design
   ('follows',            'public_read', 'follower_id', null, 'follower lists are public'),
   ('song_likes',         'public_read', 'user_id',     null, 'like counts and lists are public'),
@@ -87,6 +89,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
+  ('push_subscriptions',    'service', 'user_id', null, 'endpoints and keys are credentials: API routes with the service role only'),
   ('spend_ledger',          'service', null,      null, null),
   ('stripe_webhook_events', 'service', null,      null, null),
   ('user_spend',            'service', 'user_id', null, null),
@@ -106,6 +109,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
 create table rls_audit.seed_override (name text, col text, expr text, primary key (name, col));
 insert into rls_audit.seed_override (name, col, expr) values
   ('collections',            'public_id',    '''0123456789'''),
+  ('notifications',          'type',         '''like'''),
+  ('push_subscriptions',     'endpoint',     '''https://push.example/audit'''),
   ('agent_runs',             'agent_key',    '''free'''),
   ('agent_runs',             'status',       '''pending'''),
   ('config_versions',        'status',       '''draft'''),
