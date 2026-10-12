@@ -5,74 +5,49 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { serverI18n } from "@/lib/i18n/server";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
 export const metadata: Metadata = {
   title: "Trust & safety -- neo-fm",
   description:
     "How neo-fm keeps AI music honest: original lyrics, no voice cloning, labelled AI audio, fail-closed safety checks and clear privacy limits.",
 };
 
-const COMMITMENTS: readonly { title: string; body: React.ReactNode }[] = [
-  {
-    title: "Original lyrics, never copied",
-    body: "Our lyric engine writes new words for every song. Requests to reproduce an existing song's lyrics are declined before any generation happens.",
-  },
-  {
-    title: "No voice cloning, no imitation of real artists",
-    body: "You can describe a sound: instruments, raga, mood, tempo. You can't ask for a real artist's voice or name them as the target. Those requests are blocked, and so is any attempt to work around the rule.",
-  },
-  {
-    title: "Honest labelling",
-    body: (
-      <>
-        Everything made here is AI-generated and we say so. According to
-        Google&apos;s documentation, audio from its Lyria models carries an
-        inaudible SynthID watermark that helps platforms identify
-        AI-generated music. Please keep the AI-generated label when you
-        share a track.
-      </>
-    ),
-  },
-  {
-    title: "Safety checks that fail closed",
-    body: "Your brief is checked by fixed rules and by an AI reviewer before any song is made, and the lyrics are checked again just before audio is rendered. If a check can't run, we don't generate. We block sexual content involving minors, hate and harassment, encouragement of self-harm, and violent extremism.",
-  },
-  {
-    title: "Spending limits you can trust",
-    body: "Each plan has monthly song limits, and audio rendering sits behind a global spend cap enforced in the database, so a bug or a bad actor can't run up costs that end up in your price.",
-  },
-  {
-    title: "Your data",
-    body: "Your briefs and songs are stored to run your account and are visible only to you unless you publish a track. We don't sell your data. You can export your data, delete a song, or delete your whole account from Settings.",
-  },
+const COMMITMENTS: readonly { title: UiKey; body: UiKey }[] = [
+  { title: "trust.c1.title", body: "trust.c1.body" },
+  { title: "trust.c2.title", body: "trust.c2.body" },
+  { title: "trust.c3.title", body: "trust.c3.body" },
+  { title: "trust.c4.title", body: "trust.c4.body" },
+  { title: "trust.c5.title", body: "trust.c5.body" },
+  { title: "trust.c6.title", body: "trust.c6.body" },
 ];
 
 export default function TrustPage() {
+  const { t } = serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Trust &amp; safety</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("trust.title")}</h1>
       <p className="mt-3 text-foreground/70">
-        neo-fm, a Technektar product, is built for Indian languages and for people
-        who love music. These are the rules we hold ourselves to.
+        {t("trust.intro")}
       </p>
       <ul className="mt-10 space-y-8">
         {COMMITMENTS.map((c) => (
           <li key={c.title}>
-            <h2 className="text-lg font-medium">{c.title}</h2>
-            <p className="mt-1 text-foreground/70">{c.body}</p>
+            <h2 className="text-lg font-medium">{t(c.title)}</h2>
+            <p className="mt-1 text-foreground/70">{t(c.body)}</p>
           </li>
         ))}
       </ul>
       <section className="mt-12 rounded-lg border border-muted/30 p-5" aria-labelledby="grievance-heading">
-        <h2 id="grievance-heading" className="text-lg font-medium">Reports, takedowns and grievances</h2>
+        <h2 id="grievance-heading" className="text-lg font-medium">{t("trust.g.title")}</h2>
         <p className="mt-2 text-sm text-foreground/70">
-          Every public song has a <strong>Report this song</strong> link. You can also write to our Grievance Officer at{" "}
-          <a className="underline" href="mailto:grievance@neo-fm.com">grievance@neo-fm.com</a> (Technektar). We acknowledge complaints within 24 hours,
-          remove content that is unlawful, impersonates a real person, is sexual content involving minors, or infringes copyright within 36 hours of a valid
-          notice, and resolve other grievances within 15 days.
+          {t("trust.g.p1a")} <strong>{t("pub.report.open")}</strong> {t("trust.g.p1b")}{" "}
+          <a className="underline" href="mailto:grievance@neo-fm.com">grievance@neo-fm.com</a> {t("trust.g.p1c")}
         </p>
         <p className="mt-2 text-sm text-foreground/60">
-          Not a report?{" "}
-          <Link href="/feedback" className="underline">Send us feedback</Link>.
+          {t("trust.g.notReport")}{" "}
+          <Link href="/feedback" className="underline">{t("trust.g.feedback")}</Link>.
         </p>
       </section>
     </main>

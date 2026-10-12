@@ -16,6 +16,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 interface ShareButtonProps {
   songId: string;
   initialVisibility: "public" | "unlisted" | "private";
@@ -36,6 +38,7 @@ export function ShareButton({
   initialPublicId,
   canShare,
 }: ShareButtonProps) {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
   const [publicId, setPublicId] = useState<string | null>(initialPublicId);
@@ -71,7 +74,7 @@ export function ShareButton({
         error?: string;
       };
       if (!res.ok) {
-        setError(payload.error ?? `request failed (${res.status})`);
+        setError(payload.error ?? t("share.requestFailed", { status: res.status }));
         return;
       }
       setVisibility(payload.visibility);
@@ -99,9 +102,9 @@ export function ShareButton({
     return (
       <span
         className="rounded-md border border-muted/20 bg-muted/5 px-3 py-1.5 text-[11px] uppercase tracking-widest text-foreground/40"
-        title="Share is available once the song has finished rendering."
+        title={t("share.unavailable")}
       >
-        Share
+        {t("share.share")}
       </span>
     );
   }
@@ -117,7 +120,7 @@ export function ShareButton({
         onClick={() => setOpen(true)}
         className="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-[11px] font-medium uppercase tracking-widest text-accent hover:bg-accent/15"
       >
-        {visibility === "private" ? "Share" : "Manage share"}
+        {visibility === "private" ? t("share.share") : t("share.manage")}
       </button>
       {open ? (
         <div
@@ -130,13 +133,13 @@ export function ShareButton({
           >
             <header className="flex items-center justify-between">
               <h2 className="text-sm font-medium tracking-tight">
-                Share this song
+                {t("share.title")}
               </h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="text-foreground/40 hover:text-foreground/80"
-                aria-label="Close"
+                aria-label={t("share.close")}
               >
                 ×
               </button>
@@ -146,24 +149,24 @@ export function ShareButton({
               <VisibilityRow
                 value="public"
                 current={visibility}
-                title="Public"
-                description="Anyone with the link can play. Will show on /discover."
+                title={t("share.public")}
+                description={t("share.publicDesc")}
                 onClick={() => setTo("public")}
                 disabled={submitting}
               />
               <VisibilityRow
                 value="unlisted"
                 current={visibility}
-                title="Unlisted"
-                description="Anyone with the link can play. Not listed publicly."
+                title={t("share.unlisted")}
+                description={t("share.unlistedDesc")}
                 onClick={() => setTo("unlisted")}
                 disabled={submitting}
               />
               <VisibilityRow
                 value="private"
                 current={visibility}
-                title="Private"
-                description="Only you can see this song. Shared links stop working."
+                title={t("share.private")}
+                description={t("share.privateDesc")}
                 onClick={() => setTo("private")}
                 disabled={submitting}
               />
@@ -179,7 +182,7 @@ export function ShareButton({
               <>
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase tracking-widest text-foreground/40">
-                    Public link
+                    {t("share.publicLink")}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -194,17 +197,17 @@ export function ShareButton({
                       className="rounded-md border border-muted/30 px-3 py-2 text-xs hover:bg-muted/10"
                     >
                       {copyState === "copied"
-                        ? "Copied"
+                        ? t("share.copied")
                         : copyState === "failed"
-                          ? "Failed"
-                          : "Copy"}
+                          ? t("share.failed")
+                          : t("share.copy")}
                     </button>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] uppercase tracking-widest text-foreground/40">
-                    Embed (iframe)
+                    {t("share.embed")}
                   </label>
                   <textarea
                     readOnly
@@ -218,8 +221,8 @@ export function ShareButton({
             ) : (
               <p className="text-xs text-foreground/50">
                 {visibility === "private"
-                  ? "This song is private. Set it to Unlisted or Public to share."
-                  : "Publishing…"}
+                  ? t("share.privateNote")
+                  : t("share.publishing")}
               </p>
             )}
 
@@ -230,7 +233,7 @@ export function ShareButton({
                 onClick={() => setOpen(false)}
                 className="rounded-md border border-accent/40 bg-accent/10 px-4 py-1.5 text-xs font-medium uppercase tracking-widest text-accent hover:bg-accent/15"
               >
-                Done
+                {t("share.done")}
               </button>
             </div>
           </div>

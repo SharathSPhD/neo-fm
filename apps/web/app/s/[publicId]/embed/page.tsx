@@ -15,6 +15,8 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 
+import { serverI18n } from "@/lib/i18n/server";
+
 import { PublicSongAudio } from "../public-song-audio";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +81,7 @@ export default async function EmbedPage({
     .maybeSingle<EmbedRow>();
 
   if (!data) notFound();
+  const { t } = serverI18n();
   const doc = data.song_documents?.document_json;
 
   const tracks = (data.tracks ?? [])
@@ -103,10 +106,10 @@ export default async function EmbedPage({
           {data.song_documents?.title?.trim()?.length
             ? data.song_documents.title
             : doc
-              ? prettyStyle(doc.style_family)
-              : "Song"}
+              ? prettyStyle(doc.style_family, t)
+              : t("song.song")}
           <span className="ml-2 text-xs text-foreground/50">
-            {doc ? prettyLanguage(doc.language) : ""}
+            {doc ? prettyLanguage(doc.language, t) : ""}
           </span>
         </span>
         <Link
@@ -127,24 +130,25 @@ export default async function EmbedPage({
       ) : (
         <p className="text-xs text-amber-200">
           {data.status === "queued" || data.status === "processing"
-            ? "Rendering now."
-            : "Audio preview not available."}
+            ? t("pub.embed.rendering")
+            : t("pub.embed.noPreview")}
         </p>
       )}
     </main>
   );
 }
 
-function prettyStyle(s: string): string {
-  if (s === "western") return "Western";
-  if (s === "carnatic") return "Carnatic";
-  if (s === "hindustani") return "Hindustani";
-  if (s === "kannada-folk") return "Kannada folk";
+type TFn = ReturnType<typeof serverI18n>["t"];
+function prettyStyle(s: string, t: TFn): string {
+  if (s === "western") return t("pub.style.western");
+  if (s === "carnatic") return t("pub.style.carnatic");
+  if (s === "hindustani") return t("pub.style.hindustani");
+  if (s === "kannada-folk") return t("pub.style.kannadaFolk");
   return s;
 }
-function prettyLanguage(l: string): string {
-  if (l === "en") return "English";
-  if (l === "hi") return "Hindi";
-  if (l === "kn") return "Kannada";
+function prettyLanguage(l: string, t: TFn): string {
+  if (l === "en") return t("pub.lang.en");
+  if (l === "hi") return t("pub.lang.hi");
+  if (l === "kn") return t("pub.lang.kn");
   return l;
 }

@@ -21,12 +21,15 @@
  */
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 interface Props {
   tier: "creator" | "pro";
   label: string;
 }
 
 export function UpgradeButton({ tier, label }: Props) {
+  const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -53,13 +56,13 @@ export function UpgradeButton({ tier, label }: Props) {
           setError(
             body.details ??
               body.error ??
-              "Couldn't start checkout. Try again in a minute.",
+              t("pub.upgrade.failed"),
           );
           return;
         }
         const body = (await res.json()) as { url?: string };
         if (!body.url) {
-          setError("Checkout returned no URL. Try again.");
+          setError(t("pub.upgrade.noUrl"));
           return;
         }
         window.location.assign(body.url);
@@ -77,7 +80,7 @@ export function UpgradeButton({ tier, label }: Props) {
         disabled={pending}
         className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60"
       >
-        {pending ? "Opening checkout…" : label}
+        {pending ? t("pub.upgrade.opening") : label}
       </button>
       {error ? (
         <p role="alert" className="text-xs text-red-300">

@@ -11,6 +11,8 @@
  */
 import { useEffect, useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 const STORAGE_KEY = "neo-fm:theme";
 
 function readInitial(): "dark" | "light" {
@@ -21,6 +23,7 @@ function readInitial(): "dark" | "light" {
 }
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
+  const { t } = useUiLang();
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [mounted, setMounted] = useState(false);
 
@@ -45,7 +48,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       type="button"
       onClick={flip}
       aria-pressed={theme === "light"}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+      aria-label={theme === "dark" ? t("misc.theme.toLight") : t("misc.theme.toDark")}
       className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-muted/40 text-foreground/70 hover:text-foreground hover:border-foreground/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${className}`}
     >
       {/* render both, hide the inactive — avoids hydration drift */}

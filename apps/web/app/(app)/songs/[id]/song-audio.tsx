@@ -108,7 +108,7 @@ export function SongAudio({
           step={1}
           value={Math.min(Math.floor(time), Math.max(1, Math.floor(duration)))}
           onChange={(e) => p.seekTo(Number(e.target.value))}
-          aria-label="Seek"
+          aria-label={t("songact.seek")}
           className="h-11 min-w-0 flex-1 accent-[hsl(var(--accent))]"
         />
         <span className="w-10 font-mono text-xs tabular-nums text-foreground/70">
