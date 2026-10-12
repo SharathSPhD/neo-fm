@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 
+import type { FunnelSummary } from "../../../lib/ops/funnel";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
 
 const KEY = "neo-fm-ops-secret";
@@ -15,6 +16,7 @@ export default function HealthPage() {
   const [secret, setSecret] = useState("");
   const [hours, setHours] = useState(24);
   const [data, setData] = useState<(HealthSummary & { truncated?: boolean }) | null>(null);
+  const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async (s: string, h: number) => {
@@ -23,6 +25,9 @@ export default function HealthPage() {
       const r = await fetch(`/api/admin/health-summary?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       if (!r.ok) throw new Error(r.status === 401 ? "Secret rejected" : `Request failed (${r.status})`);
       setData(await r.json());
+      // Funnel is secondary: a missing migration should not hide the health numbers.
+      const f = await fetch(`/api/admin/funnel?days=${Math.max(1, Math.round(h / 24))}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setFunnel(f.ok ? await f.json() : null);
     } catch (e) {
       setData(null);
       setErr((e as Error).message);
@@ -89,12 +94,25 @@ export default function HealthPage() {
           <Table title="Failure reasons" head={["Reason", "Jobs"]} rows={Object.entries(data.failures_by_code).map(([k, v]) => [k, String(v)])} />
           <Table title="Diction match" head={["Language", "Avg match %", "Audited", "QA errors"]}
             rows={Object.entries(data.diction_by_language).map(([l, d]) => [l, d.avg_match_pct === null ? "-" : String(d.avg_match_pct), String(d.n), String(d.errors)])} />
+          {funnel && (
+            <Table title={`Funnel (${funnel.window_days}d)`} head={["Step", "Count", "Conversion"]} rows={[
+              ["Landing views", String(funnel.views.landing_view), ""],
+              ["Sign-up page views", String(funnel.views.signup_view), pct(funnel.conversion.landing_to_signup_view)],
+              ["Sign-ups", String(funnel.signups), pct(funnel.conversion.signup_view_to_signup)],
+              ["Made a first song", String(funnel.first_song_users), pct(funnel.conversion.signup_to_first_song)],
+              ["Songs shared", String(funnel.songs_shared), ""],
+              ["Shared-song views", String(funnel.views.share_view), ""],
+              ["Pricing views", String(funnel.views.pricing_view), ""],
+            ]} />
+          )}
           <p className="text-xs opacity-60">Generated {data.generated_at}</p>
         </>
       )}
     </main>
   );
 }
+
+const pct = (r: number | null) => (r === null ? "-" : `${Math.round(r * 100)}%`);
 
 function Stat({ label, value }: { label: string; value: string }) {
   return <div className="rounded border p-3"><div className="text-xs uppercase opacity-70">{label}</div><div className="text-lg">{value}</div></div>;
