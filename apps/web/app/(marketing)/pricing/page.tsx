@@ -16,6 +16,7 @@
 import type { Metadata } from "next";
 
 import { isBillingEnabled } from "@/lib/billing/config";
+import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { UpgradeButton } from "./upgrade-button";
@@ -179,6 +180,7 @@ export default async function PricingPage() {
           </article>
         ))}
       </section>
+      <QualityEvidenceSummary />
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
         Prices in INR incl. GST ($6.99 / $17.99 outside India). Longer songs use more of your monthly render budget.
         All songs are AI-generated and labelled as such. <a href="/help" className="underline">FAQ</a>.
