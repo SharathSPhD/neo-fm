@@ -4,12 +4,13 @@
  *   SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... npx tsx scripts/quality/line-timings-backfill.mts            # dry run: counts + sample
  *   ... GEMINI_API_KEY=... npx tsx scripts/quality/line-timings-backfill.mts --compute --limit 5 --out timings.json  # computes payloads locally
  *
- * Candidates: agent_runs rows with audio_path and lyrics. Before migration 0076 exists the `line_timings` filter is skipped
+ * Candidates: agent_runs rows with audio_path and lyrics. Before the line_timings migration exists the `line_timings` filter is skipped
  * (the column is selected only with --has-column). Untested against prod from this thread (no service credentials here).
  */
 import { writeFileSync } from "node:fs";
 
 import { alignLines, toPayload, transcribeTimed } from "../../apps/web/lib/diction/timestamps";
+import { candidateQuery } from "./backfill-query";
 import { singable } from "./diction-sweep";
 
 const arg = (k: string) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
@@ -20,8 +21,7 @@ const h = { apikey: key, authorization: `Bearer ${key}` };
 const limit = Number(arg("limit") ?? "20");
 const hasCol = flag("has-column");
 
-const cols = `job_id,audio_path,lyrics${hasCol ? ",line_timings" : ""}`;
-const q = `${url}/rest/v1/agent_runs?select=${cols}&audio_path=not.is.null&lyrics=not.is.null${hasCol ? "&line_timings=is.null" : ""}&order=created_at.desc&limit=${limit}`;
+const q = candidateQuery(url, limit, hasCol);
 const rows = (await (await fetch(q, { headers: h })).json()) as { job_id: string; audio_path: string; lyrics: string }[];
 console.log(`${rows.length} candidate songs (limit ${limit}); ~${rows.length} Gemini audio calls to compute.`);
 if (!flag("compute")) { console.log(rows.slice(0, 5).map((r) => `${r.job_id} ${r.audio_path}`).join("\n")); process.exit(0); }
