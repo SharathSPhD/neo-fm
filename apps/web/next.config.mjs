@@ -11,6 +11,7 @@ const nextConfig = {
   // the serverless bundle ships them.
   outputFileTracingIncludes: {
     "/s/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
+    "/c/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
   },
   transpilePackages: ["@neo-fm/song-doc"],
 };
