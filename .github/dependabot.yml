@@ -1,0 +1,55 @@
+# Weekly, grouped dependency updates. Security advisories still open their own PRs immediately.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Major bumps are planned work (Next 15 migration is tracked in an issue).
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: pip
+    directories:
+      - /services/embedder
+      - /services/cover-art-synth
+      - /services/dgx-worker
+      - /services/lyric-gen
+      - /services/music-inference
+      - /services/pwm-api
+      - /services/reranker
+      - /services/stems-synth
+      - /services/vocal-synth
+      - /packages/song-doc/python
+    schedule: { interval: weekly, day: monday }
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directories:
+      - /services/embedder
+      - /services/cover-art-synth
+      - /services/dgx-worker
+      - /services/lyric-gen
+      - /services/music-inference
+      - /services/pwm-api
+      - /services/vocal-synth
+    schedule: { interval: weekly, day: monday }
+    groups:
+      docker-base-images:
+        patterns: ["*"]

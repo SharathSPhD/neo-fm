@@ -110,6 +110,10 @@ export function pickRule(
   if (/^\/ui-review\/[^/]+(\/open)?\/?$/.test(pathname)) {
     return { bucket: "uireview:page", limit: 30 };
   }
+  // Browser CSP violation reports: anonymous and unbounded in a hostile page, so cap hard.
+  if (/^\/api\/csp-report\/?$/.test(pathname)) {
+    return { bucket: "anon:csp", limit: 30 };
+  }
   // Public abuse reports are anonymous writes into a moderation queue.
   if (/^\/api\/report\/?$/.test(pathname)) {
     return { bucket: "anon:report", limit: 5 };
