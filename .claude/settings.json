@@ -27,7 +27,14 @@
       "mcp__Supabase",
       "mcp__Vercel",
       "mcp__github",
-      "mcp__claude-code-remote"
+      "mcp__claude-code-remote",
+      "Bash",
+      "Edit",
+      "Write",
+      "WebFetch",
+      "WebSearch",
+      "mcp__Hugging_Face",
+      "mcp__Claude_Docs"
     ]
   }
 }
