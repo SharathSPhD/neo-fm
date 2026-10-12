@@ -16,11 +16,14 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { serverI18n } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/ui-strings";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
+import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -148,12 +151,13 @@ export async function generateMetadata({
   if (!data || !data.song_documents) {
     return { title: "neo-fm" };
   }
+  const enT: TFn = (k, v) => translate("en", k, v);
   const doc = data.song_documents.document_json;
   const stored = data.song_documents.title?.trim();
   const title =
     stored && stored.length > 0
       ? stored
-      : `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
+      : `${prettyStyle(doc.style_family, enT)} song in ${prettyLanguage(doc.language, enT)}`;
   const description = doc.raga
     ? `Composed in raga ${doc.raga.name} (${doc.raga.system}). Generated on neo-fm.`
     : `${doc.target_duration_seconds}s composition generated on neo-fm.`;
@@ -202,14 +206,15 @@ export default async function PublicSongPage({
 
   const data = await loadPublicSong(idCheck.data);
   if (!data) notFound();
+  const { t } = serverI18n();
   const doc = data.song_documents?.document_json;
   const storedTitle = data.song_documents?.title?.trim();
   const displayTitle =
     storedTitle && storedTitle.length > 0
       ? storedTitle
       : doc
-        ? prettyStyle(doc.style_family)
-        : "Song";
+        ? prettyStyle(doc.style_family, t)
+        : t("song.song");
 
   const dedication = await loadDedication(idCheck.data);
 
@@ -289,7 +294,7 @@ export default async function PublicSongPage({
           publicId: data.public_id,
           name: displayTitle,
           language: doc.language,
-          genre: prettyStyle(doc.style_family),
+          genre: styleLabel(doc.style_family),
           durationSeconds: latestTrack?.duration_seconds ?? doc.target_duration_seconds,
           datePublished: data.published_at,
           lyrics: doc.sections
@@ -318,11 +323,11 @@ export default async function PublicSongPage({
         </h1>
         <p className="text-sm text-foreground/60">
           {doc
-            ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
+            ? `${prettyStyle(doc.style_family, t)} · ${prettyLanguage(doc.language, t)} · ${doc.target_duration_seconds}s`
             : ""}
           {data.published_visibility === "unlisted" ? (
             <span className="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">
-              unlisted
+              {t("pub.unlisted")}
             </span>
           ) : null}
         </p>
@@ -330,11 +335,11 @@ export default async function PublicSongPage({
 
       {dedication ? (
         <section
-          aria-label="Dedication"
+          aria-label={t("ded.pageLabel")}
           className="flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent/5 p-5"
         >
           <p className="text-[11px] uppercase tracking-widest text-accent/80">
-            A song dedicated to
+            {t("ded.pageEyebrow")}
           </p>
           <p className="text-2xl font-medium tracking-tight">{dedication.to}</p>
           {dedication.message ? (
@@ -414,17 +419,17 @@ export default async function PublicSongPage({
         // Branch by status so the message is honest.
         <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
           {data.status === "queued" || data.status === "processing"
-            ? "Rendering now. Refresh in a moment."
-            : "Audio preview not available for this song."}
+            ? t("pub.rendering")
+            : t("pub.noPreview")}
         </p>
       )}
 
-      {doc ? <SongMetadata doc={doc} /> : null}
+      {doc ? <SongMetadata doc={doc} t={t} /> : null}
 
       {doc ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-            Sections
+            {t("song.sections")}
           </h2>
           <ol className="flex flex-col gap-3">
             {doc.sections.map((s, idx) => (
@@ -472,10 +477,10 @@ export default async function PublicSongPage({
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
-        <span>AI-generated music and lyrics, made on neo-fm (a Technektar product) · <Link href="/trust" className="underline hover:text-foreground/70">how we keep it safe</Link></span>
+        <span>{t("pub.footer.ai")} · <Link href="/trust" className="underline hover:text-foreground/70">{t("pub.footer.safe")}</Link></span>
         <ReportButton publicId={params.publicId} />
         <Link href="/" className="hover:text-foreground/70">
-          Make your own →
+          {t("pub.makeYourOwn")}
         </Link>
       </footer>
           <ProCta />
@@ -483,38 +488,40 @@ export default async function PublicSongPage({
   );
 }
 
-function SongMetadata({ doc }: { doc: SongDocumentView }) {
+type TFn = ReturnType<typeof serverI18n>["t"];
+
+function SongMetadata({ doc, t }: { doc: SongDocumentView; t: TFn }) {
   const rows: { label: string; value: string }[] = [];
-  if (doc.tempo_bpm) rows.push({ label: "Tempo", value: `${doc.tempo_bpm} BPM` });
+  if (doc.tempo_bpm) rows.push({ label: t("pub.meta.tempo"), value: `${doc.tempo_bpm} BPM` });
   if (doc.time_signature)
-    rows.push({ label: "Time signature", value: doc.time_signature });
-  if (doc.tala) rows.push({ label: "Tala", value: doc.tala });
+    rows.push({ label: t("pub.meta.timeSig"), value: doc.time_signature });
+  if (doc.tala) rows.push({ label: t("pub.meta.tala"), value: doc.tala });
   if (doc.raga) {
     rows.push({
-      label: "Raga",
+      label: t("pub.meta.raga"),
       value: `${doc.raga.name} (${doc.raga.system})`,
     });
     if (doc.raga.arohana?.length)
-      rows.push({ label: "Arohana", value: doc.raga.arohana.join(" ") });
+      rows.push({ label: t("pub.meta.arohana"), value: doc.raga.arohana.join(" ") });
     if (doc.raga.avarohana?.length)
-      rows.push({ label: "Avarohana", value: doc.raga.avarohana.join(" ") });
+      rows.push({ label: t("pub.meta.avarohana"), value: doc.raga.avarohana.join(" ") });
   }
   if (doc.orchestration) {
     if (doc.orchestration.lead_vocal)
-      rows.push({ label: "Lead vocal", value: doc.orchestration.lead_vocal });
+      rows.push({ label: t("pub.meta.leadVocal"), value: doc.orchestration.lead_vocal });
     if (doc.orchestration.instruments?.length)
       rows.push({
-        label: "Instruments",
+        label: t("pub.meta.instruments"),
         value: doc.orchestration.instruments.join(", "),
       });
     if (doc.orchestration.texture)
-      rows.push({ label: "Texture", value: doc.orchestration.texture });
+      rows.push({ label: t("pub.meta.texture"), value: doc.orchestration.texture });
   }
   if (rows.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Composition
+        {t("song.composition")}
       </h2>
       <dl className="grid gap-1 sm:grid-cols-2">
         {rows.map((r) => (
@@ -533,18 +540,18 @@ function SongMetadata({ doc }: { doc: SongDocumentView }) {
   );
 }
 
-function prettyStyle(s: string): string {
-  if (s === "western") return "Western";
-  if (s === "carnatic") return "Carnatic";
-  if (s === "hindustani") return "Hindustani";
-  if (s === "kannada-folk") return "Kannada folk";
+function prettyStyle(s: string, t: TFn): string {
+  if (s === "western") return t("pub.style.western");
+  if (s === "carnatic") return t("pub.style.carnatic");
+  if (s === "hindustani") return t("pub.style.hindustani");
+  if (s === "kannada-folk") return t("pub.style.kannadaFolk");
   return s;
 }
 
-function prettyLanguage(l: string): string {
-  if (l === "en") return "English";
-  if (l === "hi") return "Hindi";
-  if (l === "kn") return "Kannada";
+function prettyLanguage(l: string, t: TFn): string {
+  if (l === "en") return t("pub.lang.en");
+  if (l === "hi") return t("pub.lang.hi");
+  if (l === "kn") return t("pub.lang.kn");
   return l;
 }
 
