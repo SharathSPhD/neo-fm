@@ -22,4 +22,7 @@ create or replace view public.public_profiles
 comment on view public.public_profiles is
   'Public slice of public.users (id, handle, created_at). Runs as owner on purpose; the users table itself is own-row only.';
 
+-- Supabase default grants include INSERT/UPDATE/DELETE on new views. An owner-run, auto-updatable view with write
+-- grants would let anon modify public.users and bypass RLS, so strip everything before granting SELECT only.
+revoke all on public.public_profiles from anon, authenticated;
 grant select on public.public_profiles to anon, authenticated;
