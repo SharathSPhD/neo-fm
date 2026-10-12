@@ -7,6 +7,7 @@ import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
+import { polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
@@ -90,10 +91,20 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           tasteCard: tasteCard || undefined,
           engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
         },
-        music: async (a) => {
+        music: async (a0) => {
+          let a = a0;
           // Last gate before spend: the agent's own output is untrusted too.
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
+          // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
+          if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
+            try {
+              a = { ...a, lyrics: await polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }) };
+              const v2 = await screenRequest(a.lyrics, "lyrics");
+              if (!v2.allowed) throw new SafetyRefusal(v2.reason);
+              await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
+            } catch (e) { if (e instanceof SafetyRefusal) throw e; /* polish is best-effort; sing the engine's own lyrics */ }
+          }
           return generateMusic({ ...a, stylePrompt: [a.stylePrompt, dictionHints(doc.language)].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
         },
         saveAudio: async (jobId, n, r) => {
@@ -146,7 +157,8 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
       const f = files.find((x) => x.filename.endsWith(name));
       return f ? await (await client.beta.files.download(f.id)).text() : null;
     };
-    const lyrics = await read("lyrics.md");
+    const { data: pl } = await db.from("agent_runs").select("polished_lyrics").eq("job_id", jobId).limit(1);
+    const lyrics = ((pl ?? [])[0] as { polished_lyrics: string | null } | undefined)?.polished_lyrics || (await read("lyrics.md"));
     const docText = await read("song_document.json");
     const auditText = await read("cascade_audit.json");
     let cascade: Record<string, unknown> | null = null;
