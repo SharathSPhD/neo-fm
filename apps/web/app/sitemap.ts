@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { articlePath } from "@/lib/seo/language-articles";
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
 import { PUBLIC_PATHS, siteUrl } from "@/lib/seo/site";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -34,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
       alternates: { languages },
     });
+    pages.push({ url: `${base}${articlePath(l)}`, changeFrequency: "monthly", priority: 0.6 });
   }
 
   // Only `public`, non-dedicated songs are listed; `unlisted` and dedicated ones are noindex and stay out.

@@ -1,3 +1,6 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import sitemap from "@/app/sitemap";
@@ -120,6 +123,67 @@ describe("sitemap", () => {
     });
     const home = entries.find((e) => e.url === "https://neo.test");
     expect(home?.alternates?.languages?.kn).toBe("https://neo.test/ai-songs/kannada");
-    expect(entries.filter((e) => e.url.includes("/ai-songs/"))).toHaveLength(5);
+    expect(entries.filter((e) => /\/ai-songs\/[a-z]+$/.test(e.url))).toHaveLength(5);
   });
+});
+
+import { isNotFoundError } from "next/dist/client/components/not-found";
+
+import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
+import { articleLd } from "@/lib/seo/jsonld";
+
+describe("unknown language slugs", () => {
+  it("404 from the page, its metadata and the article (no soft 404)", async () => {
+    const lang = await import("@/app/ai-songs/[lang]/page");
+    const how = await import("@/app/ai-songs/[lang]/how-it-works/page");
+    const params = { lang: "klingon" };
+    expect(() => lang.generateMetadata({ params })).toThrow();
+    await expect(lang.default({ params })).rejects.toSatisfy(isNotFoundError);
+    expect(() => how.generateMetadata({ params })).toThrow();
+    expect(() => how.default({ params })).toThrow();
+    expect(lang.dynamicParams).toBe(false);
+    expect(how.dynamicParams).toBe(false);
+    expect(lang.generateStaticParams().map((p) => p.lang).sort()).toEqual(["bengali", "hindi", "kannada", "tamil", "telugu"]);
+  });
+  it("lives outside the (marketing) group, whose loading boundary commits a 200 before notFound() runs", () => {
+    expect(existsSync(join(process.cwd(), "app/ai-songs/[lang]/page.tsx"))).toBe(true);
+    expect(existsSync(join(process.cwd(), "app/(marketing)/ai-songs"))).toBe(false);
+  });
+});
+
+describe("explainer articles", () => {
+  it("exist for every language page, in its own script, and say the audio is AI-generated", () => {
+    for (const p of LANGUAGE_PAGES) {
+      const a = LANGUAGE_ARTICLES[p.code];
+      expect(a.sections).toHaveLength(5);
+      expect(a.h1).toMatch(/neo-fm/);
+      expect(a.sections.map((s) => s.heading + s.body).join(" ")).toMatch(/Lyria/);
+      expect(a.honest).toMatch(/AI/);
+      expect(articlePath(p)).toBe(`/ai-songs/${p.slug}/how-it-works`);
+    }
+  });
+  it("builds Article JSON-LD without invented dates", () => {
+    const ld = articleLd({ base: "https://x.test", path: "/ai-songs/tamil/how-it-works", headline: "h", description: "d", language: "ta", sections: ["a", "b"] });
+    expect(ld["@type"]).toBe("Article");
+    expect(ld).not.toHaveProperty("datePublished");
+    expect(ld.articleSection).toEqual(["a", "b"]);
+  });
+  it("are in the sitemap", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://neo.test");
+    const urls = (await sitemap()).map((e) => e.url);
+    for (const p of LANGUAGE_PAGES) expect(urls).toContain(`https://neo.test${articlePath(p)}`);
+    vi.unstubAllEnvs();
+  });
+});
+
+describe("language OG image", () => {
+  it("renders a PNG for each language and a generic card for unknown slugs", async () => {
+    const og = await import("@/app/ai-songs/[lang]/opengraph-image");
+    for (const slug of [...LANGUAGE_PAGES.map((p) => p.slug), "klingon"]) {
+      const res = await og.default({ params: { lang: slug } });
+      const png = Buffer.from(await res.arrayBuffer());
+      expect(png.subarray(1, 4).toString()).toBe("PNG");
+      expect(png.length).toBeGreaterThan(5_000);
+    }
+  }, 30_000);
 });

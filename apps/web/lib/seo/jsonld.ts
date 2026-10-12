@@ -100,3 +100,28 @@ export function musicPlaylistLd(args: {
     publisher: PUBLISHER,
   };
 }
+
+/** Explainer article. Headings go in as `articleSection`; no dates are claimed because the copy is not versioned. */
+export function articleLd(args: {
+  base: string;
+  path: string;
+  headline: string;
+  description: string;
+  language: string;
+  sections: readonly string[];
+}) {
+  const url = `${args.base}${args.path}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${url}#article`,
+    url,
+    mainEntityOfPage: url,
+    headline: args.headline,
+    description: args.description,
+    inLanguage: args.language,
+    articleSection: args.sections,
+    author: PUBLISHER,
+    publisher: PUBLISHER,
+  };
+}

@@ -16,6 +16,7 @@ import {
   languagePageBySlug,
   languagePagePath,
 } from "@/lib/seo/language-pages";
+import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
 import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 import { loadTopSongs } from "@/lib/seo/top-songs";
@@ -109,6 +110,12 @@ export default async function LanguageLanding({ params }: { params: { lang: stri
           </ul>
         )}
       </section>
+
+      <p>
+        <Link href={articlePath(page)} className="text-accent underline">
+          {LANGUAGE_ARTICLES[page.code].readMore} →
+        </Link>
+      </p>
 
       <nav aria-label="Languages" className="flex flex-wrap gap-x-4 gap-y-2 border-t border-border/40 pt-6 text-sm">
         {LANGUAGE_PAGES.map((p) => (
