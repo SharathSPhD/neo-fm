@@ -34,4 +34,4 @@ Closed: real jnana/vimarsa numerics, commit policy, audit, budget gate, best-of-
 Open: (1) the embedder is a lexical hash n-gram stand-in -> cross-lingual coherence/apohana/aspect cosines are
 near zero for Indic text (observed: aspect_count 0, delta_F 0 on a Kannada test), so vimarsa rarely fires.
 A multilingual embedding model is the one real compute need (CPU, ~100 MB, stateless). (2) Hopfield store
-persistence (Supabase pgvector) and consolidation. (3) aut/interpret/audit/cascade-debug commands.
+persistence (Supabase pgvector) and consolidation. (3) `audit` and `interpret` are ported as offline, read-only commands (`pce-tools/pce_tools.py`, 2026-10-12); `aut` and `cascade-debug` are not (no design in this repo; see PR notes).
