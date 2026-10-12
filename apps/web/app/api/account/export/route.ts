@@ -11,6 +11,7 @@
 import { NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/supabase/auth";
+import { serviceClient } from "@/lib/agent/adapters";
 
 export const dynamic = "force-dynamic";
 
@@ -47,11 +48,27 @@ export async function GET() {
       .order("created_at", { ascending: false }),
   ]);
 
+  // v2 personal data (service role, strictly filtered to this user): consent records, taste profile, feedback signals,
+  // lyrics as sung, billing mirror. Internal telemetry carries no personal content and is omitted.
+  const admin = serviceClient(); // untyped client: v2 tables are not in the generated Database types
+  const [consents, taste, feedback, billing, runs] = await Promise.all([
+    admin.from("consents").select("*").eq("user_id", user.id),
+    admin.from("taste_profiles").select("*").eq("user_id", user.id).maybeSingle(),
+    admin.from("feedback_events").select("*").eq("user_id", user.id),
+    admin.from("user_billing").select("tier, status, current_period_end, created_at").eq("user_id", user.id).maybeSingle(),
+    admin.from("agent_runs").select("job_id, lyrics, polished_lyrics, diction_qa, created_at").in("job_id", ((jobs ?? []) as { id: string }[]).map((j) => j.id)),
+  ]);
+
   const payload = {
-    export_version: 1,
+    export_version: 2,
     exported_at: new Date().toISOString(),
     user: profile ?? { id: user.id, email: user.email ?? null },
     songs: jobs ?? [],
+    consents: consents.data ?? [],
+    taste_profile: taste.data ?? null,
+    feedback_events: feedback.data ?? [],
+    billing: billing.data ?? null,
+    lyrics_and_pronunciation_checks: runs.data ?? [],
   };
 
   const body = JSON.stringify(payload, null, 2);

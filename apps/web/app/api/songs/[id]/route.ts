@@ -10,9 +10,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { SongIdSchema } from "../../../../lib/api/song-schemas";
+import { waitUntil } from "@vercel/functions";
+
+import { processJobs } from "../../../../lib/agent/process";
 import { requireUser } from "../../../../lib/supabase/auth";
+import { createServiceRoleClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 300;
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 
@@ -89,6 +94,20 @@ export async function GET(
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
 
+  // Pull-based worker: whoever is watching an unfinished job moves it forward. RLS above
+  // proved ownership; a per-job lease keeps concurrent polls from doubling the work.
+  if (data.status === "queued" || data.status === "processing") {
+    const geminiKey = process.env.GEMINI_API_KEY;
+    const environmentId = process.env.MA_ENVIRONMENT_ID;
+    if (geminiKey && environmentId) {
+      waitUntil(
+        processJobs({ environmentId, geminiKey }, data.id).catch((e) =>
+          console.error("pull-advance failed", data.id, String(e?.message ?? e)),
+        ),
+      );
+    }
+  }
+
   // Pick the most recent track for this job. The query orders nested
   // tracks by created_at desc; we also re-sort defensively here so that
   // future schema or PostgREST changes can't silently regress.
@@ -121,9 +140,31 @@ export async function GET(
     };
   }
 
+  // Coarse progress stage for the live timeline (agent_runs has no RLS policies, so read it with the service role
+  // only after RLS has already proven this user owns the job).
+  let stage: "queued" | "starting" | "writing" | "rendering" | "finishing" | "done" = "queued";
+  if (data.status === "completed") stage = "done";
+  else if (data.status === "processing") {
+    stage = "starting";
+    try {
+      const { data: runs } = await createServiceRoleClient()
+        .from("agent_runs" as never)
+        .select("session_id,lyria_calls,audio_path")
+        .eq("job_id" as never, data.id as never)
+        .limit(1);
+      const run = ((runs ?? []) as { session_id: string | null; lyria_calls: number; audio_path: string | null }[])[0];
+      if (run?.audio_path) stage = "finishing";
+      else if (run && run.lyria_calls > 0) stage = "rendering";
+      else if (run?.session_id) stage = "writing";
+    } catch {
+      /* stage is cosmetic */
+    }
+  }
+
   return NextResponse.json({
     id: data.id,
     status: data.status,
+    stage,
     error: data.error,
     created_at: data.created_at,
     finished_at: data.finished_at,

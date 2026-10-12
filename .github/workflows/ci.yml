@@ -2,8 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, release-v2, "claude/**"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -33,6 +34,38 @@ jobs:
 
       - run: pnpm --filter @neo-fm/web build
 
+  agents:
+    name: managed agents (web unit + skill drift)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - name: agent runner, safety, auth, skill drift
+        run: pnpm --filter @neo-fm/web exec vitest run tests/agent-runner.test.ts tests/agent-definitions.test.ts tests/agent-auth.test.ts tests/agent-transient.test.ts tests/embed-token.test.ts tests/safety.test.ts tests/lyrics-merge.test.ts
+      - name: embedded skill is up to date
+        run: |
+          node apps/web/scripts/gen-skill.mjs
+          git diff --exit-code -- apps/web/lib/agent/skill-pce-poem.ts
+
+  pce-engine:
+    name: pce engine + embedder (python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install numpy scipy pytest -r services/embedder/requirements.txt
+      - name: engine two-round protocol
+        run: python -m pytest -q managed-agents/pce-engine/tests
+      - name: embedder token auth
+        run: python -m pytest -q services/embedder/tests
+
   py:
     name: python (uv)
     runs-on: ubuntu-latest
@@ -41,16 +74,7 @@ jobs:
       matrix:
         project:
           - packages/song-doc/python
-          - services/music-inference
-          - services/dgx-worker
-          # v1.4 sprint 7-17 added these sidecars; CI now enforces them
-          # alongside the original three projects.
-          - services/reranker
-          - services/lyric-gen
-          - services/vocal-synth
-          - services/stems-synth
-          - services/cover-art-synth
-          - evals/v1.4-bench
+          # v2 is cloud-only (Vercel + Supabase + Cloud Run + Claude Managed Agents + Gemini Lyria): the v1 DGX sidecar projects were retired.
     steps:
       - uses: actions/checkout@v4
 
@@ -106,7 +130,6 @@ jobs:
       - name: validate OpenAPI cloud + dgx
         run: |
           openapi-spec-validator docs/contracts/openapi-cloud.yaml
-          openapi-spec-validator docs/contracts/openapi-dgx.yaml
 
   song-doc-codegen:
     name: song-doc codegen drift

@@ -17,6 +17,8 @@
 import { notFound, redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { JobProgress } from "@/components/job-progress";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { RecoverButton } from "../../library/recover-button";
@@ -24,6 +26,7 @@ import { RegenerateButton } from "./regenerate-button";
 import { RemixButton } from "./remix-button";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
+import { DictionCheck } from "./diction-check";
 import { StemsPanel } from "./stems-panel";
 import { KaraokeTicker } from "./karaoke-ticker";
 import { VariationButton } from "./variation-button";
@@ -213,6 +216,15 @@ export default async function SongDetailPage({
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  // Advisory pronunciation audit (agent_runs has no RLS policies; ownership of the job was already proven above).
+  let dictionQa: { matchPct?: number; flagged?: { line: string; heard: string; cer: number }[] } | null = null;
+  if (data.status === "completed") {
+    try {
+      const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("diction_qa").eq("job_id" as never, data.id as never).limit(1);
+      dictionQa = ((runs ?? []) as { diction_qa: typeof dictionQa }[])[0]?.diction_qa ?? null;
+    } catch { /* optional */ }
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
@@ -235,7 +247,7 @@ export default async function SongDetailPage({
               {remixedFromInfo.title ? (
                 <Link
                   href={`/songs/${remixedFromInfo.id}`}
-                  className="text-accent underline-offset-4 hover:underline"
+                  className="text-accent underline underline-offset-4"
                 >
                   {remixedFromInfo.title}
                 </Link>
@@ -343,14 +355,10 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label="Retry" />
         </div>
       ) : (
-        <p className="text-sm text-foreground/60">
-          {data.status === "processing"
-            ? "Generating audio…"
-            : data.status === "queued"
-              ? "Queued."
-              : `Status: ${data.status}.`}
-        </p>
+        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
+
+      <DictionCheck qa={dictionQa} />
 
       {data.status === "completed" ? (
         <CoverArtPanel songId={data.id} />

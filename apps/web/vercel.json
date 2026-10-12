@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/agent/tick",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/admin/self-improve",
+      "schedule": "17 3 * * *"
+    }
+  ]
+}

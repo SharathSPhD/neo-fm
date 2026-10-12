@@ -45,6 +45,7 @@ const SONG_DOC = {
 };
 
 test("POST /api/songs returns 202 and a queued job", async ({ page }) => {
+  test.skip(!process.env.E2E_SLOW, "creates a real job (spends budget): set E2E_SLOW=1");
   await signIn(page);
   const create = await page.evaluate(async (doc) => {
     const r = await fetch("/api/songs", {

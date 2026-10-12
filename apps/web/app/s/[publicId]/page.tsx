@@ -15,6 +15,8 @@
  *
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
+import { ReportButton } from "./report-button";
+import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -386,11 +388,13 @@ export default async function PublicSongPage({
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
-        <span>Generated on neo-fm</span>
+        <span>AI-generated music and lyrics, made on neo-fm (a Technektar product) · <Link href="/trust" className="underline hover:text-foreground/70">how we keep it safe</Link></span>
+        <ReportButton publicId={params.publicId} />
         <Link href="/" className="hover:text-foreground/70">
           Make your own →
         </Link>
       </footer>
+          <ProCta />
     </main>
   );
 }

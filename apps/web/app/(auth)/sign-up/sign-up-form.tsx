@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
@@ -12,6 +12,9 @@ export function SignUpForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Until hydration the native form would submit credentials as a GET query string; keep submit disabled until JS owns the form.
+  const [ready, setReady] = useState(false);
+  useEffect(() => setReady(true), []);
 
   // `next` is round-tripped through the confirmation link so a visitor
   // who tried to deep-link (e.g. /sign-up?next=/songs/new) lands where
@@ -77,7 +80,7 @@ export function SignUpForm() {
   }
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={onSubmit}>
+    <form method="post" className="flex flex-col gap-4" onSubmit={onSubmit}>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
           Email
@@ -115,7 +118,7 @@ export function SignUpForm() {
       ) : null}
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || !ready}
         className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
       >
         {pending ? "Creating..." : "Create account"}

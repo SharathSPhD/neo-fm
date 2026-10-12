@@ -15,15 +15,21 @@
  *   pnpm playwright test tests/e2e/auth.spec   # one spec
  *   pnpm playwright test --headed              # debug
  */
+import { existsSync } from "node:fs";
+
 import { defineConfig } from "@playwright/test";
 
 const BASE_URL = process.env.E2E_BASE_URL ?? "https://neo-fm-web.vercel.app";
 
+const proxy = process.env.HTTPS_PROXY;
+
 export default defineConfig({
+  globalSetup: "./tests/e2e/global-setup.ts",
   testDir: "./tests/e2e",
   // Vitest owns ./tests; explicitly include only the e2e subdir so
   // running playwright doesn't accidentally try to run vitest specs.
   testMatch: /.*\.spec\.ts/,
+  testIgnore: /legacy-v1\//,
   fullyParallel: false, // smoke user is shared; serial is safer.
   workers: 1,
   retries: process.env.CI ? 1 : 0,
@@ -40,6 +46,8 @@ export default defineConfig({
   use: {
     baseURL: BASE_URL,
     headless: true,
+    storageState: process.env.E2E_SHARE_TOKEN && existsSync("tests/e2e/.share-state.json") ? "tests/e2e/.share-state.json" : undefined,
+    launchOptions: { executablePath: process.env.E2E_CHROMIUM, proxy: proxy ? { server: proxy } : undefined },
     viewport: { width: 1280, height: 900 },
     actionTimeout: 15_000,
     navigationTimeout: 30_000,

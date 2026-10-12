@@ -1,0 +1,131 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+import { estimatedCostGbp, type SpendGuard } from "./lyria";
+import type { AgentEvent, RunRow, RunStore, SessionApi } from "./runner";
+
+export function serviceClient(env = process.env): SupabaseClient {
+  const url = env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
+  // Next.js (Vercel) caches fetch() GETs in a persistent data cache; the worker must always read live state.
+  const noStore: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store" });
+  return createClient(url, key, { auth: { persistSession: false }, global: { fetch: noStore } });
+}
+
+/**
+ * Managed Agents authenticate with a Console API key. Cloud dev sessions strip
+ * `ANTHROPIC_API_KEY`, so prefer the dedicated `MA_ANTHROPIC_API_KEY`.
+ */
+export function anthropicClient(env = process.env): Anthropic {
+  // Same reason as serviceClient(): never let Next's persistent fetch cache answer session/event reads.
+  const noStore: typeof fetch = (input, init) => fetch(input, { ...init, cache: "no-store" });
+  return new Anthropic({ apiKey: env.MA_ANTHROPIC_API_KEY ?? env.ANTHROPIC_API_KEY, fetch: noStore });
+}
+
+export function sessionApi(client = anthropicClient()): SessionApi {
+  return {
+    async create({ agentId, environmentId, title }) {
+      const s = await client.beta.sessions.create({ agent: agentId, environment_id: environmentId, title });
+      return { id: s.id };
+    },
+    async sendOutcome(sessionId, { description, rubric, maxIterations }) {
+      await client.beta.sessions.events.send(sessionId, {
+        events: [
+          {
+            type: "user.define_outcome",
+            description,
+            rubric: { type: "text", content: rubric },
+            max_iterations: maxIterations,
+          },
+        ],
+      });
+    },
+    async listEvents(sessionId) {
+      // The unfiltered list returns only the oldest page, so a long session's later events were
+      // invisible. Ask for exactly what the worker needs: tool calls/answers (all), and the newest status events.
+      const wanted = ["agent.custom_tool_use", "user.custom_tool_result", "agent.tool_use", "agent.mcp_tool_use", "user.tool_confirmation"] as const;
+      const [tools, status] = await Promise.all([
+        client.beta.sessions.events.list(sessionId, { types: [...wanted], limit: 100 }),
+        client.beta.sessions.events.list(sessionId, { types: ["session.status_idle", "session.status_terminated"], order: "desc", limit: 5 }),
+      ]);
+      const toolEvents = ((tools as unknown as { data: AgentEvent[] }).data ?? []) as AgentEvent[];
+      // Newest-first from the API; hand the runner chronological order so "last" means latest.
+      const statusEvents = [...(((status as unknown as { data: AgentEvent[] }).data ?? []) as AgentEvent[])].reverse();
+      return [...toolEvents, ...statusEvents];
+    },
+    async sendToolResult(sessionId, toolUseId, text) {
+      const res = await client.beta.sessions.events.send(sessionId, {
+        events: [{ type: "user.custom_tool_result", custom_tool_use_id: toolUseId, content: [{ type: "text", text }] }],
+      });
+      return JSON.stringify(res).slice(0, 400);
+    },
+    async sendToolConfirmation(sessionId, toolUseId, result, denyMessage) {
+      await client.beta.sessions.events.send(sessionId, {
+        events: [{ type: "user.tool_confirmation", tool_use_id: toolUseId, result, ...(denyMessage ? { deny_message: denyMessage } : {}) }],
+      });
+    },
+    async status(sessionId) {
+      return (await client.beta.sessions.retrieve(sessionId)).status;
+    },
+  };
+}
+
+export function runStore(db: SupabaseClient, agentKey: "free" | "pro"): RunStore {
+  return {
+    async get(jobId) {
+      // Array read + first row (maybeSingle on an explicit column list returned null for an existing row).
+      const { data, error } = await db.from("agent_runs").select("*").eq("job_id", jobId).limit(1);
+      if (error) throw new Error(`agent_runs get: ${error.message}`);
+      const r = (data ?? [])[0] as Record<string, unknown> | undefined;
+      if (!r) return null;
+      return {
+        job_id: String(r.job_id),
+        session_id: (r.session_id as string | null) ?? null,
+        lyria_calls: Number(r.lyria_calls ?? 0),
+        audio_path: (r.audio_path as string | null) ?? null,
+        status: r.status as RunRow["status"],
+      };
+    },
+    async claimStart(jobId) {
+      const { data, error } = await db
+        .from("agent_runs")
+        .upsert({ job_id: jobId, agent_key: agentKey }, { onConflict: "job_id", ignoreDuplicates: true })
+        .select("job_id");
+      if (error) throw new Error(`agent_runs claim: ${error.message}`);
+      return (data ?? []).length > 0;
+    },
+    async claimRender(jobId, max) {
+      const { data, error } = await db.rpc("claim_render", { p_job_id: jobId, p_max: max });
+      if (error) throw new Error(`agent_runs claim_render: ${error.message}`);
+      return typeof data === "number" ? data : null;
+    },
+    async upsert(row) {
+      const { error } = await db.from("agent_runs").upsert({ agent_key: agentKey, updated_at: new Date().toISOString(), ...row }, { onConflict: "job_id" });
+      if (error) throw new Error(`agent_runs upsert: ${error.message}`);
+    },
+  };
+}
+
+export function spendGuard(db: SupabaseClient, scope: { userId: string; userCapGbp: number }, env = process.env): SpendGuard {
+  const globalCap = Number(env.LYRIA_BUDGET_GBP ?? "3"); // monthly ceiling across all users (migration 0057)
+  const periods: string[] = []; // period of each outstanding reservation, so a release hits the month it was made in
+  // Reserve/release amounts are the same estimate used by generateMusic(). Both the shared ceiling and the
+  // user's monthly envelope are checked in one atomic statement (migration 0055).
+  return {
+    async reserve(amount) {
+      const { data, error } = await db.rpc("reserve_user_spend", {
+        p_user: scope.userId, p_provider: "lyria", p_amount: amount, p_user_cap: scope.userCapGbp, p_global_cap: globalCap,
+      });
+      if (error) throw new Error(`reserve_user_spend: ${error.message}`);
+      if (data === true) periods.push(new Date().toISOString().slice(0, 7) + "-01");
+      return data === true;
+    },
+    async release(amount) {
+      const period = periods.pop() ?? new Date().toISOString().slice(0, 7) + "-01";
+      await db.rpc("release_user_spend", { p_user: scope.userId, p_provider: "lyria", p_amount: amount, p_period: period });
+    },
+  };
+}
+
+export { estimatedCostGbp };

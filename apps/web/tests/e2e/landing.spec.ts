@@ -30,29 +30,13 @@ test("landing page leads with the phoneme wedge", async ({ page }) => {
   await expect(h1).toContainText(/Indian languages/i);
 });
 
-test("landing page exposes the Listen anchor section", async ({ page }) => {
+test("landing page shows how it works and the supported languages", async ({ page }) => {
   await page.goto("/");
-  const listenHeading = page.getByRole("heading", {
-    name: /hear the difference/i,
-    level: 2,
-  });
-  await expect(listenHeading).toBeVisible();
-
-  // Each preset link should land on /songs/new with a preset param.
-  const presets = [
-    "hindustani-khayal-sketch",
-    "kannada-bhavageete",
-    "tamil-folk",
-  ] as const;
-  for (const preset of presets) {
-    const link = page.locator(
-      `a[href="/songs/new?preset=${encodeURIComponent(preset)}"]`,
-    );
-    // The same href is also rendered in the Style Gallery further
-    // down the page; we just need at least one to exist in the
-    // Listen section so the wedge has a "play with it" affordance.
-    await expect(link.first()).toBeVisible();
+  await expect(page.getByRole("heading", { name: /three steps/i, level: 2 })).toBeVisible();
+  for (const l of ["Kannada", "Tamil", "Telugu", "Hindi", "Bengali"]) {
+    await expect(page.getByRole("list", { name: /supported languages/i }).getByText(l)).toBeVisible();
   }
+  await expect(page.getByRole("link", { name: /make your first song free/i })).toBeVisible();
 });
 
 test("landing page has no serious axe violations", async ({ page }) => {

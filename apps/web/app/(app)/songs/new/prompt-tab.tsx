@@ -45,6 +45,12 @@ const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
 
 const DURATION_OPTIONS: Duration[] = [30, 60, 90, 180];
 
+/** The style that best fits each language, applied until the listener picks a style themselves. */
+const DEFAULT_STYLE: Record<Language, StyleFamily> = {
+  hi: "bollywood-ballad", kn: "kannada-light-classical", ta: "tamil-folk", te: "telugu-keerthana",
+  bn: "bengali-rabindrasangeet", sa: "sanskrit-shloka", en: "western",
+};
+
 const PROMPT_MAX_CHARS = 500;
 
 const EXAMPLE_PROMPTS: string[] = [
@@ -59,9 +65,10 @@ export function PromptTab() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [prompt, setPrompt] = useState("");
-  const [styleFamily, setStyleFamily] = useState<StyleFamily>("carnatic");
+  const [styleFamily, setStyleFamily] = useState<StyleFamily>(DEFAULT_STYLE.hi);
+  const [styleTouched, setStyleTouched] = useState(false);
   const [language, setLanguage] = useState<Language>("hi");
-  const [duration, setDuration] = useState<Duration>(90);
+  const [duration, setDuration] = useState<Duration>(30);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -185,7 +192,7 @@ export function PromptTab() {
           <select
             id="prompt-style"
             value={styleFamily}
-            onChange={(e) => setStyleFamily(e.target.value as StyleFamily)}
+            onChange={(e) => { setStyleTouched(true); setStyleFamily(e.target.value as StyleFamily); }}
             className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
           >
             {STYLE_OPTIONS.map((o) => (
@@ -206,7 +213,7 @@ export function PromptTab() {
           <select
             id="prompt-language"
             value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
+            onChange={(e) => { const l = e.target.value as Language; setLanguage(l); if (!styleTouched) setStyleFamily(DEFAULT_STYLE[l]); }}
             className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
           >
             {LANGUAGE_OPTIONS.map((o) => (
