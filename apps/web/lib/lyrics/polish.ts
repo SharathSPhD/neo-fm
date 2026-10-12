@@ -5,7 +5,7 @@ export const POLISH_MODEL = "claude-sonnet-5-5";
 /** Meter/diction polish applied to a committed PCE lyric. Minimal edits only: sections, length and imagery stay. */
 export async function polishLyrics(client: Anthropic, a: { language: string; style: string; brief: string; lyrics: string }): Promise<string> {
   const res = await client.messages.create({
-    model: POLISH_MODEL, max_tokens: 3000,
+    model: POLISH_MODEL, max_tokens: 8000,
     messages: [{ role: "user", content: `You are a senior lyricist and prosody editor in ${a.language} (style family: ${a.style}).
 Brief: ${a.brief}
 Here is a draft song lyric chosen by a selection engine. Edit it minimally:
