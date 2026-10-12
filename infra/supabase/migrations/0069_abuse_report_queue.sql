@@ -1,4 +1,4 @@
--- 0065_abuse_report_queue.sql -- moderation queue + takedown for reported public songs
+-- 0069_abuse_report_queue.sql -- moderation queue + takedown for reported public songs
 --
 -- song_reports (0024) only recorded a free-text reason. This adds the review state the admin queue needs and a
 -- takedown flag on jobs that survives an owner re-publishing: a taken-down song cannot be made public/unlisted
