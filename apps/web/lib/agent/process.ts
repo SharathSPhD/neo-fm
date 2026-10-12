@@ -22,7 +22,23 @@ export function isTransient(status: number | undefined, msg: string): boolean {
   return /overloaded|ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network/i.test(msg);
 }
 
-const MAX_CLAIM = 3;
+const MAX_CLAIM = 12;
+/** Sliding pool: a slow render no longer holds back jobs queued behind it (was fixed batches of 4). */
+export const POOL_SIZE = 8;
+export const TIER_WEIGHT: Record<string, number> = { pro: 3, developer: 3, creator: 2, free: 1 };
+
+/** Weighted aging: score = minutes waited x tier weight, highest first, so paying tiers go first but nobody starves. */
+export function prioritise<T extends { started_at?: string | null }>(jobs: T[], weightOf: (j: T) => number, now = Date.now()): T[] {
+  const score = (j: T) => Math.max(1, (now - (j.started_at ? new Date(j.started_at).getTime() : now)) / 60_000 + 1) * weightOf(j);
+  return [...jobs].sort((a, b) => score(b) - score(a));
+}
+
+/** Run `fn` over `items` with at most `size` in flight, starting the next as soon as any finishes. */
+export async function runPool<T>(items: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i]); } };
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+}
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
 export type ProcessEnv = { environmentId: string; geminiKey: string };
@@ -65,8 +81,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
 
   const results: Record<string, string> = {};
   const trace: string[] = [];
-  // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
-  const CONCURRENCY = 4;
+  // Renders take ~30s+ each, so jobs run in a sliding parallel pool, highest weighted-age first.
   const tickStart = Date.now();
   const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
@@ -164,9 +179,12 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       await releaseLease(db, job.id);
     }
   };
-  for (let i = 0; i < work.length; i += CONCURRENCY) {
-    await Promise.all(work.slice(i, i + CONCURRENCY).map(runJob));
+  const tiers = new Map<string, string>();
+  if (work.length > 1) {
+    const { data: us } = await db.from("users").select("id,tier").in("id", [...new Set(work.map((w) => w.user_id))]);
+    for (const u of (us ?? []) as { id: string; tier: string | null }[]) tiers.set(u.id, u.tier ?? "free");
   }
+  await runPool(prioritise(work, (j) => TIER_WEIGHT[tiers.get(j.user_id) ?? "free"] ?? 1), POOL_SIZE, runJob);
   return { results, trace };
 }
 
