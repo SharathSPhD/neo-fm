@@ -17,6 +17,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
+import { JobProgress } from "@/components/job-progress";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { RecoverButton } from "../../library/recover-button";
@@ -343,13 +344,7 @@ export default async function SongDetailPage({
           <RecoverButton songId={data.id} label="Retry" />
         </div>
       ) : (
-        <p className="text-sm text-foreground/60">
-          {data.status === "processing"
-            ? "Generating audio…"
-            : data.status === "queued"
-              ? "Queued."
-              : `Status: ${data.status}.`}
-        </p>
+        <JobProgress songId={data.id} initialStage={data.status === "processing" ? "starting" : "queued"} />
       )}
 
       {data.status === "completed" ? (

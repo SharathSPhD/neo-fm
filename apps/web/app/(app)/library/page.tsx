@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/empty-state";
 import { LibraryToolbar } from "./toolbar";
 import { LibraryOnboardingModal } from "./onboarding-modal";
 import { Pagination } from "./pagination";
+import { ActiveJobsWatcher } from "@/components/active-jobs-watcher";
 import { SongGrid } from "./song-grid";
 import { SongList } from "./song-list";
 
@@ -285,6 +286,7 @@ export default async function LibraryPage({
         )
       ) : (
         <>
+          <ActiveJobsWatcher jobIds={songs.filter((x) => x.status === "queued" || x.status === "processing").map((x) => x.id)} />
           {view === "grid" ? (
             <SongGrid initialSongs={songs} userId={userData.user.id} />
           ) : (

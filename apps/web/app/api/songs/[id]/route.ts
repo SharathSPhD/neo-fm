@@ -14,6 +14,7 @@ import { waitUntil } from "@vercel/functions";
 
 import { processJobs } from "../../../../lib/agent/process";
 import { requireUser } from "../../../../lib/supabase/auth";
+import { createServiceRoleClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -139,9 +140,31 @@ export async function GET(
     };
   }
 
+  // Coarse progress stage for the live timeline (agent_runs has no RLS policies, so read it with the service role
+  // only after RLS has already proven this user owns the job).
+  let stage: "queued" | "starting" | "writing" | "rendering" | "finishing" | "done" = "queued";
+  if (data.status === "completed") stage = "done";
+  else if (data.status === "processing") {
+    stage = "starting";
+    try {
+      const { data: runs } = await createServiceRoleClient()
+        .from("agent_runs" as never)
+        .select("session_id,lyria_calls,audio_path")
+        .eq("job_id" as never, data.id as never)
+        .limit(1);
+      const run = ((runs ?? []) as { session_id: string | null; lyria_calls: number; audio_path: string | null }[])[0];
+      if (run?.audio_path) stage = "finishing";
+      else if (run && run.lyria_calls > 0) stage = "rendering";
+      else if (run?.session_id) stage = "writing";
+    } catch {
+      /* stage is cosmetic */
+    }
+  }
+
   return NextResponse.json({
     id: data.id,
     status: data.status,
+    stage,
     error: data.error,
     created_at: data.created_at,
     finished_at: data.finished_at,
