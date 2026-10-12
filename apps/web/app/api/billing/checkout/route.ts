@@ -80,9 +80,18 @@ export async function POST(req: Request) {
   // upgrade page never strands a second customer record.
   const { data: billing } = await supabase
     .from("user_billing")
-    .select("stripe_customer_id")
+    .select("stripe_customer_id, status")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  // A second subscription would bill the user twice for one entitlement. Plan changes and cancellation go through
+  // the customer portal, which updates the existing subscription.
+  if (billing?.status === "active" || billing?.status === "trialing") {
+    return NextResponse.json(
+      { error: "already_subscribed", details: "Use the billing portal to change or cancel your plan." },
+      { status: 409 },
+    );
+  }
 
   const stripe = getStripe();
   const origin = getPublicAppUrl();
