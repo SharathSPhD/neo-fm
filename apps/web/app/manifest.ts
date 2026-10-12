@@ -16,37 +16,25 @@ export default function manifest(): MetadataRoute.Manifest {
     description:
       "India-first, composition-aware AI music. Carnatic, Hindustani, " +
       "Kannada folk, Western — generate songs with raga / tala / script.",
-    start_url: "/",
+    id: "/",
+    start_url: "/library",
     scope: "/",
+    lang: "en-IN",
     display: "standalone",
     background_color: "#0a0612",
     theme_color: "#321656",
-    orientation: "portrait",
+    orientation: "any",
     icons: [
-      {
-        src: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/icon-192.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "maskable",
-      },
-      {
-        src: "/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "any",
-      },
-      {
-        src: "/icon-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      // Dedicated maskable art with the logo inside the 80% safe zone, so
+      // Android's adaptive-icon masks never crop it.
+      { src: "/icon-maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    shortcuts: [
+      { name: "Create a song", short_name: "Create", url: "/songs/new", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
+      { name: "My library", short_name: "Library", url: "/library", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
     ],
     categories: ["music", "entertainment", "art"],
   };
