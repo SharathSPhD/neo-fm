@@ -2,8 +2,9 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, release-v2, "claude/**"]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -73,16 +74,7 @@ jobs:
       matrix:
         project:
           - packages/song-doc/python
-          - services/music-inference
-          - services/dgx-worker
-          # v1.4 sprint 7-17 added these sidecars; CI now enforces them
-          # alongside the original three projects.
-          - services/reranker
-          - services/lyric-gen
-          - services/vocal-synth
-          - services/stems-synth
-          - services/cover-art-synth
-          - evals/v1.4-bench
+          # v2 is cloud-only (Vercel + Supabase + Cloud Run + Claude Managed Agents + Gemini Lyria): the v1 DGX sidecar projects were retired.
     steps:
       - uses: actions/checkout@v4
 
@@ -138,7 +130,6 @@ jobs:
       - name: validate OpenAPI cloud + dgx
         run: |
           openapi-spec-validator docs/contracts/openapi-cloud.yaml
-          openapi-spec-validator docs/contracts/openapi-dgx.yaml
 
   song-doc-codegen:
     name: song-doc codegen drift
