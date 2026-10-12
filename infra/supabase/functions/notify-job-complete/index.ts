@@ -10,8 +10,8 @@
 //   RESEND_API_KEY               -- Resend account API key. While unset the
 //                                   function is a no-op: messages stay queued
 //                                   (and expire unsent after 24h).
-//   RESEND_FROM                  -- verified sender, defaults to neo-fm <no-reply@neo-fm.app>
-//   APP_URL                      -- e.g. https://neo-fm.app -- used in the email link
+//   RESEND_FROM                  -- verified sender, defaults to neo-fm <noreply@neo-fm.com>
+//   APP_URL                      -- e.g. https://www.neo-fm.com -- used in the email link
 //   SUPABASE_URL                 -- injected automatically
 //   SUPABASE_SERVICE_ROLE_KEY    -- injected automatically
 //   NEO_FM_WEBHOOK_SECRET        -- optional; if set, callers must echo it
@@ -52,10 +52,10 @@ const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const APP_URL =
   Deno.env.get("APP_URL") ??
   Deno.env.get("NEO_FM_PUBLIC_APP_URL") ??
-  "https://neo-fm.app";
+  "https://www.neo-fm.com";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const RESEND_FROM =
-  Deno.env.get("RESEND_FROM") ?? "neo-fm <no-reply@neo-fm.app>";
+  Deno.env.get("RESEND_FROM") ?? "neo-fm <noreply@neo-fm.com>";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_SERVICE_ROLE_KEY =
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -388,50 +388,38 @@ export function buildResendRequest(
 // wrapper for the read/archive helpers.
 // ---------------------------------------------------------------------
 
-async function pgmqRead(): Promise<PgmqReadRow[]> {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("supabase service-role credentials missing");
-  }
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/read`, {
+async function rpc(fn: string, body: Record<string, unknown>): Promise<Response> {
+  return await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       apikey: SUPABASE_SERVICE_ROLE_KEY,
-      "Accept-Profile": "pgmq",
-      "Content-Profile": "pgmq",
     },
-    body: JSON.stringify({
-      queue_name: QUEUE_NAME,
-      vt: VISIBILITY_TIMEOUT_SECS,
-      qty: BATCH_SIZE,
-    }),
+    body: JSON.stringify(body),
   });
+}
+
+// pgmq lives in a schema PostgREST does not expose, so the queue is reached through the service-role-only
+// wrappers public.email_queue_read / email_queue_archive (migration 0087).
+async function pgmqRead(): Promise<PgmqReadRow[]> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("supabase service-role credentials missing");
+  }
+  const res = await rpc("email_queue_read", { p_qty: BATCH_SIZE, p_vt: VISIBILITY_TIMEOUT_SECS });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`pgmq.read failed: ${res.status} ${body.slice(0, 200)}`);
+    throw new Error(`email_queue_read failed: ${res.status} ${body.slice(0, 200)}`);
   }
   const rows = (await res.json()) as PgmqReadRow[];
   return Array.isArray(rows) ? rows : [];
 }
 
 async function pgmqArchive(msgId: number): Promise<void> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/archive`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      "Accept-Profile": "pgmq",
-      "Content-Profile": "pgmq",
-    },
-    body: JSON.stringify({ queue_name: QUEUE_NAME, msg_id: msgId }),
-  });
+  const res = await rpc("email_queue_archive", { p_msg_id: msgId });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(
-      `pgmq.archive(${msgId}) failed: ${res.status} ${body.slice(0, 200)}`,
-    );
+    throw new Error(`email_queue_archive(${msgId}) failed: ${res.status} ${body.slice(0, 200)}`);
   }
 }
 

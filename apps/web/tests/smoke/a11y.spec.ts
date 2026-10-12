@@ -6,7 +6,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const PAGES = ["/", "/pricing", "/trust", "/privacy", "/terms", "/help", "/sign-in", "/sign-up"];
+const PAGES = ["/", "/pricing", "/trust", "/privacy", "/terms", "/help", "/ideas", "/sign-in", "/sign-up"];
 const THEMES = ["dark", "light"] as const;
 
 for (const theme of THEMES) {
