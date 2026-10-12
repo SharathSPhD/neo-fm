@@ -10,7 +10,8 @@ import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
-import { dictionHints } from "../diction";
+import { dictionHints, scoreTranscriptUnordered } from "../diction";
+import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
@@ -291,8 +292,12 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
     if (!blob) return null;
     const audio = new Uint8Array(await blob.arrayBuffer());
-    const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
-    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash" } }).eq("job_id", jobId);
+    // Score against the sung lines only: a "Pallavi:" header counted as a line scored as a miss (te-16: 66 -> 97).
+    const sung = singableLines(r.lyrics).join("\n") || r.lyrics;
+    const qa = await auditDiction(sung, audio, blob.type || "audio/mpeg", language, geminiKey);
+    // Shadow gate (DICTION_GATE=off disables): record the verdict and the order-free score; nothing the user sees changes.
+    const gate = gateMode() === "off" ? null : dictionVerdict(qa, scoreTranscriptUnordered(sung, qa.transcript));
+    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", ...(gate ? { unorderedPct: gate.unorderedPct, verdict: gate.verdict, reasons: gate.reasons, reordered: gate.reordered, tailUnsung: gate.tailUnsung } : {}) } }).eq("job_id", jobId);
     return { matchPct: qa.matchPct };
   } catch (e) {
     /* QA is advisory, but leave the reason visible instead of failing silently */

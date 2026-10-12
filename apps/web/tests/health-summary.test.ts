@@ -43,6 +43,17 @@ describe("health summary", () => {
     expect(s.diction_by_language.hi).toEqual({ n: 0, avg_match_pct: null, errors: 1 });
   });
 
+  it("counts shadow diction-gate verdicts and songs scored before the gate", () => {
+    const s = summarize([], [
+      { language: "te", diction_qa: { matchPct: 95, verdict: "pass" } },
+      { language: "te", diction_qa: { matchPct: 70, verdict: "review" } },
+      { language: "bn", diction_qa: { matchPct: 37, verdict: "rerender" } },
+      { language: "hi", diction_qa: { matchPct: 90 } },
+      { language: "hi", diction_qa: { error: "no audio" } },
+    ], spend, now);
+    expect(s.diction_gate).toEqual({ pass: 1, review: 1, rerender: 1, ungated: 1 });
+  });
+
   it("alerts on failure rate only past a minimum sample", () => {
     const few = summarize([job("failed", 5, 4, "x"), job("failed", 5, 4, "x")], [], spend, now);
     expect(few.alerts).toEqual([]);
