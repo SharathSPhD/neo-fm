@@ -1,4 +1,4 @@
--- 0065_users_column_privileges.sql
+-- 0070_users_column_privileges.sql
 -- Threat-model fixes T-RLS-1 / T-RLS-2 (docs/SECURITY-THREAT-MODEL.md).
 --
 -- Before: Supabase's default grants gave anon + authenticated every column on public.users, and the policy
@@ -16,3 +16,7 @@ grant select (id, handle, created_at) on table public.users to anon;
 
 revoke insert, update, delete, truncate, references, trigger on table public.users from authenticated;
 grant update (handle, name, locale) on table public.users to authenticated;
+
+-- Authenticated users must not read other users' rows (email, tier, ...) through the handle policy; anon only.
+-- Signed-in reads of public profiles go through the public_profiles view (see follow-up migration).
+alter policy users_select_public_handle on public.users to anon;
