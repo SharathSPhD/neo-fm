@@ -23,6 +23,7 @@ import { isBillingEnabled } from "@/lib/billing/config";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
+import { TastePanel } from "./taste-panel";
 import { ManageBillingButton } from "./manage-billing-button";
 
 export const dynamic = "force-dynamic";
@@ -162,6 +163,7 @@ export default async function AccountPage({ searchParams }: PageProps) {
         </section>
       ) : null}
 
+      <TastePanel />
       <AccountActions email={auth.user.email ?? ""} />
     </div>
   );

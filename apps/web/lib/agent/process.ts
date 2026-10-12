@@ -9,6 +9,7 @@ import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
+import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { mintEmbedToken } from "./embed-token";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
@@ -75,6 +76,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
       const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan);
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
+      let tasteCard = "";
+      try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       const outcome = await advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
@@ -84,6 +87,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           language: doc.language, styleFamily: doc.style_family,
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
+          tasteCard: tasteCard || undefined,
           engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
         },
         music: async (a) => {
