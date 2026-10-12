@@ -85,6 +85,8 @@ for (const [vpName, viewport] of Object.entries(VIEWPORTS)) {
       test("embed", async ({ page }) => {
         await prime(page, theme, "hi");
         await settle(page, `/s/${SONG_FIXTURES.hi.publicId}/embed`);
+        // The no-audio notice appears after hydration; wait for it so the shot is not racy.
+        await expect(page.getByText(/audio preview not available/i)).toBeVisible();
         await expect(page).toHaveScreenshot(`embed-hi-${vpName}-${theme}.png`, { fullPage: true });
       });
 

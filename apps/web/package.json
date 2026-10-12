@@ -15,7 +15,7 @@
     "test:e2e": "playwright test",
     "test:smoke": "node scripts/smoke-local.mjs",
     "test:visual": "node scripts/visual-local.mjs",
-    "test:visual:update": "node scripts/visual-local.mjs --update-snapshots"
+    "test:visual:update": "node scripts/visual-local.mjs --update-snapshots=all"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

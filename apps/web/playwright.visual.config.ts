@@ -34,7 +34,12 @@ export default defineConfig({
     deviceScaleFactor: 1,
     locale: "en-IN",
     timezoneId: "Asia/Kolkata",
-    launchOptions: { executablePath: process.env.E2E_CHROMIUM },
+    launchOptions: {
+      executablePath: process.env.E2E_CHROMIUM,
+      // Pin text rendering: LCD vs greyscale anti-aliasing flips with compositing
+      // state and made identical pages differ run to run.
+      args: ["--disable-lcd-text", "--font-render-hinting=none", "--force-color-profile=srgb"],
+    },
   },
   projects: [
     { name: "setup", testMatch: /auth\.setup\.ts/ },
