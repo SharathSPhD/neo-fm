@@ -48,3 +48,22 @@ describe("share card helpers", () => {
     expect(reorderForSatori("hello")).toBe("hello");
   });
 });
+
+import { latin } from "./helpers/latin-font";
+
+describe("per-script excerpt switch", () => {
+  it("title-only card when a script is switched off", async () => {
+    const { EXCERPT_SCRIPTS_ENABLED } = await import("@/lib/share/card");
+    const { renderShareCard } = await import("@/lib/share/card-image");
+    const on = await renderShareCard({ title: "T", subtitle: "S", excerpt: ["ಪ್ರೀತಿ ಸ್ನೇಹ"], seed: "x", baseFonts: await latin() });
+    EXCERPT_SCRIPTS_ENABLED.kannada = false;
+    try {
+      const off = await renderShareCard({ title: "T", subtitle: "S", excerpt: ["ಪ್ರೀತಿ ಸ್ನೇಹ"], seed: "x", baseFonts: await latin() });
+      const [a, b] = [Buffer.from(await on.arrayBuffer()), Buffer.from(await off.arrayBuffer())];
+      expect(a.equals(b)).toBe(false);
+      expect(b.length).toBeLessThan(a.length);
+    } finally {
+      EXCERPT_SCRIPTS_ENABLED.kannada = true;
+    }
+  });
+});

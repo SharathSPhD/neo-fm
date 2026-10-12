@@ -18,6 +18,20 @@ export type CardFontScript =
   | "bengali"
   | "latin";
 
+/**
+ * Per-script kill switch for the lyric excerpt on the card. Flip a
+ * script to false to ship the title-only card for it (e.g. if shaping
+ * regresses); Latin is always on.
+ */
+export const EXCERPT_SCRIPTS_ENABLED: Record<CardFontScript, boolean> = {
+  devanagari: true,
+  bengali: true,
+  tamil: true,
+  telugu: true,
+  kannada: true,
+  latin: true,
+};
+
 const SCRIPT_RANGES: [CardFontScript, RegExp][] = [
   ["devanagari", /[ऀ-ॿ]/],
   ["bengali", /[ঀ-৿]/],

@@ -31,6 +31,8 @@ const FILES: Record<Exclude<CardFontScript, "latin">, string> = {
   kannada: "NotoSansKannada-Regular.ttf",
 };
 
+const rawFontCache = new Map<string, ArrayBuffer>();
+
 type Hb = typeof import("harfbuzzjs");
 const fontCache = new Map<string, { font: InstanceType<Hb["Font"]>; upem: number }>();
 let hbPromise: Promise<Hb> | null = null;
@@ -110,11 +112,15 @@ export async function loadFontsFor(text: string): Promise<CardFont[]> {
   if (script === "latin") return [];
   const file = `NotoSans${SCRIPT_FILE[script]}-Regular.ttf`;
   try {
-    const buf = await readFile(join(process.cwd(), "lib/share/fonts", file));
-    const data = buf.buffer.slice(
-      buf.byteOffset,
-      buf.byteOffset + buf.byteLength,
-    ) as ArrayBuffer;
+    let data = rawFontCache.get(file);
+    if (!data) {
+      const buf = await readFile(join(process.cwd(), "lib/share/fonts", file));
+      data = buf.buffer.slice(
+        buf.byteOffset,
+        buf.byteOffset + buf.byteLength,
+      ) as ArrayBuffer;
+      rawFontCache.set(file, data);
+    }
     return [{ name: FONT_FAMILY[script], data, weight: 400, style: "normal" }];
   } catch {
     return [];
