@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 /**
  * Per-section "Regenerate" button. POSTs to
  * /api/songs/[id]/sections/[sectionId]/regenerate, then refreshes the
@@ -19,6 +21,7 @@ export function RegenerateButton({
   sectionId,
 }: RegenerateButtonProps) {
   const router = useRouter();
+  const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,22 +45,22 @@ export function RegenerateButton({
         return;
       }
       if (res.status === 409) {
-        setError("Parent song isn't done generating yet. Try again once it is.");
+        setError(t("songact.parentNotDone"));
         return;
       }
       if (res.status === 429) {
         setError(
           body?.reason === "rows_per_month"
-            ? "You've hit your monthly job quota. Try next month."
-            : "Quota exceeded.",
+            ? t("songact.jobQuota")
+            : t("songact.quotaExceeded"),
         );
         return;
       }
       if (res.status === 404) {
-        setError("Couldn't find that song or section.");
+        setError(t("songact.notFound"));
         return;
       }
-      setError(body?.error ?? `Request failed (${res.status}).`);
+      setError(body?.error ?? t("songact.requestFailed", { status: res.status }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -74,16 +77,16 @@ export function RegenerateButton({
         className="rounded-md border border-accent/30 px-2 py-1 text-[11px] text-accent hover:bg-accent/10 disabled:opacity-50"
       >
         {submitting
-          ? "Submitting…"
+          ? t("songact.submitting")
           : pending
-            ? "Queued"
+            ? t("songact.queued")
             : submittedJobId
-              ? "Queued"
-              : "Regenerate"}
+              ? t("songact.queued")
+              : t("songact.regenerate")}
       </button>
       {submittedJobId ? (
         <span className="text-[10px] text-accent">
-          Job {submittedJobId.slice(0, 8)} queued
+          {t("songact.jobQueued", { id: submittedJobId.slice(0, 8) })}
         </span>
       ) : null}
       {error ? (
