@@ -8,19 +8,23 @@
  */
 import Link from "next/link";
 
-export function MarketingNav({
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { serverI18n } from "@/lib/i18n/server";
+
+export async function MarketingNav({
   isSignedIn,
   showSubLinks = true,
 }: {
   isSignedIn: boolean;
   showSubLinks?: boolean;
 }) {
+  const { t } = await serverI18n();
   return (
     <header className="border-b border-muted/30">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
         <Link
           href="/"
-          aria-label="neo-fm home"
+          aria-label={t("nav.home")}
           className="text-lg font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         >
           neo-fm
@@ -32,7 +36,7 @@ export function MarketingNav({
                 href="/discover"
                 className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
               >
-                Discover
+                {t("nav.discover")}
               </Link>
               <Link
                 href="/ideas"
@@ -44,22 +48,23 @@ export function MarketingNav({
                 href="/pricing"
                 className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
               >
-                Pricing
+                {t("nav.pricing")}
               </Link>
               <Link
                 href="/help"
                 className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
               >
-                Help
+                {t("nav.help")}
               </Link>
             </>
           )}
+          <LanguageSwitcher />
           {isSignedIn ? (
             <Link
               href="/library"
               className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              Library
+              {t("nav.library")}
             </Link>
           ) : (
             <>
@@ -67,13 +72,13 @@ export function MarketingNav({
                 href="/sign-in"
                 className="rounded-md border border-muted/40 px-3 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                Sign in
+                {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
                 className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
-                Get started
+                {t("nav.getStarted")}
               </Link>
             </>
           )}

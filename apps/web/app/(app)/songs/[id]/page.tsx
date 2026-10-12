@@ -16,6 +16,8 @@
  */
 import { notFound, redirect } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
+
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JobProgress } from "@/components/job-progress";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -93,6 +95,7 @@ export default async function SongDetailPage(
   }
 ) {
   const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
@@ -158,7 +161,7 @@ export default async function SongDetailPage(
     return (
       <div className="mx-auto max-w-3xl">
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
-          Couldn&apos;t load song: {error.message}
+          {t("song.loadError")} {error.message}
         </p>
       </div>
     );
@@ -272,7 +275,7 @@ export default async function SongDetailPage(
           </p>
           {remixedFromInfo ? (
             <p className="text-xs text-foreground/55">
-              Remixed from{" "}
+              {t("song.remixedFrom")}{" "}
               {remixedFromInfo.title ? (
                 <Link
                   href={`/songs/${remixedFromInfo.id}`}
@@ -282,7 +285,7 @@ export default async function SongDetailPage(
                 </Link>
               ) : (
                 <span className="italic text-foreground/45">
-                  a private or deleted song
+                  {t("song.privateOrDeleted")}
                 </span>
               )}
             </p>
@@ -341,7 +344,7 @@ export default async function SongDetailPage(
           </code>
           {data.finished_at ? (
             <span className="text-[10px] text-foreground/40">
-              finished {new Date(data.finished_at).toLocaleString()}
+              {t("song.finished")} {new Date(data.finished_at).toLocaleString()}
             </span>
           ) : null}
         </div>
@@ -349,14 +352,14 @@ export default async function SongDetailPage(
 
       {data.error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
-          Generation failed: {data.error}
+          {t("song.failed")}: {data.error}
         </p>
       ) : null}
 
       {signedUrl ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-            Playback
+            {t("song.playback")}
           </h2>
           <SongAudio
             songId={data.id}
@@ -382,15 +385,14 @@ export default async function SongDetailPage(
       ) : data.status === "completed" ? (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
           <span>
-            This song is marked completed but the rendered track is missing
-            (orphan). Click Recover to re-queue it.
+            {t("song.orphan")}
           </span>
-          <RecoverButton songId={data.id} label="Recover" />
+          <RecoverButton songId={data.id} label={t("song.recover")} />
         </div>
       ) : data.status === "failed" ? (
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-200">
-          <span>Generation failed{data.error ? `: ${data.error}` : "."}</span>
-          <RecoverButton songId={data.id} label="Retry" />
+          <span>{t("song.failed")}{data.error ? `: ${data.error}` : "."}</span>
+          <RecoverButton songId={data.id} label={t("song.retry")} />
         </div>
       ) : (
         <JobProgress songId={data.id} createdAt={data.created_at} initialStage={data.status === "processing" ? "starting" : "queued"} />
@@ -417,7 +419,7 @@ export default async function SongDetailPage(
       {regenChildren.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-            Regen history
+            {t("song.regenHistory")}
           </h2>
           <ul className="flex flex-col gap-1.5">
             {regenChildren.map((c) => (
@@ -454,7 +456,8 @@ export default async function SongDetailPage(
   );
 }
 
-function SongMetadata({ doc }: { doc: SongDocumentView }) {
+async function SongMetadata({ doc }: { doc: SongDocumentView }) {
+  const { t } = await serverI18n();
   const rows: { label: string; value: string }[] = [];
   if (doc.tempo_bpm) rows.push({ label: "Tempo", value: `${doc.tempo_bpm} BPM` });
   if (doc.time_signature)
@@ -487,7 +490,7 @@ function SongMetadata({ doc }: { doc: SongDocumentView }) {
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Composition
+        {t("song.composition")}
       </h2>
       <dl className="grid gap-1 sm:grid-cols-2">
         {rows.map((r) => (
@@ -506,7 +509,7 @@ function SongMetadata({ doc }: { doc: SongDocumentView }) {
   );
 }
 
-function SectionsView({
+async function SectionsView({
   songId,
   doc,
   regenChildren,
@@ -517,6 +520,7 @@ function SectionsView({
   regenChildren: RegenChildView[];
   canRegen: boolean;
 }) {
+  const { t: tr } = await serverI18n();
   const inFlightSections = new Set(
     regenChildren
       .filter((c) => c.status === "queued" || c.status === "processing")
@@ -526,7 +530,7 @@ function SectionsView({
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Sections
+        {tr("song.sections")}
       </h2>
       <ol className="flex flex-col gap-3">
         {doc.sections.map((s, idx) => (
@@ -552,7 +556,7 @@ function SectionsView({
               {canRegen ? (
                 inFlightSections.has(s.id) ? (
                   <span className="text-[10px] text-accent">
-                    Regen in flight…
+                    {tr("song.regenInFlight")}
                   </span>
                 ) : (
                   <RegenerateButton songId={songId} sectionId={s.id} />
@@ -565,7 +569,7 @@ function SectionsView({
               </p>
             ) : (
               <p className="text-[11px] text-foreground/40">
-                No lyrics (instrumental section).
+                {tr("song.noLyrics")}
               </p>
             )}
             {s.tags && s.tags.length > 0 ? (
