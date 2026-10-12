@@ -19,7 +19,9 @@ Reply with ONLY JSON: {"reason":"<=50 words","A":{"prosody":n,"diction":n,"image
 
 async function gen(client: Anthropic, model: string, prompt: string, max = 700): Promise<string> {
   const res = await client.messages.create({ model, max_tokens: max, ...(model === BASELINE_MODEL ? { thinking: { type: "disabled" as const } } : {}), messages: [{ role: "user", content: prompt }] });
-  return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
+  const out = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
+  if (out.length < 20) throw new Error(`empty generation from ${model} (stop=${res.stop_reason})`);
+  return out;
 }
 const writePrompt = (language: string, style: string, brief: string) =>
   `Write original song lyrics in ${language} (native script only, no transliteration, no translation) in the style family "${style}". Brief: ${brief}. ${STRUCTURE_TARGET} Use section tags like [Pallavi]/[Charanam] or [Verse]/[Chorus] as fits the style. Output only the lyrics.`;
@@ -31,7 +33,7 @@ export async function singleShot(client: Anthropic, language: string, style: str
 /** Stronger baseline: 6 Haiku drafts, then Sonnet picks the best and lightly revises it (controls for "PCE just samples more"). */
 export async function bestOfSix(client: Anthropic, language: string, style: string, brief: string): Promise<string> {
   const drafts = await Promise.all(Array.from({ length: 6 }, () => gen(client, BASELINE_MODEL, writePrompt(language, style, brief))));
-  return gen(client, JUDGE_MODEL, `You are a lyricist in ${language}. Brief: ${brief}. ${STRUCTURE_TARGET}\nBelow are 6 drafts. Choose the one with the best meter, diction, imagery and cultural fit, fix any flaws in it (keep native script, keep the length), and output ONLY the final lyrics.\n\n${drafts.map((d, i) => `--- DRAFT ${i + 1} ---\n${d}`).join("\n\n")}`, 600);
+  return gen(client, JUDGE_MODEL, `You are a lyricist in ${language}. Brief: ${brief}. ${STRUCTURE_TARGET}\nBelow are 6 drafts. Choose the one with the best meter, diction, imagery and cultural fit, fix any flaws in it (keep native script, keep the length), and output ONLY the final lyrics.\n\n${drafts.map((d, i) => `--- DRAFT ${i + 1} ---\n${d}`).join("\n\n")}`, 4000);
 }
 
 type Scores = Record<Dim, number>;
