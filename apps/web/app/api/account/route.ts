@@ -25,6 +25,7 @@
 import { NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/supabase/auth";
+import { getBillingConfigOrNull } from "@/lib/billing/config";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,35 @@ export async function DELETE() {
   const { user } = authed;
 
   const admin = createServiceRoleClient();
+
+  // DPDP/GDPR erasure must reach everything we hold, not just rows: (1) stop billing, (2) delete stored audio.
+  const steps: Record<string, string> = {};
+  try {
+    if (getBillingConfigOrNull()) {
+      const { data: bill } = await admin.from("user_billing").select("stripe_subscription_id").eq("user_id", user.id).maybeSingle();
+      const subId = (bill as { stripe_subscription_id: string | null } | null)?.stripe_subscription_id;
+      if (subId) {
+        const { getStripe } = await import("@/lib/billing/stripe");
+        await getStripe().subscriptions.cancel(subId);
+        steps.subscription = "cancelled";
+      }
+    }
+  } catch (e) {
+    // A failed cancel must not leave the user billed after deletion: stop and tell them.
+    return NextResponse.json({ error: "subscription_cancel_failed", details: String((e as Error).message).slice(0, 200) }, { status: 502 });
+  }
+  try {
+    const { data: jobs } = await admin.from("jobs").select("id").eq("user_id", user.id);
+    const bucket = admin.storage.from("tracks");
+    let removed = 0;
+    for (const j of (jobs ?? []) as { id: string }[]) {
+      const { data: files } = await bucket.list(j.id);
+      const paths = (files ?? []).map((f) => `${j.id}/${f.name}`);
+      if (paths.length) { await bucket.remove(paths); removed += paths.length; }
+    }
+    steps.audio_files_removed = String(removed);
+  } catch { steps.audio_files_removed = "partial"; }
+
   const deleteAuth = await admin.auth.admin.deleteUser(user.id);
   if (deleteAuth.error) {
     return NextResponse.json(
@@ -45,5 +75,5 @@ export async function DELETE() {
       { status: 500 },
     );
   }
-  return NextResponse.json({ deleted: true });
+  return NextResponse.json({ deleted: true, steps });
 }
