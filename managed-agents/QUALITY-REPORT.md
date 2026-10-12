@@ -32,7 +32,7 @@ The proper re-run the section below asked for: `lyria-3.5` with "exactly 60 seco
 
 - **Length control holds with longer lyrics:** 15 of 15 files are 61.4-67.1 s (ffprobe).
 - **Diction at 60 s with real lyrics is in the same range as 30 s** (medians 91-96 against 98-99 at 30 s; N=3 is a smoke test, not a distribution). Slightly lower is expected: more lines per song gives more places to deviate.
-- **The one failure is real:** Bengali bn-10 (37) sang the lines in a scrambled order and garbled several of them (7 flagged lines, CER 0.5-0.8); order-free scoring does not rescue it. The Bengali median is 93, but one in three Bengali songs failing is the number to watch at higher N.
+- **The one failure is real:** Bengali bn-10 (37) sang the lines in a scrambled order and garbled several of them (7 flagged lines, CER 0.5-0.8); order-free scoring lifts it from 37 to 68, which is still a failure. The Bengali median is 93, but one in three Bengali songs failing is the number to watch at higher N.
 - **Tail truncation is not the issue at 60 s:** the full lyrics were reached in 14 of 15 songs.
 - Caveat on the numbers: a later rescore from the stored file (without the appended hook repeat) gives higher medians for Hindi, Kannada and Tamil (95, 98, 97); the table above uses the lines Lyria was actually given.
 
