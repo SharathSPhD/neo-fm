@@ -75,6 +75,9 @@ const en = {
   "install.dismiss": "Not now",
   "install.ios": "On iPhone: tap Share, then Add to Home Screen.",
   "net.offline": "You're offline. Songs you haven't opened yet can't play.",
+  "player.error": "Couldn't play this song. Check your connection and try again.",
+  "player.retry": "Retry",
+  "player.reconnecting": "Reconnecting…",
 } as const;
 
 export type UiKey = keyof typeof en;
@@ -133,6 +136,9 @@ const hi: Dict = {
   "install.dismiss": "अभी नहीं",
   "install.ios": "iPhone पर: शेयर दबाएँ, फिर होम स्क्रीन में जोड़ें चुनें।",
   "net.offline": "आप ऑफ़लाइन हैं। जो गीत अभी तक नहीं खोले, वे नहीं चलेंगे।",
+  "player.error": "यह गीत नहीं चल सका। अपना कनेक्शन जाँचें और फिर कोशिश करें।",
+  "player.retry": "फिर कोशिश करें",
+  "player.reconnecting": "फिर से जुड़ रहे हैं…",
 };
 
 const ta: Dict = {
@@ -188,6 +194,9 @@ const ta: Dict = {
   "install.dismiss": "இப்போது வேண்டாம்",
   "install.ios": "iPhone இல்: பகிர் என்பதைத் தொட்டு, முகப்புத் திரையில் சேர் என்பதைத் தேர்ந்தெடுங்கள்.",
   "net.offline": "நீங்கள் ஆஃப்லைனில் உள்ளீர்கள். இன்னும் திறக்காத பாடல்கள் இயங்காது.",
+  "player.error": "இந்தப் பாடலை இயக்க முடியவில்லை. இணைப்பைச் சரிபார்த்து மீண்டும் முயலுங்கள்.",
+  "player.retry": "மீண்டும் முயல்க",
+  "player.reconnecting": "மீண்டும் இணைக்கிறது…",
 };
 
 const te: Dict = {
@@ -243,6 +252,9 @@ const te: Dict = {
   "install.dismiss": "ఇప్పుడు వద్దు",
   "install.ios": "iPhone లో: షేర్ నొక్కి, హోమ్ స్క్రీన్‌కు జోడించు ఎంచుకోండి.",
   "net.offline": "మీరు ఆఫ్‌లైన్‌లో ఉన్నారు. ఇంకా తెరవని పాటలు ప్లే కావు.",
+  "player.error": "ఈ పాటను ప్లే చేయలేకపోయాం. మీ కనెక్షన్ చూసుకొని మళ్లీ ప్రయత్నించండి.",
+  "player.retry": "మళ్లీ ప్రయత్నించండి",
+  "player.reconnecting": "మళ్లీ కనెక్ట్ అవుతోంది…",
 };
 
 const kn: Dict = {
@@ -298,6 +310,9 @@ const kn: Dict = {
   "install.dismiss": "ಈಗ ಬೇಡ",
   "install.ios": "iPhone ನಲ್ಲಿ: ಶೇರ್ ಒತ್ತಿ, ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ ಆಯ್ಕೆಮಾಡಿ.",
   "net.offline": "ನೀವು ಆಫ್‌ಲೈನ್‌ನಲ್ಲಿದ್ದೀರಿ. ಇನ್ನೂ ತೆರೆಯದ ಹಾಡುಗಳು ಪ್ಲೇ ಆಗುವುದಿಲ್ಲ.",
+  "player.error": "ಈ ಹಾಡನ್ನು ಪ್ಲೇ ಮಾಡಲು ಆಗಲಿಲ್ಲ. ನಿಮ್ಮ ಸಂಪರ್ಕವನ್ನು ಪರಿಶೀಲಿಸಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+  "player.retry": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
+  "player.reconnecting": "ಮತ್ತೆ ಸಂಪರ್ಕಿಸಲಾಗುತ್ತಿದೆ…",
 };
 
 const bn: Dict = {
@@ -353,6 +368,9 @@ const bn: Dict = {
   "install.dismiss": "এখন নয়",
   "install.ios": "iPhone-এ: শেয়ার চেপে হোম স্ক্রিনে যোগ করুন বেছে নিন।",
   "net.offline": "আপনি অফলাইনে আছেন। যে গান এখনও খোলেননি তা চলবে না।",
+  "player.error": "এই গানটি চালানো যায়নি। আপনার সংযোগ দেখে আবার চেষ্টা করুন।",
+  "player.retry": "আবার চেষ্টা করুন",
+  "player.reconnecting": "আবার সংযোগ হচ্ছে…",
 };
 
 export const UI_STRINGS: Record<UiLang, Dict> = { en, hi, ta, te, kn, bn };

@@ -89,6 +89,14 @@ export function MiniPlayer() {
             <span aria-hidden>✕</span>
           </button>
         </div>
+        {p.playbackError ? (
+          <div role="alert" className="flex items-center justify-between gap-2 border-t border-red-400/30 bg-red-400/10 px-3 py-1.5 text-xs text-red-200">
+            <span>{t("player.error")}</span>
+            <button type="button" onClick={p.retry} className="min-h-[44px] px-2 underline">
+              {t("player.retry")}
+            </button>
+          </div>
+        ) : null}
         <div aria-hidden className="h-1 bg-muted/30">
           <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
         </div>

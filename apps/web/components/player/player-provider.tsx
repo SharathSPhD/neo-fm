@@ -67,6 +67,9 @@ interface PlayerContextValue {
   duration: number;
   refreshing: boolean;
   refreshError: string | null;
+  /** Set once automatic recovery has given up; cleared by retry() or a new track. */
+  playbackError: boolean;
+  retry(): void;
   dataSaver: boolean;
   dataSaverPref: DataSaverPref;
   setDataSaverPref(p: DataSaverPref): void;
@@ -89,6 +92,9 @@ interface PlayerContextValue {
 const PlayerContext = createContext<PlayerContextValue | null>(null);
 
 const PREF_KEY = "neo-fm:data-saver";
+/** Signed-URL refreshes allowed per track before we surface an error. */
+const MAX_REFRESH_ATTEMPTS = 2;
+const REFRESH_BACKOFF_MS = [1000, 3000] as const;
 
 export function usePlayer(): PlayerContextValue {
   const v = useContext(PlayerContext);
@@ -112,10 +118,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const queueIndexRef = useRef(-1);
   const queueRef = useRef<(QueueItem & { refreshPath: string })[]>([]);
   const [queueState, setQueueState] = useState({ length: 0, index: -1 });
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [playbackError, setPlaybackError] = useState(false);
+  const refreshAttempts = useRef(0);
+  const refreshingRef = useRef(false);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pref, setPref] = useState<DataSaverPref>("auto");
   const [hintsLow, setHintsLow] = useState(false);
 
@@ -171,9 +182,13 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     queueRef.current = [];
+    queueIndexRef.current = -1;
     setQueueState({ length: 0, index: -1 });
     sentFraction.current = 0;
     starts.current = 0;
+    refreshAttempts.current = 0;
+    setPlaybackError(false);
+    setRefreshError(null);
     trackRef.current = next;
     setTrack(next);
     setCurrentTime(0);
@@ -191,6 +206,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const startQueueIndex = useCallback(async (index: number) => {
     const item = queueRef.current[index];
     if (!item) return;
+    queueIndexRef.current = index;
     setQueueState({ length: queueRef.current.length, index });
     try {
       const res = await fetch(item.refreshPath, { cache: "no-store" });
@@ -214,6 +230,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       setCurrentTime(0);
       setDuration(t.durationHint ?? 0);
       setRefreshError(null);
+      refreshAttempts.current = 0;
+      setPlaybackError(false);
       if (el) {
         el.src = t.url;
         el.load();
@@ -284,42 +302,91 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       el.load();
     }
     queueRef.current = [];
+    queueIndexRef.current = -1;
     setQueueState({ length: 0, index: -1 });
+    if (retryTimer.current) clearTimeout(retryTimer.current);
     trackRef.current = null;
     setTrack(null);
+    setPlaybackError(false);
     setPlaying(false);
     setCurrentTime(0);
     setDuration(0);
     clearMediaSession();
   }, [reportPlay]);
 
-  // Tier-2 signed-URL refresh: the URL expired mid-session.
-  const onError = useCallback(async () => {
+  // Tier-2 signed-URL refresh: the URL expired mid-session. Bounded: a
+  // fresh URL that also fails (deleted file, offline, 5xx) must not loop,
+  // so we back off, give up after MAX_REFRESH_ATTEMPTS and show an error.
+  const attemptRefresh = useCallback(async () => {
     const t = trackRef.current;
     const el = audioRef.current;
-    if (!t || !el || refreshing) return;
+    if (!t || !el || refreshingRef.current) return;
+    refreshingRef.current = true;
     setRefreshing(true);
     setRefreshError(null);
     const resumeAt = lastPosition.current;
     const wasPlaying = !el.paused;
     try {
-      const res = await fetch(t.refreshPath ?? `/api/songs/${encodeURIComponent(t.songId)}/audio-url`, {
-        cache: "no-store",
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const body = (await res.json()) as { url: string };
-      trackRef.current = { ...t, url: body.url };
-      setTrack(trackRef.current);
-      el.src = body.url;
-      el.load();
-      el.currentTime = resumeAt;
-      if (wasPlaying) void el.play().catch(() => undefined);
-    } catch (e) {
-      setRefreshError(e instanceof Error ? e.message : String(e));
+      // Each loop iteration is one signed-URL request. A URL that loads
+      // resets the counter (onLoadedMetadata); one that errors again
+      // re-enters here and keeps counting, so the total stays bounded.
+      while (refreshAttempts.current < MAX_REFRESH_ATTEMPTS) {
+        const attempt = refreshAttempts.current++;
+        if (attempt > 0) {
+          await new Promise<void>((resolve) => {
+            retryTimer.current = setTimeout(resolve, REFRESH_BACKOFF_MS[attempt - 1] ?? 3000);
+          });
+          // Track closed or changed while we waited.
+          if (trackRef.current?.songId !== t.songId) return;
+        }
+        try {
+          const res = await fetch(t.refreshPath ?? `/api/songs/${encodeURIComponent(t.songId)}/audio-url`, {
+            cache: "no-store",
+          });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const body = (await res.json()) as { url: string };
+          trackRef.current = { ...t, url: body.url };
+          setTrack(trackRef.current);
+          el.src = body.url;
+          el.load();
+          el.currentTime = resumeAt;
+          if (wasPlaying) void el.play().catch(() => undefined);
+          return;
+        } catch (e) {
+          setRefreshError(e instanceof Error ? e.message : String(e));
+        }
+      }
+      setPlaybackError(true);
+      // Don't strand a collection on one broken song.
+      const qi = queueIndexRef.current;
+      if (qi >= 0 && qi + 1 < queueRef.current.length) void startQueueIndex(qi + 1);
     } finally {
+      refreshingRef.current = false;
       setRefreshing(false);
     }
-  }, [refreshing]);
+  }, [startQueueIndex]);
+
+  const onError = useCallback(() => {
+    if (refreshAttempts.current >= MAX_REFRESH_ATTEMPTS) {
+      setPlaybackError(true);
+      return;
+    }
+    void attemptRefresh();
+  }, [attemptRefresh]);
+
+  const retry = useCallback(() => {
+    refreshAttempts.current = 0;
+    setPlaybackError(false);
+    setRefreshError(null);
+    void attemptRefresh();
+  }, [attemptRefresh]);
+
+  useEffect(
+    () => () => {
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    },
+    [],
+  );
 
   // Only one thing plays at a time: a different <audio> starting (library
   // row, compare page) pauses the global player.
@@ -362,6 +429,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       duration,
       refreshing,
       refreshError,
+      playbackError,
+      retry,
       dataSaver,
       dataSaverPref: pref,
       setDataSaverPref,
@@ -379,7 +448,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       seekBy,
       close,
     }),
-    [track, playing, currentTime, duration, refreshing, refreshError, dataSaver, pref, setDataSaverPref, load, playQueue, next, previous, queueState, toggle, seekTo, seekBy, close],
+    [track, playing, currentTime, duration, refreshing, refreshError, playbackError, retry, dataSaver, pref, setDataSaverPref, load, playQueue, next, previous, queueState, toggle, seekTo, seekBy, close],
   );
 
   return (
@@ -419,9 +488,16 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             setMediaPosition(el.currentTime, el.duration);
           }
         }}
+        onPlaying={() => {
+          refreshAttempts.current = 0;
+          setPlaybackError(false);
+          setRefreshError(null);
+        }}
         onLoadedMetadata={(e) => {
           const d = e.currentTarget.duration;
           if (isFinite(d) && d > 0) setDuration(d);
+          // The (possibly refreshed) URL loaded: recovery worked.
+          refreshAttempts.current = 0;
         }}
         onError={onError}
       />

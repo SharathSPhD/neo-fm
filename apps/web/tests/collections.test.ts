@@ -74,3 +74,14 @@ describe("song eligibility", () => {
     expect(songVisibleToPublic(null)).toBe(false);
   });
 });
+
+describe("queue audio url", () => {
+  it("uses the owner endpoint for your own songs and the public one for others'", async () => {
+    const { queueAudioUrlPath } = await import("../components/player/player-provider");
+    const q = { songId: "11111111-1111-4111-8111-111111111111", publicId: "abcdefghjk" };
+    expect(queueAudioUrlPath(q, true)).toBe(`/api/songs/${q.songId}/audio-url`);
+    expect(queueAudioUrlPath(q, false)).toBe("/api/p/abcdefghjk/audio-url");
+    // A song someone else owns and hasn't published has no public path: fall back (the endpoint will 404 and the queue skips it).
+    expect(queueAudioUrlPath({ songId: q.songId, publicId: null }, false)).toBe(`/api/songs/${q.songId}/audio-url`);
+  });
+});
