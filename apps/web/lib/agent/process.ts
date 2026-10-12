@@ -7,7 +7,7 @@ import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
-import { polishLyrics } from "../lyrics/polish";
+import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
@@ -100,7 +100,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
           if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
             try {
-              a = { ...a, lyrics: await polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }) };
+              a = { ...a, lyrics: await polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db)) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
               if (!v2.allowed) throw new SafetyRefusal(v2.reason);
               await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
