@@ -1,4 +1,4 @@
--- 0066_public_profiles_owner_view.sql  (number pending from lead; see PR description)
+-- 0071_public_profiles_owner_view.sql  (number provisional, pending lead confirmation)
 -- Threat-model fix T-RLS-3 (docs/SECURITY-THREAT-MODEL.md, issue #38).
 --
 -- Before: policy users_select_public_handle exposed every row with a handle to anon AND authenticated, and
@@ -6,7 +6,7 @@
 -- users' email and tier. The public_profiles view was security_invoker, so it depended on that policy.
 --
 -- After: the view runs as its owner (bypasses RLS) and exposes only (id, handle, created_at); the broad policy
--- is dropped, so users can read only their own users row. Every app read of another user goes through the view
+-- is dropped (prod already narrowed it to anon by 0070), so signed-in users can read only their own users row. Every app read of another user goes through the view
 -- (u/[handle], discover). Intentional: Supabase's security_definer_view lint will flag this view; the column
 -- list is the access control.
 
