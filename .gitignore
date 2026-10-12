@@ -102,3 +102,4 @@ docs/contracts/*
 !docs/contracts/openapi-dgx.yaml
 voice-tts.md
 review/
+apps/web/tests/e2e/.share-state.json
