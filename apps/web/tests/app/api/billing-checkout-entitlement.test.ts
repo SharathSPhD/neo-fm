@@ -7,13 +7,14 @@ import { NextResponse } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sessionsCreate = vi.fn();
+const subsList = vi.fn();
 const constructEvent = vi.fn();
 const retrieve = vi.fn();
 const rpc = vi.fn();
 const billingRow = vi.hoisted(() => ({ value: null as { stripe_customer_id: string; status: string } | null }));
 
 vi.mock("@/lib/billing/stripe", () => ({
-  getStripe: () => ({ checkout: { sessions: { create: sessionsCreate } }, webhooks: { constructEvent }, subscriptions: { retrieve } }),
+  getStripe: () => ({ checkout: { sessions: { create: sessionsCreate } }, subscriptions: { retrieve, list: subsList }, webhooks: { constructEvent } }),
 }));
 vi.mock("@/lib/supabase/server", () => ({ createServiceRoleClient: () => ({ rpc }) }));
 vi.mock("@/lib/supabase/auth", () => ({ requireUser: vi.fn() }));
@@ -27,7 +28,8 @@ const checkoutReq = (tier: string) => new Request("http://x/api/billing/checkout
 const hook = () => new Request("http://x/api/billing/webhook", { method: "POST", headers: { "stripe-signature": "t=1,v1=x" }, body: "{}" });
 
 beforeEach(() => {
-  for (const m of [sessionsCreate, constructEvent, retrieve, rpc]) m.mockReset();
+  for (const m of [sessionsCreate, constructEvent, retrieve, rpc, subsList]) m.mockReset();
+  subsList.mockResolvedValue({ data: [] });
   billingRow.value = null;
   rpc.mockImplementation(async (fn: string) => (fn === "claim_stripe_event" ? { data: "claimed", error: null } : { error: null }));
   vi.mocked(requireUser).mockReset().mockResolvedValue({ user: { id: "u1", email: "a@b.c" }, supabase: supabase() } as never);
@@ -54,11 +56,31 @@ describe("POST /api/billing/checkout", () => {
     await checkout(checkoutReq("pro"));
     expect(sessionsCreate).toHaveBeenCalledWith(expect.objectContaining({ customer: "cus_9" }));
   });
-  it.each(["active", "trialing"])("refuses a second subscription while %s", async (status) => {
+  it.each(["active", "trialing", "past_due", "unpaid"])("refuses a second subscription while %s", async (status) => {
     billingRow.value = { stripe_customer_id: "cus_9", status };
     const res = await checkout(checkoutReq("pro"));
     expect(res.status).toBe(409);
     expect(await res.json()).toMatchObject({ error: "already_subscribed" });
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+  it.each(["canceled", "incomplete_expired", "incomplete"])("lets a %s customer start a fresh checkout", async (status) => {
+    billingRow.value = { stripe_customer_id: "cus_9", status };
+    subsList.mockResolvedValue({ data: [{ status }] });
+    sessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/s" });
+    expect((await checkout(checkoutReq("pro"))).status).toBe(200);
+  });
+  it("blocks when Stripe has a live subscription the mirror hasn't recorded yet (webhook lag)", async () => {
+    billingRow.value = { stripe_customer_id: "cus_9", status: "inactive" };
+    subsList.mockResolvedValue({ data: [{ status: "canceled" }, { status: "active" }] });
+    const res = await checkout(checkoutReq("pro"));
+    expect(res.status).toBe(409);
+    expect(await res.json()).toMatchObject({ error: "already_subscribed", manage_url: "/account" });
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+  it("fails closed when Stripe cannot be asked", async () => {
+    billingRow.value = { stripe_customer_id: "cus_9", status: "canceled" };
+    subsList.mockRejectedValue(new Error("stripe down"));
+    expect((await checkout(checkoutReq("pro"))).status).toBe(502);
     expect(sessionsCreate).not.toHaveBeenCalled();
   });
   it("401 unauthenticated, 400 bad tier", async () => {

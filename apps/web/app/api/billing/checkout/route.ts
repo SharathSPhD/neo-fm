@@ -35,6 +35,7 @@ import {
   getPriceIdForTier,
   getPublicAppUrl,
 } from "@/lib/billing/config";
+import { isLiveSubscriptionStatus, MANAGE_PLAN_URL } from "@/lib/billing/checkout-guard";
 import { getStripe } from "@/lib/billing/stripe";
 import { requireUser } from "@/lib/supabase/auth";
 
@@ -84,16 +85,31 @@ export async function POST(req: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  const stripe = getStripe();
+
   // A second subscription would bill the user twice for one entitlement. Plan changes and cancellation go through
-  // the customer portal, which updates the existing subscription.
-  if (billing?.status === "active" || billing?.status === "trialing") {
+  // the customer portal. past_due/unpaid still hold a live Stripe subscription that recovers when the card is fixed.
+  // The mirror can lag the webhook, so when a customer is known also ask Stripe directly.
+  let alreadySubscribed = isLiveSubscriptionStatus(billing?.status);
+  if (!alreadySubscribed && billing?.stripe_customer_id) {
+    try {
+      const subs = await stripe.subscriptions.list({ customer: billing.stripe_customer_id, status: "all", limit: 10 });
+      alreadySubscribed = subs.data.some((sub) => isLiveSubscriptionStatus(sub.status));
+    } catch (err) {
+      // Fail closed: a possible double charge is worse than asking the user to retry.
+      return NextResponse.json(
+        { error: "stripe_lookup_failed", details: err instanceof Error ? err.message : String(err) },
+        { status: 502 },
+      );
+    }
+  }
+  if (alreadySubscribed) {
     return NextResponse.json(
-      { error: "already_subscribed", details: "Use the billing portal to change or cancel your plan." },
+      { error: "already_subscribed", details: "Use the billing portal to change or cancel your plan.", manage_url: MANAGE_PLAN_URL },
       { status: 409 },
     );
   }
 
-  const stripe = getStripe();
   const origin = getPublicAppUrl();
 
   try {
