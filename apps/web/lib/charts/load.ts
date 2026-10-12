@@ -1,6 +1,6 @@
 /**
  * Server-side chart loader. Calls the service-role-only chart_songs RPC
- * (migration 0076) and caches for 10 minutes so Discover and the landing
+ * (migration 0079) and caches for 10 minutes so Discover and the landing
  * page don't re-aggregate on every view. Any failure (including the
  * migration not being applied yet) yields an empty chart, never an error.
  */

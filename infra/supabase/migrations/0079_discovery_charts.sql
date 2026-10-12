@@ -1,4 +1,4 @@
--- 0076_discovery_charts.sql
+-- 0079_discovery_charts.sql
 -- "Top this week" per language and "song of the day" on Discover / landing.
 --
 -- One service-role-only function ranks PUBLIC, COMPLETED, playable songs from three signals in a window:
@@ -7,7 +7,7 @@
 --   * one contribution per (user, song): like=3, finished listen=1, share=2, summed then capped at 5, so a single
 --     account (or script) can't dominate and repeating an action adds nothing;
 --   * the song's owner never counts for their own song;
---   * test/automation accounts (example.* / smoke / e2e / test emails) never count;
+--   * test/automation accounts (e2e-bot, showcase-a/b, dpdp-test-, @neo-fm.test, @resend.dev, example.*, smoke emails) never count;
 --   * a song needs >= 2 distinct engaged users to rank at all;
 --   * songs with >= 3 abuse reports are excluded (moderation backstop; the existing report flow is the source).
 -- Returns no private data: public_id/title/language/style plus aggregate counts. No view is created, and the
@@ -67,7 +67,7 @@ as $$
     from signals s
     join eligible e on e.job_id = s.job_id and s.user_id <> e.owner_id
     join public.users u on u.id = s.user_id
-    where u.email !~* '(@example\.|^smoke|^e2e|^test)'
+    where u.email !~* '(^e2e-bot|^showcase-[ab]|^dpdp-test-|@neo-fm\.test$|@resend\.dev$|@example\.|^smoke)'
     group by s.job_id, s.user_id
   ),
   scored as (
