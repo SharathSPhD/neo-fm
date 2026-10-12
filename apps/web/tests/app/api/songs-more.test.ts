@@ -47,7 +47,7 @@ describe("POST /api/songs moderation and validation", () => {
   it("screens only the prompt branch, with the brief policy", async () => {
     authed(client());
     await POST(post(promptBody));
-    expect(screen).toHaveBeenCalledWith("a monsoon lullaby", "brief");
+    expect(screen).toHaveBeenCalledWith("a monsoon lullaby", "brief", { lang: "en" });
   });
   it("401s and 400s before any moderation or RPC", async () => {
     vi.mocked(requireUser).mockResolvedValue(NextResponse.json({ error: "unauthorized" }, { status: 401 }));
