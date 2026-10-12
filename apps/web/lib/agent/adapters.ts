@@ -107,17 +107,20 @@ export function runStore(db: SupabaseClient, agentKey: "free" | "pro"): RunStore
   };
 }
 
-export function spendGuard(db: SupabaseClient, env = process.env): SpendGuard {
-  const cap = Number(env.LYRIA_BUDGET_GBP ?? "3");
-  // Reserve/release amounts are the same estimate used by generateMusic().
+export function spendGuard(db: SupabaseClient, scope: { userId: string; userCapGbp: number }, env = process.env): SpendGuard {
+  const globalCap = Number(env.LYRIA_BUDGET_GBP ?? "3");
+  // Reserve/release amounts are the same estimate used by generateMusic(). Both the shared ceiling and the
+  // user's monthly envelope are checked in one atomic statement (migration 0055).
   return {
     async reserve(amount) {
-      const { data, error } = await db.rpc("reserve_spend", { p_provider: "lyria", p_amount: amount, p_cap: cap });
-      if (error) throw new Error(`reserve_spend: ${error.message}`);
+      const { data, error } = await db.rpc("reserve_user_spend", {
+        p_user: scope.userId, p_provider: "lyria", p_amount: amount, p_user_cap: scope.userCapGbp, p_global_cap: globalCap,
+      });
+      if (error) throw new Error(`reserve_user_spend: ${error.message}`);
       return data === true;
     },
     async release(amount) {
-      await db.rpc("release_spend", { p_provider: "lyria", p_amount: amount });
+      await db.rpc("release_user_spend", { p_user: scope.userId, p_provider: "lyria", p_amount: amount });
     },
   };
 }

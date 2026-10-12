@@ -12,12 +12,14 @@ export interface TierPlan {
   maxLyriaCalls: number;
   /** Cap on a single outcome grading loop; each iteration costs tokens. */
   maxOutcomeIterations: number;
+  /** Monthly Lyria spend envelope per user (GBP), enforced atomically with the shared ceiling. */
+  userLyriaCapGbp: number;
 }
 
 const PLANS: Record<AgentKey, TierPlan> = {
-  free: { agent: "free", maxLyriaCalls: 1, maxOutcomeIterations: 1 },
+  free: { agent: "free", maxLyriaCalls: 1, maxOutcomeIterations: 1, userLyriaCapGbp: 0.3 },
   // One full render: a throwaway clip-then-full pair doubled Lyria cost and added serial latency.
-  pro: { agent: "pro", maxLyriaCalls: 1, maxOutcomeIterations: 1 },
+  pro: { agent: "pro", maxLyriaCalls: 1, maxOutcomeIterations: 1, userLyriaCapGbp: 3 },
 };
 
 export function planForTier(tier: UserTier | null | undefined, override?: string | null): TierPlan {

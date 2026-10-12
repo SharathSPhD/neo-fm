@@ -44,7 +44,6 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
   const { environmentId, geminiKey } = env;
   const db = serviceClient();
   const sessions = sessionApi();
-  const guard = spendGuard(db);
   // Claim: queued -> processing is a conditional update, so two workers never take the same job.
   const { data: queued } = onlyJobId
     ? await db.from("jobs").select("id").eq("status", "queued").eq("id", onlyJobId)
@@ -89,7 +88,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Last gate before spend: the agent's own output is untrusted too.
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
-          return generateMusic(a, { guard, apiKey: geminiKey });
+          return generateMusic(a, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
         },
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
