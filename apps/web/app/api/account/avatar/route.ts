@@ -21,7 +21,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const BUCKET = "avatars";
-// Each upload costs a vision call, so replacements are spaced out per user.
+// Each upload costs a vision call, so replacements are spaced out per user (enforced by an atomic claim).
 const MIN_SECONDS_BETWEEN_UPLOADS = 20;
 
 const STATUS: Record<string, number> = {
@@ -57,15 +57,23 @@ export async function POST(request: NextRequest) {
   if (!checked.ok) return NextResponse.json({ error: checked.error }, { status: STATUS[checked.error] ?? 400 });
 
   const db = createServiceRoleClient();
-  const { data: row } = await db
+
+  // Claim the upload slot atomically: one UPDATE that only matches when the previous claim is old
+  // enough. Parallel requests cannot both pass, so at most one paid vision call runs per window and
+  // two uploads cannot both replace the same previous file. The claim is kept when moderation
+  // rejects the image, which also throttles retry spam.
+  const claimedAt = new Date();
+  const cutoff = new Date(claimedAt.getTime() - MIN_SECONDS_BETWEEN_UPLOADS * 1000).toISOString();
+  const { data: claimed, error: claimError } = await db
     .from("users")
-    .select("avatar_path, avatar_updated_at" as never)
+    .update({ avatar_updated_at: claimedAt.toISOString() } as never)
     .eq("id", userId)
-    .maybeSingle<UserRow>();
-  const last = row?.avatar_updated_at ? Date.parse(row.avatar_updated_at) : 0;
-  if (Date.now() - last < MIN_SECONDS_BETWEEN_UPLOADS * 1000) {
-    return NextResponse.json({ error: "too_many_uploads" }, { status: 429 });
-  }
+    .or(`avatar_updated_at.is.null,avatar_updated_at.lt.${cutoff}`)
+    .select("avatar_path" as never)
+    .returns<Pick<UserRow, "avatar_path">[]>();
+  if (claimError) return NextResponse.json({ error: "save_failed" }, { status: 500 });
+  if (!claimed?.length) return NextResponse.json({ error: "too_many_uploads" }, { status: 429 });
+  const previousPath = claimed[0]!.avatar_path;
 
   const verdict = await moderateAvatar(anthropicClient(), { mediaType: AVATAR_MIME[checked.format] as never, data: checked.bytes });
   if (!verdict.allowed) return NextResponse.json({ error: "avatar_rejected", reason: verdict.reason }, { status: 422 });
@@ -79,15 +87,22 @@ export async function POST(request: NextRequest) {
   });
   if (up.error) return NextResponse.json({ error: "upload_failed" }, { status: 500 });
 
-  const { error } = await db
+  // Compare-and-set on our claim: if a newer claim took over while we were moderating, this upload
+  // lost the race, so drop the file instead of leaving it orphaned.
+  const { data: saved, error } = await db
     .from("users")
-    .update({ avatar_path: path, avatar_updated_at: new Date().toISOString() } as never)
-    .eq("id", userId);
-  if (error) {
+    .update({ avatar_path: path } as never)
+    .eq("id", userId)
+    .eq("avatar_updated_at" as never, claimedAt.toISOString())
+    .select("id" as never)
+    .returns<{ id: string }[]>();
+  if (error || !saved?.length) {
     await db.storage.from(BUCKET).remove([path]);
-    return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    return error
+      ? NextResponse.json({ error: "save_failed" }, { status: 500 })
+      : NextResponse.json({ error: "superseded" }, { status: 409 });
   }
-  if (row?.avatar_path) await db.storage.from(BUCKET).remove([row.avatar_path]);
+  if (previousPath) await db.storage.from(BUCKET).remove([previousPath]);
   return NextResponse.json({ avatar_path: path });
 }
 
