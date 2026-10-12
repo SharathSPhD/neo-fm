@@ -13,13 +13,13 @@ import { mintEmbedToken } from "../../../../lib/agent/embed-token";
 import { briefText } from "../../../../lib/agent/runner";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
 import { PILOT_BRIEFS } from "../../../../lib/eval/briefs";
-import { judgePair, singleShot } from "../../../../lib/eval/judge";
+import { bestOfSix, judgePair, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const maxDuration = 300;
 
-const LYRICS_ONLY = "\nEVALUATION RUN: lyrics only. Do NOT call generate_music. Run the pce-poem skill, write /mnt/session/outputs/lyrics.md and cascade_audit.json, then finish.";
+const LYRICS_ONLY = `\nEVALUATION RUN: ${STRUCTURE_TARGET} Lyrics only. Do NOT call generate_music. Run the pce-poem skill, write /mnt/session/outputs/lyrics.md and cascade_audit.json, then finish.`;
 
 async function fetchLyrics(sessionId: string): Promise<string | null> {
   const client = anthropicClient();
@@ -42,11 +42,17 @@ export async function POST(req: NextRequest) {
   const { data: cfg } = await db.from("config_versions").select("id").eq("kind", "pipeline").eq("status", "live").limit(1);
   const configId = ((cfg ?? [])[0] as { id: string } | undefined)?.id ?? null;
   const out: string[] = [];
+  const baseline = req.nextUrl.searchParams.get("baseline") === "best6" ? "best6" : "single";
+  const reuse = req.nextUrl.searchParams.get("reuse"); // copy finished PCE arms from another batch (no re-run)
   for (const b of PILOT_BRIEFS.slice(0, n)) {
     const base = { batch, brief_id: b.id, language: b.language, style_family: b.style, brief: b.text, config_version_id: configId };
     try {
-      const text = await singleShot(client, b.language, b.style, b.text);
+      const text = baseline === "best6" ? await bestOfSix(client, b.language, b.style, b.text) : await singleShot(client, b.language, b.style, b.text);
       await db.from("eval_runs").upsert({ ...base, arm: "single", status: "done", lyrics: text }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
+      if (reuse) {
+        const { data: prev } = await db.from("eval_runs").select("lyrics,session_id").eq("batch", reuse).eq("brief_id", b.id).eq("arm", "pce").eq("status", "done").maybeSingle();
+        if (prev?.lyrics) { await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "done", lyrics: prev.lyrics, session_id: prev.session_id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true }); out.push(`${b.id}: reused`); continue; }
+      }
       const s = await sessions.create({ agentId: agentIdFor("free"), environmentId: envId, title: `eval ${batch} ${b.id}` });
       const engine = process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim(), 3600) } : undefined;
       await sessions.sendOutcome(s.id, { description: briefText({ language: b.language, styleFamily: b.style, targetSeconds: 30, prompt: b.text, engine }) + LYRICS_ONLY, rubric: "- lyrics.md exists, in the target language and script, sectioned for singing", maxIterations: 1 });
