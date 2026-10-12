@@ -16,7 +16,7 @@ import { allEvalBriefs } from "../../../../lib/eval/briefs-gen";
 
 const PILOT_BRIEFS = allEvalBriefs();
 import { polishLyrics } from "../../../../lib/lyrics/polish";
-import { bestOfSix, judgePair, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
+import { bestOfSix, judgePair, judgePairGemini, singleShot, STRUCTURE_TARGET } from "../../../../lib/eval/judge";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -108,6 +108,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ batch, to, log, total: [...new Set(rows.map((r) => r.brief_id))].length });
   }
 
+  if (action === "gjudge") {
+    // Second, independent judge (Gemini) over an already-judged batch; stored beside the Claude verdict for agreement stats.
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return NextResponse.json({ error: "GEMINI_API_KEY missing" }, { status: 503 });
+    const { data: js } = await db.from("eval_judgments").select("id,brief_id,detail").eq("batch", batch);
+    const { data: rs } = await db.from("eval_runs").select("brief_id,arm,lyrics,language,brief").eq("batch", batch);
+    const todo = ((js ?? []) as { id: string; brief_id: string; detail: Record<string, unknown> }[]).filter((j) => !j.detail?.gemini).slice(0, Number(req.nextUrl.searchParams.get("n") ?? 10));
+    const rr = (rs ?? []) as { brief_id: string; arm: string; lyrics: string; language: string; brief: string }[];
+    const log: string[] = [];
+    await Promise.all(todo.map(async (j) => {
+      const pce = rr.find((r) => r.brief_id === j.brief_id && r.arm === "pce"); const one = rr.find((r) => r.brief_id === j.brief_id && r.arm === "single");
+      if (!pce || !one) return;
+      const g = await judgePairGemini(pce.language, pce.brief, pce.lyrics, one.lyrics, key);
+      await db.from("eval_judgments").update({ detail: { ...j.detail, gemini: g } }).eq("id", j.id);
+      log.push(`${j.brief_id}: ${g.winner}`);
+    }));
+    return NextResponse.json({ batch, log, remaining: Math.max(0, ((js ?? []) as { detail: Record<string, unknown> }[]).filter((j) => !j.detail?.gemini).length - todo.length) });
+  }
+
   if (action === "events") {
     const sid = req.nextUrl.searchParams.get("session");
     if (!sid) return NextResponse.json({ error: "session required" }, { status: 400 });
@@ -173,8 +192,12 @@ export async function GET(req: NextRequest) {
   const w = count("pce"), l = count("single"), nn = w + l;
   let p = 1;
   if (nn > 0) { const k = Math.max(w, l); let tail = 0; let c = 1; for (let i = 0; i <= nn; i++) { if (i > 0) c = (c * (nn - i + 1)) / i; if (i >= k) tail += c; } p = Math.min(1, (2 * tail) / 2 ** nn); }
+  const gj = judgments.map((x) => ({ c: x.winner, g: (x.detail as { gemini?: { winner?: string } })?.gemini?.winner })).filter((x) => x.g);
+  const gCount = (w: string) => gj.filter((x) => x.g === w).length;
+  const bothDecided = gj.filter((x) => x.c !== "tie" && x.g !== "tie");
+  const gemini = gj.length ? { judged: gj.length, pce_wins: gCount("pce"), other_wins: gCount("single"), ties: gCount("tie"), agree_with_claude_on_decided: bothDecided.length ? Math.round((bothDecided.filter((x) => x.c === x.g).length / bothDecided.length) * 100) / 100 : null, n_decided_by_both: bothDecided.length } : null;
   return NextResponse.json({
-    batch, judged: judgments.length, pce_wins: w, single_wins: l, ties: count("tie"), sign_test_p: Math.round(p * 1000) / 1000,
+    batch, gemini, judged: judgments.length, pce_wins: w, single_wins: l, ties: count("tie"), sign_test_p: Math.round(p * 1000) / 1000,
     by_language, mean_dim_diff,
     pending_runs: ((runs ?? []) as { status: string }[]).filter((r) => r.status === "running").length,
     per_brief: judgments.map((x) => ({ brief_id: x.brief_id, winner: x.winner })),

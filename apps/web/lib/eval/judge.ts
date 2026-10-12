@@ -50,6 +50,41 @@ async function once(client: Anthropic, language: string, brief: string, a: strin
   } catch { return null; }
 }
 
+/** Same rubric, different model family (Gemini): guards against the Claude-judges-Claude self-preference bias. */
+async function onceGemini(language: string, brief: string, a: string, b: string, apiKey: string): Promise<{ A: Scores; B: Scores } | null> {
+  const model = process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash";
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: RUBRIC }] },
+      contents: [{ parts: [{ text: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}` }] }],
+      generationConfig: { responseMimeType: "application/json" },
+    }),
+  });
+  if (!res.ok) return null;
+  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  try {
+    const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { A: Scores; B: Scores };
+    for (const k of ["A", "B"] as const) for (const d of DIMS) if (!(j[k]?.[d] >= 1 && j[k][d] <= 5)) return null;
+    return { A: j.A, B: j.B };
+  } catch { return null; }
+}
+
+function combine(first: { A: Scores; B: Scores } | null, second: { A: Scores; B: Scores } | null) {
+  if (!first || !second) return { winner: "tie" as const, detail: { error: "unparseable judge output" } };
+  const dim = {} as Record<Dim, number>; let total = 0;
+  for (const d of DIMS) { dim[d] = ((first.A[d] - first.B[d]) + (second.B[d] - second.A[d])) / 2; total += dim[d]; }
+  const winner = total >= 1 ? "pce" : total <= -1 ? "single" : "tie";
+  return { winner: winner as "pce" | "single" | "tie", detail: { total_diff: total, dim_diff: dim } };
+}
+
+export async function judgePairGemini(language: string, brief: string, pce: string, other: string, apiKey: string) {
+  const [first, second] = await Promise.all([onceGemini(language, brief, pce, other, apiKey), onceGemini(language, brief, other, pce, apiKey)]);
+  return combine(first, second);
+}
+
 /** Blind pairwise scoring in both orders. Per-dimension scores are averaged over orders (removes position bias);
  *  a pair is a win when the total differs by >= 1.0 point (of 25) in the same direction. */
 export async function judgePair(client: Anthropic, language: string, brief: string, pce: string, other: string) {
