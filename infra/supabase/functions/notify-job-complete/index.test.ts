@@ -188,6 +188,7 @@ Deno.test("drainQueue archives messages on successful send", async () => {
     },
     appUrl: APP_URL,
     from: FROM,
+    now: () => Date.parse("2026-01-01T00:01:00Z"),
   });
 
   assertEquals(processed, 2);
@@ -225,6 +226,7 @@ Deno.test("drainQueue archives unsendable rows (no email) without sending", asyn
     },
     appUrl: APP_URL,
     from: FROM,
+    now: () => Date.parse("2026-01-01T00:01:00Z"),
   });
 
   assertEquals(processed, 0);
@@ -259,6 +261,7 @@ Deno.test("drainQueue leaves message in queue when send fails", async () => {
     },
     appUrl: APP_URL,
     from: FROM,
+    now: () => Date.parse("2026-01-01T00:01:00Z"),
   });
 
   assertEquals(processed, 0);
@@ -286,4 +289,63 @@ Deno.test("buildResendRequest -- Resend API shape matches docs", () => {
   assert(body !== null);
   const keys = Object.keys(body).sort();
   assertEquals(keys, ["from", "html", "subject", "text", "to"]);
+});
+
+Deno.test("localised email: Hindi subject, html lang and CTA", () => {
+  const opts = {
+    jobId: "job-hi",
+    publicId: null,
+    songTitle: "बारिश",
+    status: "completed" as const,
+    appUrl: APP_URL,
+    language: "hi",
+  };
+  assertEquals(renderEmailSubject(opts), 'आपका गीत "बारिश" तैयार है 🎵');
+  const html = renderEmailHtml(opts);
+  assertStringIncludes(html, '<html lang="hi">');
+  assertStringIncludes(html, "अभी सुनें");
+  assertStringIncludes(html, `${APP_URL}/songs/job-hi`);
+});
+
+Deno.test("localised email: every launch language renders both states", () => {
+  for (const language of ["en", "hi", "ta", "te", "kn", "bn"]) {
+    for (const status of ["completed", "failed"] as const) {
+      const opts = { jobId: "j", publicId: null, songTitle: "T", status, appUrl: APP_URL, language };
+      assertStringIncludes(renderEmailHtml(opts), `<html lang="${language}">`);
+      assert(renderEmailText(opts).includes(APP_URL));
+    }
+  }
+});
+
+Deno.test("unknown or missing language falls back to English", () => {
+  for (const language of [null, undefined, "sa", "xx"]) {
+    const subject = renderEmailSubject({
+      jobId: "j", publicId: null, songTitle: "T", status: "completed", appUrl: APP_URL, language,
+    });
+    assertEquals(subject, 'Your song "T" is ready 🎵');
+  }
+});
+
+Deno.test("drainQueue archives stale messages unsent", async () => {
+  const archived: number[] = [];
+  const sent: ResendRequestBody[] = [];
+  const processed = await drainQueue({
+    read: async () => [
+      {
+        msg_id: 401,
+        read_ct: 1,
+        enqueued_at: "2026-01-01T00:00:00Z",
+        vt: "2026-01-01T00:00:30Z",
+        message: { job_id: "old", user_email: "a@example.com", song_title: "Old", status: "completed", public_id: null },
+      },
+    ],
+    archive: async (id) => { archived.push(id); },
+    send: async (b) => { sent.push(b); },
+    appUrl: APP_URL,
+    from: FROM,
+    now: () => Date.parse("2026-01-03T00:00:00Z"),
+  });
+  assertEquals(processed, 0);
+  assertEquals(archived, [401]);
+  assertEquals(sent.length, 0);
 });

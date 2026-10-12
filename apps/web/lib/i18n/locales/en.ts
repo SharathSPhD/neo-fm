@@ -144,7 +144,6 @@ export const en = {
   "cta.title": "Loved the clip? Make the whole song yours.",
   "cta.body": "Free songs are 30-second previews. Pro writes your lyrics in several passes, lets you steer them, and renders a full-length track in your language and style.",
   "cta.button": "See Pro",
-  "profile.eyebrow": "profile",
   "profile.follower": "{n} follower",
   "profile.followers": "{n} followers",
   "profile.joined": "joined",

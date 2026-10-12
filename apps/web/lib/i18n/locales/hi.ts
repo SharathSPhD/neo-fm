@@ -146,7 +146,6 @@ export const hi: Dict = {
   "cta.title": "क्लिप पसंद आई? पूरा गीत अपना बनाइए।",
   "cta.body": "मुफ़्त गीत 30 सेकंड की झलक होते हैं। Pro आपके बोल कई चरणों में लिखता है, आपको दिशा देने देता है और आपकी भाषा व शैली में पूरी अवधि का गीत बनाता है।",
   "cta.button": "Pro देखें",
-  "profile.eyebrow": "प्रोफ़ाइल",
   "profile.follower": "{n} फ़ॉलोअर",
   "profile.followers": "{n} फ़ॉलोअर",
   "profile.joined": "जुड़े",

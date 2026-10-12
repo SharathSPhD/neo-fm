@@ -11,16 +11,16 @@ This replaces the DGX/HeartMuLa path with Managed Agents (lyrics, pce-poem casca
 ## Monetisation (Stripe tiers already in the app)
 | Plan | Price | Limits (proposal) | Why |
 |---|---|---|---|
-| Free | INR 0 | 3 clips/month (<=30s), watermark-labelled | acquisition, no real cost exposure |
-| Creator | INR 399/mo | 30 full songs/month | healthy margin at ~INR 7-20 render cost |
-| Pro | INR 1,499/mo | 150 full songs/month + stems + API | power users, studios |
+| Free | INR 0 | 3 songs/month (30s), AI-labelled | acquisition, capped cost exposure |
+| Creator | INR 299/mo | 15 songs/month, up to 90s | ~50% modeled margin after Claude + Lyria + infra |
+| Pro | INR 799/mo | 40 songs/month, up to 3 min, Opus final polish | power users, small studios |
 Add-ons later: credit packs (top-up renders), commercial-use licence, karaoke/stems exports.
 
 **Unit economics - must be measured before launch.** Secondary sources put Lyria around USD 0.04 (clip) to 0.08 (full)
 per track; our ledger assumes GBP 0.05 / 0.25 (deliberately conservative). Claude cost per song (measured via
-`usage` on session events): free tier is Haiku-only (~cents); pro adds Sonnet + one Opus polish. Target gross margin >= 70%.
-Existing DB quotas (free 3 / creator 100 / pro 1000 songs per month) are **too generous for paid Lyria renders** -
-retune in `user_tier_quota()` once real cost per full song is measured.
+`usage` on session events): free tier is Haiku-only (~cents); pro adds Sonnet + one Opus polish. Modeled gross margin is ~50% (see ECONOMICS.md); not yet verified against billing.
+Quotas are now 3 / 15 / 40 songs per month (`user_tier_quota()`, migration 0061) with per-user Lyria spend caps in
+`apps/web/lib/agent/tiers.ts`; retune both once real cost per full song is measured from Lyria billing (see ECONOMICS.md).
 
 ## Ethics, safety, security (what is enforced in code)
 - Content gate before any job and again before any paid call: deterministic rules + Haiku moderator, fails closed
