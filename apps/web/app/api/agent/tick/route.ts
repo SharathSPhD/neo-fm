@@ -8,6 +8,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { checkBearer } from "../../../../lib/agent/auth";
 import { processJobs } from "../../../../lib/agent/process";
+import { serviceClient } from "../../../../lib/agent/adapters";
+import { sweepDeps, sweepStuckJobs } from "../../../../lib/agent/sweeper";
 import { requireId } from "../../../../lib/agent/tiers";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +30,9 @@ export async function GET(req: NextRequest) {
   }
   if (!geminiKey) return NextResponse.json({ error: "not_configured", message: "Missing GEMINI_API_KEY" }, { status: 503 });
   try {
-    return NextResponse.json(await processJobs({ environmentId, geminiKey }));
+    // Sweep first so a wedged job is failed (and its reservation released) even if processing it throws.
+    const swept = await sweepStuckJobs(sweepDeps(serviceClient())).catch((e) => ({ sweep_error: String((e as Error).message).slice(0, 200) }));
+    return NextResponse.json({ ...(await processJobs({ environmentId, geminiKey })), swept });
   } catch (e) {
     return NextResponse.json({ error: "tick_failed", message: (e as Error).message }, { status: 500 });
   }
