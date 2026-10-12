@@ -7,6 +7,8 @@ import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
+import { auditDiction } from "../diction/gemini";
+import { dictionHints } from "../diction";
 import { mintEmbedToken } from "./embed-token";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
@@ -88,7 +90,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Last gate before spend: the agent's own output is untrusted too.
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
-          return generateMusic(a, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
+          return generateMusic({ ...a, stylePrompt: [a.stylePrompt, dictionHints(doc.language)].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey });
         },
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
@@ -99,7 +101,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         },
       });
       results[job.id] = outcome;
-      if (outcome === "done") await finalize(db, job.id);
+      if (outcome === "done") {
+        await finalize(db, job.id);
+        await qaDiction(db, job.id, doc.language, geminiKey);
+      }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
       results[job.id] = `error: ${msg}`;
@@ -174,4 +179,20 @@ async function finalize(db: ReturnType<typeof serviceClient>, jobId: string) {
   }
   await db.from("tracks").upsert({ job_id: jobId, attempt_id: attemptId, url: `tracks/${run.audio_path}`, format: "mp3" }, { onConflict: "job_id,attempt_id" });
   await db.from("jobs").update({ status: "completed", progress: 1, finished_at: now }).eq("id", jobId);
+}
+
+/** Best-effort post-render audit: Gemini hears the song, we score it against the intended lyrics. Never fails the job. */
+async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string) {
+  try {
+    const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,diction_qa").eq("job_id", jobId).limit(1);
+    const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; diction_qa: unknown } | undefined;
+    if (!r?.audio_path || !r.lyrics || r.diction_qa) return;
+    const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
+    if (!blob) return;
+    const audio = new Uint8Array(await blob.arrayBuffer());
+    const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
+    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-flash-latest" } }).eq("job_id", jobId);
+  } catch {
+    /* QA is advisory */
+  }
 }
