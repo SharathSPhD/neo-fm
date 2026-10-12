@@ -10,8 +10,9 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string; jobId: string } },
+  props: { params: Promise<{ id: string; jobId: string }> },
 ) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   if (!UUID_RE.test(params.id) || !UUID_RE.test(params.jobId)) {

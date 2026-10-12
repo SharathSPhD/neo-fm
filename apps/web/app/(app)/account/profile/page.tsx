@@ -9,14 +9,14 @@ import { createServerClient } from "@/lib/supabase/server";
 
 import { ProfileForm } from "./profile-form";
 
-export function generateMetadata(): Metadata {
-  const { t } = serverI18n();
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await serverI18n();
   return { title: `${t("profedit.title")} -- neo-fm`, robots: { index: false } };
 }
 export const dynamic = "force-dynamic";
 
 export default async function EditProfilePage() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account/profile");

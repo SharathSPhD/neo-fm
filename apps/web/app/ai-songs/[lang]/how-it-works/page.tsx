@@ -17,7 +17,8 @@ export function generateStaticParams() {
   return LANGUAGE_PAGES.map((p) => ({ lang: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { lang: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const page = languagePageBySlug(params.lang);
   if (!page) notFound();
   const a = LANGUAGE_ARTICLES[page.code];
@@ -32,7 +33,8 @@ export function generateMetadata({ params }: { params: { lang: string } }): Meta
   };
 }
 
-export default function HowItWorks({ params }: { params: { lang: string } }) {
+export default async function HowItWorks(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
   const page = languagePageBySlug(params.lang);
   if (!page) notFound();
   const a = LANGUAGE_ARTICLES[page.code];

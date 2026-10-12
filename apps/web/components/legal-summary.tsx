@@ -10,8 +10,8 @@ const SUMMARY_KEYS: Record<"terms" | "privacy", readonly UiKey[]> = {
  * Plain-language summary shown above the English legal text, in the
  * reader's UI language. It is a convenience: the English text governs.
  */
-export function LegalSummary({ kind }: { kind: "terms" | "privacy" }) {
-  const { t, lang } = serverI18n();
+export async function LegalSummary({ kind }: { kind: "terms" | "privacy" }) {
+  const { t, lang } = await serverI18n();
   return (
     <aside aria-labelledby={`${kind}-summary`} className="mt-8 rounded-xl border border-accent/30 bg-accent/5 p-5" lang={lang}>
       <h2 id={`${kind}-summary`} className="text-lg font-medium">

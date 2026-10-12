@@ -102,7 +102,7 @@ describe("GET /api/lyrics/[id]", () => {
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
     const req = new NextRequest("http://localhost/api/lyrics/hi/kabir-pothi");
-    const res = await GET_ONE(req, { params: { id: "hi/kabir-pothi" } });
+    const res = await GET_ONE(req, { params: Promise.resolve({ id: "hi/kabir-pothi" }) });
     expect(res.status).toBe(401);
   });
 
@@ -112,7 +112,7 @@ describe("GET /api/lyrics/[id]", () => {
     // Next.js decodes the path segment before passing it in; we simulate the
     // already-decoded path here, but the route also tolerates a re-encoded
     // value (it calls decodeURIComponent internally).
-    const res = await GET_ONE(req, { params: { id: "hi%2Fkabir-pothi" } });
+    const res = await GET_ONE(req, { params: Promise.resolve({ id: "hi%2Fkabir-pothi" }) });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { id: string; body: string; language: string };
     expect(body.id).toBe("hi/kabir-pothi");
@@ -123,7 +123,7 @@ describe("GET /api/lyrics/[id]", () => {
   it("returns 404 for an unknown id", async () => {
     authedRequire();
     const req = new NextRequest("http://localhost/api/lyrics/hi/nope");
-    const res = await GET_ONE(req, { params: { id: "hi/nope" } });
+    const res = await GET_ONE(req, { params: Promise.resolve({ id: "hi/nope" }) });
     expect(res.status).toBe(404);
   });
 });

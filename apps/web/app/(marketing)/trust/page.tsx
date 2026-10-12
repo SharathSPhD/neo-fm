@@ -24,8 +24,8 @@ const COMMITMENTS: readonly { title: UiKey; body: UiKey }[] = [
   { title: "trust.c6.title", body: "trust.c6.body" },
 ];
 
-export default function TrustPage() {
-  const { t } = serverI18n();
+export default async function TrustPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">{t("trust.title")}</h1>
@@ -44,7 +44,7 @@ export default function TrustPage() {
         <h2 id="grievance-heading" className="text-lg font-medium">{t("trust.g.title")}</h2>
         <p className="mt-2 text-sm text-foreground/70">
           {t("trust.g.p1a")} <strong>{t("pub.report.open")}</strong> {t("trust.g.p1b")}{" "}
-          <a className="underline" href="mailto:grievance@neo-fm.com">grievance@neo-fm.com</a> {t("trust.g.p1c")}
+          <a className="underline" href="mailto:info@technektar.com">info@technektar.com</a> {t("trust.g.p1c")}
         </p>
         <p className="mt-2 text-sm text-foreground/60">
           {t("trust.g.notReport")}{" "}

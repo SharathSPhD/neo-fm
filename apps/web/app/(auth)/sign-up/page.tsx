@@ -9,7 +9,7 @@ import { SignUpForm } from "./sign-up-form";
 import { serverI18n } from "@/lib/i18n/server";
 
 export default async function SignUpPage() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data } = await supabase.auth.getUser();
   if (data?.user) redirect("/library");

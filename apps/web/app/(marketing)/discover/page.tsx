@@ -84,12 +84,13 @@ type DiscoverRow = {
     | null;
 };
 
-export default async function DiscoverPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const { t } = serverI18n();
+export default async function DiscoverPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const style = ALLOWED_STYLES.has(searchParams.style ?? "")
     ? (searchParams.style as string)
@@ -326,7 +327,7 @@ export default async function DiscoverPage({
   );
 }
 
-function DiscoverPagination({
+async function DiscoverPagination({
   current,
   style,
   hasNext,
@@ -335,7 +336,7 @@ function DiscoverPagination({
   style: string | null;
   hasNext: boolean;
 }) {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   function pageHref(p: number) {
     const params = new URLSearchParams();
     if (style) params.set("style", style);

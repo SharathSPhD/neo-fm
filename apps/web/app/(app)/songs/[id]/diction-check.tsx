@@ -3,9 +3,9 @@ import { serverI18n } from "@/lib/i18n/server";
 type Qa = { matchPct?: number; flagged?: { line: string; heard: string; cer: number }[]; error?: string } | null;
 
 /** Post-render pronunciation check (Gemini listened to the song and compared it with the lyrics). */
-export function DictionCheck({ qa }: { qa: Qa }) {
+export async function DictionCheck({ qa }: { qa: Qa }) {
   if (!qa || qa.matchPct === undefined) return null;
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const tone = qa.matchPct >= 85 ? "text-emerald-300" : qa.matchPct >= 70 ? "text-amber-200" : "text-red-300";
   return (
     <section aria-labelledby="diction-h" className="rounded-lg border border-muted/20 p-4 text-sm">

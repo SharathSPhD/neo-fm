@@ -104,7 +104,7 @@ describe("PATCH /api/collections/[id]", () => {
     authed();
     (screenRequest as ReturnType<typeof vi.fn>).mockResolvedValue({ allowed: false, reason: "no" });
     const calls = fakeDb({});
-    const res = await PATCH(json({ title: "bad" }), { params: { id: COL } });
+    const res = await PATCH(json({ title: "bad" }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(422);
     expect(calls.some((c) => c.op === "update")).toBe(false);
   });
@@ -113,7 +113,7 @@ describe("PATCH /api/collections/[id]", () => {
     authed();
     (screenRequest as ReturnType<typeof vi.fn>).mockResolvedValue({ allowed: true });
     const calls = fakeDb({ collections: [{ data: null, error: null }] });
-    const res = await PATCH(json({ visibility: "public" }), { params: { id: COL } });
+    const res = await PATCH(json({ visibility: "public" }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(404);
     expect(calls.filter((c) => c.op === "eq").map((c) => c.args)).toContainEqual(["user_id", USER]);
   });
@@ -121,7 +121,7 @@ describe("PATCH /api/collections/[id]", () => {
   it("skips moderation for a visibility-only change", async () => {
     authed();
     fakeDb({ collections: [{ data: { id: COL }, error: null }] });
-    const res = await PATCH(json({ visibility: "unlisted" }), { params: { id: COL } });
+    const res = await PATCH(json({ visibility: "unlisted" }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(200);
     expect(screenRequest).not.toHaveBeenCalled();
   });
@@ -134,7 +134,7 @@ describe("POST /api/collections/[id]/items", () => {
       collections: [{ data: { id: COL } }],
       jobs: [{ data: { user_id: "someone-else", published_visibility: "private" } }],
     });
-    const res = await ADD(json({ jobId: JOB }), { params: { id: COL } });
+    const res = await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(404);
     expect(calls.some((c) => c.table === "collection_items" && c.op === "insert")).toBe(false);
   });
@@ -142,7 +142,7 @@ describe("POST /api/collections/[id]/items", () => {
   it("404s when the collection isn't the caller's", async () => {
     authed();
     fakeDb({ collections: [{ data: null }] });
-    expect((await ADD(json({ jobId: JOB }), { params: { id: COL } })).status).toBe(404);
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(404);
   });
 
   it("appends a published song after the last position", async () => {
@@ -155,7 +155,7 @@ describe("POST /api/collections/[id]/items", () => {
         { error: null },
       ],
     });
-    const res = await ADD(json({ jobId: JOB }), { params: { id: COL } });
+    const res = await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(201);
     const insert = calls.find((c) => c.table === "collection_items" && c.op === "insert")!;
     expect(insert.args[0]).toMatchObject({ collection_id: COL, job_id: JOB, position: 5 });
@@ -168,7 +168,7 @@ describe("POST /api/collections/[id]/items", () => {
       jobs: [{ data: { user_id: USER, published_visibility: "private" } }],
       collection_items: [{ data: [{ job_id: JOB, position: 0 }] }],
     });
-    const res = await ADD(json({ jobId: JOB }), { params: { id: COL } });
+    const res = await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) });
     expect(res.status).toBe(200);
     expect(calls.some((c) => c.op === "insert")).toBe(false);
   });
