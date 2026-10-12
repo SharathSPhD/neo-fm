@@ -51,8 +51,8 @@ export default function TrustPage() {
     <main className="mx-auto max-w-3xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Trust &amp; safety</h1>
       <p className="mt-3 text-foreground/70">
-        neo-fm is built for Indian languages and for people who love music.
-        These are the rules we hold ourselves to.
+        neo-fm, a Technektar product, is built for Indian languages and for people
+        who love music. These are the rules we hold ourselves to.
       </p>
       <ul className="mt-10 space-y-8">
         {COMMITMENTS.map((c) => (
