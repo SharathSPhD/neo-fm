@@ -40,3 +40,16 @@ export function checkAdminBearer(header: string | null, env = process.env): Auth
   if (!admin) return checkBearer(header, env);
   return checkBearer(header, { ADMIN_SECRET: undefined, CRON_SECRET: admin, AGENT_TICK_SECRET: undefined } as unknown as NodeJS.ProcessEnv);
 }
+
+/**
+ * Admin routes that Vercel Cron calls (self-improve, spend-monitor). Cron sends CRON_SECRET, so these accept
+ * ADMIN_SECRET as well as the cron/tick secrets; everything operator-only uses checkAdminBearer.
+ */
+export function checkCronOrAdminBearer(header: string | null, env = process.env): AuthResult {
+  const viaCron = checkBearer(header, env);
+  if (viaCron.ok) return viaCron;
+  const admin = cleanSecret(env.ADMIN_SECRET);
+  if (!admin) return viaCron;
+  const adminOnly = checkBearer(header, { CRON_SECRET: admin } as unknown as NodeJS.ProcessEnv);
+  return { ok: adminOnly.ok, diag: { secret_configured: true, bearer_present: viaCron.diag.bearer_present } };
+}

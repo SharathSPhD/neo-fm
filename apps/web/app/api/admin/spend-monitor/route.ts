@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { checkCronOrAdminBearer } from "../../../../lib/agent/auth";
 import { estimatedCostGbp } from "../../../../lib/agent/lyria";
 import { analyseSpend, type RunRow, type UserSpendRow } from "../../../../lib/spend/monitor";
 
@@ -16,7 +16,7 @@ export const maxDuration = 60;
 type JoinedRun = { job_id: string; status: string; lyria_calls: number; updated_at: string; jobs: { user_id: string; created_at: string } | { user_id: string; created_at: string }[] | null };
 
 export async function GET(req: NextRequest) {
-  const auth = checkAdminBearer(req.headers.get("authorization"));
+  const auth = checkCronOrAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const period = new Date().toISOString().slice(0, 7) + "-01";
