@@ -650,7 +650,7 @@ export const en = {
   "pub.report.sexual": "Sexual content or involves minors",
   "pub.report.copyright": "Copies someone's copyrighted work",
   "pub.report.other": "Something else",
-  "pub.report.thanks": "Thanks — we'll review this report. Urgent? Write to grievance@neo-fm.com.",
+  "pub.report.thanks": "Thanks — we'll review this report. Urgent? Write to info@technektar.com.",
   "pub.report.open": "Report this song",
   "pub.report.why": "Why are you reporting it?",
   "pub.report.details": "Details (optional)",
