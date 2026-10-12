@@ -18,3 +18,6 @@
 **What it does not support.** Claims about singability or prosody (PCE is slightly behind there), about human songwriters, about audio, or about "best". No native-speaker panel has reviewed these yet (needed before any stronger claim; advisor go/no-go: native kappa >= 0.4, per-language lower CI >= 45%).
 
 Reproduce: `/api/admin/pce-eval` actions start / advance / polishcopy / gjudge / report; data in tables `eval_runs`, `eval_judgments` (neo-fm-prod).
+
+## Guarded self-improvement: first run (2026-10-12)
+`/api/admin/self-improve` — Opus drafted a new polish template from the 8 worst-prosody training pairs (held-out briefs never shown). On the 28 held-out briefs it **lost** to the live template (candidate 11 PCE-wins vs live 20; worse on every dimension), so the verdict was `reject` and nothing changed. Promotion needs both Claude and Gemini to see a gain (>= +3 / +2 wins) with no dimension worse by > 0.15, and a daily monitor rolls a promoted version back if the pronunciation match drops > 10 points. The loop is data-only: it can change one prompt template, never code, safety rules, spend caps or the eval set.
