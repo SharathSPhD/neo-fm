@@ -102,10 +102,12 @@ export async function GET(req: NextRequest) {
     const { data: judged } = await db.from("eval_judgments").select("brief_id").eq("batch", batch);
     const have = new Set(((judged ?? []) as { brief_id: string }[]).map((j) => j.brief_id));
     const rows = (all ?? []) as { brief_id: string; arm: string; status: string; lyrics: string | null; language: string; brief: string }[];
+    let budget = 3; // keep each advance call well inside maxDuration
     for (const id of new Set(rows.map((r) => r.brief_id))) {
-      if (have.has(id)) continue;
+      if (have.has(id) || budget <= 0) continue;
       const pce = rows.find((r) => r.brief_id === id && r.arm === "pce"); const one = rows.find((r) => r.brief_id === id && r.arm === "single");
       if (pce?.status === "done" && pce.lyrics && one?.status === "done" && one.lyrics) {
+        budget--;
         const j = await judgePair(client, pce.language, pce.brief, pce.lyrics, one.lyrics);
         await db.from("eval_judgments").upsert({ batch, brief_id: id, winner: j.winner, detail: j.detail }, { onConflict: "batch,brief_id" });
         log.push(`${id}: judged ${j.winner}`);
