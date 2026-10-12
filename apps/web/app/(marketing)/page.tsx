@@ -157,6 +157,12 @@ function Footer() {
             Privacy
           </Link>
           <Link
+            href="/content-policy"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            Content policy
+          </Link>
+          <Link
             href="/terms"
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >

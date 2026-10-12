@@ -94,7 +94,7 @@ export function AccountActions({ email }: { email: string }) {
         />
         <ActionRow
           title="Export my data"
-          subtitle="Downloads a JSON dump of your songs and metadata."
+          subtitle="Downloads a JSON file of your account, songs, lyrics, settings and feedback. Audio files download from your library."
           buttonLabel="Download .json"
           onClick={exportData}
           disabled={pending}
@@ -107,7 +107,7 @@ export function AccountActions({ email }: { email: string }) {
       <div className="flex flex-col gap-3 rounded-md border border-red-400/30 bg-red-400/5 px-5 py-4">
         <ActionRow
           title="Delete account"
-          subtitle="Removes your sign-in. Songs you've published stay live but become anonymous."
+          subtitle="Permanently deletes your account, songs (including published ones, whose links will stop working), audio, feedback and any subscription. This can't be undone."
           buttonLabel="Delete account"
           onClick={deleteAccount}
           disabled={pending}
