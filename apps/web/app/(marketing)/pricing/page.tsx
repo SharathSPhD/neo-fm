@@ -15,6 +15,7 @@
  */
 import type { Metadata } from "next";
 
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { isBillingEnabled } from "@/lib/billing/config";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -22,6 +23,7 @@ import { UpgradeButton } from "./upgrade-button";
 import { WaitlistButton } from "./waitlist-button";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/pricing" },
   title: "Pricing -- neo-fm",
   description:
     "Free for 3 songs a month. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
@@ -105,8 +107,9 @@ export default async function PricingPage() {
   }
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
+      <FunnelBeacon event="pricing_view" />
       <header className="flex flex-col gap-3 text-center">
-        <p className="text-xs uppercase tracking-widest text-foreground/40">
+        <p className="text-xs uppercase tracking-widest text-foreground/60">
           pricing
         </p>
         <h1 className="text-4xl font-medium tracking-tight sm:text-5xl">
