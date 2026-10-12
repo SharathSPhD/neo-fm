@@ -1,8 +1,10 @@
 /**
  * PUT /api/songs/[id]/dedication  body { to, message }  -> set or clear
- * Owner-only (enforced again inside the set_dedication RPC). Both fields
- * are screened by the same moderation as briefs because they appear on a
- * public page and card; if moderation is unavailable we fail closed.
+ * Owner-only. The set_dedication RPC is service-role only (migration 0074),
+ * so this route is the only way in: it authenticates the caller, moderates
+ * both fields (same moderation as briefs, fail closed because the text is
+ * public), then writes via the service client passing the caller's id, which
+ * the RPC re-checks against the song's owner.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -10,6 +12,7 @@ import { SongIdSchema } from "../../../../../lib/api/song-schemas";
 import { screenRequest } from "../../../../../lib/safety";
 import { DedicationBodySchema } from "../../../../../lib/share/dedication";
 import { requireUser } from "../../../../../lib/supabase/auth";
+import { createServiceRoleClient } from "../../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +22,7 @@ export async function PUT(
 ) {
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
-  const { supabase } = authed;
+  const { user } = authed;
 
   const idCheck = SongIdSchema.safeParse(params.id);
   if (!idCheck.success) {
@@ -54,12 +57,13 @@ export async function PUT(
   }
 
   const { error } = await (
-    supabase.rpc as unknown as (
+    createServiceRoleClient().rpc as unknown as (
       fn: string,
       args: Record<string, unknown>,
     ) => Promise<{ error: { code?: string } | null }>
   )("set_dedication", {
     p_job_id: idCheck.data,
+    p_owner_id: user.id,
     p_to: to,
     p_message: message,
   });
