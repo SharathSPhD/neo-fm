@@ -88,3 +88,41 @@ a:focus {
 :root[data-theme="light"] .text-foreground\/55 {
   color: hsl(var(--foreground) / 0.68);
 }
+
+/*
+ * Embedded player themes (/s/<id>/embed?theme=light|dark|auto). Scoped to
+ * the embed root so the host page's and the app's own theme toggle never
+ * leak in; "auto" follows the visitor's OS setting.
+ */
+.embed-root {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.embed-root[data-embed-theme="light"] {
+  --background: 0 0% 99%;
+  --foreground: 240 10% 12%;
+  --accent: 28 92% 42%;
+  --muted: 240 5% 86%;
+}
+.embed-root[data-embed-theme="dark"] {
+  --background: 240 6% 8%;
+  --foreground: 0 0% 96%;
+  --accent: 28 92% 60%;
+  --muted: 240 4% 22%;
+}
+@media (prefers-color-scheme: light) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 12%;
+    --accent: 28 92% 42%;
+    --muted: 240 5% 86%;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 240 6% 8%;
+    --foreground: 0 0% 96%;
+    --accent: 28 92% 60%;
+    --muted: 240 4% 22%;
+  }
+}

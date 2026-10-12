@@ -12,7 +12,7 @@
  * (ADR 0013). On success we surface:
  *   - the public URL  /s/[publicId]
  *   - a "copy link" button
- *   - an "embed code" snippet (iframe pointing at /s/[publicId]/embed)
+ *   - an embed code generator (<EmbedBuilder>: layout, theme, width)
  */
 import { useEffect, useRef, useState } from "react";
 
@@ -22,6 +22,8 @@ import {
   DEDICATION_TO_MAX,
   whatsappShareUrl,
 } from "@/lib/share/dedication";
+
+import { EmbedBuilder } from "./embed-builder";
 
 interface ShareButtonProps {
   songId: string;
@@ -176,10 +178,6 @@ export function ShareButton({
     );
   }
 
-  const embedCode = publicId
-    ? `<iframe src="${typeof window !== "undefined" ? window.location.origin : ""}/s/${publicId}/embed" width="100%" height="180" frameborder="0" allow="autoplay; encrypted-media"></iframe>`
-    : "";
-
   return (
     <>
       <button
@@ -195,7 +193,7 @@ export function ShareButton({
           onClick={() => setOpen(false)}
         >
           <div
-            className="flex w-full max-w-md flex-col gap-4 rounded-lg border border-muted/30 bg-background p-6 shadow-xl"
+            className="flex w-full max-h-[90vh] max-w-md flex-col overflow-y-auto gap-4 rounded-lg border border-muted/30 bg-background p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <header className="flex items-center justify-between">
@@ -351,18 +349,13 @@ export function ShareButton({
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-widest text-foreground/40">
-                    Embed (iframe)
-                  </label>
-                  <textarea
-                    readOnly
-                    value={embedCode}
-                    onFocus={(e) => e.currentTarget.select()}
-                    rows={3}
-                    className="w-full rounded-md border border-muted/30 bg-muted/10 px-3 py-2 font-mono text-[10px]"
+                {publicId ? (
+                  <EmbedBuilder
+                    publicId={publicId}
+                    title={title}
+                    origin={typeof window !== "undefined" ? window.location.origin : ""}
                   />
-                </div>
+                ) : null}
               </>
             ) : (
               <p className="text-xs text-foreground/50">

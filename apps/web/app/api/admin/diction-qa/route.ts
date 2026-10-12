@@ -2,7 +2,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { qaDiction } from "../../../../lib/agent/process";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export const fetchCache = "force-no-store";
 export const maxDuration = 120;
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const job = req.nextUrl.searchParams.get("job");
   const key = process.env.GEMINI_API_KEY;

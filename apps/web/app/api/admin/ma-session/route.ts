@@ -6,14 +6,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { anthropicClient, runStore, serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 export const maxDuration = 60;
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   const probeText = req.nextUrl.searchParams.get("moderate");
   if (probeText) {
