@@ -16,11 +16,15 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { MoreLikeThis } from "@/components/more-like-this";
+import { loadDedication } from "@/lib/share/load";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
+
+import { requestOrigin } from "@/lib/embed/origin";
 
 import {
   createServerClient,
@@ -148,15 +152,28 @@ export async function generateMetadata({
   const description = doc.raga
     ? `Composed in raga ${doc.raga.name} (${doc.raga.system}). Generated on neo-fm.`
     : `${doc.target_duration_seconds}s composition generated on neo-fm.`;
+  const dedication = await loadDedication(idCheck.data);
+  // A dedication names a person: never index it, even on a public song.
   const robots =
-    data.published_visibility === "unlisted"
+    data.published_visibility === "unlisted" || dedication
       ? { index: false, follow: false }
       : { index: true, follow: true };
+  // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
+  // WordPress etc. turn a pasted link into the embedded player.
+  const origin = requestOrigin();
+  const oembed = origin
+    ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
+    : null;
   return {
-    title,
-    description,
+    title: dedication ? `A song for ${dedication.to}` : title,
+    description: dedication?.message
+      ? dedication.message.slice(0, 160)
+      : description,
     robots,
-    alternates: { canonical: `/s/${idCheck.data}` },
+    alternates: {
+      canonical: `/s/${idCheck.data}`,
+      ...(oembed ? { types: { "application/json+oembed": oembed } } : {}),
+    },
     openGraph: {
       title,
       description,
@@ -188,6 +205,8 @@ export default async function PublicSongPage({
       : doc
         ? prettyStyle(doc.style_family)
         : "Song";
+
+  const dedication = await loadDedication(idCheck.data);
 
   let signedUrl: string | null = null;
   let latestTrack: PublicSongRow["tracks"] extends (infer T)[] | null
@@ -280,6 +299,23 @@ export default async function PublicSongPage({
           ) : null}
         </p>
       </header>
+
+      {dedication ? (
+        <section
+          aria-label="Dedication"
+          className="flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent/5 p-5"
+        >
+          <p className="text-[11px] uppercase tracking-widest text-accent/80">
+            A song dedicated to
+          </p>
+          <p className="text-2xl font-medium tracking-tight">{dedication.to}</p>
+          {dedication.message ? (
+            <p className="whitespace-pre-line text-base text-foreground/80">
+              {dedication.message}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {signedUrl && latestTrack ? (
         <section className="flex flex-col gap-3">
@@ -387,6 +423,14 @@ export default async function PublicSongPage({
             ))}
           </ol>
         </section>
+      ) : null}
+
+      {doc ? (
+        <MoreLikeThis
+          publicId={data.public_id}
+          language={doc.language}
+          style={doc.style_family}
+        />
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
