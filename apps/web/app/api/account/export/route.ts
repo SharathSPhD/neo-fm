@@ -56,7 +56,7 @@ export async function GET() {
     admin.from("consents").select("*").eq("user_id", user.id),
     admin.from("taste_profiles").select("*").eq("user_id", user.id).maybeSingle(),
     admin.from("feedback_events").select("*").eq("user_id", user.id),
-    admin.from("user_billing").select("tier, status, current_period_end, created_at").eq("user_id", user.id).maybeSingle(),
+    admin.from("user_billing").select("status, stripe_price_id, current_period_end, cancel_at_period_end, created_at").eq("user_id", user.id).maybeSingle(),
     admin.from("agent_runs").select("job_id, lyrics, polished_lyrics, diction_qa, updated_at").in("job_id", ((jobs ?? []) as { id: string }[]).map((j) => j.id)),
     admin.from("user_presets").select("*").eq("user_id", user.id),
     admin.from("song_likes").select("*").eq("user_id", user.id),

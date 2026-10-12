@@ -16,10 +16,13 @@
  */
 import { useEffect, useRef, useState } from "react";
 
+import { buildSharePayload } from "@/lib/share/card";
+
 interface ShareButtonProps {
   songId: string;
   initialVisibility: "public" | "unlisted" | "private";
   initialPublicId: string | null;
+  title?: string;
   canShare: boolean; // false for non-completed songs
 }
 
@@ -34,6 +37,7 @@ export function ShareButton({
   songId,
   initialVisibility,
   initialPublicId,
+  title = "this song",
   canShare,
 }: ShareButtonProps) {
   const [open, setOpen] = useState(false);
@@ -93,6 +97,20 @@ export function ShareButton({
       setCopyState("failed");
       setTimeout(() => setCopyState("idle"), 1500);
     }
+  }
+
+  async function shareNatively(url: string) {
+    // Web Share API where available (mobile, Safari); otherwise the
+    // same copy-link path as the Copy button.
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share(buildSharePayload(title, url));
+        return;
+      } catch (e) {
+        if ((e as Error).name === "AbortError") return;
+      }
+    }
+    await copyToClipboard(url);
   }
 
   if (!canShare) {
@@ -188,6 +206,13 @@ export function ShareButton({
                       onFocus={(e) => e.currentTarget.select()}
                       className="flex-1 rounded-md border border-muted/30 bg-muted/10 px-3 py-2 font-mono text-xs"
                     />
+                    <button
+                      type="button"
+                      onClick={() => shareNatively(publicUrl)}
+                      className="rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-xs text-accent hover:bg-accent/15"
+                    >
+                      Share…
+                    </button>
                     <button
                       type="button"
                       onClick={() => copyToClipboard(publicUrl)}
