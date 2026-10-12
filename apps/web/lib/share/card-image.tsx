@@ -11,7 +11,7 @@ import {
   waveformBars,
 } from "./card";
 import type { CardFont } from "./card";
-import { loadFontsFor, shapeLine, type ShapedLine } from "./shape";
+import { loadFontsFor, loadLatinFont, shapeLine, type ShapedLine } from "./shape";
 
 export const CARD_SIZE = { width: 1200, height: 630 };
 
@@ -46,7 +46,7 @@ export async function renderShareCard({
   );
   const allShaped = shaped.length > 0 && shaped.every((s) => s !== null);
   const fonts = [
-    ...baseFonts,
+    ...(baseFonts.length ? baseFonts : [await loadLatinFont()]),
     ...(excerptText && !allShaped ? await loadFontsFor(excerptText) : []),
   ];
   const bars = waveformBars(seed);

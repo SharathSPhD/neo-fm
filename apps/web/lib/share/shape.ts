@@ -101,6 +101,23 @@ function transformPath(d: string, k: number, dx: number, dy: number): string {
   });
 }
 
+/** Latin base face, always passed to satori so Latin text (and an empty
+ * `fonts` list, which disables next/og's default) never leaves it fontless. */
+export async function loadLatinFont(): Promise<CardFont> {
+  let data = rawFontCache.get("latin");
+  if (!data) {
+    const buf = await readFile(
+      join(process.cwd(), "lib/share/fonts", "NotoSansLatin-Regular.ttf"),
+    );
+    data = buf.buffer.slice(
+      buf.byteOffset,
+      buf.byteOffset + buf.byteLength,
+    ) as ArrayBuffer;
+    rawFontCache.set("latin", data);
+  }
+  return { name: "Noto Sans", data, weight: 400, style: "normal" };
+}
+
 /**
  * Loads the bundled Noto face for the text's script (OFL, see
  * ./fonts/OFL.txt). Latin needs nothing: next/og ships its own. Bundled
