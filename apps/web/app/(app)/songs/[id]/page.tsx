@@ -247,7 +247,7 @@ export default async function SongDetailPage({
               {remixedFromInfo.title ? (
                 <Link
                   href={`/songs/${remixedFromInfo.id}`}
-                  className="text-accent underline-offset-4 hover:underline"
+                  className="text-accent underline underline-offset-4"
                 >
                   {remixedFromInfo.title}
                 </Link>

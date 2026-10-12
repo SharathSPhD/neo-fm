@@ -10,8 +10,8 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "./helpers/auth";
-import { expectNoSeriousA11yViolations } from "./helpers/axe";
+import { signIn } from "../helpers/auth";
+import { expectNoSeriousA11yViolations } from "../helpers/axe";
 
 test("Make a remix forks the parent song and stamps lineage", async ({ page }) => {
   await signIn(page);

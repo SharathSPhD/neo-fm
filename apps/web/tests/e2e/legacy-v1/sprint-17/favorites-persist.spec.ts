@@ -9,7 +9,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "../helpers/auth";
+import { signIn } from "../../helpers/auth";
 
 test("Favoriting a library row persists across reload and view toggle", async ({
   page,
