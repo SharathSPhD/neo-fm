@@ -204,19 +204,23 @@ async function finalize(db: ReturnType<typeof serviceClient>, jobId: string): Pr
 }
 
 /** Best-effort post-render audit: Gemini hears the song, we score it against the intended lyrics. Never fails the job. */
-async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string): Promise<{ matchPct: number } | null> {
+export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string): Promise<{ matchPct: number } | null> {
   try {
     const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,diction_qa").eq("job_id", jobId).limit(1);
     const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; diction_qa: unknown } | undefined;
-    if (!r?.audio_path || !r.lyrics || r.diction_qa) return null;
+    if (!r?.audio_path || !r.lyrics) { await db.from("agent_runs").update({ diction_qa: { error: !r?.audio_path ? "no audio" : "no lyrics captured" } }).eq("job_id", jobId); return null; }
+    if ((r.diction_qa as { matchPct?: number } | null)?.matchPct !== undefined) return null;
     const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
     if (!blob) return null;
     const audio = new Uint8Array(await blob.arrayBuffer());
     const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
     await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-2.5-flash" } }).eq("job_id", jobId);
     return { matchPct: qa.matchPct };
-  } catch {
-    /* QA is advisory */
+  } catch (e) {
+    /* QA is advisory, but leave the reason visible instead of failing silently */
+    const msg = String((e as Error)?.message ?? e).slice(0, 240);
+    console.error("diction qa failed", jobId, msg);
+    try { await db.from("agent_runs").update({ diction_qa: { error: msg } }).eq("job_id", jobId); } catch { /* ignore */ }
     return null;
   }
 }
