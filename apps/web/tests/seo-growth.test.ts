@@ -127,7 +127,11 @@ describe("sitemap", () => {
   });
 });
 
-import { isNotFoundError } from "next/dist/client/components/not-found";
+// next/dist's isNotFoundError moved between 14.2.x and 15; the digest is the stable contract.
+const isNotFoundError = (e: unknown): boolean => {
+  const digest = (e as { digest?: unknown } | null)?.digest;
+  return digest === "NEXT_NOT_FOUND" || digest === "NEXT_HTTP_ERROR_FALLBACK;404";
+};
 
 import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
 import { articleLd } from "@/lib/seo/jsonld";

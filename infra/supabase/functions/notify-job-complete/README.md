@@ -29,8 +29,8 @@ anything else falls back to English).
 | Variable                    | Required           | Notes                                              |
 | --------------------------- | ------------------ | -------------------------------------------------- |
 | `RESEND_API_KEY`            | yes (in prod)      | When unset, the function is a no-op (queue untouched). |
-| `RESEND_FROM`               | no                 | Defaults to `neo-fm <noreply@neo-fm.app>`.         |
-| `NEO_FM_PUBLIC_APP_URL`     | yes                | e.g. `https://neo-fm.app`. Used in the email link. |
+| `RESEND_FROM`               | no                 | Defaults to `neo-fm <noreply@neo-fm.com>`.         |
+| `NEO_FM_PUBLIC_APP_URL`     | yes                | e.g. `https://www.neo-fm.com`. Used in the email link. |
 | `SUPABASE_URL`              | auto               | Provided by the Supabase runtime.                  |
 | `SUPABASE_SERVICE_ROLE_KEY` | auto               | Provided by the Supabase runtime.                  |
 | `NEO_FM_WEBHOOK_SECRET`     | yes (recommended)  | Shared secret echoed back as `x-webhook-secret`.    |

@@ -120,6 +120,7 @@ export default function HealthPage() {
               ["Songs shared", String(funnel.songs_shared), ""],
               ["Shared-song views", String(funnel.views.share_view), ""],
               ["Pricing views", String(funnel.views.pricing_view), ""],
+              ["Upgrade clicks (checkout started)", String(funnel.views.checkout_started), pct(funnel.conversion.pricing_view_to_checkout)],
             ]} />
           )}
           <section>

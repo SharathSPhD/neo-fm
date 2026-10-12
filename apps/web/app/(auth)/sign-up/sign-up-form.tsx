@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 export function SignUpForm() {
   const router = useRouter();
+  const { t } = useUiLang();
   const search = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -51,9 +53,7 @@ export function SignUpForm() {
       // Email confirmation required. Stash the email so the visitor
       // can resend the link without having to retype it.
       setPendingEmail(email);
-      setInfo(
-        "We sent a confirmation link to your inbox. Click it from the same browser to come right back into the app.",
-      );
+      setInfo(t("auth.signUp.confirmSent"));
       return;
     }
     startTransition(() => {
@@ -76,14 +76,14 @@ export function SignUpForm() {
       setError(err.message);
       return;
     }
-    setInfo("Confirmation email re-sent — check your inbox (and spam).");
+    setInfo(t("auth.signUp.resent"));
   }
 
   return (
     <form method="post" className="flex flex-col gap-4" onSubmit={onSubmit}>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Email
+          {t("auth.email")}
         </span>
         <input
           name="email"
@@ -95,7 +95,7 @@ export function SignUpForm() {
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Password
+          {t("auth.password")}
         </span>
         <input
           name="password"
@@ -121,7 +121,7 @@ export function SignUpForm() {
         disabled={pending || !ready}
         className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
       >
-        {pending ? "Creating..." : "Create account"}
+        {pending ? t("auth.signUp.pending") : t("auth.signUp.title")}
       </button>
       {pendingEmail ? (
         <button
@@ -129,7 +129,7 @@ export function SignUpForm() {
           onClick={resend}
           className="self-start text-xs text-foreground/60 hover:text-foreground underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         >
-          Didn&apos;t get the email? Resend to {pendingEmail}
+          {t("auth.signUp.resend", { email: pendingEmail })}
         </button>
       ) : null}
     </form>

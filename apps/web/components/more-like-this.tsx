@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { serverI18n } from "@/lib/i18n/server";
 import {
   hasPersonalizationConsent,
   loadTaste,
@@ -34,6 +35,7 @@ export async function MoreLikeThis({
   // style/language come from stored documents and are interpolated into a
   // PostgREST .or() filter below; only real enum values get through (an
   // unknown enum value makes Postgres reject the whole query).
+  const { t: tr } = serverI18n();
   const orFilter = similarOrFilter(style, language);
   if (!orFilter) return null;
   try {
@@ -85,13 +87,13 @@ export async function MoreLikeThis({
     return (
       <section aria-labelledby="mlt-heading" className="flex flex-col gap-3">
         <h2 id="mlt-heading" className="text-lg font-medium">
-          More like this
+          {tr("mlt.heading")}
         </h2>
         {personalised ? (
           <p className="text-xs text-foreground/50">
-            Ordered with your listening taste.{" "}
+            {tr("mlt.ordered")}{" "}
             <Link href="/account" className="underline">
-              Manage in Account
+              {tr("mlt.manage")}
             </Link>
           </p>
         ) : null}
@@ -102,7 +104,7 @@ export async function MoreLikeThis({
                 href={`/s/${p.public_id}`}
                 className="block rounded-lg border border-muted/20 bg-muted/5 p-4 hover:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent"
               >
-                <span className="font-medium">{p.title || "Untitled"}</span>
+                <span className="font-medium">{p.title || tr("song.untitled")}</span>
                 <span className="mt-1 block text-xs text-foreground/60">
                   {prettyLanguage(p.language)} · {prettyStyle(p.style)}
                 </span>

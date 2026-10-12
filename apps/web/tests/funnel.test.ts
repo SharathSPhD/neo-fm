@@ -26,8 +26,18 @@ describe("funnel", () => {
       { signups: 10, firstSongUsers: 4, shared: 2 }, 7,
     );
     expect(f.views).toMatchObject({ landing_view: 100, signup_view: 20, share_view: 0 });
-    expect(f.conversion).toEqual({ landing_to_signup_view: 0.2, signup_view_to_signup: 0.5, signup_to_first_song: 0.4 });
+    expect(f.conversion).toEqual({ landing_to_signup_view: 0.2, signup_view_to_signup: 0.5, signup_to_first_song: 0.4, pricing_view_to_checkout: null });
     expect(f.by_day["2026-10-12"]).toEqual({ landing_view: 40, signup_view: 20 });
+  });
+
+  it("counts checkout_started and relates it to pricing views", () => {
+    expect(isFunnelEvent("checkout_started")).toBe(true);
+    const f = buildFunnel(
+      [{ day: "2026-10-12", event: "pricing_view", n: 50 }, { day: "2026-10-12", event: "checkout_started", n: 5 }],
+      { signups: 0, firstSongUsers: 0, shared: 0 }, 7,
+    );
+    expect(f.views.checkout_started).toBe(5);
+    expect(f.conversion.pricing_view_to_checkout).toBe(0.1);
   });
 
   it("returns null conversion instead of dividing by zero", () => {
