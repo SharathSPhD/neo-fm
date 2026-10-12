@@ -23,6 +23,7 @@ import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
+import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -292,7 +293,7 @@ export default async function PublicSongPage({
           publicId: data.public_id,
           name: displayTitle,
           language: doc.language,
-          genre: prettyStyle(doc.style_family),
+          genre: styleLabel(doc.style_family),
           durationSeconds: latestTrack?.duration_seconds ?? doc.target_duration_seconds,
           datePublished: data.published_at,
           lyrics: doc.sections
