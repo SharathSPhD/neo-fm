@@ -10,6 +10,7 @@ import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
+import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHints } from "../diction";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
@@ -84,6 +85,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
       const stages: Record<string, number> = {};
+      const cost = new CostCollector();
       const timed = async <T,>(name: string, fn: () => Promise<T>): Promise<T> => {
         const t0 = Date.now();
         try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
@@ -112,7 +114,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
           if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
             try {
-              a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
+              a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
               if (!v2.allowed) throw new SafetyRefusal(v2.reason);
               await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
@@ -147,8 +149,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "started") await assignConfig(db, job.id);
       if (outcome === "done") {
         const cascade = await timed("finalize", () => finalize(db, job.id));
-        const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none", stages_ms: stages });
+        const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey, cost.qa));
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none", stages_ms: stages }, cost);
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -251,7 +253,7 @@ async function finalize(db: ReturnType<typeof serviceClient>, jobId: string): Pr
 }
 
 /** Best-effort post-render audit: Gemini hears the song, we score it against the intended lyrics. Never fails the job. */
-export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string): Promise<{ matchPct: number } | null> {
+export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string, onUsage?: (u: TokenUsage) => void): Promise<{ matchPct: number } | null> {
   try {
     const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,diction_qa").eq("job_id", jobId).limit(1);
     const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; diction_qa: unknown } | undefined;
@@ -260,7 +262,7 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
     if (!blob) return null;
     const audio = new Uint8Array(await blob.arrayBuffer());
-    const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
+    const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey, undefined, onUsage);
     await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash" } }).eq("job_id", jobId);
     return { matchPct: qa.matchPct };
   } catch (e) {
@@ -289,7 +291,7 @@ async function assignConfig(db: ReturnType<typeof serviceClient>, jobId: string)
   } catch { /* telemetry never blocks a job */ }
 }
 
-async function recordTelemetry(db: ReturnType<typeof serviceClient>, jobId: string, extra: Record<string, unknown>) {
+async function recordTelemetry(db: ReturnType<typeof serviceClient>, jobId: string, extra: Record<string, unknown>, cost?: CostCollector) {
   try {
     const { data: runs } = await db.from("agent_runs").select("lyria_calls").eq("job_id", jobId).limit(1);
     const { data: jobs } = await db.from("jobs").select("created_at,started_at,finished_at").eq("id", jobId).limit(1);
@@ -297,6 +299,14 @@ async function recordTelemetry(db: ReturnType<typeof serviceClient>, jobId: stri
     if (j.created_at && j.started_at && extra.stages_ms && typeof extra.stages_ms === "object") (extra.stages_ms as Record<string, number>).queue_wait = Math.max(0, new Date(j.started_at).getTime() - new Date(j.created_at).getTime());
     const latency_ms = j.started_at && j.finished_at ? new Date(j.finished_at).getTime() - new Date(j.started_at).getTime() : null;
     const lyria_calls = Number(((runs ?? [])[0] as { lyria_calls?: number } | undefined)?.lyria_calls ?? 0);
-    await db.from("job_telemetry").upsert({ job_id: jobId, config_version_id: await liveConfigId(db), metrics: { ...extra, latency_ms, lyria_calls } }, { onConflict: "job_id" });
+    if (cost) {
+      cost.lyria(lyria_calls);
+      try { // Managed Agents session usage; best effort so a billing read can never fail telemetry.
+        const { data: sr } = await db.from("agent_runs").select("session_id").eq("job_id", jobId).limit(1);
+        const sid = ((sr ?? [])[0] as { session_id?: string | null } | undefined)?.session_id;
+        if (sid) cost.session((await anthropicClient().beta.sessions.retrieve(sid) as unknown as { usage?: unknown }).usage);
+      } catch { /* cost is optional */ }
+    }
+    await db.from("job_telemetry").upsert({ job_id: jobId, config_version_id: await liveConfigId(db), metrics: { ...extra, latency_ms, lyria_calls, ...(cost ? { cost: cost.toJSON() } : {}) } }, { onConflict: "job_id" });
   } catch { /* telemetry never blocks a job */ }
 }
