@@ -17,6 +17,8 @@ interface PublicSongAudioProps {
   initialUrl: string;
   durationSeconds: number | null;
   format: string;
+  /** Set for signed-in listeners: finished listens feed the weekly chart. */
+  feedbackSongId?: string;
 }
 
 export function PublicSongAudio({
@@ -24,6 +26,7 @@ export function PublicSongAudio({
   initialUrl,
   durationSeconds,
   format,
+  feedbackSongId,
 }: PublicSongAudioProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
@@ -34,6 +37,23 @@ export function PublicSongAudio({
     setSrc(initialUrl);
     setError(null);
   }, [initialUrl]);
+
+  // Furthest play fraction, sent when playback pauses/ends. Signed-in
+  // listeners only (the chart dedupes per user); anonymous plays are not recorded.
+  const sentRef = useRef(0);
+  function reportPlay() {
+    const el = audioRef.current;
+    if (!feedbackSongId || !el || !el.duration || !isFinite(el.duration)) return;
+    const pct = Math.min(1, el.currentTime / el.duration);
+    if (pct <= sentRef.current + 0.2) return;
+    sentRef.current = pct;
+    void fetch(`/api/songs/${encodeURIComponent(feedbackSongId)}/feedback`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ kind: "play_pct", value: Number(pct.toFixed(2)) }),
+    }).catch(() => undefined);
+  }
 
   async function onError() {
     if (refreshing) return;
@@ -77,6 +97,8 @@ export function PublicSongAudio({
         preload="metadata"
         src={src}
         onError={onError}
+        onPause={reportPlay}
+        onEnded={reportPlay}
         crossOrigin="anonymous"
         className="w-full"
       />

@@ -1,4 +1,5 @@
 import { ListenFirst } from "@/components/listen-first";
+import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
 /**
@@ -29,6 +30,9 @@ export default async function Page() {
   return (
     <main className="min-h-screen">
       <Hero />
+      <div className="mx-auto max-w-6xl px-6 pt-12">
+        <SongOfTheDay />
+      </div>
       <ListenFirst />
       <HowItWorks />
       <Different />
