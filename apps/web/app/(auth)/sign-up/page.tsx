@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
 
+import { GoogleButton } from "../google-button";
 import { SignUpForm } from "./sign-up-form";
 
 export default async function SignUpPage() {
@@ -15,9 +16,10 @@ export default async function SignUpPage() {
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-medium tracking-tight">Create account</h1>
         <p className="text-sm text-foreground/60">
-          Free tier: 3 songs per month. Upgrade later via Stripe (not in v1).
+          Start free: a few songs every month. Upgrade any time for longer, custom lyrics and music.
         </p>
       </header>
+      <GoogleButton />
       <SignUpForm />
       <footer className="text-sm text-foreground/60">
         Already signed up?{" "}

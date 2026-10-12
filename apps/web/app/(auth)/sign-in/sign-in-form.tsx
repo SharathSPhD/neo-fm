@@ -5,6 +5,8 @@ import { useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
+import { GoogleButton } from "../google-button";
+
 export function SignInForm({
   next,
   initialError,
@@ -38,6 +40,8 @@ export function SignInForm({
   }
 
   return (
+    <div className="flex flex-col gap-4">
+    <GoogleButton next={next} />
     <form className="flex flex-col gap-4" onSubmit={onSubmit}>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
@@ -77,5 +81,6 @@ export function SignInForm({
         {pending ? "Signing in..." : "Sign in"}
       </button>
     </form>
+    </div>
   );
 }
