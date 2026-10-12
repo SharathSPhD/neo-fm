@@ -113,7 +113,7 @@ Still open, deliberately not merged (decide one by one; none is needed for the l
 
 ## 11. Closure log
 
-- Migrations applied to `neo-fm-prod` this session: 0069 through 0075, 0077, 0079 through 0085, 0087 and 0088 (see `infra/supabase/migrations`). Not applied: 0072, 0076, 0078, 0086 (their PRs are open).
+- Migrations applied to `neo-fm-prod` this session: 0069 to 0071, 0073 to 0075, 0077, 0079 to 0085, 0087 and 0088 (see `infra/supabase/migrations`). Not applied: 0072, 0076, 0078, 0086 (their PRs are open).
 - Production verified after the last merge: `/api/health` ok (Supabase and Upstash), sign-in works on Next 15, `/account/notifications` renders.
 - The RLS audit job (`scripts/rls-audit.sh`) needs every new table or view classified in `infra/supabase/tests/rls_audit.sql`; migration 0085's tables were added after #114 merged.
 - Test accounts to delete before launch: `lat-bot@neo-fm.test` (Pro, latency tests), `e2e-bot@neo-fm.test`, showcase users.
