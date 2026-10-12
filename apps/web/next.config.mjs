@@ -13,6 +13,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       "/s/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
       "/api/recap/image": ["./lib/share/fonts/*.ttf"],
+      "/c/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
     },
   },
   transpilePackages: ["@neo-fm/song-doc"],

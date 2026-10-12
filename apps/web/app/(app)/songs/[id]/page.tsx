@@ -26,6 +26,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { RemixButton } from "./remix-button";
+import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 import { DictionCheck } from "./diction-check";
@@ -302,6 +303,7 @@ export default async function SongDetailPage({
             }}
             canShare={data.status === "completed"}
           />
+          {data.status === "completed" ? <AddToCollectionButton jobId={data.id} /> : null}
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
               <VariationButton
