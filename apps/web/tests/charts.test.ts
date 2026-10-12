@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it } from "vitest";
 
 import {
@@ -43,5 +46,29 @@ describe("charts", () => {
   it("returns null for an empty chart", () => {
     expect(pickSongOfTheDay([])).toBeNull();
     expect(utcDayNumber(new Date("1970-01-02T00:00:00Z"))).toBe(1);
+  });
+});
+
+describe("chart_songs anti-gaming guards (migration text)", () => {
+  // The function is validated against a scratch Postgres by hand; this just
+  // stops a later edit from silently dropping a guard.
+  const sql = readFileSync(
+    join(process.cwd(), "../../infra/supabase/migrations/0079_discovery_charts.sql"),
+    "utf8",
+  );
+  it.each([
+    ["verified email", /au\.email_confirmed_at is not null/],
+    ["account age", /au\.created_at <= now\(\) - interval '3 days'/],
+    ["trust weight", /case when u\.tier::text <> 'free'/],
+    ["per-account cap on songs", /user_rank <= 10/],
+    ["owner excluded", /s\.user_id <> e\.owner_id/],
+    ["distinct trusted floor", /s\.engaged >= 5/],
+    ["abuse backstop", /song_reports r where r\.job_id = j\.id\) < 3/],
+    ["service role only", /grant execute on function public\.chart_songs\(text, int, int\) to service_role/],
+  ])("keeps the %s guard", (_name, re) => {
+    expect(sql).toMatch(re);
+  });
+  it("is not executable by end users", () => {
+    expect(sql).toMatch(/revoke all on function public\.chart_songs\(text, int, int\) from public, anon, authenticated/);
   });
 });
