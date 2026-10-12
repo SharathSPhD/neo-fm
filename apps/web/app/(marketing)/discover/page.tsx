@@ -15,9 +15,15 @@ import Link from "next/link";
 
 import { CoverArt } from "@/components/cover-art";
 import { ProCta } from "@/components/pro-cta";
+import { serverI18n } from "@/lib/i18n/server";
+import { SongOfTheDay } from "@/components/song-of-the-day";
+import { TopThisWeek } from "@/components/top-this-week";
+import { normalizeChartLang } from "@/lib/charts/pick";
 import { ForYou } from "./for-you";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
+import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +51,10 @@ const ALLOWED_STYLES = new Set(
   STYLE_OPTIONS.map((o) => o.value).filter(Boolean),
 );
 
-type SearchParams = { style?: string; page?: string };
+type SearchParams = { style?: string; page?: string; chart?: string };
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/discover" },
   title: "Discover -- neo-fm",
   description:
     "Recently-published songs from the neo-fm community. Carnatic, Hindustani, Kannada folk, and Western.",
@@ -82,6 +89,7 @@ export default async function DiscoverPage({
 }: {
   searchParams: SearchParams;
 }) {
+  const { t } = serverI18n();
   const supabase = createServerClient();
   const style = ALLOWED_STYLES.has(searchParams.style ?? "")
     ? (searchParams.style as string)
@@ -170,27 +178,51 @@ export default async function DiscoverPage({
     }
   }
 
+  // The unfiltered first page is the canonical collection; filtered and later pages are views of it.
+  const playlistLd =
+    page === 1 && !style && (data ?? []).length > 0
+      ? musicPlaylistLd({
+          base: siteUrl(),
+          path: "/discover",
+          name: "Songs from the neo-fm community",
+          description: "Recently published songs in Indian languages, generated on neo-fm.",
+          tracks: (data ?? []).map((row) => ({
+            publicId: row.public_id,
+            name: row.song_documents?.title?.trim() || (row.song_documents ? `${prettyStyle(row.song_documents.style_family)} song` : "Song"),
+            language: row.song_documents?.language ?? "en",
+          })),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
+      {playlistLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(playlistLd) }} />
+      ) : null}
       <header className="flex flex-col gap-3">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
-          discover
+          {t("nav.discover")}
         </p>
         <h1 className="text-4xl font-medium tracking-tight">
-          Songs from the community
+          {t("discover.title")}
         </h1>
         <p className="text-base text-foreground/60">
-          Fresh public releases across Carnatic, Hindustani, Kannada folk,
-          and Western. Click through to play the full track.
+          {t("discover.intro")}
         </p>
       </header>
 
       <ProCta compact />
 
-      {page === 1 && !style ? <ForYou /> : null}
+      {page === 1 && !style ? (
+        <>
+          <SongOfTheDay />
+          <TopThisWeek lang={normalizeChartLang(searchParams.chart)} />
+          <ForYou />
+        </>
+      ) : null}
 
       <nav
-        aria-label="Style filter"
+        aria-label={t("discover.styleFilter")}
         className="flex flex-wrap items-center gap-2 text-sm"
       >
         {STYLE_OPTIONS.map((o) => {
@@ -208,7 +240,7 @@ export default async function DiscoverPage({
                   : "rounded-full border border-muted/30 px-3 py-1 text-foreground/70 hover:border-accent/30 hover:text-foreground"
               }
             >
-              {o.label}
+              {o.value ? o.label : t("discover.allStyles")}
             </Link>
           );
         })}
@@ -216,13 +248,13 @@ export default async function DiscoverPage({
 
       {error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
-          Couldn&apos;t load feed: {error.message}
+          {t("discover.feedError")} {error.message}
         </p>
       ) : !data || data.length === 0 ? (
         <p className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/60">
-          No songs match this filter yet. Be the first to{" "}
+          {t("discover.empty")}{" "}
           <Link href="/songs/new" className="underline">
-            publish one
+            {t("discover.emptyCta")}
           </Link>
           .
         </p>
@@ -232,7 +264,7 @@ export default async function DiscoverPage({
             const doc = row.song_documents;
             const title =
               doc?.title?.trim() ||
-              (doc ? `${prettyStyle(doc.style_family)} song` : "Song");
+              (doc ? t("discover.styleSong", { style: prettyStyle(doc.style_family) }) : t("song.song"));
             const author = handleMap[row.user_id];
             const coverUrl = coverUrlByJob.get(row.id) ?? null;
             return (
@@ -240,7 +272,7 @@ export default async function DiscoverPage({
                 <Link
                   href={`/s/${row.public_id}`}
                   className="relative block aspect-square overflow-hidden rounded-lg border border-muted/20 bg-muted/5 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  aria-label={`${title} – open public page`}
+                  aria-label={t("discover.openPublic", { title })}
                 >
                   <CoverArt
                     url={coverUrl}
@@ -267,7 +299,7 @@ export default async function DiscoverPage({
                   </p>
                   {author ? (
                     <p className="text-xs text-foreground/50">
-                      by{" "}
+                      {t("discover.by")}{" "}
                       <Link
                         href={`/u/${author}`}
                         className="underline hover:text-foreground"
@@ -276,7 +308,7 @@ export default async function DiscoverPage({
                       </Link>
                     </p>
                   ) : (
-                    <p className="text-xs text-foreground/40">by anonymous</p>
+                    <p className="text-xs text-foreground/40">{t("discover.byAnon")}</p>
                   )}
                 </div>
               </li>
@@ -303,6 +335,7 @@ function DiscoverPagination({
   style: string | null;
   hasNext: boolean;
 }) {
+  const { t } = serverI18n();
   function pageHref(p: number) {
     const params = new URLSearchParams();
     if (style) params.set("style", style);
@@ -312,7 +345,7 @@ function DiscoverPagination({
   }
   return (
     <nav
-      aria-label="Discover pagination"
+      aria-label={t("discover.pagination")}
       className="flex items-center justify-center gap-2 pt-2 text-sm"
     >
       {current > 1 ? (
@@ -320,16 +353,16 @@ function DiscoverPagination({
           href={pageHref(current - 1)}
           className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
         >
-          ← Prev
+          {t("common.prev")}
         </Link>
       ) : null}
-      <span className="px-3 text-foreground/60">Page {current}</span>
+      <span className="px-3 text-foreground/60">{t("common.page", { n: current })}</span>
       {hasNext ? (
         <Link
           href={pageHref(current + 1)}
           className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
         >
-          Next →
+          {t("common.next")}
         </Link>
       ) : null}
     </nav>

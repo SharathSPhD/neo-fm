@@ -9,25 +9,30 @@
 import type { Metadata } from "next";
 
 import { FeedbackForm } from "./feedback-form";
+import { serverI18n } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Send feedback -- neo-fm",
-  description: "Tell us what's working, what isn't, and what to build next.",
-};
+export function generateMetadata(): Metadata {
+  const { t } = serverI18n();
+  return {
+    alternates: { canonical: "/feedback" },
+    title: t("feedback.meta.title"),
+    description: t("feedback.meta.description"),
+  };
+}
 
 export default function FeedbackPage() {
+  const { t } = serverI18n();
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-3">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
-          feedback
+          {t("feedback.eyebrow")}
         </p>
         <h1 className="text-4xl font-medium tracking-tight">
-          Tell us what&apos;s on your mind.
+          {t("feedback.title")}
         </h1>
         <p className="text-base text-foreground/60">
-          Bug reports, feature wishes, songs we should support, raga
-          requests -- everything lands in our inbox. We read every note.
+          {t("feedback.intro")}
         </p>
       </header>
       <FeedbackForm />

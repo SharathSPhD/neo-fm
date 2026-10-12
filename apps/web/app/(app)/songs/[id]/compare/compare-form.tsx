@@ -8,6 +8,8 @@
  */
 import { useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 type Side = { trackId: string; label: string; url: string | null };
 
 export function CompareForm({
@@ -19,6 +21,7 @@ export function CompareForm({
   a: Side;
   b: Side;
 }) {
+  const { t } = useUiLang();
   const [pending, setPending] = useState<"A" | "B" | "tie" | null>(null);
   const [outcome, setOutcome] = useState<{ ok: true } | { ok: false; error: string } | null>(null);
 
@@ -60,7 +63,7 @@ export function CompareForm({
           disabled={!!pending}
           className="rounded-md border border-accent/40 bg-accent/15 px-4 py-2 text-sm text-accent transition hover:bg-accent/25 disabled:opacity-40"
         >
-          {pending === "A" ? "Saving…" : "A sounds better"}
+          {pending === "A" ? t("compare.saving") : t("compare.aBetter")}
         </button>
         <button
           type="button"
@@ -68,7 +71,7 @@ export function CompareForm({
           disabled={!!pending}
           className="rounded-md border border-muted/30 px-4 py-2 text-sm text-foreground/65 hover:border-accent/40 hover:text-foreground disabled:opacity-40"
         >
-          {pending === "tie" ? "Saving…" : "Too close to tell"}
+          {pending === "tie" ? t("compare.saving") : t("compare.tie")}
         </button>
         <button
           type="button"
@@ -76,7 +79,7 @@ export function CompareForm({
           disabled={!!pending}
           className="rounded-md border border-accent/40 bg-accent/15 px-4 py-2 text-sm text-accent transition hover:bg-accent/25 disabled:opacity-40"
         >
-          {pending === "B" ? "Saving…" : "B sounds better"}
+          {pending === "B" ? t("compare.saving") : t("compare.bBetter")}
         </button>
       </div>
       {outcome ? (
@@ -85,14 +88,14 @@ export function CompareForm({
             role="status"
             className="rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-sm text-emerald-300"
           >
-            Vote recorded. Thanks — this feeds the reranker.
+            {t("compare.recorded")}
           </p>
         ) : (
           <p
             role="alert"
             className="rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-300"
           >
-            Couldn&apos;t save vote: {outcome.error}
+            {t("compare.saveError", { error: outcome.error })}
           </p>
         )
       ) : null}
@@ -101,6 +104,7 @@ export function CompareForm({
 }
 
 function CandidateCard({ side, disabled }: { side: Side; disabled: boolean }) {
+  const { t } = useUiLang();
   return (
     <article className="flex flex-col gap-2 rounded-md border border-muted/30 bg-muted/5 px-4 py-3">
       <header className="flex items-center justify-between text-xs uppercase tracking-widest text-foreground/55">
@@ -117,7 +121,7 @@ function CandidateCard({ side, disabled }: { side: Side; disabled: boolean }) {
           className="w-full"
         />
       ) : (
-        <p className="text-sm text-foreground/55">Audio unavailable.</p>
+        <p className="text-sm text-foreground/55">{t("compare.noAudio")}</p>
       )}
     </article>
   );

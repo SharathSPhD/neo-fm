@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 /**
  * Cover-art panel.
  *
@@ -52,6 +54,7 @@ const TERMINAL: ReadonlySet<NonNullable<AttemptStatus>> = new Set([
 const POLL_INTERVAL_MS = 2500;
 
 export function CoverArtPanel({ songId }: { songId: string }) {
+  const { t } = useUiLang();
   const [url, setUrl] = useState<string | null>(null);
   const [status, setStatus] = useState<AttemptStatus>(null);
   const [error, setError] = useState<string | null>(null);
@@ -76,12 +79,12 @@ export function CoverArtPanel({ songId }: { songId: string }) {
     if (state.attempt) {
       lastAttemptIdRef.current = state.attempt.attempt_id;
       if (state.attempt.status === "failed" || state.attempt.status === "dlq") {
-        setError(state.attempt.error ?? "Cover art generation failed.");
+        setError(state.attempt.error ?? t("cover.genFailed"));
       } else if (state.attempt.status === "completed") {
         setError(null);
       }
     }
-  }, []);
+  }, [t]);
 
   const schedulePoll = useCallback(() => {
     if (pollHandle.current) clearTimeout(pollHandle.current);
@@ -114,7 +117,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(
-          data.details ?? data.error ?? "Couldn't render the template cover.",
+          data.details ?? data.error ?? t("cover.templateError"),
         );
         return;
       }
@@ -144,7 +147,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         setError(
-          data.details ?? data.error ?? "Couldn't enqueue cover art.",
+          data.details ?? data.error ?? t("cover.enqueueError"),
         );
         return;
       }
@@ -168,11 +171,11 @@ export function CoverArtPanel({ songId }: { songId: string }) {
   return (
     <section className="flex flex-col gap-2" data-cover-art-panel>
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Cover art
+        {t("cover.title")}
       </h2>
       <div className="flex flex-wrap items-start gap-4">
         <div
-          aria-label="Cover art preview"
+          aria-label={t("cover.preview")}
           aria-busy={inFlight ? "true" : "false"}
           className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-md border border-muted/20 bg-gradient-to-br from-accent/20 to-fuchsia-500/20 text-xs text-foreground/50"
         >
@@ -180,12 +183,12 @@ export function CoverArtPanel({ songId }: { songId: string }) {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={url}
-              alt="Cover art"
+              alt={t("cover.title")}
               className="h-full w-full rounded-md object-cover"
               data-cover-art-image
             />
           ) : (
-            <span>No cover art yet</span>
+            <span>{t("cover.none")}</span>
           )}
           {inFlight ? (
             <div
@@ -198,7 +201,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
                   aria-hidden="true"
                   className="h-2 w-2 animate-pulse rounded-full bg-accent"
                 />
-                Cover art rendering…
+                {t("cover.rendering")}
               </span>
             </div>
           ) : null}
@@ -212,10 +215,10 @@ export function CoverArtPanel({ songId }: { songId: string }) {
             data-cover-art-template
           >
             {pending && !inFlight
-              ? "Rendering…"
+              ? t("cover.renderingBtn")
               : url
-                ? "Re-roll cover art"
-                : "Generate cover art"}
+                ? t("cover.reroll")
+                : t("cover.generate")}
           </button>
           {premiumEnabled ? (
             <button
@@ -225,12 +228,12 @@ export function CoverArtPanel({ songId }: { songId: string }) {
               className="self-start rounded-md border border-muted/30 px-4 py-2 text-xs font-medium text-foreground/80 transition hover:border-accent/60 disabled:opacity-50"
               data-cover-art-premium
             >
-              {inFlight ? "Premium queued…" : "Generate HD (premium)"}
+              {inFlight ? t("cover.premiumQueued") : t("cover.premium")}
             </button>
           ) : null}
           {status && !inFlight && status !== "completed" ? (
             <p className="text-xs text-foreground/60">
-              Last attempt: {status}
+              {t("cover.lastAttempt", { status })}
             </p>
           ) : null}
           {error ? (

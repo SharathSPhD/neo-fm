@@ -2,6 +2,8 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export function Pagination({
   current,
   total,
@@ -16,6 +18,7 @@ export function Pagination({
    */
   view?: "grid" | "list";
 }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const params = useSearchParams();
 
@@ -29,7 +32,7 @@ export function Pagination({
 
   return (
     <nav
-      aria-label="Library pagination"
+      aria-label={t("lib.pager.aria")}
       className="flex items-center justify-center gap-2 pt-2 text-sm"
     >
       <button
@@ -38,10 +41,10 @@ export function Pagination({
         disabled={current <= 1}
         className="rounded-md border border-muted/30 px-3 py-1.5 text-foreground/80 transition hover:border-accent/40 disabled:opacity-40"
       >
-        ← Prev
+        {t("common.prev")}
       </button>
       <span className="px-3 text-foreground/60">
-        Page {current} of {total}
+        {t("lib.pager.of", { current, total })}
       </span>
       <button
         type="button"
@@ -49,7 +52,7 @@ export function Pagination({
         disabled={current >= total}
         className="rounded-md border border-muted/30 px-3 py-1.5 text-foreground/80 transition hover:border-accent/40 disabled:opacity-40"
       >
-        Next →
+        {t("common.next")}
       </button>
     </nav>
   );

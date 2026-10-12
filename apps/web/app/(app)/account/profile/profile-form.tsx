@@ -3,26 +3,44 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { BIO_MAX_CHARS } from "@/lib/profile/bio";
 import { AVATAR_MAX_BYTES } from "@/lib/profile/image";
 
-const ERRORS: Record<string, string> = {
-  too_long: `Keep it under ${BIO_MAX_CHARS} characters.`,
-  links_not_allowed: "Links and email addresses aren't allowed in a bio.",
-  bio_rejected: "That bio can't be used. Try rewording it.",
-  moderation_unavailable: "The safety check is temporarily unavailable. Try again in a minute.",
-  too_large: "That image is over 1 MB.",
-  unsupported_type: "Use a PNG, JPEG or WebP image.",
-  corrupt: "We couldn't read that image.",
-  too_small: "The image must be at least 64 x 64 pixels.",
-  too_big_dimensions: "The image must be at most 4096 x 4096 pixels.",
-  avatar_rejected: "That image can't be used as a profile picture.",
-  too_many_uploads: "Please wait a few seconds before uploading again.",
-};
+type T = ReturnType<typeof useUiLang>["t"];
 
-async function errorText(res: Response): Promise<string> {
+function errorMessage(t: T, code: string | undefined): string {
+  switch (code) {
+    case "too_long":
+      return t("profedit.err.tooLong", { max: BIO_MAX_CHARS });
+    case "links_not_allowed":
+      return t("profedit.err.links");
+    case "bio_rejected":
+      return t("profedit.err.bioRejected");
+    case "moderation_unavailable":
+      return t("profedit.err.moderation");
+    case "too_large":
+      return t("profedit.err.tooLarge");
+    case "unsupported_type":
+      return t("profedit.err.unsupportedType");
+    case "corrupt":
+      return t("profedit.err.corrupt");
+    case "too_small":
+      return t("profedit.err.tooSmall");
+    case "too_big_dimensions":
+      return t("profedit.err.tooBig");
+    case "avatar_rejected":
+      return t("profedit.err.avatarRejected");
+    case "too_many_uploads":
+      return t("profedit.err.tooMany");
+    default:
+      return t("profedit.err.generic");
+  }
+}
+
+async function errorText(t: T, res: Response): Promise<string> {
   const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return (data.error && ERRORS[data.error]) || "Something went wrong. Try again.";
+  return errorMessage(t, data.error);
 }
 
 export function ProfileForm({
@@ -34,6 +52,7 @@ export function ProfileForm({
   initialBio: string;
   initialAvatarUrl: string | null;
 }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
   const [bio, setBio] = useState(initialBio);
@@ -52,22 +71,22 @@ export function ProfileForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ bio }),
       });
-      if (!res.ok) return setBioMsg({ ok: false, text: await errorText(res) });
-      setBioMsg({ ok: true, text: "Saved." });
+      if (!res.ok) return setBioMsg({ ok: false, text: await errorText(t, res) });
+      setBioMsg({ ok: true, text: t("profedit.saved") });
       router.refresh();
     });
   }
 
   function upload(file: File) {
     setAvatarMsg(null);
-    if (file.size > AVATAR_MAX_BYTES) return setAvatarMsg({ ok: false, text: ERRORS.too_large! });
+    if (file.size > AVATAR_MAX_BYTES) return setAvatarMsg({ ok: false, text: errorMessage(t, "too_large") });
     startTransition(async () => {
       const body = new FormData();
       body.set("file", file);
       const res = await fetch("/api/account/avatar", { method: "POST", body });
-      if (!res.ok) return setAvatarMsg({ ok: false, text: await errorText(res) });
+      if (!res.ok) return setAvatarMsg({ ok: false, text: await errorText(t, res) });
       setAvatar(URL.createObjectURL(file));
-      setAvatarMsg({ ok: true, text: "Picture updated." });
+      setAvatarMsg({ ok: true, text: t("profedit.pictureUpdated") });
       router.refresh();
     });
   }
@@ -76,9 +95,9 @@ export function ProfileForm({
     setAvatarMsg(null);
     startTransition(async () => {
       const res = await fetch("/api/account/avatar", { method: "DELETE" });
-      if (!res.ok) return setAvatarMsg({ ok: false, text: await errorText(res) });
+      if (!res.ok) return setAvatarMsg({ ok: false, text: await errorText(t, res) });
       setAvatar(null);
-      setAvatarMsg({ ok: true, text: "Picture removed." });
+      setAvatarMsg({ ok: true, text: t("profedit.pictureRemoved") });
       router.refresh();
     });
   }
@@ -96,7 +115,7 @@ export function ProfileForm({
         )}
         <div className="flex flex-col gap-2">
           <h2 id="avatar-h" className="text-sm font-medium">
-            Profile picture
+            {t("profedit.pictureHeading")}
           </h2>
           <div className="flex gap-2">
             <input
@@ -104,7 +123,7 @@ export function ProfileForm({
               type="file"
               accept="image/png,image/jpeg,image/webp"
               className="sr-only"
-              aria-label="Choose a profile picture"
+              aria-label={t("profedit.choosePicture")}
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) upload(f);
@@ -117,7 +136,7 @@ export function ProfileForm({
               onClick={() => fileRef.current?.click()}
               className="rounded-md border border-muted/40 px-3 py-1.5 text-sm hover:border-accent/50 disabled:opacity-50"
             >
-              {avatar ? "Replace" : "Upload"}
+              {avatar ? t("profedit.replace") : t("profedit.upload")}
             </button>
             {avatar ? (
               <button
@@ -126,11 +145,11 @@ export function ProfileForm({
                 onClick={removeAvatar}
                 className="rounded-md border border-muted/40 px-3 py-1.5 text-sm text-foreground/70 hover:border-accent/50 disabled:opacity-50"
               >
-                Remove
+                {t("profedit.remove")}
               </button>
             ) : null}
           </div>
-          <p className="text-xs text-foreground/60">PNG, JPEG or WebP, up to 1 MB, at least 64 x 64 px.</p>
+          <p className="text-xs text-foreground/60">{t("profedit.pictureHelp")}</p>
           <p role="status" aria-live="polite" className={`text-xs ${avatarMsg?.ok ? "text-foreground/70" : "text-red-400"}`}>
             {avatarMsg?.text}
           </p>
@@ -139,7 +158,7 @@ export function ProfileForm({
 
       <form onSubmit={saveBio} className="flex flex-col gap-2">
         <label htmlFor="bio" className="text-sm font-medium">
-          Bio
+          {t("profedit.bio")}
         </label>
         <textarea
           id="bio"
@@ -151,14 +170,14 @@ export function ProfileForm({
         />
         <div className="flex items-center justify-between">
           <p id="bio-help" className={`text-xs ${remaining < 0 ? "text-red-400" : "text-foreground/60"}`}>
-            {remaining} characters left. No links or email addresses.
+            {t("profedit.bioHelp", { n: remaining })}
           </p>
           <button
             type="submit"
             disabled={pending || remaining < 0}
             className="rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-background hover:bg-accent/90 disabled:opacity-50"
           >
-            Save bio
+            {t("profedit.saveBio")}
           </button>
         </div>
         <p role="status" aria-live="polite" className={`text-xs ${bioMsg?.ok ? "text-foreground/70" : "text-red-400"}`}>
