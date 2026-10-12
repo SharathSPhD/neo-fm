@@ -16,6 +16,7 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { ProCta } from "@/components/pro-cta";
@@ -278,6 +279,7 @@ export default async function PublicSongPage({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
+      <FunnelBeacon event="share_view" />
       <header className="flex flex-col gap-2">
         <Link
           href="/"
