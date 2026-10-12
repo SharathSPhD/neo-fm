@@ -264,6 +264,7 @@ export default async function SongDetailPage({
             songId={data.id}
             initialVisibility={data.published_visibility}
             initialPublicId={data.public_id}
+            title={title}
             canShare={data.status === "completed"}
           />
           {data.status === "completed" ? (

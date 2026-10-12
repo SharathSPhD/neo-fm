@@ -10,6 +10,13 @@ import { ImageResponse } from "next/og";
 import { z } from "zod";
 
 import { createServerClient } from "@/lib/supabase/server";
+import {
+  fontFamilyFor,
+  loadFontsFor,
+  pickExcerpt,
+  reorderForSatori,
+  waveformBars,
+} from "@/lib/share/card";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,6 +35,8 @@ export default async function OgImage({
 }) {
   let title = "neo-fm";
   let subtitle = "AI music, India-first";
+  let excerpt: string[] = [];
+  let seed = params.publicId;
 
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (idCheck.success) {
@@ -52,14 +61,19 @@ export default async function OgImage({
             language: string;
             target_duration_seconds: number;
             raga?: { name: string };
+            sections?: { type?: string; lyrics?: string; script?: string }[];
           };
           language: string;
           style_family: string;
           title: string | null;
         } | null;
       }>();
+    // Query is limited to public/unlisted, so private songs never get
+    // their lyrics rendered into a cacheable image.
     if (data?.song_documents) {
       const doc = data.song_documents.document_json;
+      excerpt = pickExcerpt(doc.sections).map(reorderForSatori);
+      seed = data.public_id;
       const stored = data.song_documents.title?.trim();
       title =
         stored && stored.length > 0
@@ -70,6 +84,11 @@ export default async function OgImage({
         : `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · neo-fm`;
     }
   }
+
+  const excerptText = excerpt.join("\n");
+  const fonts = excerptText ? await loadFontsFor(excerptText) : [];
+  const bars = waveformBars(seed);
+  const excerptFamily = fontFamilyFor(excerptText);
 
   return new ImageResponse(
     (
@@ -103,7 +122,7 @@ export default async function OgImage({
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div
             style={{
-              fontSize: 96,
+              fontSize: excerpt.length > 0 ? 72 : 96,
               fontWeight: 500,
               letterSpacing: -2,
               lineHeight: 1.05,
@@ -120,6 +139,45 @@ export default async function OgImage({
           >
             {subtitle}
           </div>
+          {excerpt.length > 0 ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                marginTop: 22,
+                paddingLeft: 24,
+                borderLeft: "4px solid #f0b35a",
+                fontFamily: `"${excerptFamily}", system-ui, sans-serif`,
+                fontSize: 40,
+                lineHeight: 1.4,
+                color: "#fef7ea",
+              }}
+            >
+              {excerpt.map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            height: 90,
+          }}
+        >
+          {bars.map((b, i) => (
+            <div
+              key={i}
+              style={{
+                width: 12,
+                height: Math.max(8, Math.round(b * 90)),
+                borderRadius: 6,
+                background: i % 5 === 0 ? "#f0b35a" : "rgba(240,179,90,0.55)",
+              }}
+            />
+          ))}
         </div>
         <div
           style={{
@@ -135,7 +193,7 @@ export default async function OgImage({
         </div>
       </div>
     ),
-    { ...size },
+    { ...size, fonts },
   );
 }
 
