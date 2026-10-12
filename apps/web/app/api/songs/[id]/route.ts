@@ -16,7 +16,7 @@ import { processJobs } from "../../../../lib/agent/process";
 import { requireUser } from "../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour
 

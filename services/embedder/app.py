@@ -1,7 +1,7 @@
 """neo-fm embedder: multilingual-e5-small (ONNX, int8) behind a tiny HTTP API.
 
 POST /embed  {"texts": ["..."], "kind": "passage"|"query"}  ->  {"model", "dim", "vectors": [[...]]}
-GET  /healthz
+GET  /health
 Auth: `Authorization: Bearer <EMBED_TOKEN>` (shared secret; set as a Cloud Run env var).
 Vectors are L2-normalised, so cosine == dot product. Stateless; the model is baked into the image.
 """
@@ -75,8 +75,8 @@ class Req(BaseModel):
     kind: str = "passage"
 
 
-@app.get("/healthz")
-def healthz() -> dict[str, str]:
+@app.get("/health")
+def health() -> dict[str, str]:
     _engine()
     return {"ok": "true", "model": MODEL_ID}
 

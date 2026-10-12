@@ -13,7 +13,7 @@ import { agentIdFor, planForTier, type UserTier } from "./tiers";
 class SafetyRefusal extends Error {}
 
 const MAX_CLAIM = 3;
-const LEASE_SECONDS = 55;
+const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
 export type ProcessEnv = { environmentId: string; geminiKey: string };
 

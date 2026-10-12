@@ -44,11 +44,11 @@ call still needs the bearer token. `--max-instances 3` caps cost and abuse.)
 ## 4. Smoke test (still in Cloud Shell)
 ```bash
 URL=$(gcloud run services describe neo-fm-embedder --region asia-south1 --format 'value(status.url)')
-curl -s $URL/healthz
+curl -s -X POST $URL/embed -H "Authorization: Bearer $EMBED_TOKEN" -H "content-type: application/json" -d '{"texts":["hello"]}' | head -c 80
 curl -s -X POST $URL/embed -H "Authorization: Bearer $EMBED_TOKEN" -H 'content-type: application/json' \
   -d '{"texts":["ಮಳೆ ಬಂತು ಮನೆ ನೆನಪಾಯ್ತು"]}' | head -c 200
 ```
-Expect `{"ok":"true",...}` and a `"dim":384` vector. First call after idle takes a few seconds (cold start).
+Expect a `"dim":384` vector. First call after idle takes a few seconds (cold start).
 
 ## 5. Give it to the app (Vercel project → Settings → Environment Variables, **Preview**, mark Sensitive)
 | Name | Value |

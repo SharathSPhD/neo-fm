@@ -12,7 +12,7 @@ import { requireId } from "../../../../lib/agent/tiers";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function GET(req: NextRequest) {
   const auth = checkBearer(req.headers.get("authorization"));
