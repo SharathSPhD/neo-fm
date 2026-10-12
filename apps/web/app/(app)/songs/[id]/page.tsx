@@ -29,6 +29,7 @@ import { RemixButton } from "./remix-button";
 import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
 import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
 import { loadVersionSiblings } from "@/lib/song/language-versions-load";
+import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 import { DictionCheck } from "./diction-check";
@@ -321,6 +322,7 @@ export default async function SongDetailPage({
               existingLanguages={versionSiblings.map((v) => v.language)}
             />
           ) : null}
+          {data.status === "completed" ? <AddToCollectionButton jobId={data.id} /> : null}
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
               <VariationButton

@@ -36,6 +36,7 @@ import {
   createServerClient,
   createServiceRoleClient,
 } from "@/lib/supabase/server";
+import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { LikeButton } from "@/components/like-button";
 import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
@@ -391,6 +392,11 @@ export default async function PublicSongPage({
                 nextPath={`/s/${data.public_id}`}
               />
             ) : null}
+            <AddToCollectionButton
+              jobId={data.id}
+              signedIn={!!currentUserId}
+              nextPath={`/s/${data.public_id}`}
+            />
             <PublicShareButton
               title={displayTitle}
               feedbackSongId={currentUserId ? data.id : undefined}
