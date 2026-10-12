@@ -6,7 +6,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkCronOrAdminBearer } from "../../../../lib/agent/auth";
 import { loadFunnel, loadHealthSummary, OpsQueryError } from "../../../../lib/ops/load";
 import { stripForStorage } from "../../../../lib/ops/snapshot";
 
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkCronOrAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const db = serviceClient();
   try {

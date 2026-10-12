@@ -7,7 +7,8 @@
 import { toFile } from "@anthropic-ai/sdk";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { safeEmbedUrl } from "../../../../lib/agent/embed-url";
 import { anthropicClient } from "../../../../lib/agent/adapters";
 import {
   environmentParams, freeProducerParams, poetParams, polisherParams, proProducerParams,
@@ -29,7 +30,7 @@ async function firstByName<T extends { id: string }>(
 }
 
 export async function POST(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) {
     return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   }
@@ -52,7 +53,9 @@ export async function POST(req: NextRequest) {
       // Roll existing resources forward: new skill version (SKILL.md + vendored engine), sandbox networking
       // (package managers + embedder allowlist), and the pro producer's tools/system. Nothing is deleted.
       const hosts: string[] = [];
-      try { if (process.env.EMBED_URL) hosts.push(new URL(process.env.EMBED_URL.trim()).host); } catch { /* ignore a bad URL */ }
+      const embedUrl = safeEmbedUrl(process.env.EMBED_URL);
+      if (embedUrl) hosts.push(new URL(embedUrl).host);
+      else if (process.env.EMBED_URL) return NextResponse.json({ error: "embed_url_unsafe", hint: "EMBED_URL must be an https URL to a public host" }, { status: 400 });
       const files = await Promise.all(Object.entries(SKILL_FILES).map(([name, text]) => toFile(Buffer.from(text), name, { type: "text/plain" })));
       const v = await client.skills.versions.create(skillId, { files });
       const envParams = environmentParams(hosts);
