@@ -30,7 +30,8 @@ export function generateStaticParams() {
   return LANGUAGE_PAGES.map((p) => ({ lang: p.slug }));
 }
 
-export function generateMetadata({ params }: { params: { lang: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const page = languagePageBySlug(params.lang);
   // Unknown slugs must 404 here too: with a route-level loading state the page body streams after the status line.
   if (!page) notFound();
@@ -43,7 +44,8 @@ export function generateMetadata({ params }: { params: { lang: string } }): Meta
   };
 }
 
-export default async function LanguageLanding({ params }: { params: { lang: string } }) {
+export default async function LanguageLanding(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
   const page = languagePageBySlug(params.lang);
   if (!page) notFound();
 

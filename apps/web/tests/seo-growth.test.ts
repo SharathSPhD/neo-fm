@@ -140,11 +140,11 @@ describe("unknown language slugs", () => {
   it("404 from the page, its metadata and the article (no soft 404)", async () => {
     const lang = await import("@/app/ai-songs/[lang]/page");
     const how = await import("@/app/ai-songs/[lang]/how-it-works/page");
-    const params = { lang: "klingon" };
-    expect(() => lang.generateMetadata({ params })).toThrow();
+    const params = Promise.resolve({ lang: "klingon" });
+    await expect(lang.generateMetadata({ params })).rejects.toSatisfy(isNotFoundError);
     await expect(lang.default({ params })).rejects.toSatisfy(isNotFoundError);
-    expect(() => how.generateMetadata({ params })).toThrow();
-    expect(() => how.default({ params })).toThrow();
+    await expect(how.generateMetadata({ params })).rejects.toSatisfy(isNotFoundError);
+    await expect(how.default({ params })).rejects.toSatisfy(isNotFoundError);
     expect(lang.dynamicParams).toBe(false);
     expect(how.dynamicParams).toBe(false);
     expect(lang.generateStaticParams().map((p) => p.lang).sort()).toEqual(["bengali", "hindi", "kannada", "tamil", "telugu"]);
@@ -184,7 +184,7 @@ describe("language OG image", () => {
   it("renders a PNG for each language and a generic card for unknown slugs", async () => {
     const og = await import("@/app/ai-songs/[lang]/opengraph-image");
     for (const slug of [...LANGUAGE_PAGES.map((p) => p.slug), "klingon"]) {
-      const res = await og.default({ params: { lang: slug } });
+      const res = await og.default({ params: Promise.resolve({ lang: slug }) });
       const png = Buffer.from(await res.arrayBuffer());
       expect(png.subarray(1, 4).toString()).toBe("PNG");
       expect(png.length).toBeGreaterThan(5_000);
