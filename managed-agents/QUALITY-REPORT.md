@@ -62,3 +62,16 @@ Same method, `lyria-3.5` with "exactly 60 seconds". **Correction to an earlier d
 
 ## Order-insensitive scoring (added)
 `scoreTranscriptUnordered` / `scoreBoth` in `apps/web/lib/diction/index.ts` (tests: `apps/web/tests/diction-unordered.test.ts`): each intended line takes its best window anywhere in the transcript, but a stretch of transcript can vouch for only one line (greedy by lowest CER, at most 30 % overlap), so one sung hook cannot score a hook that appears twice; unsung lines count as fully wrong. Report both going forward: in order is what production stores today; order-free separates "sang it in another order" from "did not sing it". On the 50 stored 30 s songs the medians are identical (no reordering there); the 60 s smoke test shows the difference above. `diction-sweep.ts --report` prints both columns. Production (`lib/agent/*`) still stores only the in-order score; storing both is the lead's change.
+
+## Blind AI-judge pass on the 15 sixty-second files (2026-10-12, well under GBP 0.10, no renders)
+`scripts/quality/blind-judge.mts`: Gemini listens to each file (shuffled, told only the language, no ids or scores) and rates 1-5 on pronunciation, stress/rhythm, clarity, overall; raw rows in `managed-agents/quality/blind-judge-60s.json`. 14 of 15 parsed (hi-11 returned unparseable JSON).
+
+| Language | N | Mean overall | Pronunciation | Stress/rhythm | Clarity |
+|---|---|---|---|---|---|
+| Hindi | 2 | 4.0 | 4.0 | 3.5 | 4.0 |
+| Kannada | 3 | 3.3 | 3.7 | 3.3 | 4.0 |
+| Tamil | 3 | 3.3 | 3.7 | 3.3 | 4.0 |
+| Bengali | 3 | 3.0 | 3.7 | 3.3 | 3.7 |
+| Telugu | 3 | 3.0 | 3.7 | 3.0 | 4.0 |
+
+Reading it: clarity is consistently 4; stress/rhythm is the weakest dimension in every language (the judge's "worst issue" is almost always mechanical phrasing and unnatural vowel sustain on line endings, i.e. prosody, which fits the earlier finding that diction is not the problem); Kannada is not worse than the others on this judge. **Weak evidence:** one model family, N=14, compressed 3-4 scale, and the same files whose transcripts it also scored; it cannot replace the native-reviewer packet. It is a regression check, not a claim.
