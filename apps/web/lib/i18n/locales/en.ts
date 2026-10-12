@@ -170,7 +170,6 @@ export const en = {
   "landing.subtitle": "Describe a song in Kannada, Tamil, Telugu, Hindi or Bengali. Our lyric engine writes it natively, a singer performs it, and we check the pronunciation against your words.",
   "landing.ctaPrimary": "Make your first song free",
   "landing.ctaSecondary": "Listen to songs",
-  "landing.languages": "Supported languages",
   "landing.howTitle": "From idea to share-link in three steps",
   "landing.step1.title": "Describe the song",
   "landing.step1.body": "Tell us the mood, the occasion, the language and the style. One or two sentences is enough.",
