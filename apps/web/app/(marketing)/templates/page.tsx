@@ -23,6 +23,7 @@ import { PRESETS, type StylePreset } from "@neo-fm/style-presets";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/templates" },
   title: "Templates · neo-fm",
   description:
     "Browse curated Song Document templates -- Indian classical, Indian folk, and crossover starters with raga, tala, and instrumentation already chosen.",
