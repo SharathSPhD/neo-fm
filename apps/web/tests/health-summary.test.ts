@@ -57,3 +57,12 @@ describe("health summary", () => {
     expect(alertString(loud)).toMatch(/^ALERT .*queue stuck/);
   });
 });
+
+describe("spend alert", () => {
+  it("alerts when a provider nears its cap", () => {
+    const s = summarize([], [], { global: [{ provider: "lyria", reserved_gbp: 2.6, cap_gbp: 3 }], topUsersThisMonth: [] }, now);
+    expect(s.alerts[0]).toContain("lyria spend 87% of cap");
+    const ok = summarize([], [], { global: [{ provider: "lyria", reserved_gbp: 1, cap_gbp: 3 }], topUsersThisMonth: [] }, now);
+    expect(ok.alerts).toEqual([]);
+  });
+});
