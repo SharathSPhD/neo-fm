@@ -20,11 +20,13 @@ import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isBillingEnabled } from "@/lib/billing/config";
+import { startOfMonthIso } from "@/lib/billing/usage";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
 import { TastePanel } from "./taste-panel";
 import { ManageBillingButton } from "./manage-billing-button";
+import { UsageMeter } from "./usage-meter";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +76,22 @@ export default async function AccountPage({ searchParams }: PageProps) {
         .eq("user_id", auth.user.id)
         .maybeSingle()
     : { data: null as null };
+
+  // Same definition as user_jobs_count_month: completed jobs finished since the start of the UTC month. A failed
+  // lookup hides the meter rather than showing a wrong number.
+  const [{ data: quotaData, error: quotaErr }, { count: usedCount, error: usedErr }] = await Promise.all([
+    supabase.rpc("user_tier_quota", { p_user_id: auth.user.id }),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", auth.user.id)
+      .eq("status", "completed")
+      .gte("finished_at", startOfMonthIso()),
+  ]);
+  const usage =
+    !quotaErr && !usedErr && typeof quotaData === "number" && usedCount !== null
+      ? { quota: quotaData, used: usedCount }
+      : null;
 
   const plan = PLAN_LABEL[row?.tier ?? "free"] ?? "Free";
   const memberSince = row?.created_at
@@ -152,12 +170,19 @@ export default async function AccountPage({ searchParams }: PageProps) {
         ) : null}
       </section>
 
+      {usage ? (
+        <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+          <h2 className="text-sm font-medium tracking-tight">Plan usage</h2>
+          <UsageMeter quota={usage.quota} used={usage.used} />
+        </section>
+      ) : null}
+
       {billing?.stripe_subscription_id ? (
         <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
           <h2 className="text-sm font-medium tracking-tight">Billing</h2>
           <p className="text-xs text-foreground/60">
             Open the Stripe-hosted Customer Portal to change plan, update
-            your card, cancel, or download invoices.
+            your card, cancel, or download invoices. Prices in INR include GST.
           </p>
           <ManageBillingButton />
         </section>
