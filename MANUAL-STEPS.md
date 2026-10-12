@@ -88,15 +88,3 @@ Not needed; step 6 is enough.
 
 ## 10. Approve the paid test renders: ✅ DONE
 Approved in chat and run; results are in the quality and latency reports.
-
-## 11. Web push for notifications (optional; the bell works without it)
-Why: the in-app notifications centre ships with web push switched off. Until you do this, the bell, unread count and preferences work and the push toggle reads "not available yet".
-1. Generate a VAPID key pair on any machine with Node: `npx web-push generate-vapid-keys --json` (or ask the lead session to generate one). Keep the private key secret.
-2. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables and add for Production:
-   - `VAPID_PUBLIC_KEY` = the public key
-   - `VAPID_PRIVATE_KEY` = the private key (Sensitive)
-   - `VAPID_SUBJECT` = `mailto:` your support address
-   - `NEO_FM_WEB_PUSH_ENABLED` = `true`
-3. Redeploy as in step 6.3. The cron `/api/notifications/push-drain` (every minute, uses the existing `CRON_SECRET`) then delivers queued pushes.
-4. Check: https://neo-fm.com/account/notifications → Enable push on one device → finish a song.
-To turn it off again, set `NEO_FM_WEB_PUSH_ENABLED` to `false` and redeploy.
