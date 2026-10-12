@@ -1,6 +1,6 @@
 # Pro latency: baseline and plan to under 4 minutes
 
-Status: baseline from total job latency only (per-stage timings land with the lead's instrumentation in `lib/agent/process.ts`, written to `job_telemetry.metrics.stages_ms`). Regenerate with `ADMIN_TOKEN=… node scripts/latency-breakdown.mjs --base <host> --plan pro` or `select * from stage_latency_summary(now() - interval '7 days', 'pro')` (migration 0066).
+Status: baseline from total job latency only (per-stage timings land with the lead's instrumentation in `lib/agent/process.ts`, written to `job_telemetry.metrics.stages_ms`). Regenerate with `ADMIN_TOKEN=… node scripts/latency-breakdown.mjs --base <host> --plan pro` or `select * from stage_latency_summary(now() - interval '7 days', 'pro')` (migration 0067).
 
 ## Baseline (neo-fm-prod, all jobs to date, 2026-10-12, 31 incl. 4 failed, `started_at` to `finished_at`)
 

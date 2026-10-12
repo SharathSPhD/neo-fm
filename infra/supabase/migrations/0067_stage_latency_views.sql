@@ -1,4 +1,4 @@
--- 0066_stage_latency_views.sql
+-- 0067_stage_latency_views.sql
 -- Read-side latency analytics over job_telemetry.metrics. The pipeline (lib/agent/process.ts) writes
 -- metrics.stages_ms = { "<stage>": <milliseconds>, ... } alongside metrics.latency_ms; no table changes here.
 -- Jobs recorded before stage timing shipped have no stages_ms and simply yield no stage rows.
