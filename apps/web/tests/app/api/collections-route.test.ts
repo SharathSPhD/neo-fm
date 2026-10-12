@@ -175,7 +175,7 @@ describe("POST /api/collections/[id]/items", () => {
       song_documents: [{ data: { title: "Raat" } }],
       collection_items: [{ data: [] }, { error: null }],
     });
-    expect((await ADD(json({ jobId: JOB }), { params: { id: COL } })).status).toBe(201);
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
     expect(notifyUser).toHaveBeenCalledWith(
       expect.anything(),
       "author",
@@ -192,13 +192,13 @@ describe("POST /api/collections/[id]/items", () => {
       jobs: [{ data: { user_id: "author", published_visibility: "public" } }],
       collection_items: [{ data: [] }, { error: null }],
     });
-    expect((await ADD(json({ jobId: JOB }), { params: { id: COL } })).status).toBe(201);
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
     fakeDb({
       collections: [{ data: { id: COL, visibility: "public" } }, { data: null }],
       jobs: [{ data: { user_id: USER, published_visibility: "private" } }],
       collection_items: [{ data: [] }, { error: null }],
     });
-    expect((await ADD(json({ jobId: JOB }), { params: { id: COL } })).status).toBe(201);
+    expect((await ADD(json({ jobId: JOB }), { params: Promise.resolve({ id: COL }) })).status).toBe(201);
     expect(notifyUser).not.toHaveBeenCalled();
   });
 
