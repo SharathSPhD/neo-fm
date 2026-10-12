@@ -106,6 +106,7 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
 const FRIENDLY: Record<string, string> = {
   allowance_reached: "You've used this month's song allowance. It resets on the 1st, or upgrade your plan for more songs.",
   render_failed: "The music engine had a hiccup and we couldn't finish this one. Your allowance was not used; please try again.",
+  timed_out: "This one took too long and we stopped it. Your allowance was not used; please try again.",
   content_policy: "We couldn't make this one because it didn't pass our content guidelines. Try rewording your idea.",
 };
 
