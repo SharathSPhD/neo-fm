@@ -23,7 +23,7 @@ Scored on all 65 transcripts already collected (50 clips at 30 s, 15 songs at 60
 - `review` (60 <= U < 80): 4/65 more: hi-16 (63), bn-10 (68), bn-14 (79), te-14 (79). Together 5/65 = 7.7% of songs need a look.
 - 81 and above pass, including the Kannada 88 and 91 songs (one soft line each).
 - bn-10 is the Bengali failure from the 60 s run: 37 in order, **68 order-free**. The scrambled order accounts for about 30 points, so the order-free score is the fairer gate input, but 68 is still a real failure and lands in `review`. (An earlier note in the quality report said order-free scoring does not rescue bn-10; it rescues it partly, to 68, not to a pass.)
-- Why 80 and 60: 60 is the failure line the quality report already uses; 80 sits in the gap between the 79 cluster and 81+, so the review queue is the bottom ~8%. Moving it to 85 would add 2 songs (kn-1 86, ta-15 88-ish) of the 65; to 75 would drop two.
+- Why 80 and 60: 60 is the failure line the quality report already uses; 80 sits in the gap between the 79 cluster and 81+, so the review queue is the bottom ~8%. Moving it to 85 would add one song (te-17, 81) to the review queue; moving it to 75 would drop two (bn-14, te-14, both 79).
 
 Caveats: N=65 internal renders from one transcriber, no native-speaker ground truth for "bad", and the lyrics were all from one pipeline config. The thresholds are a starting point for the shadow run, not a measured error rate.
 
