@@ -1,7 +1,7 @@
 import { DEFAULT_POLISH_TEMPLATE } from "./polish";
 
 /**
- * Offline prosody experiments (docs/experiments/kannada-prosody.md). These are candidate polish templates for the
+ * Offline prosody experiments (managed-agents/experiments/kannada-prosody.md). These are candidate polish templates for the
  * eval harness only: nothing here is read by the product path, `livePolishTemplate` or the self-improve promotion
  * path. A variant ships only through the existing gate (both judge families, no dimension worse by > 0.15) and S's approval.
  */
