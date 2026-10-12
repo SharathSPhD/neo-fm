@@ -113,24 +113,29 @@ export async function POST(req: Request) {
   const origin = getPublicAppUrl();
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      payment_method_types: ["card"],
-      line_items: [
-        { price: getPriceIdForTier(parsed.tier), quantity: 1 },
-      ],
-      success_url: `${origin}/account?upgraded=${parsed.tier}`,
-      cancel_url: `${origin}/pricing?canceled=1`,
-      client_reference_id: user.id,
-      ...(billing?.stripe_customer_id
-        ? { customer: billing.stripe_customer_id }
-        : { customer_email: user.email ?? undefined }),
-      allow_promotion_codes: true,
-      subscription_data: {
+    const session = await stripe.checkout.sessions.create(
+      {
+        mode: "subscription",
+        payment_method_types: ["card"],
+        line_items: [
+          { price: getPriceIdForTier(parsed.tier), quantity: 1 },
+        ],
+        success_url: `${origin}/account?upgraded=${parsed.tier}`,
+        cancel_url: `${origin}/pricing?canceled=1`,
+        client_reference_id: user.id,
+        ...(billing?.stripe_customer_id
+          ? { customer: billing.stripe_customer_id }
+          : { customer_email: user.email ?? undefined }),
+        allow_promotion_codes: true,
+        subscription_data: {
+          metadata: { user_id: user.id, tier: parsed.tier },
+        },
         metadata: { user_id: user.id, tier: parsed.tier },
       },
-      metadata: { user_id: user.id, tier: parsed.tier },
-    });
+      // Double-clicks and retries within the same minute reuse one Checkout session instead of creating two.
+      { idempotencyKey: `checkout:${user.id}:${parsed.tier}:${Math.floor(Date.now() / 60_000)}` },
+    );
+
 
     if (!session.url) {
       return NextResponse.json(

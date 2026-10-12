@@ -48,13 +48,29 @@ describe("POST /api/billing/checkout", () => {
       client_reference_id: "u1",
       line_items: [{ price: "price_c", quantity: 1 }],
       subscription_data: { metadata: { user_id: "u1", tier: "creator" } },
-    }));
+    }), expect.anything());
+  });
+  it("passes a per-user, per-tier, per-minute idempotency key to Stripe", async () => {
+    sessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/s" });
+    vi.useFakeTimers(); vi.setSystemTime(new Date("2026-10-12T20:55:10Z"));
+    await checkout(checkoutReq("pro"));
+    vi.setSystemTime(new Date("2026-10-12T20:55:50Z"));
+    await checkout(checkoutReq("pro"));
+    vi.setSystemTime(new Date("2026-10-12T20:56:05Z"));
+    await checkout(checkoutReq("pro"));
+    await checkout(checkoutReq("creator"));
+    vi.useRealTimers();
+    const keys = sessionsCreate.mock.calls.map((c) => c[1].idempotencyKey);
+    expect(keys[0]).toBe(keys[1]);
+    expect(keys[2]).not.toBe(keys[0]);
+    expect(keys[3]).not.toBe(keys[2]);
+    expect(keys[0]).toContain("checkout:u1:pro:");
   });
   it("reuses the stored Stripe customer for a returning (cancelled) user", async () => {
     billingRow.value = { stripe_customer_id: "cus_9", status: "canceled" };
     sessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/s" });
     await checkout(checkoutReq("pro"));
-    expect(sessionsCreate).toHaveBeenCalledWith(expect.objectContaining({ customer: "cus_9" }));
+    expect(sessionsCreate).toHaveBeenCalledWith(expect.objectContaining({ customer: "cus_9" }), expect.anything());
   });
   it.each(["active", "trialing", "past_due", "unpaid"])("refuses a second subscription while %s", async (status) => {
     billingRow.value = { stripe_customer_id: "cus_9", status };
