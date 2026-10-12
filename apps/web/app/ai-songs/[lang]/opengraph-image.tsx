@@ -11,7 +11,8 @@ export const alt = "neo-fm: AI songs in Indian languages";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OgImage({ params }: { params: { lang: string } }) {
+export default async function OgImage(props: { params: Promise<{ lang: string }> }) {
+  const params = await props.params;
   const page = languagePageBySlug(params.lang);
   if (!page) {
     return renderShareCard({ title: "neo-fm", subtitle: "AI music, India-first", excerpt: [], seed: params.lang });

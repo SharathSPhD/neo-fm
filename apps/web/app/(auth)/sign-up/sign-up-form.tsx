@@ -58,7 +58,7 @@ export function SignUpForm() {
     }
     startTransition(() => {
       router.replace(nextPath);
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 

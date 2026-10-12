@@ -23,10 +23,8 @@ export const dynamic = "force-dynamic";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour, same as the page render path.
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;

@@ -52,7 +52,7 @@ describe("GET /api/p/[publicId]", () => {
     const s = makeFakeSupabase();
     withServer(s);
     const req = new NextRequest("http://localhost/api/p/x");
-    const res = await GET_JSON(req, { params: { publicId: INVALID_ID } });
+    const res = await GET_JSON(req, { params: Promise.resolve({ publicId: INVALID_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -61,7 +61,7 @@ describe("GET /api/p/[publicId]", () => {
     s.__state.select_singles.jobs = null;
     withServer(s);
     const req = new NextRequest("http://localhost/api/p/x");
-    const res = await GET_JSON(req, { params: { publicId: VALID_ID } });
+    const res = await GET_JSON(req, { params: Promise.resolve({ publicId: VALID_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -86,7 +86,7 @@ describe("GET /api/p/[publicId]", () => {
     };
     withServer(s);
     const req = new NextRequest("http://localhost/api/p/x");
-    const res = await GET_JSON(req, { params: { publicId: VALID_ID } });
+    const res = await GET_JSON(req, { params: Promise.resolve({ publicId: VALID_ID }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.public_id).toBe(VALID_ID);
@@ -103,7 +103,7 @@ describe("GET /api/p/[publicId]/audio-url", () => {
     const s = makeFakeSupabase();
     withServiceRole(s);
     const req = new NextRequest("http://localhost/api/p/x/audio-url");
-    const res = await GET_AUDIO(req, { params: { publicId: INVALID_ID } });
+    const res = await GET_AUDIO(req, { params: Promise.resolve({ publicId: INVALID_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -112,7 +112,7 @@ describe("GET /api/p/[publicId]/audio-url", () => {
     s.__state.select_singles.jobs = null;
     withServiceRole(s);
     const req = new NextRequest("http://localhost/api/p/x/audio-url");
-    const res = await GET_AUDIO(req, { params: { publicId: VALID_ID } });
+    const res = await GET_AUDIO(req, { params: Promise.resolve({ publicId: VALID_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -127,7 +127,7 @@ describe("GET /api/p/[publicId]/audio-url", () => {
     };
     withServiceRole(s);
     const req = new NextRequest("http://localhost/api/p/x/audio-url");
-    const res = await GET_AUDIO(req, { params: { publicId: VALID_ID } });
+    const res = await GET_AUDIO(req, { params: Promise.resolve({ publicId: VALID_ID }) });
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.error).toBe("no_track");
@@ -154,7 +154,7 @@ describe("GET /api/p/[publicId]/audio-url", () => {
     };
     withServiceRole(s);
     const req = new NextRequest("http://localhost/api/p/x/audio-url");
-    const res = await GET_AUDIO(req, { params: { publicId: VALID_ID } });
+    const res = await GET_AUDIO(req, { params: Promise.resolve({ publicId: VALID_ID }) });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.url).toBe("https://signed.example.test/abc.mp3");

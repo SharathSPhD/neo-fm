@@ -88,7 +88,7 @@ describe("resolveJobReports", () => {
 describe("moderation email", () => {
   it("renders notices", () => {
     expect(takedownNotice({ title: "Moonlight", category: "hateful_or_harassing", note: "n" }).text).toContain("hateful or harassing");
-    expect(reporterOutcome({ action: "dismiss" }).text).toContain("grievance@neo-fm.com");
+    expect(reporterOutcome({ action: "dismiss" }).text).toContain("info@technektar.com");
   });
   it("dry-runs without a key and posts to Resend with one", async () => {
     expect(await resendMailer({} as never)({ to: "a@b.c", subject: "s", text: "t" })).toEqual({ sent: false });

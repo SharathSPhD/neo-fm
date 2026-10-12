@@ -15,8 +15,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { HandleForm } from "./handle-form";
 import { serverI18n } from "@/lib/i18n/server";
 
-export function generateMetadata(): Metadata {
-  const { t } = serverI18n();
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await serverI18n();
   return {
     title: t("handle.meta.title"),
     description: t("handle.meta.description"),
@@ -26,7 +26,7 @@ export function generateMetadata(): Metadata {
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingHandlePage() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/onboarding/handle");

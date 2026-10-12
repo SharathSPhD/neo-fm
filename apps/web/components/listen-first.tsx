@@ -36,7 +36,7 @@ const loadPublicStrip = unstable_cache(
 
 /** Landing-page strip: the newest community songs, playable without an account. */
 export async function ListenFirst() {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const rows = await loadPublicStrip().catch(() => [] as Row[]);
   if (rows.length === 0) return null;
   return (

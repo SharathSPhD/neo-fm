@@ -141,7 +141,7 @@ describe("DELETE /api/user-presets/[id]", () => {
     const s = makeFakeSupabase();
     authed(s);
     const res = await DELETE(new Request("http://localhost/"), {
-      params: { id: "bad" },
+      params: Promise.resolve({ id: "bad" }),
     });
     expect(res.status).toBe(400);
   });
@@ -154,7 +154,7 @@ describe("DELETE /api/user-presets/[id]", () => {
       error: { message: "preset_not_found", code: "42704" } as never,
     });
     const res = await DELETE(new Request("http://localhost/"), {
-      params: { id: PRESET_ID },
+      params: Promise.resolve({ id: PRESET_ID }),
     });
     expect(res.status).toBe(404);
   });
@@ -167,7 +167,7 @@ describe("DELETE /api/user-presets/[id]", () => {
       error: null,
     });
     const res = await DELETE(new Request("http://localhost/"), {
-      params: { id: PRESET_ID },
+      params: Promise.resolve({ id: PRESET_ID }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();

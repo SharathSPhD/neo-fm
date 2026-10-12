@@ -11,8 +11,8 @@ export type Crumb = {
   label: string;
 };
 
-export function Breadcrumbs({ items }: { items: Crumb[] }) {
-  const { t } = serverI18n();
+export async function Breadcrumbs({ items }: { items: Crumb[] }) {
+  const { t } = await serverI18n();
   if (items.length === 0) return null;
   return (
     <nav aria-label={t("lib.breadcrumb")} className="text-xs text-foreground/60">
