@@ -37,7 +37,7 @@ export function JobProgress({ songId, initialStage = "queued" }: { songId: strin
           if (j.stage) setStage(j.stage);
           if (j.status === "completed" || j.status === "failed") {
             done.current = true;
-            if (j.status === "failed") setError(j.error ?? "Generation failed");
+            if (j.status === "failed") setError(friendlyJobError(j.error));
             router.refresh();
             return;
           }
@@ -80,4 +80,14 @@ export function JobProgress({ songId, initialStage = "queued" }: { songId: strin
       </p>
     </section>
   );
+}
+
+const FRIENDLY: Record<string, string> = {
+  allowance_reached: "You've used this month's song allowance. It resets on the 1st, or upgrade your plan for more songs.",
+  render_failed: "The music engine had a hiccup and we couldn't finish this one. Your allowance was not used; please try again.",
+  content_policy: "We couldn't make this one because it didn't pass our content guidelines. Try rewording your idea.",
+};
+
+export function friendlyJobError(code?: string | null): string {
+  return (code && FRIENDLY[code]) || "Something went wrong while making this song. Please try again.";
 }
