@@ -29,6 +29,7 @@ type NavUser = {
 const TOP_NAV_LINKS: readonly { href: string; label: UiKey; icon: string }[] = [
   { href: "/library", label: "nav.library", icon: "▲" },
   { href: "/discover", label: "nav.discover", icon: "◎" },
+  { href: "/collections", label: "nav.collections", icon: "☰" },
 ];
 
 type BottomLink = {

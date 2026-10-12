@@ -17,7 +17,8 @@ Status as of 2026-10-12: ✅ done · ⏳ still needs you · ➖ optional.
 | 6 | Replace CRON_SECRET | ✅ done (rotated, live after redeploy) |
 | 7 | Before public launch | ⏳ |
 | 8 | Rate limiting store (Upstash) | ✅ done, `/api/health` reports upstash ok |
-| 9 | Re-run agent setup (removes web_fetch from the Pro agent) | ⏳ |
+| 9 | Re-run agent setup (removes web_fetch from the Pro agent) | ⏳ needs a secret you can paste (see 9) |
+| 10 | Approve the paid test renders (about £5.50 total) | ⏳ type the approval in chat |
 
 ## Do these next, in this order
 1. **2a** Supabase auth URLs for the new domain (2 minutes). Until then sign-in from the new domain may land on the vercel.app address.
@@ -80,7 +81,7 @@ To reply as `grievance@neo-fm.com` later, ImprovMX has a free SMTP sender; ask C
 3. Redeploy: https://vercel.com/ss-projects-f08e52ab/neo-fm-web/deployments → latest Production row → ⋯ → Redeploy.
 4. Do step 9 after this step, using the new value.
 
-## 7. Before public launch: ⏳
+## 7. Before public launch: ⏳ (not needed yet; only when you decide to go public)
 1. Stripe live mode: https://dashboard.stripe.com/products → create live prices Creator ₹299/month and Pro ₹799/month; copy the live keys from https://dashboard.stripe.com/apikeys; create the live webhook at https://dashboard.stripe.com/webhooks (URL `https://www.neo-fm.com/api/billing/webhook`); update the Stripe variables in Vercel.
 2. Delete test users at https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/users: `e2e-bot@neo-fm.test`, `showcase-a`, `showcase-b`, `delivered@resend.dev`.
 3. Retire the old production Supabase project once nothing uses it: https://supabase.com/dashboard/projects → old project → Settings → General → Pause or Delete.
@@ -95,20 +96,25 @@ Why: without it, per-IP rate limits live in memory on each serverless instance, 
 (Alternative: install the Upstash integration from https://vercel.com/marketplace/upstash, which adds both variables for you.)
 
 ## 9. Re-run agent setup: ⏳
-Why: a security change removed web access (`web_fetch`) from the Pro agent. It only takes effect when the agent definitions are re-published. Claude cannot send your `CRON_SECRET`, so run this once from any terminal with internet (your Mac is fine; it does not run on the server). Use the NEW secret from step 6, and run it only after the site has redeployed with that secret (it has):
-```
-read -s CRON_SECRET
-curl -i --max-time 120 -X POST -H "Authorization: Bearer $CRON_SECRET" "https://www.neo-fm.com/api/admin/ma-setup?upgrade=1"
-```
-`read -s` waits for you to paste the secret, then press Enter; nothing is echoed or kept in history. `-i` shows the status line, so you always see something.
+Why: a security change removed web access (`web_fetch`) from the Pro agent. It only takes effect when the agent definitions are re-published. Vercel never shows a saved secret again, so the easy way is to set a fresh `CRON_SECRET` from your clipboard and use it straight away. Run on any terminal with internet (your Mac is fine).
+1. Make a new secret and copy it, printing nothing:
+   ```
+   openssl rand -hex 32 | tr -d '\n' | pbcopy
+   ```
+2. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables → `CRON_SECRET` → Edit → paste → Production → Save. Copy nothing else.
+3. Tell Claude "secret saved". Claude redeploys so the new value is live (1 to 2 minutes).
+4. Then run (still without copying anything else):
+   ```
+   curl -i --max-time 120 -X POST -H "Authorization: Bearer $(pbpaste)" "https://www.neo-fm.com/api/admin/ma-setup?upgrade=1"
+   ```
 - `200` plus JSON listing agents: worked. Tell Claude "done: 9".
-- `401`: wrong secret, or the old secret. Paste the new one.
-- `504` or a timeout: run it again. It takes up to a minute and never duplicates anything.
+- `401`: the clipboard no longer holds the secret, or the redeploy is not live yet. Repeat from 1.
+- `504` or a timeout: run step 4 again; it takes up to a minute and never duplicates anything.
 
-## Decisions Claude is waiting for in chat (not dashboard steps)
-- Paid test renders: 3 Pro 60 s songs (about £0.75) for the latency measurement, and the full-length 60 s re-run (about £3.75) for the quality report. Neither has run. Approve in chat and Claude starts them.
+## 10. Approve the paid test renders: ⏳
+Two small measurement runs spend real Lyria money, so Claude waits for your own words in the chat. They are: the quality re-run with full-length 60 s lyrics (about £3.75), and 3 Pro 60 s songs for the latency measurement (about £0.75). To approve, type in the chat, for example: "I approve up to £4.50 for the quality renders and £1 for the latency renders." Claude then runs them and reports the results.
 
-## 10. Web push for notifications (optional; the bell works without it)
+## 11. Web push for notifications (optional; the bell works without it)
 Why: the in-app notifications centre ships with web push switched off. Until you do this, the bell, unread count and preferences work and the push toggle reads "not available yet".
 1. Generate a VAPID key pair on any machine with Node: `npx web-push generate-vapid-keys --json` (or ask the lead session to generate one). Keep the private key secret.
 2. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables and add for Production:
