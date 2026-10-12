@@ -38,12 +38,19 @@ export class SpendCapError extends Error {
   }
 }
 
-export function buildPrompt(stylePrompt: string, lyrics: string): string {
-  return `${stylePrompt.trim()}\n\nLyrics:\n${lyrics.trim()}`;
+/**
+ * Lyria 3.5 honours an explicit length instruction (measured: "exactly 60 seconds total" -> 62.7 s; without it a
+ * 60 s request produced ~170 s). The clip model is fixed at ~30 s, so no instruction is added for it.
+ */
+export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?: number, cls: DurationClass = "full"): string {
+  const len = cls === "full" && targetSeconds && targetSeconds > 0
+    ? `Duration: exactly ${Math.round(targetSeconds)} seconds total, do not exceed ${Math.round(targetSeconds)} seconds. `
+    : "";
+  return `${len}${stylePrompt.trim()}\n\nLyrics:\n${lyrics.trim()}`;
 }
 
 export async function generateMusic(
-  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass },
+  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number },
   deps: { guard: SpendGuard; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv },
 ): Promise<LyriaResult> {
   const f = deps.fetchImpl ?? fetch;
@@ -57,7 +64,7 @@ export async function generateMusic(
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": deps.apiKey },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics) }] }],
+          contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics, args.targetSeconds, args.durationClass) }] }],
           generationConfig: { responseModalities: ["AUDIO", "TEXT"] },
         }),
       },

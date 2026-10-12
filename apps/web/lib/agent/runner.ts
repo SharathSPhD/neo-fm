@@ -83,7 +83,7 @@ export interface AdvanceDeps {
   brief: Brief;
   /** Optional trace sink (surfaced in the tick response) - never receives secrets. */
   log?: (message: string) => void;
-  music: (a: { stylePrompt: string; lyrics: string; durationClass: DurationClass }) => Promise<LyriaResult>;
+  music: (a: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number }) => Promise<LyriaResult>;
   saveAudio: (jobId: string, n: number, r: LyriaResult) => Promise<string>;
 }
 
@@ -148,7 +148,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       continue;
     }
     try {
-      const r = await d.music({ stylePrompt: inp.style_prompt, lyrics: inp.lyrics, durationClass: inp.duration_class });
+      const r = await d.music({ stylePrompt: inp.style_prompt, lyrics: inp.lyrics, durationClass: inp.duration_class, targetSeconds: d.brief.targetSeconds });
       const path = await d.saveAudio(jobId, slot, r);
       await d.store.upsert({ job_id: jobId, audio_path: path });
       const sent = await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
