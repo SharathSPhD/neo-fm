@@ -35,6 +35,12 @@ export function MarketingNav({
                 Discover
               </Link>
               <Link
+                href="/ideas"
+                className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
+              >
+                Ideas
+              </Link>
+              <Link
                 href="/pricing"
                 className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
               >

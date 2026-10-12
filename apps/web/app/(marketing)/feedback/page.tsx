@@ -11,6 +11,7 @@ import type { Metadata } from "next";
 import { FeedbackForm } from "./feedback-form";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/feedback" },
   title: "Send feedback -- neo-fm",
   description: "Tell us what's working, what isn't, and what to build next.",
 };

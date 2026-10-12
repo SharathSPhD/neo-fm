@@ -10,6 +10,8 @@ import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 
+import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
 import { createServerClient } from "@/lib/supabase/server";
 import { CoverArt } from "@/components/cover-art";
 import { avatarUrl } from "@/lib/profile/avatar-url";
@@ -181,8 +183,22 @@ export default async function ProfilePage({ params }: Props) {
     groups.map((g) => prettyLanguage(g.language)),
   );
 
+  const playlistLd =
+    songs.length > 0
+      ? musicPlaylistLd({
+          base: siteUrl(),
+          path: `/u/${profile.handle}`,
+          name: `Songs by @${profile.handle}`,
+          description: shareText,
+          tracks: songs.map((s) => ({ publicId: s.public_id, name: s.title?.trim() || `${prettyStyle(s.style_family)} song`, language: s.language })),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
+      {playlistLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(playlistLd) }} />
+      ) : null}
       <header className="flex flex-col gap-6 sm:flex-row sm:items-center">
         {avatarUrl(profile.avatar_path) ? (
           // eslint-disable-next-line @next/next/no-img-element -- user avatar from the public bucket
