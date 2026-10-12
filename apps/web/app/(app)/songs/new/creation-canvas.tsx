@@ -337,7 +337,7 @@ export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
     setStatus("Queued. Redirecting to library...");
     startTransition(() => {
       router.replace("/library");
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 

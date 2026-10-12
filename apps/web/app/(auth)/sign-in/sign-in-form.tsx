@@ -38,7 +38,7 @@ export function SignInForm({
     }
     startTransition(() => {
       router.replace(next ?? "/library");
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 

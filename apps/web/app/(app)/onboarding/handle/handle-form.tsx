@@ -46,7 +46,7 @@ export function HandleForm({ initial }: { initial: string }) {
         return;
       }
       router.replace(`/u/${v}`);
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 
