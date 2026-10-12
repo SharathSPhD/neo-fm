@@ -330,6 +330,7 @@ export default async function SongDetailPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack?.duration_seconds ?? null}
             format={latestTrack?.format ?? "wav"}
+            title={data.song_documents?.title ?? null}
           />
           {data.song_documents?.document_json &&
           (data.song_documents.document_json as SongDocumentView)?.sections

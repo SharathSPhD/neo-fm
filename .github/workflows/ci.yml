@@ -34,6 +34,35 @@ jobs:
 
       - run: pnpm --filter @neo-fm/web build
 
+  a11y:
+    name: accessibility (axe, public pages)
+    runs-on: ubuntu-latest
+    env:
+      # Placeholders only: the gate covers public pages and never talks to Supabase.
+      NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm --filter @neo-fm/web build
+      - name: start the app
+        run: |
+          pnpm --filter @neo-fm/web exec next start -p 3000 > next.log 2>&1 &
+          npx --yes wait-on@7 http-get://localhost:3000/pricing --timeout 60000
+      - name: install chromium
+        run: pnpm --filter @neo-fm/web exec playwright install --with-deps chromium
+      - name: axe (WCAG 2.1 A/AA incl. colour contrast, light + dark)
+        run: pnpm --filter @neo-fm/web test:a11y
+        env:
+          E2E_BASE_URL: http://localhost:3000
+      - if: failure()
+        run: tail -n 50 next.log || true
+
   agents:
     name: managed agents (web unit + skill drift)
     runs-on: ubuntu-latest

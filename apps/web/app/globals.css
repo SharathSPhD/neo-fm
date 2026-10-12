@@ -66,3 +66,25 @@ a:focus {
     transition-duration: 0.001ms !important;
   }
 }
+
+/*
+ * Accessibility: contrast floor for de-emphasised text (WCAG 1.4.3, 4.5:1).
+ * Many components use `text-foreground/30..55` for secondary copy; those
+ * alphas fall below 4.5:1 against the page background. Rather than edit
+ * every call site we clamp them here, keeping the visual hierarchy
+ * (secondary text stays lighter than primary) while passing AA.
+ */
+:root .text-foreground\/30,
+:root .text-foreground\/35,
+:root .text-foreground\/40,
+:root .text-foreground\/45 {
+  color: hsl(var(--foreground) / 0.55);
+}
+:root[data-theme="light"] .text-foreground\/30,
+:root[data-theme="light"] .text-foreground\/35,
+:root[data-theme="light"] .text-foreground\/40,
+:root[data-theme="light"] .text-foreground\/45,
+:root[data-theme="light"] .text-foreground\/50,
+:root[data-theme="light"] .text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.68);
+}

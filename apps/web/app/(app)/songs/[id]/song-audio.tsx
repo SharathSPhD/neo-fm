@@ -22,6 +22,8 @@ interface SongAudioProps {
   initialUrl: string;
   durationSeconds: number | null;
   format: string;
+  /** Song title, used for the player's accessible name. */
+  title?: string | null;
 }
 
 export function SongAudio({
@@ -29,6 +31,7 @@ export function SongAudio({
   initialUrl,
   durationSeconds,
   format,
+  title,
 }: SongAudioProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
@@ -109,6 +112,7 @@ export function SongAudio({
       <audio
         ref={audioRef}
         controls
+        aria-label={title ? `Audio player: ${title}` : "Song audio player"}
         preload="metadata"
         src={src}
         onError={onError}
@@ -124,7 +128,7 @@ export function SongAudio({
           {format.toUpperCase()}
           {durationSeconds ? ` · ${durationSeconds}s` : null}
         </span>
-        <span aria-live="polite">
+        <span role="status" aria-live="polite">
           {refreshing
             ? "Refreshing signed URL…"
             : refreshError

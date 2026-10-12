@@ -12,7 +12,8 @@
     "lint": "next lint --dir app --dir lib",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:a11y": "playwright test -c playwright.a11y.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
