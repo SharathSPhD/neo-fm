@@ -97,7 +97,7 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
 
 type CreationMode = "compose" | "describe";
 
-export function CreationCanvas() {
+export function CreationCanvas({ firstRun = false }: { firstRun?: boolean }) {
   const router = useRouter();
   const [creationMode, setCreationMode] = useState<CreationMode>("describe");
   const [error, setError] = useState<string | null>(null);
@@ -369,7 +369,7 @@ export function CreationCanvas() {
       </div>
 
       {creationMode === "describe" ? (
-        <PromptTab />
+        <PromptTab showGuide={firstRun} />
       ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
