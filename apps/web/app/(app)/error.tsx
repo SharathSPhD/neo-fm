@@ -8,6 +8,8 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export default function AppGroupError({
   error,
   reset,
@@ -15,6 +17,7 @@ export default function AppGroupError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useUiLang();
   useEffect(() => {
     // server-side logs already capture this; we just keep the browser log
     // tidy for the user-facing reload.
@@ -23,20 +26,18 @@ export default function AppGroupError({
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 rounded-xl border border-red-500/30 bg-red-500/5 p-6 text-sm">
-      <div>
+      <div role="alert">
         <h1 className="text-lg font-semibold text-foreground">
-          Something broke
+          {t("error.title")}
         </h1>
         <p className="mt-1 text-foreground/70">
-          We hit an unexpected error rendering this page. Reloading often
-          clears it. If it persists, share the error digest below with{" "}
+          {t("error.body")}{" "}
           <Link
             href="/feedback"
-            className="text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+            className="inline-flex min-h-[44px] items-center rounded text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            feedback
+            {t("error.report")}
           </Link>
-          .
         </p>
       </div>
       {error.digest && (
@@ -48,15 +49,15 @@ export default function AppGroupError({
         <button
           type="button"
           onClick={reset}
-          className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="min-h-[44px] rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
-          Try again
+          {t("error.retry")}
         </button>
         <Link
           href="/library"
-          className="rounded-md border border-muted/40 px-3 py-1.5 text-sm text-foreground/80 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="inline-flex min-h-[44px] items-center rounded-md border border-muted/40 px-4 py-1.5 text-sm text-foreground/80 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          Go to library
+          {t("error.library")}
         </Link>
       </div>
     </div>

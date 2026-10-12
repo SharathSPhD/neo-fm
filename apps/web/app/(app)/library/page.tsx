@@ -10,6 +10,7 @@ import { redirect } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
+import { T } from "@/components/t";
 
 import { LibraryToolbar } from "./toolbar";
 import { LibraryOnboardingModal } from "./onboarding-modal";
@@ -274,9 +275,9 @@ export default async function LibraryPage({
       ) : songs.length === 0 ? (
         libraryTotal === 0 ? (
           <EmptyState
-            title="No songs yet"
-            body="Pick a style preset, type a verse, hit Generate. Your first song will land here in about a minute."
-            cta={{ href: "/songs/new", label: "Create your first song" }}
+            title={<T k="empty.title" />}
+            body={<T k="empty.body" />}
+            cta={{ href: "/songs/new", label: <T k="empty.cta" /> }}
           />
         ) : (
           <EmptyState
