@@ -238,5 +238,14 @@ export async function DELETE(
   if (!count) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
   }
+  // The job row (and its track rows) are gone; remove the audio too so deleted songs do not leave paid-for orphans.
+  // Only reached when RLS let the delete through, i.e. the caller owns the job. Best-effort: never fails the delete.
+  try {
+    const storage = createServiceRoleClient().storage.from("tracks");
+    const { data: files } = await storage.list(parsed.data, { limit: 100 });
+    if (files && files.length > 0) await storage.remove(files.map((f) => `${parsed.data}/${f.name}`));
+  } catch (e) {
+    console.error("song delete: audio cleanup failed", parsed.data, String((e as Error)?.message ?? e));
+  }
   return NextResponse.json({ deleted: true });
 }
