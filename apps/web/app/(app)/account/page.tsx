@@ -48,10 +48,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 interface PageProps {
-  searchParams?: { upgraded?: string };
+  searchParams?: Promise<{ upgraded?: string }>;
 }
 
-export default async function AccountPage({ searchParams }: PageProps) {
+export default async function AccountPage(props: PageProps) {
+  const searchParams = await props.searchParams;
   const supabase = createServerClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account");

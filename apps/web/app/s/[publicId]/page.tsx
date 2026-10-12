@@ -130,11 +130,12 @@ async function loadPublicSong(publicId: string): Promise<PublicSongRow | null> {
   return data ?? null;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { publicId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) {
     return { title: "neo-fm" };
@@ -160,7 +161,7 @@ export async function generateMetadata({
       : { index: true, follow: true };
   // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
   // WordPress etc. turn a pasted link into the embedded player.
-  const origin = requestOrigin();
+  const origin = await requestOrigin();
   const oembed = origin
     ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
     : null;
@@ -184,11 +185,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicSongPage({
-  params,
-}: {
-  params: { publicId: string };
-}) {
+export default async function PublicSongPage(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+) {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
 

@@ -87,11 +87,12 @@ interface RegenChildView {
   created_at: string;
 }
 
-export default async function SongDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function SongDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
