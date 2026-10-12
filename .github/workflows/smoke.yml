@@ -1,0 +1,46 @@
+name: smoke (core flows)
+
+# Runs the Playwright smoke suite against a local production build backed by an
+# in-memory fake Supabase: no real database, Lyria, Anthropic or prod writes.
+# Manual runs can point it at a preview deployment instead (read-only specs only).
+
+on:
+  push:
+    branches: [main, release-v2, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Optional preview URL (https://...). Empty = local build + fake backend."
+        required: false
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: smoke (playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SMOKE_BASE_URL: ${{ inputs.base_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r --filter "./packages/*" build
+      - run: pnpm --filter @neo-fm/web exec playwright install --with-deps chromium
+      - name: smoke suite
+        run: pnpm --filter @neo-fm/web test:smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-report
+          path: |
+            apps/web/tests/smoke/.report
+            apps/web/tests/smoke/.output
