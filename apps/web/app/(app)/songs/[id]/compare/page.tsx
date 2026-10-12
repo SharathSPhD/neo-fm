@@ -50,12 +50,13 @@ function pickPair(tracks: RawTrack[]): [RawTrack, RawTrack] | null {
   return [first, second];
 }
 
-export default async function ComparePage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const { t } = serverI18n();
+export default async function ComparePage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) redirect(`/sign-in?next=/songs/${params.id}/compare`);

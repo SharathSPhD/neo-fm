@@ -138,11 +138,12 @@ async function loadPublicSong(publicId: string): Promise<PublicSongRow | null> {
   return data ?? null;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { publicId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) {
     return { title: "neo-fm" };
@@ -169,7 +170,7 @@ export async function generateMetadata({
       : { index: true, follow: true };
   // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
   // WordPress etc. turn a pasted link into the embedded player.
-  const origin = requestOrigin();
+  const origin = await requestOrigin();
   const oembed = origin
     ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
     : null;
@@ -196,17 +197,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicSongPage({
-  params,
-}: {
-  params: { publicId: string };
-}) {
+export default async function PublicSongPage(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+) {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
 
   const data = await loadPublicSong(idCheck.data);
   if (!data) notFound();
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   const doc = data.song_documents?.document_json;
   const storedTitle = data.song_documents?.title?.trim();
   const displayTitle =
@@ -488,7 +490,7 @@ export default async function PublicSongPage({
   );
 }
 
-type TFn = ReturnType<typeof serverI18n>["t"];
+type TFn = Awaited<ReturnType<typeof serverI18n>>["t"];
 
 function SongMetadata({ doc, t }: { doc: SongDocumentView; t: TFn }) {
   const rows: { label: string; value: string }[] = [];

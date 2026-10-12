@@ -11,14 +11,14 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { serverI18n } from "@/lib/i18n/server";
 
-export function MarketingNav({
+export async function MarketingNav({
   isSignedIn,
   showSubLinks = true,
 }: {
   isSignedIn: boolean;
   showSubLinks?: boolean;
 }) {
-  const { t } = serverI18n();
+  const { t } = await serverI18n();
   return (
     <header className="border-b border-muted/30">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-5">

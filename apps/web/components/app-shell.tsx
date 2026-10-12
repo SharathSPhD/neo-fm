@@ -68,8 +68,8 @@ export function AppShell({
   );
 }
 
-function TopNav({ user, active }: { user: NavUser; active?: string }) {
-  const { t } = serverI18n();
+async function TopNav({ user, active }: { user: NavUser; active?: string }) {
+  const { t } = await serverI18n();
   return (
     <header className="sticky top-0 z-30 border-b border-muted/30 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
@@ -122,8 +122,8 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
   );
 }
 
-function MobileBottomNav({ active }: { active?: string }) {
-  const { t } = serverI18n();
+async function MobileBottomNav({ active }: { active?: string }) {
+  const { t } = await serverI18n();
   return (
     <nav
       aria-label="Primary mobile"

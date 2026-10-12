@@ -29,10 +29,8 @@ const PublicIdSchema = z
   .string()
   .regex(/^[0-9abcdefghjkmnpqrstvwxyz]{10}$/);
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { publicId: string } },
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ publicId: string }> }) {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });

@@ -62,6 +62,19 @@ test.describe("sign up", () => {
   });
 });
 
+test.describe("sign in", () => {
+  test("valid credentials leave /sign-in for the library (regression: Next 15 replace+refresh hang)", async ({ page }) => {
+    test.skip(REMOTE, "signs in against the local fake backend only");
+    await dismissOnboarding(page);
+    await page.goto("/sign-in");
+    await page.getByLabel(/email/i).fill("smoke@neo-fm.test");
+    await page.getByLabel(/password/i).fill("Sm0ke-Test-Pass!");
+    await page.getByRole("button", { name: /^sign in/i }).click();
+    await expect(page).toHaveURL(/\/library/, { timeout: 15_000 });
+    await expect(page.getByRole("button", { name: /signing in/i })).toHaveCount(0);
+  });
+});
+
 test.describe("create a song (up to queued)", () => {
   test("signed-in user submits a prompt and a job is queued", async ({ page }) => {
     test.skip(REMOTE, "signs in and creates a job; local fake backend only");

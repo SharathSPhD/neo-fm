@@ -48,12 +48,12 @@ export const viewport: Viewport = {
   themeColor: "#321656",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const lang = getUiLang();
+  const lang = await getUiLang();
   return (
     <html lang={lang}>
       <body>

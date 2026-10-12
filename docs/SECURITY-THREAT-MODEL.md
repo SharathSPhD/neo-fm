@@ -61,3 +61,5 @@ Migration 0070 was applied inside a rolled-back transaction on the dev Supabase 
 - Other headers: `X-Permitted-Cross-Domain-Policies: none`, `poweredByHeader: false`, WebP-only image optimizer.
 - Dependencies: `pnpm audit` went from 87 to ~34 advisories (next 14.2.35, vitest 3, `pnpm.overrides` for postcss, vite, glob, js-yaml, brace-expansion, toml, ...). What remains high/critical: Next 14.x advisories fixed only in Next >= 15.5 (migration issue filed), and `braces@3.0.3` (no patched release; dev-only via tailwind/chokidar).
 - CI: `secret scan (gitleaks)` over full history (pinned v8.21.2, `.gitleaks.toml`); Dependabot weekly grouped updates for npm, pip, docker and GitHub Actions (Next major bumps ignored until the migration).
+
+- Next 15.5 / React 19 upgrade (issue #79): clears every Next advisory. After it, `pnpm audit` shows no critical and one high (`braces@3.0.3`, no patched release, dev-only via tailwind/chokidar).

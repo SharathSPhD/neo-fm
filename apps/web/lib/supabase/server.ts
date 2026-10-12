@@ -47,7 +47,9 @@ function assertEnv(value: string | undefined, name: string): string {
 }
 
 export function createServerClient() {
-  const cookieStore = cookies();
+  // Call cookies() eagerly (not awaited): in Next 15 this is what opts the caller out of static prerendering, as the
+  // sync call did in Next 14. getAll/setAll below await the same promise.
+  const cookieJar = cookies();
   return createSsrServerClient<Database>(
     assertEnv(SUPABASE_URL, "NEXT_PUBLIC_SUPABASE_URL"),
     assertEnv(
@@ -56,11 +58,13 @@ export function createServerClient() {
     ),
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
+        // Next 15: cookies() is async. @supabase/ssr accepts async getAll/setAll, so the client stays synchronous to build.
+        async getAll() {
+          return (await cookieJar).getAll();
         },
-        setAll(toSet) {
+        async setAll(toSet) {
           try {
+            const cookieStore = await cookieJar;
             toSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options),
             );

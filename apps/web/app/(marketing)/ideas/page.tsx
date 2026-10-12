@@ -54,7 +54,8 @@ const chip = (active: boolean, disabled = false) =>
         : "border-muted/40 text-foreground/80 hover:border-foreground/50"
   }`;
 
-export default function IdeasPage({ searchParams }: { searchParams: Search }) {
+export default async function IdeasPage(props: { searchParams: Promise<Search> }) {
+  const searchParams = await props.searchParams;
   const lang: IdeaLang = isIdeaLang(searchParams.lang) ? searchParams.lang : "hi";
   const occasion = pick<Occasion>(searchParams.occasion, OCCASIONS);
   const mood = pick<Mood>(searchParams.mood, MOODS);
