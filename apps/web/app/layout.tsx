@@ -3,6 +3,7 @@ import Script from "next/script";
 
 import { siteUrl } from "@/lib/seo/site";
 import { AuthListener } from "@/components/auth-listener";
+import { ClientErrorListener } from "@/components/client-error-listener";
 
 import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
@@ -57,6 +58,7 @@ export default function RootLayout({
             /public so no inline-script audit surface. */}
         <Script src="/theme-boot.js" strategy="beforeInteractive" />
         <AuthListener />
+        <ClientErrorListener />
         {children}
         <ServiceWorkerRegister />
       </body>

@@ -16,6 +16,7 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
@@ -24,6 +25,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
+
+import { requestOrigin } from "@/lib/embed/origin";
 
 import {
   createServerClient,
@@ -157,13 +160,22 @@ export async function generateMetadata({
     data.published_visibility === "unlisted" || dedication
       ? { index: false, follow: false }
       : { index: true, follow: true };
+  // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
+  // WordPress etc. turn a pasted link into the embedded player.
+  const origin = requestOrigin();
+  const oembed = origin
+    ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
+    : null;
   return {
     title: dedication ? `A song for ${dedication.to}` : title,
     description: dedication?.message
       ? dedication.message.slice(0, 160)
       : description,
     robots,
-    alternates: { canonical: `/s/${idCheck.data}` },
+    alternates: {
+      canonical: `/s/${idCheck.data}`,
+      ...(oembed ? { types: { "application/json+oembed": oembed } } : {}),
+    },
     openGraph: {
       title,
       description,
@@ -435,6 +447,14 @@ export default async function PublicSongPage({
             ))}
           </ol>
         </section>
+      ) : null}
+
+      {doc ? (
+        <MoreLikeThis
+          publicId={data.public_id}
+          language={doc.language}
+          style={doc.style_family}
+        />
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
