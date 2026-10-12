@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
 
   // Safety gate: screen free-text briefs before a job (and any paid call) exists.
   if (parsed.data.prompt) {
-    const verdict = await screenRequest(parsed.data.prompt, "brief");
+    const verdict = await screenRequest(parsed.data.prompt, "brief", { lang: parsed.data.language });
     if (!verdict.allowed) {
       return NextResponse.json(
         { error: "content_policy", category: verdict.category, message: verdict.reason },
