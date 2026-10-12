@@ -19,7 +19,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "./helpers/auth";
+import { signIn } from "../helpers/auth";
 
 const V13_PRESETS = [
   "carnatic-kriti",

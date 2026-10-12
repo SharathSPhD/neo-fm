@@ -13,7 +13,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "./helpers/auth";
+import { signIn } from "../helpers/auth";
 
 test("Voice picker selection lands in the POSTed SongDocument", async ({
   page,

@@ -10,7 +10,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "./helpers/auth";
+import { signIn } from "../helpers/auth";
 
 test("ForkSongDialog submits a populated variation with overrides", async ({
   page,

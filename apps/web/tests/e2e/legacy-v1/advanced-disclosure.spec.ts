@@ -11,7 +11,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "./helpers/auth";
+import { signIn } from "../helpers/auth";
 
 test("Advanced disclosure expands + folds into the SongDocument we POST", async ({
   page,

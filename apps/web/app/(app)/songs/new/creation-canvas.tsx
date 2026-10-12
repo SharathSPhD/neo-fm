@@ -99,7 +99,7 @@ type CreationMode = "compose" | "describe";
 
 export function CreationCanvas() {
   const router = useRouter();
-  const [creationMode, setCreationMode] = useState<CreationMode>("compose");
+  const [creationMode, setCreationMode] = useState<CreationMode>("describe");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -363,7 +363,7 @@ export function CreationCanvas() {
                 : "text-foreground/50 hover:text-foreground/80",
             ].join(" ")}
           >
-            {mode === "compose" ? "Compose manually" : "Describe with AI"}
+            {mode === "compose" ? "Write my own lyrics" : "Describe with AI"}
           </button>
         ))}
       </div>

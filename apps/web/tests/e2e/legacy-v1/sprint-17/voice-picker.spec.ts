@@ -9,7 +9,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "../helpers/auth";
+import { signIn } from "../../helpers/auth";
 
 test("Voice picker pivots on language change and stamps voice_id", async ({
   page,

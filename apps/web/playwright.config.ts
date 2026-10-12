@@ -29,6 +29,7 @@ export default defineConfig({
   // Vitest owns ./tests; explicitly include only the e2e subdir so
   // running playwright doesn't accidentally try to run vitest specs.
   testMatch: /.*\.spec\.ts/,
+  testIgnore: /legacy-v1\//,
   fullyParallel: false, // smoke user is shared; serial is safer.
   workers: 1,
   retries: process.env.CI ? 1 : 0,

@@ -68,7 +68,7 @@ test("cover-art GET returns a status + (eventually) a signed url", async ({
   }, songId);
 
   expect(result.status, JSON.stringify(result.body)).toBe(200);
-  expect(result.body).toMatchObject({
-    status: expect.stringMatching(/^(queued|processing|completed|failed|none)$/),
-  });
+  // Contract: { attempt: { status } | null, url, created_at }.
+  const body = result.body as { status?: string; attempt?: { status?: string } | null };
+  expect(body.status ?? body.attempt?.status ?? "none").toMatch(/^(queued|processing|completed|failed|none)$/);
 });

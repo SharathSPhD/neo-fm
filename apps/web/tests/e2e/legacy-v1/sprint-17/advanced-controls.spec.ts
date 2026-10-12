@@ -8,7 +8,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { signIn } from "../helpers/auth";
+import { signIn } from "../../helpers/auth";
 
 test("Advanced controls on /songs/new round-trip into the POSTed body", async ({
   page,
