@@ -4,8 +4,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-ENGINE = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ENGINE))
+# pce_tools lives outside pce-engine/ on purpose: pce-engine is embedded verbatim in the agent skill (lib/agent/skill-pce-poem.ts).
+TOOLS = Path(__file__).resolve().parents[2] / "pce-tools"
+sys.path.insert(0, str(TOOLS))
 import pce_tools  # noqa: E402
 
 GOOD = {
@@ -38,8 +39,8 @@ def test_interpret_explains_draft_commit() -> None:
 def test_cli_exit_codes(tmp_path: Path) -> None:
     p = tmp_path / "result.json"
     p.write_text(json.dumps(GOOD))
-    ok = subprocess.run([sys.executable, str(ENGINE / "pce_tools.py"), "audit", str(p)], capture_output=True, text=True)
+    ok = subprocess.run([sys.executable, str(TOOLS / "pce_tools.py"), "audit", str(p)], capture_output=True, text=True)
     assert ok.returncode == 0
     bad = json.loads(json.dumps(GOOD)); bad["committed"] = "nope"
     p.write_text(json.dumps(bad))
-    assert subprocess.run([sys.executable, str(ENGINE / "pce_tools.py"), "audit", str(p)], capture_output=True).returncode == 1
+    assert subprocess.run([sys.executable, str(TOOLS / "pce_tools.py"), "audit", str(p)], capture_output=True).returncode == 1
