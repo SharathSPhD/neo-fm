@@ -55,6 +55,11 @@ function csp({
   const supabase = supabaseHost
     ? [`https://${supabaseHost}`, `wss://${supabaseHost}`]
     : [];
+  // A plain-http Supabase URL is only ever a local stack (supabase CLI or the
+  // smoke suite's fake); production URLs are https, so this adds nothing there.
+  if (supabaseHost && process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http://")) {
+    supabase.push(`http://${supabaseHost}`);
+  }
   const connect = [
     "'self'",
     ...supabase,
