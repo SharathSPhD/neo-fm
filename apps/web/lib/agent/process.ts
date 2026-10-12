@@ -191,7 +191,14 @@ async function finalize(db: ReturnType<typeof serviceClient>, jobId: string): Pr
     attemptId = crypto.randomUUID();
     await db.from("jobs").update({ attempt_id: attemptId }).eq("id", jobId);
   }
-  await db.from("tracks").upsert({ job_id: jobId, attempt_id: attemptId, url: `tracks/${run.audio_path}`, format: "mp3" }, { onConflict: "job_id,attempt_id" });
+  // Insert-if-absent keyed on the job (the production schema's unique indexes are (job_id, attempt_id, candidate_index) and one
+  // is_current row per job, which an upsert on (job_id, attempt_id) cannot target). An insert error must NOT be swallowed:
+  // a job without its track row looks completed but plays nothing.
+  const { data: existing } = await db.from("tracks").select("id").eq("job_id", jobId).limit(1);
+  if (!(existing ?? []).length) {
+    const { error: trackErr } = await db.from("tracks").insert({ job_id: jobId, attempt_id: attemptId, url: `tracks/${run.audio_path}`, format: "mp3" });
+    if (trackErr) throw new Error(`tracks insert failed: ${trackErr.message}`);
+  }
   await db.from("jobs").update({ status: "completed", progress: 1, finished_at: now }).eq("id", jobId);
   return cascade;
 }
