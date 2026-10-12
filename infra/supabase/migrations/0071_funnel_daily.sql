@@ -10,7 +10,8 @@ create table if not exists public.funnel_daily (
   primary key (day, event)
 );
 alter table public.funnel_daily enable row level security;
--- No policies: service role only.
+-- No policies, and Supabase grants ALL on new public tables to anon/authenticated by default, so revoke it: service role only.
+revoke all on public.funnel_daily from public, anon, authenticated;
 
 create or replace function public.bump_funnel(p_event text)
 returns void
