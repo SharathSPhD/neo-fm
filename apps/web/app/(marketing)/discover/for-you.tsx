@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { loadTaste, hasPersonalizationConsent } from "@/lib/personalization/load";
 import { createServerClient } from "@/lib/supabase/server";
+import { forYouReason } from "@/lib/personalization/similar";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
 type Row = { public_id: string; song_documents: { title: string | null; language: string; style_family: string } | null };
@@ -13,9 +14,25 @@ export async function ForYou() {
   const userId = u?.user?.id;
   if (!userId) return null;
   try {
-    if (!(await hasPersonalizationConsent(supabase, userId))) return null;
+    if (!(await hasPersonalizationConsent(supabase, userId))) {
+      return (
+        <p className="text-xs text-foreground/50">
+          Want picks tuned to your taste?{" "}
+          <Link href="/account" className="underline hover:text-foreground/80">
+            Turn on personalised picks in Account
+          </Link>
+          .
+        </p>
+      );
+    }
     const { profile } = await loadTaste(supabase, userId);
-    if (profile.nSignals < 3) return null;
+    if (profile.nSignals < 3) {
+      return (
+        <p className="text-xs text-foreground/50">
+          Like or replay a few songs and your &ldquo;For you&rdquo; picks will appear here.
+        </p>
+      );
+    }
     const { data } = await supabase
       .from("jobs")
       .select("public_id, song_documents!inner ( title, language, style_family ), tracks!inner ( id )")
@@ -35,6 +52,7 @@ export async function ForYou() {
               <Link href={`/s/${r.public_id}`} className="block rounded-lg border border-accent/30 bg-accent/5 p-4 hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent">
                 <span className="font-medium">{r.song_documents?.title || "Untitled"}</span>
                 <span className="mt-1 block text-xs text-foreground/60">{prettyLanguage(r.song_documents?.language ?? "")} · {prettyStyle(r.song_documents?.style_family ?? "")}</span>
+                <span className="mt-1 block text-[11px] text-accent/80">{forYouReason(profile, r.song_documents?.language ?? "", r.song_documents?.style_family ?? "")}</span>
               </Link>
             </li>
           ))}

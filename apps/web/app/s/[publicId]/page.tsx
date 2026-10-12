@@ -16,6 +16,7 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
@@ -409,6 +410,14 @@ export default async function PublicSongPage({
             ))}
           </ol>
         </section>
+      ) : null}
+
+      {doc ? (
+        <MoreLikeThis
+          publicId={data.public_id}
+          language={doc.language}
+          style={doc.style_family}
+        />
       ) : null}
 
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
