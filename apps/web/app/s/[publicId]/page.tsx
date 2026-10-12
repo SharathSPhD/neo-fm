@@ -30,6 +30,10 @@ import { LikeButton } from "@/components/like-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
+
 import { PublicSongAudio } from "./public-song-audio";
 
 export const dynamic = "force-dynamic";
@@ -256,6 +260,11 @@ export default async function PublicSongPage({
     initiallyLiked = !!probe.data;
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    publishedOnly: true,
+    viewerId: currentUserId,
+  });
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-2">
@@ -279,6 +288,7 @@ export default async function PublicSongPage({
           ) : null}
         </p>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
 
       {signedUrl && latestTrack ? (
         <section className="flex flex-col gap-3">
@@ -296,6 +306,22 @@ export default async function PublicSongPage({
               initialCount={likeCount}
               signedIn={!!currentUserId}
             />
+            {data.status === "completed" && data.song_documents ? (
+              <MakeInLanguageButton
+                songId={data.id}
+                title={displayTitle}
+                sourceLanguage={data.song_documents.language}
+                sourceStyle={data.song_documents.style_family}
+                durationSeconds={
+                  ([30, 60, 90, 180].includes(doc?.target_duration_seconds ?? 0)
+                    ? doc?.target_duration_seconds
+                    : 60) as 30 | 60 | 90 | 180
+                }
+                existingLanguages={versionSiblings.map((v) => v.language)}
+                signedIn={!!currentUserId}
+                nextPath={`/s/${data.public_id}`}
+              />
+            ) : null}
             <VariationButton
               songId={data.id}
               styleFamily={doc?.style_family ?? "western"}

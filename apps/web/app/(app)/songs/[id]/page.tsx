@@ -24,6 +24,9 @@ import { createServerClient } from "@/lib/supabase/server";
 import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { RemixButton } from "./remix-button";
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 import { DictionCheck } from "./diction-check";
@@ -225,6 +228,12 @@ export default async function SongDetailPage({
     } catch { /* optional */ }
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    viewerId: userData.user.id,
+  });
+  const originalBrief =
+    typeof doc?.metadata?.prompt === "string" ? doc.metadata.prompt : null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
@@ -267,6 +276,17 @@ export default async function SongDetailPage({
             title={title}
             canShare={data.status === "completed"}
           />
+          {data.status === "completed" && doc && data.song_documents ? (
+            <MakeInLanguageButton
+              songId={data.id}
+              title={title}
+              sourceLanguage={data.song_documents.language}
+              sourceStyle={data.song_documents.style_family}
+              durationSeconds={doc.target_duration_seconds as 30 | 60 | 90 | 180}
+              originalBrief={originalBrief}
+              existingLanguages={versionSiblings.map((v) => v.language)}
+            />
+          ) : null}
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
               <VariationButton
@@ -313,6 +333,7 @@ export default async function SongDetailPage({
           ) : null}
         </div>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
 
       {data.error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
