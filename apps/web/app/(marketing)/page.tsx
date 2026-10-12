@@ -2,6 +2,9 @@ import { ListenFirst } from "@/components/listen-first";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
+import { jsonLdString } from "@/lib/seo/jsonld";
+
 /**
  * v2 landing. Everything claimed here is something the product does today:
  *  - lyrics are written natively (not translated) by the Pratyabhijna-inspired lyric engine (K candidates, contrastive
@@ -28,7 +31,7 @@ const DIFFERENT = [
 
 export const metadata: Metadata = {
   title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
-  alternates: { canonical: "/" },
+  alternates: { canonical: "/", languages: hreflangPaths() },
 };
 
 const JSON_LD = {
@@ -43,7 +46,7 @@ const JSON_LD = {
 export default async function Page() {
   return (
     <main className="min-h-screen">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <Hero />
       <ListenFirst />
       <HowItWorks />
@@ -141,6 +144,19 @@ function PricingTeaser() {
 function Footer() {
   return (
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
+      <nav aria-label="Songs by language" className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+        {LANGUAGE_PAGES.map((l) => (
+          <Link
+            key={l.code}
+            href={languagePagePath(l)}
+            hrefLang={l.code}
+            lang={l.code}
+            className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            {l.native}
+          </Link>
+        ))}
+      </nav>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <p>
           © {new Date().getFullYear()} neo-fm · AI songs in Indian languages ·{" "}
