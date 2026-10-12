@@ -652,7 +652,7 @@ export const kn: Dict = {
   "pub.report.sexual": "ಲೈಂಗಿಕ ವಿಷಯ ಅಥವಾ ಅಪ್ರಾಪ್ತರಿಗೆ ಸಂಬಂಧಿಸಿದ್ದು",
   "pub.report.copyright": "ಯಾರದೋ ಹಕ್ಕುಸ್ವಾಮ್ಯದ ಕೃತಿಯನ್ನು ನಕಲು ಮಾಡುತ್ತದೆ",
   "pub.report.other": "ಬೇರೇನೋ",
-  "pub.report.thanks": "ಧನ್ಯವಾದಗಳು — ಈ ವರದಿಯನ್ನು ಪರಿಶೀಲಿಸುತ್ತೇವೆ. ತುರ್ತೇ? grievance@neo-fm.com ಗೆ ಬರೆಯಿರಿ.",
+  "pub.report.thanks": "ಧನ್ಯವಾದಗಳು — ಈ ವರದಿಯನ್ನು ಪರಿಶೀಲಿಸುತ್ತೇವೆ. ತುರ್ತೇ? info@technektar.com ಗೆ ಬರೆಯಿರಿ.",
   "pub.report.open": "ಈ ಹಾಡನ್ನು ವರದಿ ಮಾಡಿ",
   "pub.report.why": "ನೀವು ಇದನ್ನು ಏಕೆ ವರದಿ ಮಾಡುತ್ತಿದ್ದೀರಿ?",
   "pub.report.details": "ವಿವರಗಳು (ಐಚ್ಛಿಕ)",
