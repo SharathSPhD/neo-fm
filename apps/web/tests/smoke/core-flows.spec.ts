@@ -81,9 +81,12 @@ test.describe("create a song (up to queued)", () => {
       .fill("A gentle Hindi lullaby about the monsoon rain");
     await page.getByRole("button", { name: /queue|generate|create|make|compose/i }).first().click();
 
-    await expect(page.getByText(/queued/i).first()).toBeVisible();
-    const calls = await fakeCalls();
-    expect(calls.some((c) => c.path === "/rest/v1/rpc/create_song_job")).toBe(true);
+    // The "Queued" toast is transient (the form redirects to /library), so
+    // assert on the durable signals: the job RPC fired and we left the form.
+    await expect
+      .poll(async () => (await fakeCalls()).some((c) => c.path === "/rest/v1/rpc/create_song_job"))
+      .toBe(true);
+    await expect(page).toHaveURL(/\/library/);
   });
 });
 

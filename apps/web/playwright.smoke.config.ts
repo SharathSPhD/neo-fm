@@ -14,7 +14,8 @@ import { defineConfig } from "@playwright/test";
 
 import { APP_PORT, FAKE_PORT, smokeEnv } from "./tests/smoke/env.mjs";
 
-const REMOTE = process.env.SMOKE_BASE_URL;
+// CI passes an empty string when the manual input is blank, so use `||`, not `??`.
+const REMOTE = process.env.SMOKE_BASE_URL || undefined;
 const proxy = REMOTE ? process.env.HTTPS_PROXY : undefined;
 
 export default defineConfig({
