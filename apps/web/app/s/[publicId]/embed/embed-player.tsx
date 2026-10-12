@@ -10,7 +10,7 @@
  */
 import { useMemo, useState } from "react";
 
-import { activeLineIndex, buildLyricTimeline, type SyncSectionInput } from "@/lib/lyrics/sync";
+import { activeLineIndex, buildLyricTimeline, parseLineTimings, type SyncSectionInput } from "@/lib/lyrics/sync";
 import type { EmbedLayout } from "@/lib/embed/options";
 
 import { PublicSongAudio } from "../public-song-audio";
@@ -21,6 +21,8 @@ interface Props {
   durationSeconds: number | null;
   format: string;
   sections: SyncSectionInput[];
+  /** agent_runs.line_timings; evenly paced when absent or not matching the lyrics. */
+  lineTimings?: unknown;
   layout: EmbedLayout;
   language: string;
 }
@@ -31,13 +33,14 @@ export function EmbedPlayer({
   durationSeconds,
   format,
   sections,
+  lineTimings,
   layout,
   language,
 }: Props) {
   const compact = layout === "compact";
   const lines = useMemo(
-    () => buildLyricTimeline(sections, durationSeconds),
-    [sections, durationSeconds],
+    () => buildLyricTimeline(sections, durationSeconds, parseLineTimings(lineTimings)),
+    [sections, durationSeconds, lineTimings],
   );
   const [t, setT] = useState(0);
   const idx = activeLineIndex(lines, t);
