@@ -19,7 +19,8 @@ const BodySchema = z.object({ kind: z.enum(LISTEN_KINDS) });
 
 const noContent = () => new NextResponse(null, { status: 204 });
 
-export async function POST(request: NextRequest, { params }: { params: { publicId: string } }) {
+export async function POST(request: NextRequest, props: { params: Promise<{ publicId: string }> }) {
+  const params = await props.params;
   if (optedOutOfTracking(request.headers)) return noContent();
   const id = PublicIdSchema.safeParse(params.publicId);
   const body = BodySchema.safeParse(await request.json().catch(() => null));
