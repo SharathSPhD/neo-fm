@@ -47,6 +47,12 @@ def main(workdir: str) -> int:
         embedding=embed.encode(brief["constraint"]),
         must_avoid=tuple(brief.get("must_avoid", [])),
     )
+    # Calibration: the plugin's 0.30-0.40 thresholds were tuned for same-language MiniLM cosines. With the centred
+    # multilingual service embedder, English aspect vs Indic lyric cosines separate cleanly at ~0.15
+    # (bench/embedder_bench.py: positives min 0.06 / mean 0.34, negatives max 0.05).
+    hit = float(brief.get("aspect_cosine_hit", 0.15 if embed.model_id.endswith("@service") else 0.40))
+    _jnana = sys.modules["pce.operators.jnana"]  # (the package attribute `jnana` is the function)
+    _jnana.ASPECT_HIT_FLOOR = min(_jnana.ASPECT_HIT_FLOOR, hit) if embed.model_id.endswith("@service") else _jnana.ASPECT_HIT_FLOOR
     lm = ReplayLM(gens.get("draft", []), gens.get("revision", []), embed)
     K = int(brief.get("K", 3))
     cit_t = float(brief.get("cit_temperature", 1 / 3))  # 1/3 is the neutral point: exactly K candidates per pass
@@ -56,7 +62,7 @@ def main(workdir: str) -> int:
             aspects=brief.get("aspects") or None,
             retrieval_set=brief.get("retrieval_set") or None,
             cit_temperature=cit_t,
-            aspect_cosine_hit=float(brief.get("aspect_cosine_hit", 0.20 if embed.model_id.endswith("@service") else 0.40)),
+            aspect_cosine_hit=hit,
             commit_policy=brief.get("commit_policy", "event_gated"),
             base_seed=int(brief.get("seed", 0)),
         )

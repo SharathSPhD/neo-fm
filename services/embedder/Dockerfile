@@ -3,6 +3,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 # Bake the model into the image: no download at cold start, no Hugging Face dependency at runtime.
+ARG EMBED_MODEL=gemma
+ENV EMBED_MODEL=${EMBED_MODEL}
 COPY fetch_model.py .
 RUN python fetch_model.py
 COPY app.py .

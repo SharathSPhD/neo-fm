@@ -32,7 +32,7 @@ _REFERENCE = [
 
 class Embedder(LexicalEmbedder):
     def __init__(self, url: str | None = None, token: str | None = None) -> None:
-        super().__init__(model_id="multilingual-e5-small@service")
+        super().__init__(model_id="multilingual-embedding@service")
         self.url = (url or os.environ["EMBED_URL"]).rstrip("/")
         self.token = token or os.environ["EMBED_TOKEN"]
         self._cache: dict[str, npt.NDArray[np.float32]] = {}
@@ -45,7 +45,7 @@ class Embedder(LexicalEmbedder):
         for i in range(0, len(texts), 32):
             req = urllib.request.Request(
                 self.url + "/embed", method="POST",
-                data=json.dumps({"texts": texts[i : i + 32], "kind": "passage"}).encode(),
+                data=json.dumps({"texts": texts[i : i + 32], "kind": "similarity"}).encode(),
                 headers={"Authorization": f"Bearer {self.token}", "content-type": "application/json"},
             )
             with urllib.request.urlopen(req, timeout=60) as r:  # noqa: S310 - fixed https endpoint

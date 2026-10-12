@@ -67,3 +67,17 @@ value into chat; the app reads them from Vercel.
 ## Later (optional)
 - Move the song worker here too (the Vercel function‑time lever): same pattern, `services/worker/`.
 - Reuse the same project for Cloud Storage/CDN for audio if bandwidth becomes the main cost.
+
+
+## Upgrade: switch the embedder to EmbeddingGemma-300M (recommended; needs 2 GiB)
+Benchmark on 15 English-aspect vs Kannada/Tamil/Telugu/Hindi/Bengali lyric pairs (`managed-agents/pce-engine/bench/embedder_bench.py`):
+multilingual-e5-small top-1 13/15, mean margin 0.024; **EmbeddingGemma-300M top-1 14/15, mean margin 0.175 (7x)**. After centring,
+positives (min 0.06, mean 0.34) and negatives (max 0.05) separate cleanly, and the PCE vimarsa gate starts firing (delta_F 0.77).
+Re-run the deploy from the same folder (existing `EMBED_TOKEN` is kept; the model is baked in at build time):
+```bash
+cd ~/neo-fm && git pull origin claude/sleepy-keller-8eiz4s && cd services/embedder
+gcloud run deploy neo-fm-embedder --source . --region asia-south1 --allow-unauthenticated \
+  --memory 2Gi --cpu 2 --cpu-boost --concurrency 4 --min-instances 0 --max-instances 3 --timeout 30
+```
+(Model: google EmbeddingGemma, Gemma terms of use; ONNX int8 from `onnx-community/embeddinggemma-300m-ONNX`.) To go back: `--set-build-env-vars`
+is not needed; build with `--build-arg`-free default, or set `EMBED_MODEL=e5` in `fetch_model.py`.
