@@ -23,7 +23,7 @@ export async function GET() {
   const [{ data: profile, error: profile_error }, { data: jobs, error: jobs_error }] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, tier, created_at")
+      .select("id, email, tier, created_at, handle, bio, avatar_path")
       .eq("id", user.id)
       .maybeSingle(),
     supabase

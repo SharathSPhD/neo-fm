@@ -45,6 +45,7 @@ import {
   ListSongsQuerySchema,
 } from "../../../lib/api/song-schemas";
 import { screenRequest } from "../../../lib/safety";
+import { getLogger } from "../../../lib/obs/log";
 import { requireUser } from "../../../lib/supabase/auth";
 import type { Json } from "../../../lib/supabase/database.types";
 
@@ -288,6 +289,10 @@ export async function POST(request: NextRequest) {
 
   if (rpcErr) {
     const msg = rpcErr.message ?? "";
+    // Quota and capacity rejections are expected outcomes; anything else is a fault worth a log line.
+    if (!/quota_exceeded|concurrent_cap_exceeded|unauthenticated|invalid_target_duration_seconds/.test(msg)) {
+      getLogger("/api/songs", request).error("create_song_job_failed", { detail: msg });
+    }
     // ADR 0005: per-tier storage byte cap. Different reset semantics
     // (reset happens when the user deletes a song or the sweep prunes
     // expired tracks); we return -1 to make that explicit on the client.

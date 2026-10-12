@@ -69,6 +69,7 @@ export async function DELETE() {
       removed += await removeTree(admin.storage.from("tracks"), j.id);
     }
     removed += await removeTree(admin.storage.from("cover-art"), user.id);
+    removed += await removeTree(admin.storage.from("avatars"), user.id);
     steps.audio_files_removed = String(removed);
   } catch (e) {
     return NextResponse.json({ error: "storage_delete_failed", details: String((e as Error).message).slice(0, 200) }, { status: 502 });
