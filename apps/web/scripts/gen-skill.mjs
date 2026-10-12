@@ -9,7 +9,7 @@ const files = { "pce-poem/SKILL.md": readFileSync(skillMd, "utf8") };
 const walk = (dir) => {
   for (const name of readdirSync(dir).sort()) {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) { if (name !== "tests" && name !== "__pycache__") walk(p); continue; }
+    if (statSync(p).isDirectory()) { if (name !== "tests" && name !== "__pycache__" && !name.startsWith(".")) walk(p); continue; }
     if (/\.(py|md|txt)$/.test(name) && name !== "PCE-LICENSE") files[`pce-poem/${relative(engine, p)}`] = readFileSync(p, "utf8");
   }
 };
