@@ -23,7 +23,11 @@
       "mcp__Supabase__list_tables",
       "mcp__claude-code-remote__list_repos",
       "mcp__claude-code-remote__read_documentation",
-      "mcp__github__get_commit"
+      "mcp__github__get_commit",
+      "mcp__Supabase",
+      "mcp__Vercel",
+      "mcp__github",
+      "mcp__claude-code-remote"
     ]
   }
 }
