@@ -56,5 +56,5 @@ test("blocks an edit that drops a {placeholder}", async ({ page }) => {
 
 test("no overflow and no serious a11y violations", async ({ page }) => {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-  await expectNoSeriousA11yViolations(page);
+  await expectNoSeriousA11yViolations(page, "dev-preview ui-review");
 });
