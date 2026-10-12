@@ -1,46 +1,58 @@
 /**
- * /u/[handle] -- public profile page (Sprint G).
+ * /u/[handle] -- public creator profile.
  *
- * Resolves a handle -> user_id via the unauthenticated
- * `public_profiles` view (migration 0023), then lists that user's
- * public songs from `public.jobs` filtered by visibility. RLS does
- * the gating server-side; this page can be fully indexed by search
- * engines.
- *
- * Shows: handle, member-since, follower count, follow/unfollow
- * button (client island), and a paginated grid of public songs.
+ * Resolves a handle -> user_id via the `public_profiles` view (id, handle, created_at only),
+ * then lists that user's public songs grouped by language. No bio or play counts: neither is
+ * stored, and the view is deliberately limited to three columns.
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
+import { CoverArt } from "@/components/cover-art";
+import {
+  avatarColors,
+  avatarInitial,
+  groupByLanguage,
+  profileBlurb,
+  profileStats,
+  type ProfileSong,
+} from "@/lib/profile/summary";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
 import { FollowButton } from "./follow-button";
+import { ShareProfileButton } from "./share-profile-button";
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 24;
+// A profile shows up to this many songs, grouped by language. Beyond it we would need paging per group.
+const MAX_SONGS = 200;
 
 type Props = {
   params: { handle: string };
-  searchParams: { page?: string };
 };
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { handle: string };
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
   const handle = params.handle.toLowerCase();
+  const title = `@${handle} on neo-fm`;
+  const data = await loadProfile(handle);
+  // Unknown handles and empty profiles are not worth indexing.
+  const indexable = Boolean(data && data.songs.length > 0);
+  const description = data
+    ? profileBlurb(
+        handle,
+        profileStats(data.songs),
+        groupByLanguage(data.songs).map((g) => prettyLanguage(g.language)),
+      )
+    : `Songs by @${handle} on neo-fm.`;
   return {
-    title: `@${handle} -- neo-fm`,
-    description: `Songs by @${handle} on neo-fm.`,
-    openGraph: {
-      title: `@${handle} -- neo-fm`,
-      description: `Songs by @${handle}`,
-    },
+    title,
+    description,
+    alternates: { canonical: `/u/${handle}` },
+    robots: indexable ? { index: true, follow: true } : { index: false, follow: true },
+    openGraph: { title, description, type: "profile" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 
@@ -61,25 +73,14 @@ type SongRow = {
   } | null;
 };
 
-export default async function ProfilePage({ params, searchParams }: Props) {
+/** Profile row plus public songs (with like counts), or null for an unknown handle. */
+async function loadProfile(handle: string) {
   const supabase = createServerClient();
-  const handle = params.handle.toLowerCase();
-  const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
-  const offset = (page - 1) * PAGE_SIZE;
-
-  // Cast: `public_profiles` view isn't in the generated Database
-  // types yet (migration 0023 just landed). Type the view shape locally.
-  const profileLookup = await (
+  const lookup = await (
     supabase.from("public_profiles" as never) as unknown as {
       select: (s: string) => {
-        eq: (
-          col: string,
-          val: string,
-        ) => {
-          maybeSingle: () => Promise<{
-            data: ProfileRow | null;
-            error: { message: string } | null;
-          }>;
+        eq: (col: string, val: string) => {
+          maybeSingle: () => Promise<{ data: ProfileRow | null; error: { message: string } | null }>;
         };
       };
     }
@@ -87,114 +88,148 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     .select("id, handle, created_at")
     .eq("handle", handle)
     .maybeSingle();
+  if (lookup.error || !lookup.data) return null;
+  const profile = lookup.data;
 
-  if (profileLookup.error || !profileLookup.data) {
-    notFound();
+  const songsRes = await supabase
+    .from("jobs")
+    .select("id, public_id, published_at, song_documents!inner ( title, language, style_family )")
+    .eq("user_id", profile.id)
+    .eq("status", "completed")
+    .eq("published_visibility", "public")
+    .not("public_id", "is", null)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .limit(MAX_SONGS)
+    .returns<SongRow[]>();
+  const rows = (songsRes.data ?? []).filter((r) => r.song_documents);
+
+  // song_likes is readable by everyone (policy song_likes_select_all); count per song in JS.
+  const likeCounts = new Map<string, number>();
+  if (rows.length > 0) {
+    const likes = await supabase
+      .from("song_likes")
+      .select("job_id")
+      .in("job_id", rows.map((r) => r.id));
+    for (const l of (likes.data ?? []) as { job_id: string }[]) {
+      likeCounts.set(l.job_id, (likeCounts.get(l.job_id) ?? 0) + 1);
+    }
   }
-  const profile = profileLookup.data;
 
-  const [songsRes, followerCountRes, currentUserRes, isFollowingRes] =
-    await Promise.all([
-      supabase
-        .from("jobs")
-        .select(
-          `
-          id, public_id, published_at,
-          song_documents!inner ( title, language, style_family )
-        `,
-        )
-        .eq("user_id", profile.id)
-        .eq("status", "completed")
-        .eq("published_visibility", "public")
-        .not("public_id", "is", null)
-        .order("published_at", { ascending: false, nullsFirst: false })
-        .range(offset, offset + PAGE_SIZE - 1)
-        .returns<SongRow[]>(),
-      (
-        supabase.from("follows" as never) as unknown as {
-          select: (
-            s: string,
-            opts: { count: "exact"; head: true },
-          ) => {
-            eq: (
-              col: string,
-              val: string,
-            ) => Promise<{ count: number | null }>;
-          };
-        }
-      )
-        .select("followee_id", { count: "exact", head: true })
-        .eq("followee_id", profile.id),
-      supabase.auth.getUser(),
-      (async () => {
-        const { data: auth } = await supabase.auth.getUser();
-        if (!auth?.user) return { data: false };
-        const probe = await (
-          supabase.from("follows" as never) as unknown as {
-            select: (s: string) => {
-              eq: (
-                col: string,
-                val: string,
-              ) => {
-                eq: (
-                  col2: string,
-                  val2: string,
-                ) => {
-                  maybeSingle: () => Promise<{ data: unknown }>;
-                };
-              };
-            };
-          }
-        )
-          .select("follower_id")
-          .eq("follower_id", auth.user.id)
-          .eq("followee_id", profile.id)
-          .maybeSingle();
-        return { data: !!probe.data };
-      })(),
-    ]);
+  const songs: ProfileSong[] = rows.map((r) => ({
+    id: r.id,
+    public_id: r.public_id,
+    published_at: r.published_at,
+    title: r.song_documents?.title ?? null,
+    language: r.song_documents?.language ?? "en",
+    style_family: r.song_documents?.style_family ?? "western",
+    like_count: likeCounts.get(r.id) ?? 0,
+  }));
+  return { profile, songs };
+}
 
-  const songs = songsRes.data ?? [];
+export default async function ProfilePage({ params }: Props) {
+  const supabase = createServerClient();
+  const handle = params.handle.toLowerCase();
+
+  const loaded = await loadProfile(handle);
+  if (!loaded) notFound();
+  const { profile, songs } = loaded;
+
+  const [followerCountRes, authRes] = await Promise.all([
+    (
+      supabase.from("follows" as never) as unknown as {
+        select: (s: string, opts: { count: "exact"; head: true }) => {
+          eq: (col: string, val: string) => Promise<{ count: number | null }>;
+        };
+      }
+    )
+      .select("followee_id", { count: "exact", head: true })
+      .eq("followee_id", profile.id),
+    supabase.auth.getUser(),
+  ]);
   const followerCount = followerCountRes.count ?? 0;
-  const currentUserId = currentUserRes.data.user?.id ?? null;
-  const isFollowing = isFollowingRes.data ?? false;
+  const currentUserId = authRes.data.user?.id ?? null;
   const isSelf = currentUserId === profile.id;
 
+  let isFollowing = false;
+  if (currentUserId && !isSelf) {
+    const probe = await (
+      supabase.from("follows" as never) as unknown as {
+        select: (s: string) => {
+          eq: (c: string, v: string) => {
+            eq: (c2: string, v2: string) => { maybeSingle: () => Promise<{ data: unknown }> };
+          };
+        };
+      }
+    )
+      .select("follower_id")
+      .eq("follower_id", currentUserId)
+      .eq("followee_id", profile.id)
+      .maybeSingle();
+    isFollowing = Boolean(probe.data);
+  }
+
+  const stats = profileStats(songs);
+  const groups = groupByLanguage(songs);
+  const shareText = profileBlurb(
+    profile.handle,
+    stats,
+    groups.map((g) => prettyLanguage(g.language)),
+  );
+
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
-      <header className="flex flex-col gap-3">
-        <p className="text-xs uppercase tracking-widest text-foreground/40">
-          profile
-        </p>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h1 className="text-4xl font-medium tracking-tight">
-              @{profile.handle}
-            </h1>
-            <p className="text-sm text-foreground/55">
-              {followerCount}{" "}
-              {followerCount === 1 ? "follower" : "followers"} · joined{" "}
-              {new Date(profile.created_at).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "long",
-              })}
-            </p>
+    <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
+      <header className="flex flex-col gap-6 sm:flex-row sm:items-center">
+        <div
+          aria-hidden
+          className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-4xl font-semibold text-white"
+          style={{ backgroundImage: `linear-gradient(135deg, ${avatarColors(profile.handle).from}, ${avatarColors(profile.handle).to})` }}
+        >
+          {avatarInitial(profile.handle)}
+        </div>
+        <div className="flex flex-1 flex-col gap-2">
+          <h1 className="text-4xl font-medium tracking-tight">@{profile.handle}</h1>
+          <p className="text-sm text-foreground/60">
+            <span data-testid="follower-count">{followerCount}</span>{" "}
+            {followerCount === 1 ? "follower" : "followers"} · joined{" "}
+            {new Date(profile.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
+          </p>
+          {stats.songs > 0 ? (
+            <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/80">
+              <li>
+                <strong className="font-semibold">{stats.songs}</strong> {stats.songs === 1 ? "song" : "songs"}
+              </li>
+              <li>
+                <strong className="font-semibold">{stats.languages}</strong>{" "}
+                {stats.languages === 1 ? "language" : "languages"}
+              </li>
+              <li>
+                <strong className="font-semibold">{stats.likes}</strong> {stats.likes === 1 ? "like" : "likes"}
+              </li>
+            </ul>
+          ) : null}
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            {currentUserId && !isSelf ? (
+              <FollowButton userId={profile.id} initialFollowing={isFollowing} initialCount={followerCount} />
+            ) : null}
+            {!currentUserId ? (
+              <Link
+                href={`/sign-in?next=${encodeURIComponent(`/u/${profile.handle}`)}`}
+                className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent"
+              >
+                Sign in to follow
+              </Link>
+            ) : null}
+            {isSelf ? (
+              <Link
+                href="/onboarding/handle"
+                className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
+              >
+                Change handle
+              </Link>
+            ) : null}
+            <ShareProfileButton handle={profile.handle} text={shareText} />
           </div>
-          {currentUserId && !isSelf ? (
-            <FollowButton
-              userId={profile.id}
-              initialFollowing={isFollowing}
-              initialCount={followerCount}
-            />
-          ) : null}
-          {isSelf ? (
-            <Link
-              href="/onboarding/handle"
-              className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
-            >
-              Change handle
-            </Link>
-          ) : null}
         </div>
       </header>
 
@@ -205,59 +240,62 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             : `@${profile.handle} hasn't published any songs yet.`}
         </p>
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {songs.map((row) => {
-            const doc = row.song_documents;
-            const title =
-              doc?.title?.trim() ||
-              (doc ? `${prettyStyle(doc.style_family)} song` : "Song");
-            return (
-              <li
-                key={row.id}
-                className="flex flex-col gap-2 rounded-lg border border-muted/20 bg-muted/5 p-4 transition hover:border-accent/30"
-              >
-                <Link
-                  href={`/s/${row.public_id}`}
-                  className="text-base font-medium hover:text-accent"
+        <>
+          {groups.length > 1 ? (
+            <nav aria-label="Jump to language" className="flex flex-wrap gap-2">
+              {groups.map((g) => (
+                <a
+                  key={g.language}
+                  href={`#lang-${g.language}`}
+                  className="rounded-full border border-muted/40 px-3 py-1 text-xs text-foreground/80 hover:border-accent/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                 >
-                  {title}
-                </Link>
-                <p className="text-xs text-foreground/55">
-                  {doc ? prettyStyle(doc.style_family) : "—"}
-                  {doc ? ` · ${prettyLanguage(doc.language)}` : ""}
-                </p>
-                {row.published_at ? (
-                  <p className="text-[11px] text-foreground/35">
-                    {new Date(row.published_at).toLocaleDateString()}
-                  </p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
+                  {prettyLanguage(g.language)} · {g.songs.length}
+                </a>
+              ))}
+            </nav>
+          ) : null}
+          {groups.map((g) => (
+            <section key={g.language} id={`lang-${g.language}`} aria-labelledby={`h-${g.language}`} className="scroll-mt-6">
+              <h2 id={`h-${g.language}`} className="mb-4 text-xl font-medium tracking-tight">
+                {prettyLanguage(g.language)}{" "}
+                <span className="text-sm font-normal text-foreground/60">
+                  {g.songs.length} {g.songs.length === 1 ? "song" : "songs"}
+                </span>
+              </h2>
+              <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {g.songs.map((song) => {
+                  const title = song.title?.trim() || `${prettyStyle(song.style_family)} song`;
+                  return (
+                    <li key={song.id}>
+                      <Link
+                        href={`/s/${song.public_id}`}
+                        className="group flex gap-3 rounded-lg border border-muted/20 bg-muted/5 p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
+                      >
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md">
+                          <CoverArt url={null} seed={song.id} styleFamily={song.style_family} alt="" showGlyph />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 text-base font-medium group-hover:text-accent">{title}</p>
+                          <p className="mt-0.5 text-xs text-foreground/60">
+                            {prettyStyle(song.style_family)}
+                            {song.like_count > 0 ? ` · ♥ ${song.like_count}` : ""}
+                          </p>
+                          {song.published_at ? (
+                            <p className="text-[11px] text-foreground/50">
+                              {new Date(song.published_at).toLocaleDateString()}
+                            </p>
+                          ) : null}
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+          <p className="text-xs text-foreground/50">AI-generated music and lyrics, made on neo-fm.</p>
+        </>
       )}
-
-      {songs.length === PAGE_SIZE || page > 1 ? (
-        <nav className="flex items-center justify-center gap-2 text-sm">
-          {page > 1 ? (
-            <Link
-              href={`/u/${profile.handle}?page=${page - 1}`}
-              className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
-            >
-              ← Prev
-            </Link>
-          ) : null}
-          <span className="px-3 text-foreground/60">Page {page}</span>
-          {songs.length === PAGE_SIZE ? (
-            <Link
-              href={`/u/${profile.handle}?page=${page + 1}`}
-              className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
-            >
-              Next →
-            </Link>
-          ) : null}
-        </nav>
-      ) : null}
     </main>
   );
 }
