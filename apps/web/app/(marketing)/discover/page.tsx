@@ -18,6 +18,8 @@ import { ProCta } from "@/components/pro-cta";
 import { ForYou } from "./for-you";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
+import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +50,7 @@ const ALLOWED_STYLES = new Set(
 type SearchParams = { style?: string; page?: string };
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/discover" },
   title: "Discover -- neo-fm",
   description:
     "Recently-published songs from the neo-fm community. Carnatic, Hindustani, Kannada folk, and Western.",
@@ -170,8 +173,27 @@ export default async function DiscoverPage({
     }
   }
 
+  // The unfiltered first page is the canonical collection; filtered and later pages are views of it.
+  const playlistLd =
+    page === 1 && !style && (data ?? []).length > 0
+      ? musicPlaylistLd({
+          base: siteUrl(),
+          path: "/discover",
+          name: "Songs from the neo-fm community",
+          description: "Recently published songs in Indian languages, generated on neo-fm.",
+          tracks: (data ?? []).map((row) => ({
+            publicId: row.public_id,
+            name: row.song_documents?.title?.trim() || (row.song_documents ? `${prettyStyle(row.song_documents.style_family)} song` : "Song"),
+            language: row.song_documents?.language ?? "en",
+          })),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
+      {playlistLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(playlistLd) }} />
+      ) : null}
       <header className="flex flex-col gap-3">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
           discover
