@@ -36,3 +36,14 @@ test("privacy and terms pages exist and are linked from the footer", async ({ pa
   await page.goto("/terms");
   await expect(page.getByRole("heading", { level: 1, name: /terms/i })).toBeVisible();
 });
+
+test("sign-in/up forms cannot submit credentials natively before hydration (no password in the URL)", async ({ browser, baseURL }) => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false, baseURL: baseURL ?? undefined, extraHTTPHeaders: {} });
+  const page = await ctx.newPage();
+  for (const path of ["/sign-in", "/sign-up"]) {
+    await page.goto(path);
+    await expect(page.locator("form button[type=submit]").first()).toBeDisabled();
+    await expect(page.locator("form").first()).toHaveAttribute("method", /post/i);
+  }
+  await ctx.close();
+});
