@@ -14,7 +14,7 @@ describe("seo", () => {
   it("robots keeps app, api and admin surfaces out and points at the sitemap", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://neo-fm.example");
     const r = robots();
-    const rule = Array.isArray(r.rules) ? r.rules[0] : r.rules;
+    const rule = Array.isArray(r.rules) ? r.rules[0]! : r.rules;
     expect(rule.disallow).toEqual(expect.arrayContaining(["/api/", "/admin/", "/library", "/songs/"]));
     expect(rule.allow).toContain("/s/");
     expect(r.sitemap).toBe("https://neo-fm.example/sitemap.xml");
