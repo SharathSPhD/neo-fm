@@ -1,0 +1,63 @@
+name: visual regression
+
+# Full-page screenshots of the key pages across UI language x viewport x theme,
+# against a local production build backed by an in-memory fake Supabase (no real
+# database, Lyria, Anthropic or prod writes). See apps/web/tests/visual/README.md.
+#
+# On a diff the job fails and uploads:
+#   visual-report     HTML report with expected / actual / diff images side by side
+#   visual-baselines  freshly rendered baselines; if the change is intended,
+#                     unzip them over apps/web/tests/visual/baselines and commit
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: visual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  visual:
+    name: visual (playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm -r --filter "./packages/*" build
+      - run: pnpm --filter @neo-fm/web exec playwright install --with-deps chromium
+      # Indic shaping depends on the system fonts: pin them so baselines are
+      # reproducible. Devanagari, Tamil, Telugu, Kannada and Bengali are all in noto-core.
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-core
+      - name: compare against baselines
+        id: compare
+        continue-on-error: true
+        run: pnpm --filter @neo-fm/web test:visual # builds first, then compares
+      - uses: actions/upload-artifact@v4
+        if: steps.compare.outcome == 'failure'
+        with:
+          name: visual-report
+          path: |
+            apps/web/tests/visual/.report
+            apps/web/tests/visual/.output
+      - name: render candidate baselines (only when the comparison failed)
+        if: steps.compare.outcome == 'failure'
+        run: SMOKE_SKIP_BUILD=1 pnpm --filter @neo-fm/web test:visual:update
+      - uses: actions/upload-artifact@v4
+        if: steps.compare.outcome == 'failure'
+        with:
+          name: visual-baselines
+          path: apps/web/tests/visual/baselines
+      - name: fail if the comparison failed
+        if: steps.compare.outcome == 'failure'
+        run: |
+          echo "::error::Visual diff. Review the visual-report artifact; if intended, commit the visual-baselines artifact."
+          exit 1
