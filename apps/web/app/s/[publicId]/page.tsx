@@ -406,7 +406,7 @@ export default async function PublicSongPage({
         // being prepared. Refresh in a moment." for any song without a
         // track, including seeded catalog rows that will never get one.
         // Branch by status so the message is honest.
-        <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+        <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-warn">
           {data.status === "queued" || data.status === "processing"
             ? "Rendering now. Refresh in a moment."
             : "Audio preview not available for this song."}
