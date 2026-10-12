@@ -7,7 +7,7 @@ Read this first. Applies to every agent (human or AI) committing to this reposit
 A change merges only when:
 
 1. **CI is green** on the PR head (`ts`, `agents`, `pce-engine` in `.github/workflows/ci.yml`; `e2e` where it applies).
-2. **The lead session has reviewed it.** The lead Claude session reviews and merges on S's behalf; S is not asked to review each PR. Other agents open PRs (draft by default), send the link to the lead session, handle its review comments, and never merge themselves. `main` deploys to production on Vercel, so merging is a release.
+2. **The lead session has reviewed it.** Merges are reviewed by the lead Claude session; S can review or override any PR at any time. Other agents open PRs (draft by default), send the link to the lead session, handle its review comments, and never merge themselves. `main` deploys to production on Vercel, so merging is a release.
 3. **Evidence for behavior changes**: tests that fail without the change, or a listenable/visible artifact for audio and UI work. No mocks presented as "real" results, no "tests later".
 4. **Claims stay honest.** Quality or marketing claims must stay inside what `managed-agents/EVAL-PCE.md` supports (AI judges, no native-speaker panel yet, prosody behind baseline).
 
