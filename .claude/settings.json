@@ -34,7 +34,23 @@
       "WebFetch",
       "WebSearch",
       "mcp__Hugging_Face",
-      "mcp__Claude_Docs"
+      "mcp__Claude_Docs",
+      "mcp__ccd_session",
+      "Read",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "Agent",
+      "Skill",
+      "ToolSearch",
+      "Monitor",
+      "ScheduleWakeup",
+      "TaskCreate",
+      "TaskUpdate",
+      "TaskList",
+      "TaskGet",
+      "SendMessage",
+      "Artifact"
     ]
   }
 }
