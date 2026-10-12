@@ -1,6 +1,6 @@
--- 00XX_profile_bio_avatar.sql -- public bio and avatar on creator profiles
+-- 0082_profile_bio_avatar.sql -- public bio and avatar on creator profiles
 --
--- Adds users.bio (<= 160 chars) and users.avatar_path, and exposes both through public_profiles.
+-- Adds users.bio (<= 280 chars) and users.avatar_path, and exposes both through public_profiles.
 --
 -- Write path: NO column grant is given to `authenticated` for bio or avatar_path (0070 limits updates
 -- to handle, name, locale). Both are written only by /api/account/profile and /api/account/avatar with
@@ -18,7 +18,7 @@ alter table public.users
 
 alter table public.users drop constraint if exists users_bio_len;
 alter table public.users
-  add constraint users_bio_len check (bio is null or char_length(bio) <= 160);
+  add constraint users_bio_len check (bio is null or char_length(bio) <= 280);
 
 -- <user id>/<uuid>.<png|jpg|webp>, the only shape the avatar route writes.
 alter table public.users drop constraint if exists users_avatar_path_shape;
@@ -39,7 +39,7 @@ create or replace view public.public_profiles
 comment on view public.public_profiles is
   'Public slice of public.users (id, handle, created_at, bio, avatar_path). Runs as owner on purpose; the users table itself is own-row only.';
 
-revoke all on public.public_profiles from anon, authenticated;
+revoke all on public.public_profiles from anon, authenticated, public;
 grant select on public.public_profiles to anon, authenticated;
 
 -- Avatars are public by design (they render on public profile pages), so the bucket is public-read.
@@ -48,7 +48,9 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('avatars', 'avatars', true, 1048576, array['image/png', 'image/jpeg', 'image/webp'], false)
 on conflict (id) do nothing;
 
--- Writes are service-role only; no anon/authenticated policy exists, so clients cannot upload directly.
+-- Writes are service-role only on purpose: avatars are public, so every upload must pass the route's size,
+-- format, metadata-strip and vision-moderation checks first. An owner-scoped storage policy would let a
+-- client upload straight to the public bucket and skip them. The route stores files under <user id>/.
 drop policy if exists avatars_write_service_role on storage.objects;
 create policy avatars_write_service_role on storage.objects
   for all to service_role

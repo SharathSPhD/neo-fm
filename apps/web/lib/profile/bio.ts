@@ -1,6 +1,6 @@
 /** Rules for the public profile bio. Pure so the API route and tests share one source of truth. */
 
-export const BIO_MAX_CHARS = 160;
+export const BIO_MAX_CHARS = 280;
 
 export type BioResult = { ok: true; bio: string | null } | { ok: false; error: "too_long" | "links_not_allowed" };
 
