@@ -98,7 +98,7 @@ describe("GET /api/songs/[id]", () => {
   });
   it.each([
     [[], "starting"], [[{ session_id: "s", lyria_calls: 0, audio_path: null }], "writing"],
-    [[{ session_id: "s", lyria_calls: 1, audio_path: null }], "rendering"], [[{ session_id: "s", lyria_calls: 1, audio_path: "j/1.mp3" }], "finishing"],
+    [[{ session_id: "s", lyria_calls: 1, audio_path: null }], "polishing"], [[{ session_id: "s", lyria_calls: 1, audio_path: null, polished_lyrics: "la" }], "singing"], [[{ session_id: "s", lyria_calls: 1, audio_path: "j/1.mp3" }], "finishing"],
   ])("derives the cosmetic stage from the agent run (%j -> %s)", async (r, stage) => {
     authed(); row = job({ status: "processing" }); runs = r as unknown[];
     expect((await (await GET(req(), { params: { id: ID } })).json()).stage).toBe(stage);
