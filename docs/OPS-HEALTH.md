@@ -14,3 +14,10 @@ Omit `format=text` for JSON: job counts by status, oldest queued age, failures b
 
 Alert thresholds live in `THRESHOLDS` in `apps/web/lib/ops/health-summary.ts`: queue age over 10 min, failure rate over
 20% (min 5 jobs), p90 latency over 15 min. `spend_ledger` was also added to the `/api/admin/q` allow-list.
+
+## Dashboard, snapshots and trends
+
+`/admin/health` is a page that asks for the same secret (kept in sessionStorage only) and shows the summary, funnel and trends.
+Active alerts show in a sticky red banner at the top. `GET /api/admin/health-snapshot` stores today's summary and 1-day funnel in
+`health_snapshots` (migration 0075); a Vercel cron runs it daily at 08:40 UTC, before the 08:45 check. It is idempotent per day.
+`GET /api/admin/health-trends?days=7|30` returns the stored daily points (failure rate, p50/p90, Lyria reserved, sign-ups, landing views).
