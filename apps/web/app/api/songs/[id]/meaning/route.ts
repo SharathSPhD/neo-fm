@@ -10,16 +10,21 @@
 import { NextResponse } from "next/server";
 
 import { anthropicClient, serviceClient } from "@/lib/agent/adapters";
-import { flattenLyricLines, generateMeaning, MEANING_DISCLAIMER, MEANING_MODEL, type MeaningLine } from "@/lib/lyrics/meaning";
+import {
+  FAILURE_CACHE_MS,
+  flattenLyricLines,
+  generateMeaning,
+  MEANING_COST_GBP,
+  MEANING_DAILY_CAP,
+  MEANING_DISCLAIMER,
+  MEANING_MODEL,
+  type MeaningLine,
+} from "@/lib/lyrics/meaning";
 import type { SyncSectionInput } from "@/lib/lyrics/sync";
 import { requireUser } from "@/lib/supabase/auth";
 
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-export const MEANING_DAILY_CAP = 20;
-export const FAILURE_CACHE_MS = 10 * 60 * 1000;
-/** Ledger units (GBP) reserved per generation: one Haiku call over a few thousand tokens, rounded up. */
-export const MEANING_COST_GBP = 0.005;
 const budgetCapGbp = () => Number(process.env.MEANING_BUDGET_GBP ?? 5);
 
 export const dynamic = "force-dynamic";
