@@ -32,3 +32,15 @@ Raw per-sample rows: `managed-agents/quality/clip-30s.jsonl` (transcripts and fl
 ## Not done / needs the lead
 - **60 s class.** N=10 x 5 languages at 0.25 = GBP 12.50, over the ~GBP 8 shared cap (GBP 3.40 already used here). Proposal: N=3 per language (GBP 3.75) to size the effect, only if the lead agrees.
 - **Eval-gated experiment** for the Telugu/Kannada length fix: designed above, not run (needs the prod eval tables; owned by the docs/PCE thread).
+
+## Methodology, for citation (trust page)
+**What "diction match" is.** For each song, Lyria renders the lyrics; Gemini (`gemini-3.8-flash`, audio understanding) transcribes what is actually sung, in the original script, without being shown the intended lyrics; we compare that transcript to the intended lyrics line by line using character error rate (CER) over normalised Unicode code points (case, spaces and punctuation ignored). Match % = (1 - mean line CER) x 100. Each intended line is aligned to the best-matching window of the transcript, so the singer merging or splitting lines is not penalised. Section tags are excluded.
+
+**Sample.** 50 songs: 10 per language (Hindi, Tamil, Telugu, Kannada, Bengali), 30 s clips, lyrics from the PCE engine's shipped pipeline on the first 10 evaluation briefs per language (first 8 lines, section headers removed). One render per lyric; no cherry-picking or re-rolls. Reported as median and 10th percentile because the distribution has a low tail; "failure" means match under 60 % (none occurred).
+
+**What it supports.** "In an internal test of 50 AI-generated songs, an independent speech-recognition model transcribed 92-99 % of the intended characters correctly (mean per language, 30 s clips)." Per-language means: Kannada 99, Tamil 96, Hindi 95, Bengali 95, Telugu 92; medians 97-99.
+**What it does not support.** Claims about singing quality, pronunciation naturalness, meter or musicality: the transcriber is lenient and can recover words from context, so this is an upper bound on intelligibility, and no native-speaker panel has reviewed prosody yet (packet ready, see above). Not a claim about 60 s or longer songs (not measured), other styles or voices, or songs a user edits. Telugu's lower mean is mostly songs whose last lines the 30 s clip never reached, not mispronounced words.
+
+**Synced-lyric timing method.** For a finished song, Gemini returns timed sung segments (start seconds per line); each lyric line is aligned to that timed transcript by the same CER window matching; lines never sung are marked and interpolated. Checked by re-transcribing the audio cut at each line's times: 31 lines, mean CER 0.08. Resolution about 1 s (line-level, not word-level). Details in `LINE-TIMINGS.md`.
+
+**Reproduce.** `npx tsx scripts/quality/diction-sweep.ts --report managed-agents/quality/clip-30s.jsonl` (free, from stored transcripts); re-rendering costs about GBP 0.05 per clip. Raw per-song rows including transcripts: `managed-agents/quality/clip-30s.jsonl`. Model versions: Lyria `lyria-3-clip-preview`, QA `gemini-3.8-flash`, run on 2026-10-12.

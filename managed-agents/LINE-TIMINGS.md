@@ -17,7 +17,7 @@ All 18 aligned with every line matched and monotonic. Spot check on 6 songs / 31
 Failure modes seen: an occasional empty/unparseable reply (the sample script retries once; production should too), and long songs untested (only 30 s clips so far).
 
 ## Storage (proposed, not pushed)
-Add `agent_runs.line_timings jsonb` (nullable) via migration **0073** (next free per registry; lead to approve before any migration is pushed):
+Add `agent_runs.line_timings jsonb` (nullable) via a new migration (number to be assigned by the lead; 0073 is taken by #48, 0076 or later; nothing pushed yet):
 ```sql
 alter table public.agent_runs add column if not exists line_timings jsonb;
 ```
