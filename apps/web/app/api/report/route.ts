@@ -1,7 +1,7 @@
 /**
  * POST /api/report { public_id, reason, details? } -- anyone (signed in or not) can report a public song.
  * Writes to public.song_reports (service role; table has no public insert policy). IP rate limiting is applied by
- * middleware for /api/*. Reports are reviewed via the admin queue (GET /api/admin/reports) and the grievance mailbox.
+ * middleware for /api/*. Reports are reviewed via the admin queue (GET /api/admin/reports, POST /api/admin/reports/resolve) and the grievance mailbox.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -27,7 +27,13 @@ export async function POST(req: NextRequest) {
   let reporter: string | null = null;
   try { const { data } = await createServerClient().auth.getUser(); reporter = data?.user?.id ?? null; } catch { /* anonymous report */ }
 
-  const { error } = await db.from("song_reports").insert({ job_id: (job as { id: string }).id, reporter_id: reporter, reason: details ? `${reason}: ${details}` : reason });
+  const jobId = (job as { id: string }).id;
+  if (reporter) {
+    // A signed-in user re-reporting a song that is still under review adds nothing to the queue.
+    const { data: dup } = await db.from("song_reports").select("id").eq("job_id", jobId).eq("reporter_id", reporter).eq("status", "open").limit(1);
+    if ((dup ?? []).length) return NextResponse.json({ ok: true });
+  }
+  const { error } = await db.from("song_reports").insert({ job_id: jobId, reporter_id: reporter, reason: details ? `${reason}: ${details}` : reason, category: reason, details: details || null });
   if (error) return NextResponse.json({ error: "report_failed" }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

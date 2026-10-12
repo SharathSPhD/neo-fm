@@ -14,7 +14,7 @@ tools:
     default_config: {permission_policy: {type: auto}}
     configs:
       - {name: web_fetch, enabled: false}
-      - {name: web_search, enabled: false}
+      - {name: web_search, enabled: true}
   - type: custom
     name: generate_music
     description: Render audio with Lyria from a style prompt and structured lyrics. The host enforces a spend budget and may refuse; if refused, stop and report. At most two calls per session.

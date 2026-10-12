@@ -40,7 +40,11 @@ export async function GET(req: NextRequest) {
     [...((jobs.data ?? []) as JobRow[]), ...((active.data ?? []) as JobRow[])],
     dRows,
     {
-      global: (ledger.data ?? []).map((r) => ({ provider: String(r.provider), reserved_gbp: Number(r.reserved_gbp) })),
+      // Same ceiling spendGuard() enforces (lib/agent/adapters.ts); only Lyria has one.
+      global: (ledger.data ?? []).map((r) => ({
+        provider: String(r.provider), reserved_gbp: Number(r.reserved_gbp),
+        ...(r.provider === "lyria" ? { cap_gbp: Number(process.env.LYRIA_BUDGET_GBP ?? "3") } : {}),
+      })),
       topUsersThisMonth: (users.data ?? []).map((r) => ({ user_id: String(r.user_id), reserved_gbp: Number(r.reserved_gbp) })),
     },
     new Date(),

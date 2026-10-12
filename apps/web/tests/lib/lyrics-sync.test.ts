@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { activeLineIndex, buildLyricTimeline } from "@/lib/lyrics/sync";
+import { activeLineIndex, buildLyricTimeline, parseLineTimings } from "@/lib/lyrics/sync";
 
 const sections = [
   { id: "a", type: "pallavi", target_seconds: 10, lyrics: "one\ntwo two" },
@@ -56,5 +56,33 @@ describe("activeLineIndex", () => {
   });
   it("copes with an empty timeline", () => {
     expect(activeLineIndex([], 3)).toBe(-1);
+  });
+});
+
+describe("heard line timings", () => {
+  const timings = {
+    version: 1 as const,
+    lines: [
+      { i: 0, text: "one", start_s: 1, end_s: 3, sung: true },
+      { i: 1, text: "two two", start_s: 3, end_s: 9, sung: false },
+      { i: 2, text: "last line", start_s: 17, end_s: 24, sung: true },
+    ],
+  };
+  it("uses heard times when the line count matches", () => {
+    const lines = buildLyricTimeline(sections, 30, timings);
+    expect(lines.map((l) => l.start)).toEqual([1, 3, 17]);
+    expect(lines.map((l) => l.sung)).toEqual([true, false, true]);
+    expect(lines[2]!.sectionType).toBe("charanam");
+  });
+  it("falls back to even pacing when lyrics no longer match", () => {
+    const lines = buildLyricTimeline(sections, 30, { ...timings, lines: timings.lines.slice(0, 2) });
+    expect(lines[0]!.start).toBe(0);
+    expect(lines[0]!.sung).toBeUndefined();
+  });
+  it("rejects malformed payloads", () => {
+    expect(parseLineTimings(null)).toBeNull();
+    expect(parseLineTimings({ version: 2, lines: [] })).toBeNull();
+    expect(parseLineTimings({ version: 1, lines: [{ text: "x", start_s: 5, end_s: 1, sung: true }] })).toBeNull();
+    expect(parseLineTimings(timings)).not.toBeNull();
   });
 });
