@@ -14,6 +14,11 @@ describe("POST /api/events", () => {
     expect((await POST(mk({ event: "landing_view" }))).status).toBe(204);
     expect(rpc).toHaveBeenCalledWith("bump_funnel", { p_event: "landing_view" });
   });
+  it("counts checkout_started", async () => {
+    const { POST } = await import("../../../app/api/events/route");
+    expect((await POST(mk({ event: "checkout_started" }))).status).toBe(204);
+    expect(rpc).toHaveBeenCalledWith("bump_funnel", { p_event: "checkout_started" });
+  });
   it("does not count when the visitor opted out", async () => {
     const { POST } = await import("../../../app/api/events/route");
     expect((await POST(mk({ event: "landing_view" }, { dnt: "1" }))).status).toBe(204);

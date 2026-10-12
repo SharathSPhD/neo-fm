@@ -21,6 +21,7 @@
  */
 import { useState, useTransition } from "react";
 
+import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 interface Props {
@@ -35,6 +36,8 @@ export function UpgradeButton({ tier, label }: Props) {
 
   function start() {
     setError(null);
+    // Anonymous daily count of upgrade clicks; no tier, user or session is sent.
+    sendFunnelEvent("checkout_started");
     startTransition(async () => {
       try {
         const res = await fetch("/api/billing/checkout", {

@@ -21,6 +21,9 @@ import { translate } from "@/lib/i18n/ui-strings";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
+import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
+import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -34,6 +37,7 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 import { LikeButton } from "@/components/like-button";
+import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
@@ -174,7 +178,10 @@ export async function generateMetadata({
       ? dedication.message.slice(0, 160)
       : description,
     robots,
-    alternates: oembed ? { types: { "application/json+oembed": oembed } } : undefined,
+    alternates: {
+      canonical: `/s/${idCheck.data}`,
+      ...(oembed ? { types: { "application/json+oembed": oembed } } : {}),
+    },
     openGraph: {
       title,
       description,
@@ -278,8 +285,30 @@ export default async function PublicSongPage({
     initiallyLiked = !!probe.data;
   }
 
+  // Structured data only where the page is indexable: public and not dedicated (a dedication names a person).
+  const recordingLd =
+    doc && data.published_visibility === "public" && !dedication
+      ? musicRecordingLd({
+          base: siteUrl(),
+          publicId: data.public_id,
+          name: displayTitle,
+          language: doc.language,
+          genre: styleLabel(doc.style_family),
+          durationSeconds: latestTrack?.duration_seconds ?? doc.target_duration_seconds,
+          datePublished: data.published_at,
+          lyrics: doc.sections
+            .map((sec) => sec.lyrics?.trim())
+            .filter(Boolean)
+            .join("\n\n"),
+          hasAudio: Boolean(latestTrack && data.status === "completed"),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
+      {recordingLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(recordingLd) }} />
+      ) : null}
       <FunnelBeacon event="share_view" />
       <header className="flex flex-col gap-2">
         <Link
@@ -327,6 +356,7 @@ export default async function PublicSongPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
+            feedbackSongId={currentUserId ? data.id : undefined}
           />
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton
@@ -335,6 +365,10 @@ export default async function PublicSongPage({
               initialLiked={initiallyLiked}
               initialCount={likeCount}
               signedIn={!!currentUserId}
+            />
+            <PublicShareButton
+              title={displayTitle}
+              feedbackSongId={currentUserId ? data.id : undefined}
             />
             <VariationButton
               songId={data.id}
@@ -412,6 +446,7 @@ export default async function PublicSongPage({
                 </div>
                 {s.lyrics ? (
                   <pre
+                    lang={doc?.language}
                     className={`whitespace-pre-wrap rounded-md bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground/85 ${
                       s.script === "devanagari" || s.script === "kannada"
                         ? "font-sans"

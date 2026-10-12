@@ -14,6 +14,7 @@ import { serverI18n } from "@/lib/i18n/server";
 export function generateMetadata(): Metadata {
   const { t } = serverI18n();
   return {
+    alternates: { canonical: "/feedback" },
     title: t("feedback.meta.title"),
     description: t("feedback.meta.description"),
   };

@@ -12,6 +12,7 @@ import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/help" },
   title: "Help -- neo-fm",
   description:
     "Answers to the most-asked questions about neo-fm: how generation works, what we support, quota, ownership, and getting help.",

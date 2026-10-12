@@ -9,6 +9,7 @@ import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/trust" },
   title: "Trust & safety -- neo-fm",
   description:
     "How neo-fm keeps AI music honest: original lyrics, no voice cloning, labelled AI audio, fail-closed safety checks and clear privacy limits.",
