@@ -74,6 +74,8 @@ describe("DELETE /api/account", () => {
     expect(db.delCustomer).toHaveBeenCalledWith("cus_1");
     expect(db.removed.sort()).toEqual(["cover-art/u1/j1/att.png", "tracks/j1/audio.wav", "tracks/j1/stems/vocals.wav"]);
     expect(db.deleted).toContain("feedback");
+    // Push endpoints are credential-like: erased explicitly, before the auth user.
+    expect(db.deleted).toEqual(expect.arrayContaining(["push_subscriptions", "notifications", "notification_prefs"]));
     expect(db.deleteUser).toHaveBeenCalledWith("u1");
     expect(await res.json()).toMatchObject({ deleted: true, steps: { audio_files_removed: "3", stripe_customer: "deleted" } });
   });
@@ -102,6 +104,18 @@ describe("DELETE /api/account", () => {
     expect((await DELETE()).status).toBe(500);
     expect(db.deleteUser).not.toHaveBeenCalled();
   });
+  it("keeps the account when notification data cannot be erased", async () => {
+    db.tables["push_subscriptions:delete"] = { data: null, error: { message: "permission denied" } };
+    expect((await DELETE()).status).toBe(500);
+    expect(db.deleteUser).not.toHaveBeenCalled();
+  });
+  it("proceeds when the notification tables don't exist yet (migration 0085 not applied)", async () => {
+    for (const t of ["push_subscriptions", "notifications", "notification_prefs"]) {
+      db.tables[`${t}:delete`] = { data: null, error: { message: `relation "public.${t}" does not exist` } };
+    }
+    expect((await DELETE()).status).toBe(200);
+    expect(db.deleteUser).toHaveBeenCalled();
+  });
   it("reports auth deletion failure", async () => {
     db.deleteUser.mockResolvedValue({ error: { message: "boom" } });
     expect((await DELETE()).status).toBe(500);
@@ -118,11 +132,14 @@ describe("GET /api/account/export", () => {
     db.tables.preference_pairs = { data: [{ id: 1 }] };
     db.tables.feedback = { data: [{ body: "hi" }] };
     db.tables.consents = { data: [{ kind: "training" }] };
+    db.tables.notifications = { data: [{ id: "n1", type: "like" }] };
+    db.tables.notification_prefs = { data: { prefs: { like: { push: false } } } };
+    db.tables.push_subscriptions = { data: [{ created_at: "2026-10-12", user_agent: "UA", endpoint: "https://fcm.googleapis.com/fcm/send/SECRET", p256dh: "k", auth: "a" }] };
     const res = await GET();
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toMatchObject({
-      export_version: 3,
+      export_version: 4,
       user: { id: "u1" },
       songs: [{ id: "j1" }],
       presets: [{ name: "p" }],
@@ -131,7 +148,12 @@ describe("GET /api/account/export", () => {
       preference_pairs: [{ id: 1 }],
       feedback: [{ body: "hi" }],
       consents: [{ kind: "training" }],
+      notifications: [{ id: "n1", type: "like" }],
+      notification_preferences: { prefs: { like: { push: false } } },
     });
+    // Subscriptions are listed without their endpoint path or keys.
+    expect(body.push_subscriptions).toEqual([{ subscribed_at: "2026-10-12", user_agent: "UA", push_service: "fcm.googleapis.com" }]);
+    expect(JSON.stringify(body)).not.toContain("SECRET");
     expect(res.headers.get("cache-control")).toBe("no-store");
   });
   it("only selects columns that exist in production (agent_runs has updated_at, not created_at)", async () => {

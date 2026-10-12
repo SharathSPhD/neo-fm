@@ -10,6 +10,7 @@
  * `globals.css` and respect the `data-theme` attribute toggled via
  * `<ThemeToggle>`.
  */
+import { NotificationBell } from "@/components/notifications/bell";
 import Link from "next/link";
 
 import { CommandPalette } from "./command-palette";
@@ -98,6 +99,7 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <CommandPaletteTrigger />
+          <NotificationBell />
           <Link
             href="/songs/new"
             className="hidden h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"

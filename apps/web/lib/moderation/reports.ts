@@ -6,6 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { reporterOutcome, takedownNotice, type Mailer } from "../email/moderation";
+import { notifyUser } from "../notifications/notify";
 
 export type ResolveAction = "takedown" | "dismiss" | "reinstate";
 
@@ -82,6 +83,11 @@ export async function resolveJobReports(
       .update({ status: args.action === "takedown" ? "actioned" : "dismissed", resolved_at: nowIso, resolution_note: note || null })
       .eq("job_id", args.jobId).eq("status", "open");
     if (error) return { ok: false, error: "db_error", detail: error.message };
+  }
+
+  // In-app notice (migration 0085); best effort and independent of whether the email could be sent.
+  if (args.action === "takedown") {
+    await notifyUser(db, j.user_id, "takedown", { job_id: j.id, title: titleOf(j) }, `takedown:${j.id}`);
   }
 
   // Emails are best-effort: the decision is already recorded, so a mail failure must not undo or fail it.

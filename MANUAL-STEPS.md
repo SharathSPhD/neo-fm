@@ -70,3 +70,15 @@ Why: without it, per-IP rate limits live in memory on each serverless instance, 
 2. On the database page copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
 3. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables → add both for Production (Sensitive) → Save → redeploy as in step 3.4.
 (If you prefer, install the Upstash integration from https://vercel.com/marketplace/upstash, which adds both variables for you.)
+
+## 9. Web push for notifications (optional; the bell works without it)
+Why: the in-app notifications centre ships with web push switched off. Until you do this, the bell, unread count and preferences work and the push toggle reads "not available yet".
+1. Generate a VAPID key pair on any machine with Node: `npx web-push generate-vapid-keys --json` (or ask the lead session to generate one). Keep the private key secret.
+2. Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables and add for Production:
+   - `VAPID_PUBLIC_KEY` = the public key
+   - `VAPID_PRIVATE_KEY` = the private key (Sensitive)
+   - `VAPID_SUBJECT` = `mailto:` your support address
+   - `NEO_FM_WEB_PUSH_ENABLED` = `true`
+3. Redeploy as in step 3.4. The cron `/api/notifications/push-drain` (every minute, uses the existing `CRON_SECRET`) then delivers queued pushes.
+4. Check: https://neo-fm.com/account/notifications → Enable push on one device → finish a song.
+To turn it off again, set `NEO_FM_WEB_PUSH_ENABLED` to `false` and redeploy.

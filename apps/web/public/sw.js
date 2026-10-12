@@ -164,3 +164,47 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+// ---- Web Push (notifications centre) -----------------------------------
+// The server only sends when push is configured and the user opted in. The
+// payload is {title, body?, url, tag?}; the url must be a same-origin path.
+function safePath(u) {
+  return typeof u === "string" && u.startsWith("/") && !u.startsWith("//") ? u : "/library";
+}
+
+self.addEventListener("push", (event) => {
+  let msg = {};
+  try {
+    msg = event.data ? event.data.json() : {};
+  } catch {
+    msg = {};
+  }
+  const title = typeof msg.title === "string" && msg.title ? msg.title.slice(0, 120) : "neo-fm";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof msg.body === "string" ? msg.body.slice(0, 240) : undefined,
+      tag: typeof msg.tag === "string" ? msg.tag : undefined,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: safePath(msg.url) },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = safePath(event.notification.data && event.notification.data.url);
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of all) {
+        if ("focus" in c) {
+          await c.focus();
+          if ("navigate" in c) await c.navigate(url).catch(() => undefined);
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});
