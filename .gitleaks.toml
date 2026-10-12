@@ -1,0 +1,18 @@
+title = "neo-fm gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures and lockfiles carry fake or public values"
+paths = [
+  '''pnpm-lock\.yaml$''',
+  '''uv\.lock$''',
+  '''(^|/)tests?/''',
+  '''\.test\.[cm]?[jt]sx?$''',
+  '''(^|/)node_modules/''',
+  # Runbook with `Bearer YOUR_CRON_SECRET` placeholders.
+  '''MANUAL-STEPS\.md$''',
+  # `key=` here is a corpus-source id (e.g. "indictts-kn"), not a credential.
+  '''services/vocal-synth/scripts/curate_kannada_tts\.py$''',
+]

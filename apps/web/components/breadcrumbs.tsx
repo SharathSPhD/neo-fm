@@ -4,15 +4,18 @@
  */
 import Link from "next/link";
 
+import { serverI18n } from "@/lib/i18n/server";
+
 export type Crumb = {
   href?: string;
   label: string;
 };
 
-export function Breadcrumbs({ items }: { items: Crumb[] }) {
+export async function Breadcrumbs({ items }: { items: Crumb[] }) {
+  const { t } = await serverI18n();
   if (items.length === 0) return null;
   return (
-    <nav aria-label="Breadcrumb" className="text-xs text-foreground/60">
+    <nav aria-label={t("lib.breadcrumb")} className="text-xs text-foreground/60">
       <ol className="flex flex-wrap items-center gap-1.5">
         {items.map((item, i) => {
           const isLast = i === items.length - 1;

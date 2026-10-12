@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 type Stem = {
   kind: string;
   url: string;
@@ -10,6 +12,7 @@ type Stem = {
 };
 
 export function StemsPanel({ songId }: { songId: string }) {
+  const { t } = useUiLang();
   const [stems, setStems] = useState<Stem[] | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +29,7 @@ export function StemsPanel({ songId }: { songId: string }) {
         return;
       }
       if (!res.ok) {
-        setError("Couldn't load stems.");
+        setError(t("stems.loadError"));
         return;
       }
       const payload = (await res.json()) as { stems: Stem[] };
@@ -38,9 +41,9 @@ export function StemsPanel({ songId }: { songId: string }) {
     return (
       <section className="flex flex-col gap-2 rounded-md border border-amber-400/30 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">
         <p>
-          Stem downloads are a Creator+ feature.{" "}
+          {t("stems.locked")}{" "}
           <a href="/pricing" className="underline">
-            Upgrade →
+            {t("stems.upgrade")}
           </a>
         </p>
       </section>
@@ -55,7 +58,7 @@ export function StemsPanel({ songId }: { songId: string }) {
         disabled={pending}
         className="self-start rounded-md border border-muted/30 px-4 py-2 text-sm text-foreground/80 hover:border-accent/40 hover:text-foreground disabled:opacity-50"
       >
-        {pending ? "Loading…" : "Show stems"}
+        {pending ? t("stems.loading") : t("stems.show")}
       </button>
     );
   }
@@ -63,8 +66,7 @@ export function StemsPanel({ songId }: { songId: string }) {
   if (stems.length === 0) {
     return (
       <p className="text-xs text-foreground/50">
-        Stems aren&apos;t ready yet for this song. They get rendered alongside
-        the master in newer jobs; older songs only have the master mix.
+        {t("stems.notReady")}
       </p>
     );
   }
@@ -72,7 +74,7 @@ export function StemsPanel({ songId }: { songId: string }) {
   return (
     <section className="flex flex-col gap-2">
       <h3 className="text-xs uppercase tracking-widest text-foreground/50">
-        Stems (1h links)
+        {t("stems.heading")}
       </h3>
       <ul className="flex flex-col gap-2">
         {stems.map((s) => (
@@ -86,7 +88,7 @@ export function StemsPanel({ songId }: { songId: string }) {
               download={`${s.kind}.${s.format}`}
               className="text-accent underline"
             >
-              Download {s.format.toUpperCase()}
+              {t("stems.download", { format: s.format.toUpperCase() })}
               {s.bytes ? ` (${formatBytes(s.bytes)})` : null}
             </a>
           </li>

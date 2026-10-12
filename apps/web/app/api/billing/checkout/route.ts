@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         error: "billing_disabled",
         details:
           "Stripe is not configured on this deployment. " +
-          "See docs/RUNBOOK.md section 6 for setup.",
+          "Set STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_PRICE_CREATOR_ID and STRIPE_PRICE_PRO_ID, or see docs/RUNBOOK.md for operations.",
       },
       { status: 503 },
     );

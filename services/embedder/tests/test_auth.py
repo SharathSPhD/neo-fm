@@ -26,3 +26,16 @@ def test_rejects_expired_forged_and_empty() -> None:
     assert not app._authorized(scoped(int(time.time()) - 5))
     assert not app._authorized(scoped(int(time.time()) + 60, key="other"))
     assert not app._authorized("v1.9999999999.deadbeef")
+
+
+def scoped_v2(exp: int, scope: str = "job_1", key: str = "master") -> str:
+    return f"v2.{exp}.{scope}." + hmac.new(key.encode(), f"v2.{exp}.{scope}".encode(), hashlib.sha256).hexdigest()
+
+
+def test_job_bound_v2_tokens() -> None:
+    assert app._authorized(scoped_v2(int(time.time()) + 60))
+    assert not app._authorized(scoped_v2(int(time.time()) - 5))
+    assert not app._authorized(scoped_v2(int(time.time()) + 60, key="other"))
+    # the scope is part of the signature: swapping it invalidates the token
+    tampered = scoped_v2(int(time.time()) + 60).replace("job_1", "job_2")
+    assert not app._authorized(tampered)

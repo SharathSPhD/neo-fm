@@ -3,10 +3,14 @@
  *
  * Aimed at Substack / Notion / blogs that embed via `<iframe>`. Strips
  * navigation and metadata; keeps only the title strip + the audio
- * player + a small "Play on neo-fm" link. Same ADR 0013 / RLS gate as
+ * player + a "Made with neo-fm" link. Same ADR 0013 / RLS gate as
  * the full /s/[publicId] page.
+ *
+ * Query: ?layout=compact|full (default full), ?theme=light|dark|auto
+ * (default auto). Private and taken-down songs fall through to
+ * ./not-found.tsx.
  */
-import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
@@ -15,9 +19,15 @@ import {
   createServiceRoleClient,
 } from "@/lib/supabase/server";
 
-import { PublicSongAudio } from "../public-song-audio";
+import { parseEmbedOptions } from "@/lib/embed/options";
+import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
+
+import { EmbedPlayer } from "./embed-player";
 
 export const dynamic = "force-dynamic";
+
+// The player is a widget, not a destination: the song page is what should rank.
+export const metadata: Metadata = { title: "neo-fm player", robots: { index: false, follow: false } };
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 
@@ -36,6 +46,7 @@ interface EmbedRow {
       language: string;
       target_duration_seconds: number;
       raga?: { name: string };
+      sections?: { id: string; type: string; target_seconds: number; lyrics?: string }[];
     };
     language: string;
     style_family: string;
@@ -52,14 +63,18 @@ interface EmbedRow {
     | null;
 }
 
-export default async function EmbedPage({
-  params,
-}: {
-  params: { publicId: string };
-}) {
+export default async function EmbedPage(
+  props: {
+    params: Promise<{ publicId: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
-
+  const { layout, theme } = parseEmbedOptions(searchParams);
+  const compact = layout === "compact";
   const supabase = createServerClient();
   const { data } = await supabase
     .from("jobs")
@@ -96,55 +111,77 @@ export default async function EmbedPage({
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  // Heard per-line lyric times; optional (the column may be absent on older databases) and only read once the
+  // song passed the public gate above. Without them the player paces lines evenly.
+  let lineTimings: unknown = null;
+  if (signedUrl) {
+    try {
+      const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("line_timings").eq("job_id" as never, data.id as never).limit(1);
+      lineTimings = ((runs ?? []) as { line_timings: unknown }[])[0]?.line_timings ?? null;
+    } catch { /* optional */ }
+  }
+
+  const title = data.song_documents?.title?.trim()?.length
+    ? data.song_documents.title
+    : doc
+      ? prettyStyle(doc.style_family)
+      : "Song";
+  const colorScheme = theme === "auto" ? "light dark" : theme;
+
   return (
-    <main className="flex h-full min-h-[160px] flex-col gap-3 bg-background px-4 py-4">
-      <header className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-sm font-medium" title={data.song_documents?.title ?? undefined}>
-          {data.song_documents?.title?.trim()?.length
-            ? data.song_documents.title
-            : doc
-              ? prettyStyle(doc.style_family)
-              : "Song"}
-          <span className="ml-2 text-xs text-foreground/50">
-            {doc ? prettyLanguage(doc.language) : ""}
+    <main
+      className={`embed-root flex min-h-screen flex-col justify-between gap-3 px-4 py-3`}
+      data-embed-theme={theme}
+      style={{ colorScheme }}
+    >
+      <div className="flex min-h-0 flex-col gap-3">
+        <header className="flex items-baseline justify-between gap-2">
+          <span className="truncate text-sm font-medium" title={title ?? undefined}>
+            {title}
+            {!compact && doc ? (
+              <span className="ml-2 text-xs text-foreground/60">{prettyLanguage(doc.language)}</span>
+            ) : null}
           </span>
-        </span>
-        <Link
+          {compact ? (
+            <a
+              href={`/s/${data.public_id}`}
+              target="_top"
+              rel="noopener"
+              className="shrink-0 text-[10px] uppercase tracking-widest text-foreground/60 hover:text-foreground"
+            >
+              Made with neo-fm ↗
+            </a>
+          ) : null}
+        </header>
+        {signedUrl && latestTrack ? (
+          <EmbedPlayer
+            publicId={data.public_id}
+            initialUrl={signedUrl}
+            durationSeconds={latestTrack.duration_seconds}
+            format={latestTrack.format}
+            sections={doc?.sections ?? []}
+            lineTimings={lineTimings}
+            layout={layout}
+            language={doc?.language ?? "en"}
+          />
+        ) : (
+          <p className="text-xs text-foreground/70">
+            {data.status === "queued" || data.status === "processing"
+              ? "Rendering now."
+              : "Audio preview not available."}
+          </p>
+        )}
+      </div>
+      {compact ? null : (
+        <a
           href={`/s/${data.public_id}`}
           target="_top"
-          className="text-[10px] uppercase tracking-widest text-foreground/40 hover:text-foreground/70"
+          rel="noopener"
+          className="self-end text-[10px] uppercase tracking-widest text-foreground/60 hover:text-foreground"
         >
-          neo-fm ↗
-        </Link>
-      </header>
-      {signedUrl && latestTrack ? (
-        <PublicSongAudio
-          publicId={data.public_id}
-          initialUrl={signedUrl}
-          durationSeconds={latestTrack.duration_seconds}
-          format={latestTrack.format}
-        />
-      ) : (
-        <p className="text-xs text-amber-200">
-          {data.status === "queued" || data.status === "processing"
-            ? "Rendering now."
-            : "Audio preview not available."}
-        </p>
+          Made with neo-fm ↗
+        </a>
       )}
     </main>
   );
-}
-
-function prettyStyle(s: string): string {
-  if (s === "western") return "Western";
-  if (s === "carnatic") return "Carnatic";
-  if (s === "hindustani") return "Hindustani";
-  if (s === "kannada-folk") return "Kannada folk";
-  return s;
-}
-function prettyLanguage(l: string): string {
-  if (l === "en") return "English";
-  if (l === "hi") return "Hindi";
-  if (l === "kn") return "Kannada";
-  return l;
 }

@@ -3,16 +3,20 @@
  * by the song poll route so a job moves as soon as its owner is watching it.
  */
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
+import { lyriaBreaker } from "./circuit-breaker";
 import { generateMusic } from "./lyria";
 import { advance } from "./runner";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
-import { dictionHints } from "../diction";
+import { dictionHints, scoreTranscriptUnordered } from "../diction";
+import { dictionVerdict, gateMode } from "../diction/gate";
+import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
+import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
-import { mintEmbedToken } from "./embed-token";
+import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -22,7 +26,27 @@ export function isTransient(status: number | undefined, msg: string): boolean {
   return /overloaded|ECONNRESET|ETIMEDOUT|EAI_AGAIN|fetch failed|socket hang up|network/i.test(msg);
 }
 
-const MAX_CLAIM = 3;
+const MAX_CLAIM = 12;
+/** Sliding pool: a slow render no longer holds back jobs queued behind it (was fixed batches of 4). */
+export const POOL_SIZE = 8;
+/** Fleet-wide ceiling on jobs being worked at once (ticks overlap, so POOL_SIZE alone is per tick). */
+export const GLOBAL_MAX = 10;
+/** A job is not started this late in a tick: the function is killed at ~300 s and the lease would be held for nothing. */
+export const START_DEADLINE_MS = 200_000;
+export const TIER_WEIGHT: Record<string, number> = { pro: 3, developer: 3, creator: 2, free: 1 };
+
+/** Weighted aging: score = minutes waited x tier weight, highest first, so paying tiers go first but nobody starves. */
+export function prioritise<T extends { started_at?: string | null }>(jobs: T[], weightOf: (j: T) => number, now = Date.now()): T[] {
+  const score = (j: T) => Math.max(1, (now - (j.started_at ? new Date(j.started_at).getTime() : now)) / 60_000 + 1) * weightOf(j);
+  return [...jobs].sort((a, b) => score(b) - score(a));
+}
+
+/** Run `fn` over `items` with at most `size` in flight, starting the next as soon as any finishes. */
+export async function runPool<T>(items: T[], size: number, fn: (t: T) => Promise<void>): Promise<void> {
+  let next = 0;
+  const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i] as T); } };
+  await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
+}
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
 export type ProcessEnv = { environmentId: string; geminiKey: string };
@@ -59,17 +83,22 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
 
   // Plain queries (no PostgREST embeds): embed resolution depends on the schema cache
   // and failed silently once; errors are surfaced instead of swallowed.
-  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at").eq("status", "processing");
+  const activeQuery = db.from("jobs").select("id,user_id,song_document_id,started_at,agent_lease_until").eq("status", "processing");
   const { data: active, error: activeErr } = await (onlyJobId ? activeQuery.eq("id", onlyJobId) : activeQuery);
   if (activeErr) throw new Error(`jobs_query_failed: ${activeErr.message}`);
 
   const results: Record<string, string> = {};
   const trace: string[] = [];
-  // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
-  const CONCURRENCY = 4;
+  // Renders take ~30s+ each, so jobs run in a sliding parallel pool, highest weighted-age first.
   const tickStart = Date.now();
-  const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
+  const allActive = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null; agent_lease_until?: string | null }[];
+  const nowMs = Date.now();
+  const live = allActive.filter((j) => j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs).length;
+  // Jobs another tick holds are skipped, and new work is capped so overlapping ticks cannot exceed GLOBAL_MAX renders.
+  const free = allActive.filter((j) => !(j.agent_lease_until && new Date(j.agent_lease_until).getTime() > nowMs));
+  const room = onlyJobId ? free.length : Math.max(0, GLOBAL_MAX - live);
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
+    if (Date.now() - tickStart > START_DEADLINE_MS) { results[job.id] = "deferred"; return; }
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
     try {
       const [{ data: docRow, error: docErr }, { data: userRow }] = await Promise.all([
@@ -99,7 +128,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
           tasteCard: tasteCard || undefined,
-          engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
+          engine: embedEngine(job.id),
         },
         music: async (a0) => {
           let a = a0;
@@ -109,7 +138,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
-          if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
+          if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
             try {
               a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
@@ -120,8 +149,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
           const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
           const sung = ss?.romanized ? ss.text : a.lyrics;
-          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), apiKey: geminiKey }));
+          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
         },
+        gate: () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; },
+        gateRelease: () => lyriaBreaker.release(),
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
           const path = `${jobId}/${n}.mp3`;
@@ -145,7 +176,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "done") {
         const cascade = await timed("finalize", () => finalize(db, job.id));
         const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none", stages_ms: stages });
+        await timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, doc.document_json.target_duration_seconds ?? 30));
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: embedderUsed(!!safeEmbedUrl(process.env.EMBED_URL), cascade), stages_ms: stages });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
@@ -164,9 +196,12 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       await releaseLease(db, job.id);
     }
   };
-  for (let i = 0; i < work.length; i += CONCURRENCY) {
-    await Promise.all(work.slice(i, i + CONCURRENCY).map(runJob));
+  const tiers = new Map<string, string>();
+  if (free.length > 1) {
+    const { data: us } = await db.from("users").select("id,tier").in("id", [...new Set(free.map((w) => w.user_id))]);
+    for (const u of (us ?? []) as { id: string; tier: string | null }[]) tiers.set(u.id, u.tier ?? "free");
   }
+  await runPool(prioritise(free, (j) => TIER_WEIGHT[tiers.get(j.user_id) ?? "free"] ?? 1).slice(0, room), POOL_SIZE, runJob);
   return { results, trace };
 }
 
@@ -188,8 +223,8 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
     const auditText = await read("cascade_audit.json");
     let cascade: Record<string, unknown> | null = null;
     try {
-      const a = auditText ? (JSON.parse(auditText) as { committed?: string; vimarsa_event?: boolean; vimarsa_novelty?: number; embedder?: string; posterior?: number[]; audit?: { audit?: Record<string, unknown> } }) : null;
-      if (a) cascade = { committed: a.committed, vimarsa_event: a.vimarsa_event, novelty: a.vimarsa_novelty, embedder: a.embedder, k: a.posterior?.length, delta_F: a.audit?.audit?.delta_F, two_pass: a.audit?.audit?.two_pass };
+      const a = auditText ? (JSON.parse(auditText) as { committed?: string; vimarsa_event?: boolean; vimarsa_novelty?: number; embedder?: string; embedder_fallback?: string | null; posterior?: number[]; audit?: { audit?: Record<string, unknown> } }) : null;
+      if (a) cascade = { committed: a.committed, vimarsa_event: a.vimarsa_event, novelty: a.vimarsa_novelty, embedder: a.embedder, embedder_fallback: a.embedder_fallback ?? undefined, k: a.posterior?.length, delta_F: a.audit?.audit?.delta_F, two_pass: a.audit?.audit?.two_pass };
     } catch { cascade = null; }
     let agentDoc: unknown = null;
     try { agentDoc = docText ? JSON.parse(docText) : null; } catch { agentDoc = null; }
@@ -257,8 +292,12 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
     if (!blob) return null;
     const audio = new Uint8Array(await blob.arrayBuffer());
-    const qa = await auditDiction(r.lyrics, audio, blob.type || "audio/mpeg", language, geminiKey);
-    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash" } }).eq("job_id", jobId);
+    // Score against the sung lines only: a "Pallavi:" header counted as a line scored as a miss (te-16: 66 -> 97).
+    const sung = singableLines(r.lyrics).join("\n") || r.lyrics;
+    const qa = await auditDiction(sung, audio, blob.type || "audio/mpeg", language, geminiKey);
+    // Shadow gate (DICTION_GATE=off disables): record the verdict and the order-free score; nothing the user sees changes.
+    const gate = gateMode() === "off" ? null : dictionVerdict(qa, scoreTranscriptUnordered(sung, qa.transcript));
+    await db.from("agent_runs").update({ diction_qa: { matchPct: qa.matchPct, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })), model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", ...(gate ? { unorderedPct: gate.unorderedPct, verdict: gate.verdict, reasons: gate.reasons, reordered: gate.reordered, tailUnsung: gate.tailUnsung } : {}) } }).eq("job_id", jobId);
     return { matchPct: qa.matchPct };
   } catch (e) {
     /* QA is advisory, but leave the reason visible instead of failing silently */
@@ -266,6 +305,29 @@ export async function qaDiction(db: ReturnType<typeof serviceClient>, jobId: str
     console.error("diction qa failed", jobId, msg);
     try { await db.from("agent_runs").update({ diction_qa: { error: msg } }).eq("job_id", jobId); } catch { /* ignore */ }
     return null;
+  }
+}
+
+/** Best-effort synced-lyrics timings (agent_runs.line_timings). One retry on an empty reply; never fails the job. */
+export async function qaLineTimings(db: ReturnType<typeof serviceClient>, jobId: string, language: string, geminiKey: string, targetS: number): Promise<boolean> {
+  try {
+    const { data: rows } = await db.from("agent_runs").select("audio_path,lyrics,line_timings").eq("job_id", jobId).limit(1);
+    const r = (rows ?? [])[0] as { audio_path: string | null; lyrics: string | null; line_timings: unknown } | undefined;
+    if (!r?.audio_path || !r.lyrics || r.line_timings) return false;
+    const lines = singableLines(r.lyrics);
+    if (!lines.length) return false;
+    const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
+    if (!blob) return false;
+    const audio = new Uint8Array(await blob.arrayBuffer());
+    let segs = await transcribeTimed(audio, blob.type || "audio/mpeg", language, geminiKey);
+    if (!segs.length) segs = await transcribeTimed(audio, blob.type || "audio/mpeg", language, geminiKey);
+    if (!segs.length) return false;
+    const durationS = Math.max(targetS, ...segs.map((s) => s.startS));
+    await db.from("agent_runs").update({ line_timings: toPayload(alignLines(lines, segs, durationS), durationS) }).eq("job_id", jobId);
+    return true;
+  } catch (e) {
+    console.error("line timings failed", jobId, String((e as Error)?.message ?? e).slice(0, 240));
+    return false;
   }
 }
 
