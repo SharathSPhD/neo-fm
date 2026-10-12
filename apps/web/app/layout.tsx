@@ -4,6 +4,7 @@ import Script from "next/script";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
 import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
+import { ClientErrorListener } from "@/components/client-error-listener";
 
 import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
@@ -44,6 +45,7 @@ export default function RootLayout({
             /public so no inline-script audit surface. */}
         <Script src="/theme-boot.js" strategy="beforeInteractive" />
         <AuthListener />
+        <ClientErrorListener />
         {children}
         <ServiceWorkerRegister />
         </UiLangProvider>

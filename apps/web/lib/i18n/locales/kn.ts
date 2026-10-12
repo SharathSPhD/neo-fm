@@ -149,7 +149,6 @@ export const kn: Dict = {
   "profile.follower": "{n} ಫಾಲೋವರ್",
   "profile.followers": "{n} ಫಾಲೋವರ್‌ಗಳು",
   "profile.joined": "ಸೇರಿದ್ದು",
-  "profile.changeHandle": "ಹ್ಯಾಂಡಲ್ ಬದಲಿಸಿ",
   "profile.noneSelf": "ನೀವು ಇನ್ನೂ ಯಾವುದೇ ಹಾಡನ್ನು ಪ್ರಕಟಿಸಿಲ್ಲ.",
   "profile.noneOther": "@{handle} ಇನ್ನೂ ಯಾವುದೇ ಹಾಡನ್ನು ಪ್ರಕಟಿಸಿಲ್ಲ.",
   "song.song": "ಹಾಡು",
@@ -221,4 +220,7 @@ export const kn: Dict = {
   "listen.intro": "ಭಾರತೀಯ ಭಾಷೆಗಳು ಮತ್ತು ಶೈಲಿಗಳಲ್ಲಿ ಸಮುದಾಯದ ಹಾಡುಗಳು. ಖಾತೆ ಬೇಕಿಲ್ಲ.",
   "listen.browse": "ಎಲ್ಲವನ್ನೂ ನೋಡಿ",
   "listen.play": "▶ ಪ್ಲೇ ಮಾಡಿ",
+  "error.home": "ಮುಖಪುಟಕ್ಕೆ ಹೋಗಿ",
+  "error.ref": "ಉಲ್ಲೇಖ",
+  "profile.editProfile": "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ",
 };

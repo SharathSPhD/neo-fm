@@ -6,7 +6,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ const COL = /^[a-z_][a-z0-9_]*$/i;
 const SELECT = /^[a-z0-9_,()*:>.\- ]+$/i;
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const p = req.nextUrl.searchParams;
   const table = p.get("table") ?? "";

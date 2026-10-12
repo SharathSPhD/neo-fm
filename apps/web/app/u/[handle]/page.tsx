@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { CoverArt } from "@/components/cover-art";
+import { avatarUrl } from "@/lib/profile/avatar-url";
 import {
   avatarColors,
   avatarInitial,
@@ -41,7 +42,9 @@ export async function generateMetadata({ params }: { params: { handle: string } 
   const data = await loadProfile(handle);
   // Unknown handles and empty profiles are not worth indexing.
   const indexable = Boolean(data && data.songs.length > 0);
-  const description = data
+  const description = data?.profile.bio
+    ? data.profile.bio
+    : data
     ? profileBlurb(
         handle,
         profileStats(data.songs),
@@ -62,6 +65,8 @@ type ProfileRow = {
   id: string;
   handle: string;
   created_at: string;
+  bio: string | null;
+  avatar_path: string | null;
 };
 
 type SongRow = {
@@ -87,7 +92,7 @@ const loadProfile = cache(async function loadProfile(handle: string) {
       };
     }
   )
-    .select("id, handle, created_at")
+    .select("id, handle, created_at, bio, avatar_path")
     .eq("handle", handle)
     .maybeSingle();
   if (lookup.error || !lookup.data) return null;
@@ -181,13 +186,24 @@ export default async function ProfilePage({ params }: Props) {
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <div
-          aria-hidden
-          className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-4xl font-semibold text-white"
-          style={{ backgroundImage: `linear-gradient(135deg, ${avatarColors(profile.handle).from}, ${avatarColors(profile.handle).to})` }}
-        >
-          {avatarInitial(profile.handle)}
-        </div>
+        {avatarUrl(profile.avatar_path) ? (
+          // eslint-disable-next-line @next/next/no-img-element -- user avatar from the public bucket
+          <img
+            src={avatarUrl(profile.avatar_path) ?? ""}
+            alt={`@${profile.handle}`}
+            width={96}
+            height={96}
+            className="h-24 w-24 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-4xl font-semibold text-white"
+            style={{ backgroundImage: `linear-gradient(135deg, ${avatarColors(profile.handle).from}, ${avatarColors(profile.handle).to})` }}
+          >
+            {avatarInitial(profile.handle)}
+          </div>
+        )}
         <div className="flex flex-1 flex-col gap-2">
           <h1 className="text-4xl font-medium tracking-tight">@{profile.handle}</h1>
           <p className="text-sm text-foreground/60">
@@ -195,6 +211,7 @@ export default async function ProfilePage({ params }: Props) {
             {t(followerCount === 1 ? "profile.follower" : "profile.followers", { n: "" }).trim()} · {t("profile.joined")}{" "}
             {new Date(profile.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
           </p>
+          {profile.bio ? <p className="max-w-prose whitespace-pre-line text-sm text-foreground/85">{profile.bio}</p> : null}
           {stats.songs > 0 ? (
             <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/80">
               <li>
@@ -223,10 +240,10 @@ export default async function ProfilePage({ params }: Props) {
             ) : null}
             {isSelf ? (
               <Link
-                href="/onboarding/handle"
+                href="/account/profile"
                 className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
               >
-                {t("profile.changeHandle")}
+                {t("profile.editProfile")}
               </Link>
             ) : null}
             <ShareProfileButton handle={profile.handle} text={shareText} />

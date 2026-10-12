@@ -6,7 +6,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { alertString, summarize, type DictionRow, type JobRow } from "../../../../lib/ops/health-summary";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ export const fetchCache = "force-no-store";
 const JOB_CAP = 2000;
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const p = req.nextUrl.searchParams;
   const hours = Math.min(168, Math.max(1, Number(p.get("hours") ?? 24) || 24));

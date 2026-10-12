@@ -149,7 +149,6 @@ export const bn: Dict = {
   "profile.follower": "{n} জন ফলোয়ার",
   "profile.followers": "{n} জন ফলোয়ার",
   "profile.joined": "যোগ দিয়েছেন",
-  "profile.changeHandle": "হ্যান্ডেল বদলান",
   "profile.noneSelf": "আপনি এখনও কোনো গান প্রকাশ করেননি।",
   "profile.noneOther": "@{handle} এখনও কোনো গান প্রকাশ করেননি।",
   "song.song": "গান",
@@ -221,4 +220,7 @@ export const bn: Dict = {
   "listen.intro": "ভারতীয় ভাষা ও স্টাইলে কমিউনিটির গান। অ্যাকাউন্ট লাগবে না।",
   "listen.browse": "সব দেখুন",
   "listen.play": "▶ চালান",
+  "error.home": "হোমে যান",
+  "error.ref": "রেফারেন্স",
+  "profile.editProfile": "প্রোফাইল সম্পাদনা করুন",
 };

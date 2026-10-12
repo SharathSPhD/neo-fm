@@ -149,7 +149,6 @@ export const ta: Dict = {
   "profile.follower": "{n} பின்தொடர்பவர்",
   "profile.followers": "{n} பின்தொடர்பவர்கள்",
   "profile.joined": "இணைந்தது",
-  "profile.changeHandle": "கைப்பிடியை மாற்று",
   "profile.noneSelf": "நீங்கள் இன்னும் எந்தப் பாடலையும் வெளியிடவில்லை.",
   "profile.noneOther": "@{handle} இன்னும் எந்தப் பாடலையும் வெளியிடவில்லை.",
   "song.song": "பாடல்",
@@ -221,4 +220,7 @@ export const ta: Dict = {
   "listen.intro": "இந்திய மொழிகள் மற்றும் பாணிகளில் சமூகப் பாடல்கள். கணக்கு தேவையில்லை.",
   "listen.browse": "அனைத்தையும் பார்க்க",
   "listen.play": "▶ இயக்கு",
+  "error.home": "முகப்புக்குச் செல்",
+  "error.ref": "குறிப்பு எண்",
+  "profile.editProfile": "சுயவிவரத்தைத் திருத்து",
 };

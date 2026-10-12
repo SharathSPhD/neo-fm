@@ -149,7 +149,6 @@ export const hi: Dict = {
   "profile.follower": "{n} फ़ॉलोअर",
   "profile.followers": "{n} फ़ॉलोअर",
   "profile.joined": "जुड़े",
-  "profile.changeHandle": "हैंडल बदलें",
   "profile.noneSelf": "आपने अभी कोई गीत प्रकाशित नहीं किया है।",
   "profile.noneOther": "@{handle} ने अभी कोई गीत प्रकाशित नहीं किया है।",
   "song.song": "गीत",
@@ -221,4 +220,7 @@ export const hi: Dict = {
   "listen.intro": "भारतीय भाषाओं और शैलियों में समुदाय के गाने। खाते की ज़रूरत नहीं।",
   "listen.browse": "सब देखें",
   "listen.play": "▶ चलाएँ",
+  "error.home": "होम पर जाएँ",
+  "error.ref": "संदर्भ",
+  "profile.editProfile": "प्रोफ़ाइल संपादित करें",
 };

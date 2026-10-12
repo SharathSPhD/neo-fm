@@ -149,7 +149,6 @@ export const te: Dict = {
   "profile.follower": "{n} ఫాలోవర్",
   "profile.followers": "{n} ఫాలోవర్లు",
   "profile.joined": "చేరారు",
-  "profile.changeHandle": "హ్యాండిల్ మార్చండి",
   "profile.noneSelf": "మీరు ఇంకా ఏ పాటనూ ప్రచురించలేదు.",
   "profile.noneOther": "@{handle} ఇంకా ఏ పాటనూ ప్రచురించలేదు.",
   "song.song": "పాట",
@@ -221,4 +220,7 @@ export const te: Dict = {
   "listen.intro": "భారతీయ భాషలు, శైలుల్లో కమ్యూనిటీ పాటలు. ఖాతా అవసరం లేదు.",
   "listen.browse": "అన్నీ చూడండి",
   "listen.play": "▶ ప్లే చేయండి",
+  "error.home": "హోమ్‌కు వెళ్లండి",
+  "error.ref": "రిఫరెన్స్",
+  "profile.editProfile": "ప్రొఫైల్ సవరించండి",
 };

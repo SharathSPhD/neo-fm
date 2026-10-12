@@ -147,7 +147,6 @@ export const en = {
   "profile.follower": "{n} follower",
   "profile.followers": "{n} followers",
   "profile.joined": "joined",
-  "profile.changeHandle": "Change handle",
   "profile.noneSelf": "You haven't published any songs yet.",
   "profile.noneOther": "@{handle} hasn't published any songs yet.",
   "song.song": "Song",
@@ -219,4 +218,7 @@ export const en = {
   "listen.intro": "Community songs across Indian languages and styles. No account needed.",
   "listen.browse": "Browse all",
   "listen.play": "▶ Play",
+  "error.home": "Go home",
+  "error.ref": "Reference",
+  "profile.editProfile": "Edit profile",
 } as const;
