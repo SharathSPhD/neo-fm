@@ -13,7 +13,7 @@ Status as of 2026-10-12: ✅ done · ⏳ still needs you · ➖ optional.
 | 2 | Supabase auth settings, Google sign-in | ✅ done (old URLs); ⏳ add the new domain URLs (2a below) |
 | 3 | Stripe test webhook | ✅ done, verified working; ⏳ point it at the new domain (3a below) |
 | 4 | Domain neo-fm.com | ✅ done: DNS, Vercel domains, `NEXT_PUBLIC_APP_URL` |
-| 5 | Email (Resend) | ➖ DNS records already added; ⏳ API key, Supabase secret, mailbox |
+| 5 | Email (Resend) | ✅ done and live (songs email on completion); ⏳ only 5.5, the grievance@ mailbox forward |
 | 6 | Replace CRON_SECRET | ⏳ |
 | 7 | Before public launch | ⏳ |
 | 8 | Rate limiting store (Upstash) | ⏳ health still reports `upstash: missing` |
@@ -58,12 +58,21 @@ Endpoint created, signing secret saved in Vercel, and Claude verified a real che
 - `NEXT_PUBLIC_APP_URL` is saved as `https://www.neo-fm.com` (Production and Preview), as a normal non-secret variable. Vercel cannot change a Sensitive variable to another type, which is why it had to be re-added. Claude redeployed.
 - Never mark a `NEXT_PUBLIC_…` variable as Sensitive. It is public by design and Vercel refuses to save it.
 
-## 5. Email ➖ optional
-1. ✅ Resend DNS records are already in GoDaddy (`rsend`, `send` and the DKIM record). Open https://resend.com/domains → `neo-fm.com` → Verify.
-2. ⏳ https://resend.com/api-keys → Create API key (sending access).
-3. ⏳ https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/functions/secrets → add `RESEND_API_KEY` = the key → Save.
-4. Tell Claude "done: 5". Claude then deploys the song-ready function and connects the trigger.
-5. ⏳ Create the mailbox `grievance@neo-fm.com`: https://account.godaddy.com/products → Email & Office → Set up, or add a forwarder to your own address.
+## 5. Email: ✅ DONE except the mailbox
+Resend domain, API key and Supabase secret are in place. Claude deployed the song-ready function, added the queue wrappers (migration 0087) and a 2-minute schedule, and checked that it reads the queue. Finished songs now email their owner.
+
+### 5.5 Forward `grievance@neo-fm.com` to `info@technektar.com`: ⏳
+Free forwarding with ImprovMX, no GoDaddy mailbox needed. The only GoDaddy part is adding three DNS records (DNS is where the domain already lives).
+1. Open https://improvmx.com → sign up → Add domain `neo-fm.com`.
+2. Add an alias: `grievance` → `info@technektar.com`.
+3. Open https://dcc.godaddy.com/control/portfolio/neo-fm.com/settings?tab=dns and add:
+   - MX, Name `@`, Value `mx1.improvmx.com`, Priority 10
+   - MX, Name `@`, Value `mx2.improvmx.com`, Priority 20
+   - TXT, Name `@`, Value `v=spf1 include:spf.improvmx.com ~all`
+   Keep every other record. The Resend records are on the `send` name, so they do not conflict.
+4. Back in ImprovMX click Verify (it can take a few minutes).
+5. Send a test mail to `grievance@neo-fm.com` from another address, and check it arrives at `info@technektar.com`. Then tell Claude "done: 5.5".
+To reply as `grievance@neo-fm.com` later, ImprovMX has a free SMTP sender; ask Claude if you need it.
 
 ## 6. Replace CRON_SECRET with a random value: ⏳
 1. In a terminal run `openssl rand -hex 32` and copy the output.

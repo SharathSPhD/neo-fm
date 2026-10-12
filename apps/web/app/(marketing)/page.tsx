@@ -1,6 +1,11 @@
 import { FunnelBeacon } from "@/components/funnel-beacon";
+import { HowVisual } from "@/components/landing/how-visual";
+import { LanguageSamples } from "@/components/landing/language-samples";
+import { SocialProof } from "@/components/landing/social-proof";
 import { ListenFirst } from "@/components/listen-first";
+import { loadLanguageSamples } from "@/lib/landing/samples";
 import type { Metadata } from "next";
+import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
@@ -14,8 +19,6 @@ import { jsonLdString } from "@/lib/seo/jsonld";
  *  - every song gets a pronunciation check (Gemini listens, we compare with the lyric).
  * No claims about file formats, in-house voice models or G2P packs that v2 does not ship.
  */
-
-const LANGS = ["ಕನ್ನಡ Kannada", "தமிழ் Tamil", "తెలుగు Telugu", "हिन्दी Hindi", "বাংলা Bengali"] as const;
 
 const STEPS = [
   { n: 1, title: "Describe the song", body: "Tell us the mood, the occasion, the language and the style. One or two sentences is enough." },
@@ -50,8 +53,12 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
+      <div className="mx-auto max-w-6xl px-6 pt-12">
+        <SongOfTheDay />
+      </div>
       <ListenFirst />
       <HowItWorks />
+      <SocialProof />
       <Different />
       <PricingTeaser />
       <Footer />
@@ -59,7 +66,8 @@ export default async function Page() {
   );
 }
 
-function Hero() {
+async function Hero() {
+  const samples = await loadLanguageSamples();
   return (
     <section className="relative overflow-hidden border-b border-muted/30" aria-labelledby="hero-heading">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.15),_transparent_55%)]" />
@@ -75,18 +83,14 @@ function Hero() {
           Describe a song in Kannada, Tamil, Telugu, Hindi or Bengali. Our lyric engine writes it natively, a singer performs it, and we check the pronunciation against your words.
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/sign-up" className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+          <Link href="/sign-up?next=/songs/new" className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
             Make your first song free
           </Link>
           <Link href="/discover" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             Listen to songs
           </Link>
         </div>
-        <ul className="flex flex-wrap gap-2 pt-2" aria-label="Supported languages">
-          {LANGS.map((l) => (
-            <li key={l} className="rounded-full border border-muted/40 px-3 py-1 text-sm text-foreground/80">{l}</li>
-          ))}
-        </ul>
+        <LanguageSamples samples={samples} />
       </div>
     </section>
   );
@@ -106,6 +110,7 @@ function HowItWorks() {
             </li>
           ))}
         </ol>
+        <HowVisual />
       </div>
     </section>
   );

@@ -35,6 +35,7 @@ import {
 } from "@/lib/supabase/server";
 import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { LikeButton } from "@/components/like-button";
+import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
 
@@ -351,6 +352,7 @@ export default async function PublicSongPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
+            feedbackSongId={currentUserId ? data.id : undefined}
           />
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton
@@ -364,6 +366,10 @@ export default async function PublicSongPage({
               jobId={data.id}
               signedIn={!!currentUserId}
               nextPath={`/s/${data.public_id}`}
+            />
+            <PublicShareButton
+              title={displayTitle}
+              feedbackSongId={currentUserId ? data.id : undefined}
             />
             <VariationButton
               songId={data.id}
