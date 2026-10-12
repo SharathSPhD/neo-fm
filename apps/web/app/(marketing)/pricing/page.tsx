@@ -24,7 +24,7 @@ import { WaitlistButton } from "./waitlist-button";
 export const metadata: Metadata = {
   title: "Pricing -- neo-fm",
   description:
-    "Free for 3 songs a month. Creator and Pro tiers unlock longer songs, faster generations, and stem downloads. Join the waitlist while we finish billing.",
+    "Free for 3 songs a month. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
 };
 
 interface Tier {
@@ -45,12 +45,12 @@ const TIERS: readonly Tier[] = [
     label: "Free",
     price: "₹0",
     cadence: "per month",
-    pitch: "Try the engine. 3 songs a month, 90 seconds each.",
+    pitch: "Try the engine. 3 songs a month, written with our lyric engine.",
     features: [
       "3 songs per month (UTC)",
-      "Up to 90 second songs",
-      "Carnatic, Hindustani, Kannada folk, Western styles",
-      "Hindi / Kannada / English / Hinglish lyrics",
+      "30-second songs with real vocals",
+      "Kannada, Tamil, Telugu, Hindi, Bengali lyrics in native script",
+      "Pronunciation check on every song",
       "Private library + public share links",
     ],
     cta: { kind: "primary", href: "/sign-up", label: "Start free" },
@@ -58,15 +58,15 @@ const TIERS: readonly Tier[] = [
   {
     id: "creator",
     label: "Creator",
-    price: "₹399",
+    price: "₹299",
     cadence: "per month",
     pitch: "For songwriters and bedroom producers shipping demos.",
     features: [
-      "25 songs per month",
-      "Up to 3 minute songs",
-      "Priority queue (skip the line)",
-      "Stem downloads (vocal, melody, percussion)",
-      "Lyrical karaoke video export",
+      "Up to 15 songs per month",
+      "Up to 90 second songs",
+      "Sonnet-polished meter & diction on every lyric",
+      "Wider style palette: Carnatic, Hindustani, folk, film, devotional",
+      "Priority queue",
     ],
     cta: {
       kind: "waitlist",
@@ -77,16 +77,16 @@ const TIERS: readonly Tier[] = [
   {
     id: "pro",
     label: "Pro",
-    price: "₹1,499",
+    price: "₹799",
     cadence: "per month",
     pitch:
-      "For studios and content houses generating at scale. Bring your own raga.",
+      "For serious songwriters and small studios. The most renders, our best lyric pass.",
     features: [
-      "200 songs per month",
-      "Up to 10 minute songs",
-      "Custom raga + tala uploads",
-      "API access (early)",
-      "Email support + SLA",
+      "Up to 40 songs per month",
+      "Up to 3 minute songs",
+      "Opus final lyric pass + diction coach",
+      "Taste profile that learns your style (opt-in)",
+      "Email support",
     ],
     cta: { kind: "waitlist", tier: "pro", label: "Join Pro waitlist" },
   },
@@ -180,8 +180,8 @@ export default async function PricingPage() {
         ))}
       </section>
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
-        Prices in INR. Every tier ships generated audio at 44.1 kHz WAV.
-        Stems and karaoke video are Creator+. <a href="/help" className="underline">FAQ</a>.
+        Prices in INR incl. GST ($6.99 / $17.99 outside India). Longer songs use more of your monthly render budget.
+        All songs are AI-generated and labelled as such. <a href="/help" className="underline">FAQ</a>.
       </footer>
     </main>
   );
