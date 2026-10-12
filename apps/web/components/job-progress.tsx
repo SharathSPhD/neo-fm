@@ -76,7 +76,7 @@ export function JobProgress({ songId, initialStage = "queued" }: { songId: strin
         })}
       </ol>
       <p className="mt-4 text-xs text-foreground/50">
-        {error ?? `Elapsed ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} · you can leave this page — your song keeps going.`}
+        {error ?? `Elapsed ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")} of about 4–7 minutes · you can leave this page — your song keeps going.`}
       </p>
     </section>
   );
