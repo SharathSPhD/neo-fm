@@ -994,6 +994,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      claim_stripe_event: {
+        Args: { p_event_id: string; p_event_type: string }
+        Returns: string
+      }
+      complete_stripe_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
+      release_stripe_event: {
+        Args: { p_event_id: string }
+        Returns: undefined
+      }
       claim_handle: {
         Args: { p_handle: string }
         Returns: {
