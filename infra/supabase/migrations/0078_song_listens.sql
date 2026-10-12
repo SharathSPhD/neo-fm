@@ -92,3 +92,37 @@ revoke all on function public.creator_best_song_week() from public, anon, authen
 grant execute on function public.creator_insights_daily(int) to authenticated;
 grant execute on function public.creator_top_languages(int) to authenticated;
 grant execute on function public.creator_best_song_week() to authenticated;
+
+-- Retention: raw listener rows are kept 90 days (the longest window /insights reads). Older rows are rolled into
+-- per-song, per-day counts that carry no language and no timestamp finer than a day, then deleted.
+create table if not exists public.song_listens_daily (
+  job_id uuid not null references public.jobs(id) on delete cascade,
+  day date not null,
+  kind text not null check (kind in ('play', 'share')),
+  n bigint not null check (n > 0),
+  primary key (job_id, day, kind)
+);
+alter table public.song_listens_daily enable row level security;
+revoke all on public.song_listens_daily from public, anon, authenticated;
+grant select, insert, update on public.song_listens_daily to service_role;
+
+-- Called daily by /api/admin/purge-listens. Idempotent: the roll-up and the delete share one transaction.
+create or replace function public.purge_song_listens(p_keep_days int default 90)
+returns bigint
+language plpgsql security definer set search_path = '' as $$
+declare
+  cutoff timestamptz := date_trunc('day', now()) - make_interval(days => greatest(coalesce(p_keep_days, 90), 1));
+  purged bigint;
+begin
+  insert into public.song_listens_daily (job_id, day, kind, n)
+    select job_id, created_at::date, kind, count(*)
+      from public.song_listens where created_at < cutoff
+     group by job_id, created_at::date, kind
+  on conflict (job_id, day, kind) do update set n = public.song_listens_daily.n + excluded.n;
+  delete from public.song_listens where created_at < cutoff;
+  get diagnostics purged = row_count;
+  return purged;
+end;
+$$;
+revoke all on function public.purge_song_listens(int) from public, anon, authenticated;
+grant execute on function public.purge_song_listens(int) to service_role;
