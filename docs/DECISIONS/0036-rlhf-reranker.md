@@ -1,5 +1,7 @@
 # ADR 0036 — RLHF reranker + 100-prompt bench
 
+> **Legacy (DGX era).** This decision belongs to the retired DGX architecture; production is now Managed Agents + Lyria on Vercel/Supabase. See [AGENTS.md](../../AGENTS.md).
+
 **Status:** Accepted
 **Sprint:** v1.4 Sprint 16
 **Date:** 2026-05-17
