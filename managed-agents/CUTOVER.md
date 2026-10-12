@@ -3,7 +3,7 @@
 Prod backend: Supabase project **neo-fm-prod** (`kgxltxvjlsnbwomklwox`, ap-south-1). Old prod (project `neo-fm`, paused) is not migrated.
 
 ## Stage 0 — done
-- [x] neo-fm-prod created; migrations 0001–0057 applied (0001–0008 via MCP, 0009–0057 via `infra/supabase/prod-bootstrap/part*.sql` run in the SQL editor — the MCP cannot run DROP). Verified: 25 public tables, buckets tracks/cover-art/voice-samples, 40 policies, signup trigger, tiers incl. developer, live pipeline config, advisors INFO/WARN only.
+- [x] neo-fm-prod created; migrations 0001–0062 applied (0058–0062 applied via MCP after the bootstrap parts: anon RPC revoke, eval tables, polished_lyrics, v2 tier quotas 15/40, toggle_favorite fix) (0001–0008 via MCP, 0009–0057 via `infra/supabase/prod-bootstrap/part*.sql` run in the SQL editor — the MCP cannot run DROP). Verified: 25 public tables, buckets tracks/cover-art/voice-samples, 40 policies, signup trigger, tiers incl. developer, live pipeline config, advisors INFO/WARN only.
 - [x] Rehearsal wiring: preview env of branch claude/sleepy-keller-8eiz4s now points at neo-fm-prod (URL + publishable key + service role).
 - Note: migration 0029's job-complete email trigger still points at the OLD project's edge function URL; repoint before enabling email notifications.
 - [x] Embedder on Cloud Run (EmbeddingGemma), Stripe test products/prices, Google OAuth client.
@@ -36,3 +36,17 @@ Prod backend: Supabase project **neo-fm-prod** (`kgxltxvjlsnbwomklwox`, ap-south
 
 ## Pinned providers (update deliberately, never via "latest")
 - Embedder: EmbeddingGemma-300M (Cloud Run), Gemini QA transcriber: `gemini-3.8-flash` (`GEMINI_QA_MODEL` overrides; `gemini-2.5-flash` is closed to new users), Lyria: `lyria-3-clip-preview` / `lyria-3.5`.
+
+## What I still need from you at cutover (everything else I do)
+1. **Supabase Pro** for the neo-fm-prod org (billing; no pausing, backups). Then tell me; I enable PITR and custom auth domain steps.
+2. **Resend API key → Supabase Edge secrets** (`RESEND_API_KEY`, `RESEND_FROM=neo-fm <no-reply@neo-fm.com>`, `APP_URL=https://neo-fm.com`) and the same key into Vercel as `RESEND_API_KEY` (Sensitive). I then deploy `notify-job-complete`, repoint trigger 0029 and test the song-ready email.
+3. **Stripe**: confirm test-mode launch is acceptable, or give live keys later. I create the webhook endpoint; the signing secret goes into Vercel (Sensitive).
+4. **GoDaddy**: nameservers -> `ns1.vercel-dns.com` / `ns2.vercel-dns.com` (or add the A/CNAME records I give you).
+5. **Mailboxes**: forward `grievance@neo-fm.com` (statutory grievance contact shown on /trust) and `support@neo-fm.com` to a monitored inbox; name the Grievance Officer so I can add it to /trust and /privacy.
+6. **Google OAuth**: add `https://neo-fm.com` as an authorised JavaScript origin and `https://kgxltxvjlsnbwomklwox.supabase.co/auth/v1/callback` stays the redirect URI.
+
+## Launch gate (advisor-checked, must all be true)
+- Per-IP limits active (middleware; Upstash Redis recommended for multi-instance) + per-user quota/spend envelopes (done) + daily spend kill switch.
+- Stripe webhook verified + idempotent; upgrade/cancel/refund/downgrade run end-to-end; INR recurring checked with an Indian card.
+- Report button + grievance/takedown policy live (done); counsel review of /privacy and /terms; AI-generated labelling (done).
+- PCE marketing claim limited to what the eval supports (see below) until native-speaker review is done.
