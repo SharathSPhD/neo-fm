@@ -13,7 +13,7 @@ import { auditDiction } from "../diction/gemini";
 import { dictionHints } from "../diction";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
-import { mintEmbedToken } from "./embed-token";
+import { embedEngine, safeEmbedUrl } from "./embed-url";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -100,7 +100,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           targetSeconds: doc.document_json.target_duration_seconds ?? 30,
           prompt: doc.document_json.metadata?.prompt ?? "",
           tasteCard: tasteCard || undefined,
-          engine: process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim()) } : undefined,
+          engine: embedEngine(job.id),
         },
         music: async (a0) => {
           let a = a0;
@@ -110,7 +110,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
           if (!v.allowed) throw new SafetyRefusal(v.reason);
           // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
-          if (process.env.EMBED_URL && process.env.EMBED_TOKEN && process.env.PCE_POLISH !== "0") {
+          if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
             try {
               a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
               const v2 = await screenRequest(a.lyrics, "lyrics");
@@ -148,7 +148,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "done") {
         const cascade = await timed("finalize", () => finalize(db, job.id));
         const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: process.env.EMBED_URL ? "service" : "none", stages_ms: stages });
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: safeEmbedUrl(process.env.EMBED_URL) ? "service" : "none", stages_ms: stages });
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);

@@ -29,3 +29,14 @@ export function checkBearer(header: string | null, env = process.env): AuthResul
   }
   return { ok, diag };
 }
+
+/**
+ * Admin routes (setup, probes, evals, reports). When ADMIN_SECRET is set it is the ONLY accepted secret, so the
+ * cron/tick secrets cannot reach admin power. While it is unset this falls back to checkBearer so existing
+ * operator tooling keeps working until the env var is provisioned.
+ */
+export function checkAdminBearer(header: string | null, env = process.env): AuthResult {
+  const admin = cleanSecret(env.ADMIN_SECRET);
+  if (!admin) return checkBearer(header, env);
+  return checkBearer(header, { ADMIN_SECRET: undefined, CRON_SECRET: admin, AGENT_TICK_SECRET: undefined } as unknown as NodeJS.ProcessEnv);
+}

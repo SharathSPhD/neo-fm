@@ -7,7 +7,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
 
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -21,7 +21,7 @@ const PLANS = [
 ] as const;
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   return NextResponse.json({
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (mode(key) !== "test") return NextResponse.json({ error: "refusing", message: "STRIPE_SECRET_KEY is not a test-mode key" }, { status: 409 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkBearer, cleanSecret } from "../lib/agent/auth";
+import { checkAdminBearer, checkBearer, cleanSecret } from "../lib/agent/auth";
 
 const env = (v?: string) => ({ CRON_SECRET: v }) as unknown as NodeJS.ProcessEnv;
 
@@ -49,5 +49,18 @@ describe("plan override", () => {
     expect(planForTier("free", "pro").agent).toBe("pro");
     expect(planForTier("pro", "weird").agent).toBe("pro");
     expect(planForTier("free", null).agent).toBe("free");
+  });
+});
+
+describe("admin secret", () => {
+  const e = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  it("falls back to the cron/tick secrets while ADMIN_SECRET is unset", () => {
+    expect(checkAdminBearer("Bearer aaa", e({ CRON_SECRET: "aaa" })).ok).toBe(true);
+  });
+  it("accepts only ADMIN_SECRET once it is set", () => {
+    const env = e({ CRON_SECRET: "aaa", AGENT_TICK_SECRET: "bbb", ADMIN_SECRET: "adm" });
+    expect(checkAdminBearer("Bearer adm", env).ok).toBe(true);
+    expect(checkAdminBearer("Bearer aaa", env).ok).toBe(false);
+    expect(checkAdminBearer("Bearer bbb", env).ok).toBe(false);
   });
 });
