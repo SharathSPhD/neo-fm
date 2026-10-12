@@ -22,3 +22,7 @@ Add `agent_runs.line_timings jsonb` (nullable) via migration **0077** (assigned 
 alter table public.agent_runs add column if not exists line_timings jsonb;
 ```
 Compute after `qaDiction` in the same best-effort path (never fail a job on it), and backfill finished songs with a one-off that downloads `tracks/<audio_path>` and runs the same two calls. `apps/web/lib/agent/*` is the lead's, so that wiring is left to them; this PR only adds the library, tests and docs.
+
+
+## How the song page uses them (synced lyrics)
+`buildLyricTimeline` (apps/web/lib/lyrics/sync.ts) now matches heard lines to the page's lines by text, in order (case, punctuation and small edits ignored; a repeated hook matches its next occurrence), instead of requiring equal line counts. The timings are measured on the lyrics Lyria was sent, which can carry a closing hook repeat or a polish edit that the page's section lyrics lack, so the old count check would often have discarded good timings. Lines the singer skipped are interpolated between their heard neighbours and shown dimmed (`sung: false`). If fewer than half the lines match, the page falls back to even pacing rather than highlight the wrong line. The public embed player (`/s/[publicId]/embed`) now receives the same timings. Songs rendered before the pipeline wrote `line_timings` stay evenly paced until `scripts/quality/line-timings-backfill.mts` is run on them (Gemini transcription only, no Lyria spend).

@@ -111,6 +111,16 @@ export default async function EmbedPage(
     signedUrl = signed?.signedUrl ?? null;
   }
 
+  // Heard per-line lyric times; optional (the column may be absent on older databases) and only read once the
+  // song passed the public gate above. Without them the player paces lines evenly.
+  let lineTimings: unknown = null;
+  if (signedUrl) {
+    try {
+      const { data: runs } = await createServiceRoleClient().from("agent_runs" as never).select("line_timings").eq("job_id" as never, data.id as never).limit(1);
+      lineTimings = ((runs ?? []) as { line_timings: unknown }[])[0]?.line_timings ?? null;
+    } catch { /* optional */ }
+  }
+
   const title = data.song_documents?.title?.trim()?.length
     ? data.song_documents.title
     : doc
@@ -150,6 +160,7 @@ export default async function EmbedPage(
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
             sections={doc?.sections ?? []}
+            lineTimings={lineTimings}
             layout={layout}
             language={doc?.language ?? "en"}
           />
