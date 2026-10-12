@@ -1,15 +1,32 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 
+import { siteUrl } from "@/lib/seo/site";
 import { AuthListener } from "@/components/auth-listener";
 
 import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
 
+const DESCRIPTION =
+  "AI songs in Kannada, Tamil, Telugu, Hindi and Bengali. Lyrics written natively, performed by a singer, and checked for pronunciation.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: "neo-fm",
-  description: "India-first, composition-aware AI music platform.",
+  description: DESCRIPTION,
   applicationName: "neo-fm",
+  openGraph: {
+    type: "website",
+    siteName: "neo-fm",
+    title: "neo-fm: AI songs in Indian languages",
+    description: DESCRIPTION,
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "neo-fm: AI songs in Indian languages",
+    description: DESCRIPTION,
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

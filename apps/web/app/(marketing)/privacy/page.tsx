@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/privacy" },
   title: "Privacy -- neo-fm",
   description: "What neo-fm collects, why, who processes it, and the choices you have.",
 };
