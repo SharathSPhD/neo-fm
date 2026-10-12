@@ -30,7 +30,7 @@ vi.mock("../../../lib/supabase/auth", async () => {
 // Moderation is a network call to Claude (fails closed without a key); route tests must not depend on it.
 vi.mock("../../../lib/safety", async () => {
   const mod = await vi.importActual<typeof import("../../../lib/safety")>("../../../lib/safety");
-  return { ...mod, screenRequest: vi.fn(async () => ({ allowed: true })) };
+  return { ...mod, screenRequest: async () => ({ allowed: true as const }) };
 });
 
 import { requireUser } from "../../../lib/supabase/auth";
