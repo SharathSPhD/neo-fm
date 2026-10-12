@@ -38,7 +38,7 @@ There is no queue service and no GPU host. A daily cron (`/api/admin/self-improv
 |---|---|
 | `apps/web` | Next.js 14 App Router app, API routes, agent pipeline (`lib/agent`), safety (`lib/safety`), billing, tests (vitest, Playwright) |
 | `managed-agents` | Agent/skill definitions, vendored `pce-engine`, product plan, eval (`EVAL-PCE.md`), economics, cutover runbook |
-| `infra/supabase` | Migrations (0001-0063) and prod bootstrap SQL |
+| `infra/supabase` | Migrations (numbered through 0070, some numbers unused) and prod bootstrap SQL |
 | `packages` | Shared TypeScript packages |
 | `evals`, `scripts`, `data` | Evaluation briefs, helper scripts, seed data |
 | `docs/DECISIONS` | ADRs (early ones describe the DGX design; see the banner in each) |
