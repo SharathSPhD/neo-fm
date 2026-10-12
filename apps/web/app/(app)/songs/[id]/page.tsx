@@ -29,6 +29,7 @@ import { SongAudio } from "./song-audio";
 import { DictionCheck } from "./diction-check";
 import { StemsPanel } from "./stems-panel";
 import { KaraokeTicker } from "./karaoke-ticker";
+import { LyricsMeaning } from "./lyrics-meaning";
 import { VariationButton } from "./variation-button";
 import { CoverArtPanel } from "./cover-art-panel";
 import Link from "next/link";
@@ -339,6 +340,11 @@ export default async function SongDetailPage({
               }
               durationSeconds={latestTrack?.duration_seconds ?? null}
             />
+          ) : null}
+          {data.song_documents?.document_json &&
+          (data.song_documents.document_json as SongDocumentView)?.sections
+            ?.length ? (
+            <LyricsMeaning songId={data.id} />
           ) : null}
           <StemsPanel songId={data.id} />
         </section>
