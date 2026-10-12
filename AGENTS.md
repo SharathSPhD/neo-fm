@@ -1,81 +1,64 @@
-# AGENTS.md — rules for agents working in neo-fm
+# AGENTS.md: rules for agents working in neo-fm
 
-Read this first. Applies to every agent (human or AI) committing to this repository.
+Read this first. Applies to every agent (human or AI) committing to this repository. For what the product is and how it is built, read [README.md](README.md) and [STATUS.md](STATUS.md).
 
-## Phase-gating contract (Ralph-Wiggum promise)
+## Merge contract
 
-A phase advances iff **all five** hold:
+A change merges only when:
 
-1. **CI green** for `ts`, `py`, `contracts`, and `docker-build` workflows. Where the phase touches DGX behavior, `scripts/dgx-smoke.sh` also passes locally on the DGX (capture its output in `demos/phase-N-bringup.txt`).
-2. **Containers build and start on the real DGX** where applicable. The compose stack runs without manual intervention.
-3. **Real, listenable output** for at least one real input. Audio is `ffprobe`-verified (non-zero duration, correct sample rate). UI is visually diffed against the spec.
-4. **Reproducible demo**: `demos/phase-N.{wav,gif,png,txt}` is committed AND can be regenerated from the merged SHA by running `scripts/build-demo.sh phase-N`. Anyone with the repo can confirm it.
-5. **Adversarial review**: a domain reviewer (`ce-adversarial-reviewer` or a phase-specific reviewer such as `ce-correctness-reviewer`, `ce-security-reviewer`, `ce-testing-reviewer`) reviewed the diff. Any blocker findings are either resolved before merge or filed as a fresh ADR under `docs/DECISIONS/`.
+1. **CI is green** on the PR head (`ts`, `agents`, `pce-engine` in `.github/workflows/ci.yml`; `e2e` where it applies).
+2. **S has approved it.** Agents open PRs (draft by default) and never merge them. `main` deploys to production on Vercel, so merging is a release.
+3. **Evidence for behavior changes**: tests that fail without the change, or a listenable/visible artifact for audio and UI work. No mocks presented as "real" results, no "tests later".
+4. **Claims stay honest.** Quality or marketing claims must stay inside what `managed-agents/EVAL-PCE.md` supports (AI judges, no native-speaker panel yet, prosody behind baseline).
 
-No phase merges without all five. No mocks counted as "real". No "I'll add tests later". No "the reviewer is too strict, skip it."
+## Branches and commits
 
-## Worktree workflow
-
-- Each phase gets a feature branch named `phase/N-<slug>` (e.g. `phase/1-music-inference`).
-- Work happens in a `git worktree` checked out to that branch.
-- Push the worktree branch on every green test run.
-- Merge into `main` only when the four-point gating contract is met. Squash merge.
-- The `main` branch always has working demos and passing CI.
-
-## Git identity
+- Work on a feature branch (`claude/<slug>` for agent work); open a PR against `main`. Never force-push `main`.
+- Short imperative subject lines, optionally prefixed by area (`docs:`, `ux:`, `agent:`). Squash merge.
+- Git identity for commits made on S's behalf:
 
 ```sh
 git config user.name SharathSPhD
 git config user.email qbz506@york.ac.uk
 ```
 
-Empty email was tried in early phases; Vercel deploy protection blocks deployments whose commit author email is unrecognised (`Unknown`). Use the GitHub-verified `qbz506@york.ac.uk` instead. See v1.3 `demos/v1.3/merge-gate.md` for context.
+Vercel deploy protection blocks commits whose author email is unrecognised, so use the GitHub-verified address above.
 
-## Commit policy
+## Hard boundaries
 
-- Conventional-style subject lines: `phase(N): <short imperative>`.
-- Use `--allow-empty` only for phase-tag commits.
-- Never force-push `main`.
+- **Secrets**: never commit them, never paste them into PRs, issues or chat. Server-only env vars live in Vercel and Supabase. Rotate anything that has appeared in logs or chat before launch.
+- **Production**: do not change prod env vars, apply migrations to `neo-fm-prod`, or run cleanup against prod data without S's explicit go. Prepare scripts and migrations in the PR and list the S-owned step.
+- **Migrations**: sequential, next number after the highest in `infra/supabase/migrations`. Check open PRs and branches first to avoid collisions.
+- **Spend**: Lyria and Claude calls cost money. Go through the existing guards (`reserve_spend`, tier caps in `apps/web/lib/agent/tiers.ts`); never bypass them or loop paid calls in tests.
+- **Safety**: moderation fails closed. Do not weaken `apps/web/lib/safety`, and do not add voice cloning, artist imitation or copyrighted-lyric reproduction.
+- **Ownership**: if another session or PR owns a path (for example `apps/web/lib/agent/*`), coordinate instead of editing it.
 
 ## Code conventions
 
-- **TypeScript**: strict mode. No `any` without an inline rationale comment. Files named `kebab-case.ts`. No inline imports — keep imports at the top.
-- **Python**: pydantic v2, type hints everywhere, `ruff` + `mypy --strict` clean. Files named `snake_case.py`.
-- **Comments**: explain non-obvious *why*, not what. Do not narrate the code.
-- **Docker**: pin base image tags. `nvcr.io/nvidia/pytorch:24.08-py3` for GPU services. Aarch64 (GB10).
-- **Secrets**: never commit. Use `.env.local` (gitignored) for local; Supabase/Vercel for deployed.
+- **TypeScript**: strict mode. No `any` without an inline rationale. Files are `kebab-case.ts`. Imports at the top of the file, no inline imports.
+- **Python** (the `pce-engine` vendor and legacy services): type hints, `ruff` clean. Files are `snake_case.py`.
+- **Comments** explain non-obvious *why*, not what.
+- Match the surrounding code's style, naming and comment density.
 
-## Multi-agent orchestration (when applicable)
+## Before opening a PR
 
-Spawn parallel subagents for independent work where possible:
+```sh
+pnpm install
+pnpm -r typecheck
+pnpm -r --if-present lint
+pnpm --filter @neo-fm/web test
+```
 
-- Frontend → `ce-frontend-design`, `nextjs` skill, `react-best-practices`.
-- DGX services → `fastapi-pro`, `python-pro`, `ai-engineer`.
-- Cloud API + Supabase → `backend-architect`, `supabase` skill.
-- Reviews → `architect-review`, `ce-correctness-reviewer`, `ce-code-simplicity-reviewer`.
-- Debug → `debugger`, `systematic-debugging` skill.
+Docs-only changes still need CI to pass. Prices, quotas and model names in docs must match the code (`pricing/page.tsx`, `user_tier_quota()`, `lib/agent/tiers.ts`).
 
-## TRIZ contradiction handling
+## Stack
 
-When two requirements conflict, log an ADR under `docs/DECISIONS/` and route through the
-`contradiction-agent` → `solution-agent` → `evaluator-agent` chain before implementing.
+- Web: Next.js 14 App Router, Tailwind, PWA, on Vercel.
+- Data and auth: Supabase (Postgres, RLS, Auth, Storage). Project `neo-fm-prod`.
+- Lyrics: Claude Managed Agents (`managed-agents/`), PCE engine, Sonnet polish. Audio: Google Lyria.
+- Worker: Vercel cron `/api/agent/tick` each minute; no queue service, no GPU host.
+- Billing: Stripe (test mode until launch).
 
-## Stack invariants
+## Legacy DGX material
 
-- Web: Next.js 14 (App Router), Tailwind, PWA.
-- API/Auth/DB/Storage: Supabase (Postgres + RLS + Auth + Storage).
-- Queue: pgmq (Postgres extension) — see [docs/DECISIONS/0001-queue.md](docs/DECISIONS/0001-queue.md).
-- DGX services: Docker on DGX OS, NVIDIA Container Runtime preinstalled. Internal hop is the docker-compose bridge (`http://music-inference:8000`), not Tailscale.
-- Network trust boundary: DGX initiates all production traffic; cloud → DGX is forbidden ([SPEC §2.1](docs/SPEC.md), [ADR 0003](docs/DECISIONS/0003-internal-api-hmac.md)). Tailscale is **optional** for DGX outbound egress hardening; it is not the API trust boundary and must not gate dev-time SSH / IDE on LAN.
-- Models: `m-a-p/HeartMuLa-oss-3B` (Apache 2.0), `kenpath/svara-tts`, AI4Bharat Indic-TTS, IndicF5, IndicBART, MusicGen, Stable Audio Open, NeMo FastPitch+HiFi-GAN.
-
-## Compute rule (v1.4+)
-
-**All ML training and inference development runs LOCALLY on the DGX Spark (GB10 Grace Blackwell).**
-
-- Zero external compute cost.
-- HuggingFace Hub free tier is the only external dependency, used **only** to download base weights and upload our `neo-fm/*` adapters.
-- Do **not** propose or use HuggingFace Jobs, RunPod, Vast.ai, AWS / GCP / Azure GPU instances, or any other paid cloud GPU service.
-- This rule supersedes any conflicting suggestion in past plans or transcripts.
-
-v1.5 scope: web only; 10 styles (Western, Carnatic, Hindustani, Kannada-folk, Kannada-light-classical, Tamil-folk, Bollywood-ballad, Sanskrit-shloka, Bengali-Rabindrasangeet, Telugu-keerthana); langs `{en, hi, kn, ta, bn, te, sa}`; durations `{30s, 60s, 90s, 3min}`; tiers `{free, creator, pro, developer}`. No payments for developer tier. No MCP exposure.
+The original design ran HeartMuLa, svara-TTS and a pgmq worker on an NVIDIA DGX Spark, with phase gates and a "local compute only" rule. That is retired. The code remains in `services/`, `infra/docker-compose.dgx.yml` and early ADRs under `docs/DECISIONS/`; the old status and startup guide are in [docs/legacy-dgx](docs/legacy-dgx). Do not extend it or apply its rules to new work. New ADRs go in `docs/DECISIONS/`.
