@@ -388,50 +388,38 @@ export function buildResendRequest(
 // wrapper for the read/archive helpers.
 // ---------------------------------------------------------------------
 
-async function pgmqRead(): Promise<PgmqReadRow[]> {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error("supabase service-role credentials missing");
-  }
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/read`, {
+async function rpc(fn: string, body: Record<string, unknown>): Promise<Response> {
+  return await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       apikey: SUPABASE_SERVICE_ROLE_KEY,
-      "Accept-Profile": "pgmq",
-      "Content-Profile": "pgmq",
     },
-    body: JSON.stringify({
-      queue_name: QUEUE_NAME,
-      vt: VISIBILITY_TIMEOUT_SECS,
-      qty: BATCH_SIZE,
-    }),
+    body: JSON.stringify(body),
   });
+}
+
+// pgmq lives in a schema PostgREST does not expose, so the queue is reached through the service-role-only
+// wrappers public.email_queue_read / email_queue_archive (migration 0087).
+async function pgmqRead(): Promise<PgmqReadRow[]> {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("supabase service-role credentials missing");
+  }
+  const res = await rpc("email_queue_read", { p_qty: BATCH_SIZE, p_vt: VISIBILITY_TIMEOUT_SECS });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(`pgmq.read failed: ${res.status} ${body.slice(0, 200)}`);
+    throw new Error(`email_queue_read failed: ${res.status} ${body.slice(0, 200)}`);
   }
   const rows = (await res.json()) as PgmqReadRow[];
   return Array.isArray(rows) ? rows : [];
 }
 
 async function pgmqArchive(msgId: number): Promise<void> {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/archive`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      "Accept-Profile": "pgmq",
-      "Content-Profile": "pgmq",
-    },
-    body: JSON.stringify({ queue_name: QUEUE_NAME, msg_id: msgId }),
-  });
+  const res = await rpc("email_queue_archive", { p_msg_id: msgId });
   if (!res.ok) {
     const body = await res.text();
-    throw new Error(
-      `pgmq.archive(${msgId}) failed: ${res.status} ${body.slice(0, 200)}`,
-    );
+    throw new Error(`email_queue_archive(${msgId}) failed: ${res.status} ${body.slice(0, 200)}`);
   }
 }
 
