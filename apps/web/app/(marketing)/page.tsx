@@ -1,5 +1,6 @@
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ListenFirst } from "@/components/listen-first";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 /**
@@ -26,9 +27,24 @@ const DIFFERENT = [
   { title: "Honest about AI", body: "Every song is labelled AI-generated. Our safety checks run before anything is rendered, and there is a clear way to report a song." },
 ] as const;
 
+export const metadata: Metadata = {
+  title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
+  alternates: { canonical: "/" },
+};
+
+const JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "neo-fm",
+  description: "AI songs in Indian languages with native lyrics and a pronunciation check.",
+  inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
+  publisher: { "@type": "Organization", name: "Technektar" },
+};
+
 export default async function Page() {
   return (
     <main className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
       <ListenFirst />

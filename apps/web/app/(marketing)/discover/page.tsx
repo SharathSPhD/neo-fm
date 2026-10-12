@@ -48,6 +48,7 @@ const ALLOWED_STYLES = new Set(
 type SearchParams = { style?: string; page?: string };
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/discover" },
   title: "Discover -- neo-fm",
   description:
     "Recently-published songs from the neo-fm community. Carnatic, Hindustani, Kannada folk, and Western.",
