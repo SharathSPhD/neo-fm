@@ -1,3 +1,5 @@
+import { LanguageSchema, StyleFamilySchema } from "@neo-fm/song-doc";
+
 /**
  * "More like this" ranking for a song page: content similarity first
  * (same style, same language), with the listener's own taste weights as a
@@ -67,4 +69,20 @@ export function forYouReason(
   return s >= l
     ? `Because you like ${prettyStyle(style)}`
     : `Because you like ${prettyLanguage(language)}`;
+}
+
+/**
+ * PostgREST `or()` clause matching songs with the same style or language.
+ * Both columns are Postgres enums, so an unknown value (a stale or odd
+ * document) would make the whole request fail with 22P02 rather than match
+ * nothing; values are therefore checked against the real enums and unknown
+ * ones are dropped. Returns null when neither is usable.
+ */
+export function similarOrFilter(style: string, language: string): string | null {
+  const parts: string[] = [];
+  const s = StyleFamilySchema.safeParse(style);
+  if (s.success) parts.push(`style_family.eq.${s.data}`);
+  const l = LanguageSchema.safeParse(language);
+  if (l.success) parts.push(`language.eq.${l.data}`);
+  return parts.length > 0 ? parts.join(",") : null;
 }

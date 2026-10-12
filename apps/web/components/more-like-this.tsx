@@ -4,7 +4,7 @@ import {
   hasPersonalizationConsent,
   loadTaste,
 } from "@/lib/personalization/load";
-import { rankSimilar, type SimilarCandidate } from "@/lib/personalization/similar";
+import { rankSimilar, similarOrFilter, type SimilarCandidate } from "@/lib/personalization/similar";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -32,9 +32,10 @@ export async function MoreLikeThis({
   style: string;
 }) {
   // style/language come from stored documents and are interpolated into a
-  // PostgREST .or() filter below, so only plain slugs are allowed through.
-  const SLUG = /^[a-z0-9_-]{1,40}$/;
-  if (!SLUG.test(style) || !SLUG.test(language)) return null;
+  // PostgREST .or() filter below; only real enum values get through (an
+  // unknown enum value makes Postgres reject the whole query).
+  const orFilter = similarOrFilter(style, language);
+  if (!orFilter) return null;
   try {
     const supabase = createServerClient();
     const { data } = await supabase
@@ -46,10 +47,7 @@ export async function MoreLikeThis({
       .eq("published_visibility", "public")
       .not("public_id", "is", null)
       .neq("public_id", publicId)
-      .or(
-        `style_family.eq.${style},language.eq.${language}`,
-        { referencedTable: "song_documents" },
-      )
+      .or(orFilter, { referencedTable: "song_documents" })
       .order("published_at", { ascending: false, nullsFirst: false })
       .limit(60)
       .returns<Row[]>();

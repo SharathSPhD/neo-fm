@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { forYouReason, rankSimilar } from "@/lib/personalization/similar";
+import { forYouReason, rankSimilar, similarOrFilter } from "@/lib/personalization/similar";
 import type { TasteProfile } from "@/lib/personalization/taste";
 
 const cur = { public_id: "a", language: "kn", style: "kannada-folk" };
@@ -55,5 +55,22 @@ describe("forYouReason", () => {
     expect(forYouReason(p, "kn", "carnatic")).toBe("Because you like Carnatic");
     expect(forYouReason(p, "kn", "western")).toBe("Because you like Kannada");
     expect(forYouReason(p, "en", "western")).toBe("");
+  });
+});
+
+describe("similarOrFilter", () => {
+  it("builds the clause from real enum values", () => {
+    expect(similarOrFilter("carnatic", "hi")).toBe("style_family.eq.carnatic,language.eq.hi");
+    expect(similarOrFilter("bollywood-ballad", "kn")).toBe("style_family.eq.bollywood-ballad,language.eq.kn");
+  });
+  it("drops an unknown style instead of sending an invalid enum value", () => {
+    expect(similarOrFilter("devotional", "hi")).toBe("language.eq.hi");
+  });
+  it("drops an unknown language", () => {
+    expect(similarOrFilter("carnatic", "xx")).toBe("style_family.eq.carnatic");
+  });
+  it("returns null when nothing is usable, and never lets filter syntax through", () => {
+    expect(similarOrFilter("devotional", "xx")).toBeNull();
+    expect(similarOrFilter("carnatic),id.neq.x", "hi,id.eq.1")).toBeNull();
   });
 });
