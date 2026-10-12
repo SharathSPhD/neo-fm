@@ -61,14 +61,14 @@ export async function middleware(request: NextRequest) {
 
   // Per-request nonce: Next reads it from the request's CSP header and stamps its own inline scripts.
   const nonce = newNonce();
-  // Mutate (not copy), same reason as the request id above.
-  request.headers.set("x-nonce", nonce);
-  request.headers.set(
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set(
     "content-security-policy-report-only",
     strictCsp({ supabaseHost: sbHost, isEmbed: isEmbedPath(pathname), nonce }),
   );
   const response = NextResponse.next({
-    request: { headers: request.headers },
+    request: { headers: requestHeaders },
   });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
