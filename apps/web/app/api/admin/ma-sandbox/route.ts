@@ -34,6 +34,11 @@ export async function GET(req: NextRequest) {
   const auth = checkBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized", ...auth.diag }, { status: 401 });
   const client = anthropicClient();
+  const existing = req.nextUrl.searchParams.get("session");
+  if (existing) {
+    const ev = (await client.beta.sessions.events.list(existing, { limit: 100 })) as unknown as { data: Record<string, unknown>[] };
+    return NextResponse.json({ events: (ev.data ?? []).map((e) => JSON.stringify(e).slice(0, 700)) });
+  }
   const env = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
   const s = await client.beta.sessions.create({ agent: agentIdFor("free"), environment_id: env, title: "sandbox probe" });
   await client.beta.sessions.events.send(s.id, {
