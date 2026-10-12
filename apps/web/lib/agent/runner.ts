@@ -32,6 +32,7 @@ export interface RunRow {
   session_id: string | null;
   lyria_calls: number;
   audio_path: string | null;
+  render_error?: string | null;
   status: "pending" | "running" | "done" | "failed";
 }
 
@@ -165,6 +166,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
           ? "Refused by content policy. Do not retry or reword; report that the brief cannot be made."
           : "Render failed; do not retry.";
       const sent = await d.sessions.sendToolResult(sid, call.id, msg, true);
+      await d.store.upsert({ job_id: jobId, render_error: (e instanceof Error ? e.message : String(e)).slice(0, 400) }).catch(() => {});
       d.log?.(`render path failed (${e instanceof Error ? e.message.slice(0, 120) : "?"}); sent: ${sent ?? "ok"}`);
     }
   }
