@@ -1,5 +1,5 @@
 /**
- * /review/[token] -- native-speaker review kit. Private link, no sign-in, no personal data collected.
+ * /native-review/[token] -- native-speaker review kit. Private link, no sign-in, no personal data collected.
  * Shows the fixed set of songs for the token's language with a short rating form per song.
  */
 import type { Metadata } from "next";
