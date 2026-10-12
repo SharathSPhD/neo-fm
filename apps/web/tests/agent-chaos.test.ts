@@ -145,10 +145,12 @@ describe("storage chaos", () => {
 // ---- sweeper ----
 const NOW = Date.parse("2026-10-12T12:00:00Z");
 const ago = (ms: number) => new Date(NOW - ms).toISOString();
-function sweepHarness(jobs: StuckCandidate[], runs: Record<string, SweepRun | null>, failResult = true) {
+function sweepHarness(jobs: StuckCandidate[], runs: Record<string, SweepRun | null>, failResult = true, claimResult = true) {
   const d = {
     listProcessing: vi.fn(async () => jobs),
     getRun: vi.fn(async (id: string) => runs[id] ?? null),
+    claim: vi.fn(async () => claimResult),
+    unclaim: vi.fn(async () => {}),
     failJob: vi.fn(async () => failResult),
     markRunFailed: vi.fn(async () => {}),
     releaseSpend: vi.fn(async () => {}),
@@ -163,13 +165,13 @@ describe("stuck-job sweeper", () => {
     const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     expect(await sweepStuckJobs(d)).toEqual({ j1: "failed" });
     expect(d.failJob).toHaveBeenCalledWith("j1", STUCK_CODE);
-    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.05);
+    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.05, "2026-10-01");
     expect(d.markRunFailed).toHaveBeenCalledWith("j1");
   });
   it("releases one estimate per taken render slot, from the stored run", async () => {
     const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 2, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     await sweepStuckJobs(d);
-    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.1);
+    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.1, "2026-10-01");
   });
   it("a 40-minute-old job whose run was updated 2 minutes ago is NOT failed", async () => {
     const d = sweepHarness([job({ started_at: ago(40 * 60_000) })], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(2 * 60_000) } });
@@ -188,7 +190,7 @@ describe("stuck-job sweeper", () => {
   it("uses the full-length estimate for long songs", async () => {
     const d = sweepHarness([job({ target_seconds: 120 })], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
     await sweepStuckJobs(d);
-    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.25);
+    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.25, "2026-10-01");
   });
   it("releases nothing when no render slot was ever taken", async () => {
     const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 0, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } });
@@ -213,6 +215,26 @@ describe("stuck-job sweeper", () => {
   it("sweeps once: a second sweeper that loses the race neither fails nor releases", async () => {
     const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } }, false);
     expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_raced" });
+    expect(d.releaseSpend).not.toHaveBeenCalled();
+  });
+  it("releases into the month the job started in, not the month of the sweep", async () => {
+    const d = sweepHarness([job({ started_at: "2026-09-30T23:00:00Z" })], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: "2026-09-30T23:05:00Z" } });
+    await sweepStuckJobs(d);
+    expect(d.releaseSpend).toHaveBeenCalledWith("u1", 0.05, "2026-09-01");
+  });
+  it("loses the lease race to a worker: nothing is failed or released", async () => {
+    const d = sweepHarness([job()], { j1: { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) } }, true, false);
+    expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_raced" });
+    expect(d.failJob).not.toHaveBeenCalled();
+    expect(d.releaseSpend).not.toHaveBeenCalled();
+  });
+  it("audio saved between the first check and the lease: the re-read under the lease spares the job", async () => {
+    const stale: SweepRun = { audio_path: null, lyria_calls: 1, render_error: null, updated_at: ago(NO_PROGRESS_MS + 1000) };
+    const d = sweepHarness([job()], { j1: stale });
+    d.getRun.mockResolvedValueOnce(stale).mockResolvedValueOnce({ ...stale, audio_path: "j1/1.mp3", updated_at: ago(1000) });
+    expect(await sweepStuckJobs(d)).toEqual({ j1: "skipped_has_audio" });
+    expect(d.unclaim).toHaveBeenCalledWith("j1");
+    expect(d.failJob).not.toHaveBeenCalled();
     expect(d.releaseSpend).not.toHaveBeenCalled();
   });
   it("a failing run-row update does not block the spend release", async () => {

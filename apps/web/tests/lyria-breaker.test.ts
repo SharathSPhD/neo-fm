@@ -65,6 +65,18 @@ describe("circuit breaker", () => {
   });
 });
 
+describe("probe release", () => {
+  it("release() frees a held half-open probe so the next caller is admitted without waiting a cooldown", () => {
+    const c = clock(); const b = new CircuitBreaker({ threshold: 1, cooldownMs: 1000, now: c.now });
+    b.onFailure(true);
+    c.tick(1000);
+    expect(b.acquire()).toEqual({ ok: true });
+    expect(b.acquire().ok).toBe(false);
+    b.release();
+    expect(b.acquire()).toEqual({ ok: true });
+  });
+});
+
 describe("generateMusic + breaker", () => {
   const guard: SpendGuard = { reserve: async () => true, release: async () => {} };
   const run = (status: number, breaker: CircuitBreaker) =>
@@ -108,6 +120,15 @@ describe("advance gate", () => {
     expect(d.store.claimRender).not.toHaveBeenCalled();
     expect(d.music).not.toHaveBeenCalled();
     expect(d.sessions.sendToolResult).not.toHaveBeenCalled();
+  });
+  it("hands the half-open probe back when the call exits before reaching the provider", async () => {
+    const release = vi.fn();
+    const d = setup(() => null);
+    d.gateRelease = release;
+    d.store.claimRender = vi.fn(async () => null);
+    await advance("j1", d);
+    expect(release).toHaveBeenCalledTimes(1);
+    expect(d.music).not.toHaveBeenCalled();
   });
   it("renders on the next tick once the gate is open again", async () => {
     let blocked = true;

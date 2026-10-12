@@ -50,6 +50,11 @@ export class CircuitBreaker {
     return { ok: true };
   }
 
+  /** Give back a half-open probe that was acquired but never reached the provider (invalid input, no render slot, spend cap). */
+  release(): void {
+    this.probing = false;
+  }
+
   onSuccess(): void {
     this.failures = 0;
     this.openedAt = null;
