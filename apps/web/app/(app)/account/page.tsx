@@ -16,6 +16,7 @@
  *     finished writing yet, so we soft-message "your plan will update
  *     within a few seconds" rather than asserting the new tier.
  */
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -162,6 +163,14 @@ export default async function AccountPage({ searchParams }: PageProps) {
           <ManageBillingButton />
         </section>
       ) : null}
+
+      <section className="flex flex-col gap-1 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+        <h2 className="text-lg font-medium">My month in music</h2>
+        <p className="text-sm text-foreground/60">Your songs, languages and top track this month, as a story image to share.</p>
+        <Link href="/recap" className="text-sm text-accent underline-offset-4 hover:underline">
+          Open recap →
+        </Link>
+      </section>
 
       <TastePanel />
       <AccountActions email={auth.user.email ?? ""} />
