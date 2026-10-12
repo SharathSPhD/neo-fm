@@ -14,6 +14,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { prettyLanguage, prettyStyle } from "@/lib/song/labels";
 
@@ -62,6 +63,7 @@ type SongRow = {
 };
 
 export default async function ProfilePage({ params, searchParams }: Props) {
+  const { t } = serverI18n();
   const supabase = createServerClient();
   const handle = params.handle.toLowerCase();
   const page = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
@@ -164,7 +166,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
       <header className="flex flex-col gap-3">
         <p className="text-xs uppercase tracking-widest text-foreground/40">
-          profile
+          {t("profile.eyebrow")}
         </p>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -172,8 +174,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               @{profile.handle}
             </h1>
             <p className="text-sm text-foreground/55">
-              {followerCount}{" "}
-              {followerCount === 1 ? "follower" : "followers"} · joined{" "}
+              {t(followerCount === 1 ? "profile.follower" : "profile.followers", { n: followerCount })} · {t("profile.joined")}{" "}
               {new Date(profile.created_at).toLocaleDateString(undefined, {
                 year: "numeric",
                 month: "long",
@@ -192,7 +193,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               href="/onboarding/handle"
               className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
             >
-              Change handle
+              {t("profile.changeHandle")}
             </Link>
           ) : null}
         </div>
@@ -201,8 +202,8 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       {songs.length === 0 ? (
         <p className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/60">
           {isSelf
-            ? "You haven't published any songs yet."
-            : `@${profile.handle} hasn't published any songs yet.`}
+            ? t("profile.noneSelf")
+            : t("profile.noneOther", { handle: profile.handle })}
         </p>
       ) : (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -210,7 +211,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
             const doc = row.song_documents;
             const title =
               doc?.title?.trim() ||
-              (doc ? `${prettyStyle(doc.style_family)} song` : "Song");
+              (doc ? t("discover.styleSong", { style: prettyStyle(doc.style_family) }) : t("song.song"));
             return (
               <li
                 key={row.id}
@@ -244,16 +245,16 @@ export default async function ProfilePage({ params, searchParams }: Props) {
               href={`/u/${profile.handle}?page=${page - 1}`}
               className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
             >
-              ← Prev
+              {t("common.prev")}
             </Link>
           ) : null}
-          <span className="px-3 text-foreground/60">Page {page}</span>
+          <span className="px-3 text-foreground/60">{t("common.page", { n: page })}</span>
           {songs.length === PAGE_SIZE ? (
             <Link
               href={`/u/${profile.handle}?page=${page + 1}`}
               className="rounded-md border border-muted/30 px-3 py-1.5 hover:border-accent/30"
             >
-              Next →
+              {t("common.next")}
             </Link>
           ) : null}
         </nav>

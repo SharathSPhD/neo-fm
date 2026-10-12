@@ -1,3 +1,5 @@
+import { LegalSummary } from "@/components/legal-summary";
+import { serverI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -25,10 +27,12 @@ const SECTIONS: { h: string; body: string[] }[] = [
 ];
 
 export default function PrivacyPage() {
+  const { t } = serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Privacy</h1>
-      <p className="mt-3 text-sm text-foreground/60">Last updated: October 2026</p>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("legal.privacy.title")}</h1>
+      <p className="mt-3 text-sm text-foreground/60">{t("legal.updated")}</p>
+      <LegalSummary kind="privacy" />
       <div className="mt-8 space-y-8">
         {SECTIONS.map((s) => (
           <section key={s.h}>
