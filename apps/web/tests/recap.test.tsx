@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { buildRecap, currentMonth, extractMoods, monthRange, previousMonth, type RecapSong } from "@/lib/recap/compute";
 import { renderRecapStory } from "@/lib/recap/image";
+import { moodLabel } from "@/lib/recap/moods";
 import { RECAP_STRINGS, monthLabel } from "@/lib/recap/strings";
 import { UI_LANGS } from "@/lib/i18n/ui-strings";
 
@@ -54,6 +55,16 @@ describe("buildRecap", () => {
   it("reads mood tags from sections and ignores junk", () => {
     expect(extractMoods({ sections: [{ tags: ["mood:Calm", "raga:x", 5] }, { tags: ["mood:calm", "mood:<b>"] }, null] })).toEqual(["calm"]);
     expect(extractMoods(null)).toEqual([]);
+  });
+});
+
+describe("mood labels", () => {
+  it("localizes known moods and falls back to the stored word", () => {
+    expect(moodLabel("calm", "hi")).toBe("शांत");
+    expect(moodLabel("Calm", "kn")).toBe("ಶಾಂತ");
+    expect(moodLabel("calm", "en")).toBe("calm");
+    expect(moodLabel("zesty", "ta")).toBe("zesty");
+    expect(moodLabel("constructor", "ta")).toBe("constructor");
   });
 });
 

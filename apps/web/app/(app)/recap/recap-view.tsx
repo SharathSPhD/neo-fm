@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { UI_LANG_ENDONYM, UI_LANGS, isUiLang } from "@/lib/i18n/ui-strings";
 import type { Recap } from "@/lib/recap/compute";
+import { moodLabel } from "@/lib/recap/moods";
 import { RECAP_STRINGS, monthLabel } from "@/lib/recap/strings";
 import { prettyLanguage } from "@/lib/song/labels";
 
@@ -107,7 +108,7 @@ export function RecapView({ recap, month }: { recap: Recap; month: string }) {
               <h2 className="text-xs uppercase tracking-wider text-foreground/60">{S.moods}</h2>
               <ul className="flex flex-wrap gap-2">
                 {recap.moods.map((m) => (
-                  <li key={m.mood} className="rounded-full border border-muted/40 px-3 py-1 text-sm">{m.mood} · {m.count}</li>
+                  <li key={m.mood} className="rounded-full border border-muted/40 px-3 py-1 text-sm">{moodLabel(m.mood, lang)} · {m.count}</li>
                 ))}
               </ul>
             </section>

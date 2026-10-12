@@ -7,6 +7,7 @@ import { detectScript, fontFamilyFor, reorderForSatori, waveformBars, type CardF
 import { loadFontsFor, loadLatinFont, shapeLine, type ShapedLine } from "@/lib/share/shape";
 
 import type { Recap } from "./compute";
+import { moodLabel } from "./moods";
 import { RECAP_STRINGS, monthLabel } from "./strings";
 
 void React; // vitest compiles JSX with the classic runtime
@@ -77,7 +78,7 @@ export async function renderRecapStory({ recap, month, lang }: { recap: Recap; m
   const langsLabel = await prep(S.languages, 36);
   const langChips = await Promise.all(recap.languages.slice(0, 5).map(async (l) => ({ ...l, p: await prep(langName(l.code), 42) })));
   const moodsLabel = recap.moods.length ? await prep(S.moods, 36) : null;
-  const moodChips = await Promise.all(recap.moods.slice(0, 4).map(async (m) => ({ ...m, p: await prep(m.mood, 40) })));
+  const moodChips = await Promise.all(recap.moods.slice(0, 4).map(async (m) => ({ ...m, p: await prep(moodLabel(m.mood, lang), 40) })));
   const collLabel = await prep(S.collections, 36);
   const emptyP = recap.songs === 0 ? await prepFit(S.empty, 56, inner) : null;
 
