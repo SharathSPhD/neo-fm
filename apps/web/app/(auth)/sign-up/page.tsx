@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { FunnelBeacon } from "@/components/funnel-beacon";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { GoogleButton } from "../google-button";
@@ -13,6 +14,7 @@ export default async function SignUpPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 px-6">
+      <FunnelBeacon event="signup_view" />
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-medium tracking-tight">Create account</h1>
         <p className="text-sm text-foreground/60">
