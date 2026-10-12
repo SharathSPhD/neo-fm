@@ -67,6 +67,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
   const trace: string[] = [];
   // Vercel gives this route 60s; renders take ~30s each, so jobs run in small parallel batches, not one after another.
   const CONCURRENCY = 4;
+  const tickStart = Date.now();
   const work = (active ?? []) as { id: string; user_id: string; song_document_id: string; started_at?: string | null }[];
   const runJob = async (job: { id: string; user_id: string; song_document_id: string; started_at?: string | null }) => {
     if (!(await takeLease(db, job.id))) { results[job.id] = "busy"; return; }
@@ -80,7 +81,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
-      const outcome = await advance(job.id, {
+      let rendered = false; // a render was just answered: the agent only needs one more turn to finish, so don't wait a cron minute
+      const runAdvance = () => advance(job.id, {
         sessions, store: runStore(db, plan.agent), environmentId,
         agentId: agentIdFor(plan.agent),
         log: (m) => trace.push(m.slice(0, 600)),
@@ -116,9 +118,17 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           const path = `${jobId}/${n}.mp3`;
           const { error } = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });
           if (error) throw new Error(error.message);
+          rendered = true;
           return path;
         },
       });
+      let outcome = await runAdvance();
+      // Handoff latency: after answering generate_music the agent finishes within seconds. Re-advance in this tick
+      // (bounded) instead of leaving the finished song waiting for the next cron minute.
+      for (let i = 0; i < 6 && rendered && outcome === "waiting" && Date.now() - tickStart < 200_000; i++) {
+        await new Promise((r) => setTimeout(r, 5_000));
+        outcome = await runAdvance();
+      }
       results[job.id] = outcome;
       if (outcome === "started") await assignConfig(db, job.id);
       if (outcome === "done") {
