@@ -3,7 +3,9 @@
 Prod backend: Supabase project **neo-fm-prod** (`kgxltxvjlsnbwomklwox`, ap-south-1). Old prod (project `neo-fm`, paused) is not migrated.
 
 ## Stage 0 — done
-- [x] neo-fm-prod created; migrations 0001–0057 applied from `infra/supabase/migrations` (see agent report in chat).
+- [x] neo-fm-prod created; migrations 0001–0057 applied (0001–0008 via MCP, 0009–0057 via `infra/supabase/prod-bootstrap/part*.sql` run in the SQL editor — the MCP cannot run DROP). Verified: 25 public tables, buckets tracks/cover-art/voice-samples, 40 policies, signup trigger, tiers incl. developer, live pipeline config, advisors INFO/WARN only.
+- [x] Rehearsal wiring: preview env of branch claude/sleepy-keller-8eiz4s now points at neo-fm-prod (URL + publishable key + service role).
+- Note: migration 0029's job-complete email trigger still points at the OLD project's edge function URL; repoint before enabling email notifications.
 - [x] Embedder on Cloud Run (EmbeddingGemma), Stripe test products/prices, Google OAuth client.
 
 ## Stage 1 — you (5 min)
