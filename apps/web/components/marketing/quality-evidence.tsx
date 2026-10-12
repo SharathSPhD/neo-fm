@@ -23,8 +23,11 @@ export function QualityEvidenceSummary() {
         languages, AI judges preferred our lyric engine over a strong single-model
         baseline in most comparisons ({judges.claude.pce} to {judges.claude.baseline} by
         a Claude judge, {judges.gemini.pce} to {judges.gemini.baseline} by a Gemini
-        judge). The edge is in imagery, originality and cultural fit; on prosody we
-        are slightly behind. No native-speaker panel has reviewed this yet.{" "}
+        judge). The AI judges scored us higher on imagery, originality and cultural
+        fit; on prosody we are slightly behind. Kannada is our weakest evidence (the
+        Gemini judge split it {kannadaGemini.pce} to {kannadaGemini.baseline}). The Claude judge
+        is the same model family that polishes our lyrics, and no native-speaker panel
+        has reviewed any of this yet.{" "}
         <Link href="/trust#quality-evidence" className="underline">
           See the full results and limits
         </Link>
@@ -109,7 +112,7 @@ export function QualityEvidence() {
         languages.
       </p>
 
-      <h3 className="mt-5 text-sm font-medium">Where the difference comes from</h3>
+      <h3 className="mt-5 text-sm font-medium">Where the AI judges saw a difference</h3>
       <ul className="mt-2 space-y-1 text-sm">
         {dimensions.map((d) => (
           <li key={d.label} className="flex justify-between border-t border-muted/20 py-1">
@@ -125,7 +128,11 @@ export function QualityEvidence() {
 
       <h3 className="mt-5 text-sm font-medium">Limits</h3>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-foreground/70">
-        <li>The judges are AI models. No native-speaker panel has reviewed these results yet.</li>
+        <li>The judges are AI models. No native-speaker panel has reviewed these results yet, so &ldquo;cultural fit&rdquo; is an AI judgement, not a native speaker&apos;s.</li>
+        <li>
+          The Claude judge is Sonnet, which also writes the final polish for both sides of the comparison.
+          That is why we added a second judge from a different model family (Gemini) and report both.
+        </li>
         <li>This measures lyrics on the page, not the sung audio, and not human songwriters.</li>
         <li>It is an internal test, not an independent audit. We don&apos;t claim our lyrics are &ldquo;the best&rdquo;.</li>
         <li>
