@@ -18,6 +18,7 @@ import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import {
   activeLineIndex,
   buildLyricTimeline,
+  parseLineTimings,
   type SyncSectionInput,
 } from "@/lib/lyrics/sync";
 
@@ -26,17 +27,21 @@ const USER_SCROLL_HOLD_MS = 4000;
 export function KaraokeTicker({
   sections,
   durationSeconds,
+  lineTimings,
 }: {
   sections: SyncSectionInput[];
   durationSeconds?: number | null;
+  /** Heard per-line times (agent_runs.line_timings); evenly paced when absent. */
+  lineTimings?: unknown;
 }) {
   const { t } = useUiLang();
   const [audioSeconds, setAudioSeconds] = useState<number | null>(
     durationSeconds ?? null,
   );
+  const timings = useMemo(() => parseLineTimings(lineTimings), [lineTimings]);
   const lines = useMemo(
-    () => buildLyricTimeline(sections, audioSeconds),
-    [sections, audioSeconds],
+    () => buildLyricTimeline(sections, audioSeconds, timings),
+    [sections, audioSeconds, timings],
   );
   const [active, setActive] = useState(-1);
   const [autoScroll, setAutoScroll] = useState(true);
@@ -152,6 +157,8 @@ export function KaraokeTicker({
                     : i < active
                       ? "text-foreground/60 hover:text-foreground"
                       : "text-foreground/75 hover:text-foreground",
+                  // Interpolated (not heard) lines are dimmed so a wrong guess reads as a guess.
+                  l.sung === false && i !== active ? "opacity-70 italic" : "",
                 ].join(" ")}
               >
                 {l.text}

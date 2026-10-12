@@ -20,6 +20,7 @@
  *   - /auth/*, /sign-out      : 30
  *   - /sign-in, /sign-up (POST): 10
  *   - /api/report              : 5
+ *   - /api/client-errors       : 10
  *   - /api/events              : 20
  *   - native-review ratings API and /native-review/<token> page : 30
  *   - /api/songs (POST)         : 6
@@ -83,6 +84,11 @@ export function pickRule(
   }
   if (pathname === "/sign-in" || pathname === "/sign-up") {
     return isRead ? null : { bucket: "auth:submit", limit: 10 };
+  }
+  // Browser error reports: anonymous and cheap to spam, and a crash loop can
+  // legitimately send a few, so keep it tight but not zero.
+  if (/^\/api\/client-errors\/?$/.test(pathname)) {
+    return { bucket: "anon:client-errors", limit: 10 };
   }
   // Anonymous client telemetry: cheap per call but unauthenticated.
   if (/^\/api\/events\/?$/.test(pathname)) {
