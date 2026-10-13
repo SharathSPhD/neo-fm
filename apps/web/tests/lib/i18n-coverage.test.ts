@@ -69,10 +69,11 @@ describe("ui locale coverage", () => {
     expect(unused).toEqual([]);
   });
 
-  it("every locale carries a translation status; non-English are pending review", () => {
+  it("every locale carries a translation status; non-English are pending or reviewed", () => {
     for (const lang of UI_LANGS) {
       expect(TRANSLATION_STATUS[lang]).toBeDefined();
-      if (lang !== "en") expect(TRANSLATION_STATUS[lang]).toBe("pending-review");
+      // "reviewed" is set by scripts/apply-ui-review.mjs once a native reviewer has covered every key.
+      if (lang !== "en") expect(["pending-review", "reviewed"]).toContain(TRANSLATION_STATUS[lang]);
     }
     expect(TRANSLATION_STATUS.en).toBe("source");
   });
