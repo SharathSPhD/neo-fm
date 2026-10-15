@@ -15,11 +15,11 @@ jobs:
     name: typescript (pnpm)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: pnpm
@@ -38,7 +38,7 @@ jobs:
     name: secret scan (gitleaks)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: gitleaks (full history, pinned)
@@ -53,8 +53,8 @@ jobs:
     name: migration security lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
       # Fails on: table without RLS, SECURITY DEFINER without search_path or revoke, view without `revoke ... from anon`.
@@ -80,7 +80,7 @@ jobs:
     env:
       RLS_AUDIT_DB_URL: postgresql://postgres@localhost:5432/rls_audit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # Applies every migration to a throwaway Postgres (Supabase roles/auth/storage stand-in in
       # infra/supabase/ci/bootstrap.sql), seeds one private row per table for user A, then proves
       # anon and signed-in user B cannot read or write it, on every table, view and storage bucket.
@@ -92,9 +92,9 @@ jobs:
     name: managed agents (web unit + skill drift)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: pnpm
@@ -110,8 +110,8 @@ jobs:
     name: pce engine + embedder (python)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
       - run: pip install numpy scipy pytest -r services/embedder/requirements.txt
@@ -130,9 +130,9 @@ jobs:
           - packages/song-doc/python
           # v2 is cloud-only (Vercel + Supabase + Cloud Run + Claude Managed Agents + Gemini Lyria): the v1 DGX sidecar projects were retired.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -166,9 +166,9 @@ jobs:
     name: contracts (queue + openapi)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -189,16 +189,16 @@ jobs:
     name: song-doc codegen drift
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: pnpm
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
