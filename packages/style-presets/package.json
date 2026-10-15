@@ -24,7 +24,7 @@
     "@neo-fm/song-doc": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
+    "typescript": "^7.0.2",
     "vitest": "^3.2.7"
   }
 }
