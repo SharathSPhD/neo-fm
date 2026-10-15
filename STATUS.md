@@ -14,9 +14,9 @@ India-first AI music (Technektar). Native-script lyrics from the PCE cascade on 
 - Spend safety: atomic `reserve_spend`, per-user monthly Lyria caps by tier (`lib/agent/tiers.ts`), render claims counted in the DB.
 - Safety: deterministic and Haiku moderation before and after generation (fails closed), report button, trust/grievance page, AI labelling.
 - Quality eval: 150-brief blind eval, PCE+polish beats best-of-6+polish 87-41 (Claude judge) and 87-50 (Gemini judge). Negative results are recorded in `managed-agents/EVAL-PCE.md`; the marketing claim is bounded to what that supports.
-- Diction: romanized singing script cut Gemini-measured CER about 4x in the lab; Telugu match rose from 51% to 99%.
+- Diction: the romanized singing script lowered Gemini-measured character error rate from 4.6% to 1.1% on 6 Kannada/Tamil/Telugu/Hindi clips (source: comment in `apps/web/lib/diction/romanize.ts`; small sample). Current per-language pronunciation match is in `managed-agents/QUALITY-REPORT.md`.
 - Self-improvement: daily polish-template proposals gated on two-family judge agreement, with auto-rollback.
-- Tests: about 286 vitest tests, about 40 Playwright specs; CI jobs for `ts`, `agents` and `pce-engine`.
+- Tests: vitest unit tests (`apps/web/tests`) and Playwright specs (`apps/web/tests/e2e`); CI jobs for `ts`, `agents` and `pce-engine`. Counts change often, so run the suites for current numbers.
 
 ## Open issues
 
@@ -38,7 +38,7 @@ Supabase Pro, Resend key and repointing the migration 0029 email trigger (it sti
 
 ## Database
 
-Supabase project `neo-fm-prod`, migrations 0001-0063 (`infra/supabase/migrations`). New migrations start after the highest number on `main`.
+Supabase project `neo-fm-prod`, `managed-agents/CUTOVER.md` records which migrations are applied (verify against Supabase before relying on it); the repo's migrations are numbered through 0070 (some numbers are unused, e.g. 0020, 0064, 0069). Check open PRs for the next free number before adding one.
 
 ## History
 
