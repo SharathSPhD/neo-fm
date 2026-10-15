@@ -20,7 +20,7 @@ ARG STAGE=phase1
 # Built by the CI workflow as a sanity check that the FastAPI surface
 # imports without the real backend. `PWM_SKIP_BACKEND_IMPORT=1` keeps
 # the wrapper from ever trying to load `api.main`.
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

@@ -11,7 +11,7 @@
 ARG STAGE=phase0
 
 # ----- phase0 stage (CI smoke) -----------------------------------------------
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \

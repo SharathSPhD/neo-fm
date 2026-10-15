@@ -9,7 +9,7 @@
 ARG STAGE=phase0
 
 # ----- phase0 (CI smoke) ---------------------------------------------------
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
