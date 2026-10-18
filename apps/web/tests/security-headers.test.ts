@@ -8,8 +8,10 @@ const apply = (pathname: string, host: string | null = "abc.supabase.co") => app
 describe("security headers", () => {
   it("locks down ordinary pages against framing", () => {
     const h = apply("/library").headers;
-    expect(h.get("X-Frame-Options")).toBe("DENY");
-    expect(h.get("Content-Security-Policy")).toContain("frame-ancestors 'self'");
+    expect(h.get("X-Frame-Options")).toBeNull();
+    const csp = h.get("Content-Security-Policy")!;
+    expect(csp).toContain("frame-ancestors 'self' https://web.telegram.org https://webk.telegram.org https://webz.telegram.org");
+    expect(csp).not.toMatch(/frame-ancestors[^;]*\*/);
     expect(h.get("Strict-Transport-Security")).toContain("max-age=63072000");
     expect(h.get("X-Content-Type-Options")).toBe("nosniff");
     expect(h.get("Cross-Origin-Opener-Policy")).toBe("same-origin");
@@ -58,7 +60,7 @@ describe("report-only strict CSP", () => {
     const ro = h.get("Content-Security-Policy-Report-Only")!;
     expect(ro).toContain("script-src 'self' 'nonce-n0nce' 'strict-dynamic'");
     expect(ro).not.toMatch(/script-src[^;]*unsafe-(inline|eval)/);
-    expect(ro).toContain("frame-ancestors 'none'");
+    expect(ro).toContain("frame-ancestors 'self' https://web.telegram.org");
     expect(ro).toContain("report-uri /api/csp-report");
     expect(h.get("Reporting-Endpoints")).toBe('csp-endpoint="/api/csp-report"');
     expect(h.get("Content-Security-Policy")).toContain("'unsafe-inline'");

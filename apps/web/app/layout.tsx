@@ -10,6 +10,7 @@ import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
 import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
 import { ClientErrorListener } from "@/components/client-error-listener";
+import { TelegramMiniApp } from "@/components/telegram-mini-app";
 
 import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
@@ -71,6 +72,7 @@ export default async function RootLayout({
         <AmbientBackground />
         <AuthListener />
         <ClientErrorListener />
+        <TelegramMiniApp />
         {children}
         <ServiceWorkerRegister />
         </UiLangProvider>
