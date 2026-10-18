@@ -2,10 +2,13 @@
  * GET /api/station/queue?lang=hi&tags=birthday,upbeat&limit=10 -- the next tracks for this listener.
  * Ranking (lib/station/rank.ts) scores the pool from the requested language/tags and this listener's signals from the last 30 days;
  * the clock wheel (lib/station/program.ts) then orders the queue for the listener-local hour (`hour=0-23`, India time if absent).
+ * `station=<slug>` (lib/station/named.ts) narrows to a named station: its tags lean the ranking, and it can pin the daypart
+ * or force an occasion theme.
  * Each track carries a short-lived signed URL. Empty list when the pool or signal table is unavailable.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
@@ -36,10 +39,12 @@ export async function GET(req: NextRequest) {
 
   const sp = req.nextUrl.searchParams;
   const lang = sp.get("lang");
+  const station = findStation(sp.get("station"));
   const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), 25);
 
-  const pool = await loadPool();
+  const fullPool = await loadPool();
+  const pool = station ? stationPool(fullPool, station) : fullPool;
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   let rows: SignalRow[] = [];
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
 
   const signals = rowsToSignals(rows);
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
-  const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
+  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) });
   // What this listener heard lately, oldest first, so rotation carries across refills and sessions.
   const plays = signals.filter((x) => x.kind === "play").sort((a, b) => b.ageMs - a.ageMs);
   const byId = new Map(pool.map((t) => [t.id, t]));
@@ -69,7 +74,8 @@ export async function GET(req: NextRequest) {
     recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
     languageLocked: !!lang,
   };
-  const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit, rotation });
+  const clock = localClock(sp.get("hour"));
+  const ranked = programQueue(slate, { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), limit, rotation });
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {

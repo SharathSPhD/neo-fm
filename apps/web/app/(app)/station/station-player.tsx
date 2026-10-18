@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlayer } from "@/components/player/player-provider";
+import { NAMED_STATIONS } from "@/lib/station/named";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -31,12 +32,14 @@ function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
   });
 }
 
-export function StationPlayer() {
+export function StationPlayer({ initialStation = "" }: { initialStation?: string }) {
   const globalPlayer = usePlayer();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [queue, setQueue] = useState<Track[]>([]);
   const [lang, setLang] = useState<string>("");
   const [moods, setMoods] = useState<string[]>([]);
+  // A named station ("Subah", "Raat", "Diwali Radio"); empty means the listener's own station.
+  const [station, setStation] = useState<string>(initialStation);
   // "ready" flips once the saved choice has been read; "onboarded" is false on a first visit until Start is pressed.
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -48,10 +51,10 @@ export function StationPlayer() {
   const errorsInARow = useRef(0);
   const current = queue[0] ?? null;
 
-  const refill = useCallback(async (language: string, wanted: string[]) => {
+  const refill = useCallback(async (language: string, wanted: string[], stationSlug: string) => {
     setLoading(true);
     try {
-      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
+      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}${stationSlug ? `&station=${stationSlug}` : ""}`;
       const res = await fetch(`/api/station/queue?${qs}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -64,14 +67,16 @@ export function StationPlayer() {
   useEffect(() => {
     const saved = loadPrefs();
     if (saved) { setLang(saved.lang); setMoods(saved.moods); setOnboarded(true); }
+    // A station link is a choice in itself: skip the first-visit picker.
+    if (initialStation) setOnboarded(true);
     setReady(true);
   }, []);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
     savePrefs({ lang, moods });
-    void refill(lang, moods);
-  }, [ready, onboarded, lang, moods, refill]);
+    void refill(lang, moods, station);
+  }, [ready, onboarded, lang, moods, station, refill]);
 
   // Start playback when the head of the queue changes; stop the app-wide player so two songs never overlap.
   useEffect(() => {
@@ -89,7 +94,7 @@ export function StationPlayer() {
     if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
-      void refill(lang, moods);
+      void refill(lang, moods, station);
     } else {
       setQueue((q) => q.slice(1));
     }
@@ -125,7 +130,7 @@ export function StationPlayer() {
   function retry() {
     errorsInARow.current = 0;
     setFailed(false);
-    void refill(lang, moods);
+    void refill(lang, moods, station);
   }
 
   function like() {
@@ -174,6 +179,37 @@ export function StationPlayer() {
     </div>
   );
 
+  const stationRow = (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Stations">
+      <button type="button" aria-pressed={station === ""} onClick={() => setStation("")} className={`rounded-full border px-3 py-1 text-sm ${station === "" ? "bg-primary text-primary-foreground" : ""}`}>
+        My station
+      </button>
+      {NAMED_STATIONS.map((n) => (
+        <button
+          key={n.slug}
+          type="button"
+          title={n.tagline}
+          aria-pressed={station === n.slug}
+          onClick={() => { setOnboarded(true); setStation(n.slug); }}
+          className={`rounded-full border px-3 py-1 text-sm ${station === n.slug ? "bg-primary text-primary-foreground" : ""}`}
+        >
+          {n.name}
+        </button>
+      ))}
+    </div>
+  );
+
+  async function shareStation() {
+    const named = NAMED_STATIONS.find((n) => n.slug === station);
+    if (!named) return;
+    const url = `${location.origin}/station?s=${named.slug}`;
+    const text = `${named.name} on neo-fm Station: ${named.tagline}`;
+    try {
+      if (navigator.share) await navigator.share({ title: named.name, text, url });
+      else { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Station link copied"); }
+    } catch { /* share sheet dismissed */ }
+  }
+
   if (!ready) return <p>Loading…</p>;
 
   if (!onboarded) {
@@ -181,6 +217,7 @@ export function StationPlayer() {
       <section aria-label="Set up your station" className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">What do you want to hear?</h2>
         <p className="text-sm text-muted-foreground">Pick a language and up to two moods. You can change them any time.</p>
+        {stationRow}
         <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button
@@ -204,6 +241,13 @@ export function StationPlayer() {
 
   return (
     <section aria-label="Station player" className="flex flex-col gap-4">
+      {stationRow}
+      {station ? (
+        <p className="text-sm text-muted-foreground">
+          {NAMED_STATIONS.find((n) => n.slug === station)?.tagline}{" "}
+          <button type="button" onClick={shareStation} className="underline">Share this station</button>
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
         {LANGS.map((l) => (
           <button
