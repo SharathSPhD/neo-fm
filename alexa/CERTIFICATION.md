@@ -18,7 +18,7 @@ Nothing here is submitted. Submission, the Amazon developer account and any beta
 4. [ ] **On a real Echo:** confirm the signed URL plays (Content-Type `audio/mpeg`), queue-to-queue transitions are gapless, pause/resume/stop work, and the invocation name "neo f m" is recognised. Fix the name if misheard.
 5. [ ] Run the **Skill Validation API** via the ASK CLI; certification needs an overall SUCCESSFUL status (music/radio/podcast testing guide).
 6. [ ] **Beta test** with up to 500 testers (start with about 20 friends and family).
-7. [ ] **Native read of the hi-IN copy** (manifest and speech strings, see `launch/indic-copy-review.md`). Do not submit hi-IN before this.
+7. [ ] **Gemini nativeness score for the hi-IN copy** (manifest and speech strings), per S: Gemini scoring, no human readers for now (`launch/indic-copy-review.md`). Use only the already-approved Gemini budget, and do not submit hi-IN before it passes.
 8. [ ] Privacy policy URL and terms URL on the manifest, plus 108 px and 512 px icons. `/trust` and the privacy page should mention voice-assistant use first.
 9. [ ] Confirm current Alexa policy text on AI-generated content and on audio skills (*unverified*), and that "India only" matches the en-IN / hi-IN publishing rule.
 10. [ ] S approves the store listing copy and submits.

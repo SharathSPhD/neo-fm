@@ -90,7 +90,7 @@ type Strings = {
   unsupported: string;
 };
 
-// The hi strings are a first pass and need the native read in launch/indic-copy-review.md before certification.
+// The hi strings are a first pass and are gated on a Gemini nativeness score (launch/indic-copy-review.md) before certification.
 const STRINGS: Record<"en" | "hi", Strings> = {
   en: {
     launch: "Tuning in to neo-fm. Every song here is made by AI.",
