@@ -14,7 +14,8 @@ import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHints, scoreTranscriptUnordered } from "../diction";
-import { voiceHintFor } from "../voice";
+import { voiceChoiceFor, voiceHint } from "../voice";
+import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
 import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
@@ -162,7 +163,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
-        return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHintFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass), dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
+        const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass);
+        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey });
+        // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
+        return timed("lyria", async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result);
       };
       const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
         // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).

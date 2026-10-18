@@ -76,8 +76,13 @@ export function voiceHint(pref: VoicePref): string {
   return [CHOICE_HINT[pref.choice], pref.style ? STYLE_HINT[pref.style] : ""].filter(Boolean).join(" ");
 }
 
-/** Flag, entitlement and hint in one call for the render path. Returns "" whenever the choice is off or not included. */
+/** Flag and entitlement in one call for the render path. The station mix whenever the choice is off or not included. */
+export function voiceChoiceFor(raw: unknown, tier: UserTier | null | undefined, hasPass: boolean, env: NodeJS.ProcessEnv = process.env): VoicePref {
+  if (!voiceChoiceEnabled(env)) return { choice: "station" };
+  return clampVoicePref(parseVoicePref(raw), voiceEntitlement(tier, hasPass));
+}
+
+/** Convenience for callers that only need the prompt text. */
 export function voiceHintFor(raw: unknown, tier: UserTier | null | undefined, hasPass: boolean, env: NodeJS.ProcessEnv = process.env): string {
-  if (!voiceChoiceEnabled(env)) return "";
-  return voiceHint(clampVoicePref(parseVoicePref(raw), voiceEntitlement(tier, hasPass)));
+  return voiceHint(voiceChoiceFor(raw, tier, hasPass, env));
 }
