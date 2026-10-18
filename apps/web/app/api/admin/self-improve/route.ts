@@ -6,6 +6,9 @@
  *   POST ?action=evaluate&config=ID Polishes the HELD-OUT briefs (numeric suffix >= 25: 6 per language, never shown to the proposer)
  *                                   with the candidate, judges vs the best-of-6 baseline, compares with the live template on the
  *                                   same briefs. Writes eval_report + a verdict (recommend | reject). Draft -> shadow when recommended.
+ *   POST ?action=register          Body {template}: store a hand-written template (e.g. the FIT THE CLIP candidate) as a draft.
+ *   POST ?action=estimate&config=ID[&set=held|occasion|both&n=12]   Dry run: case count and expected Claude USD. Spends nothing.
+ *   evaluate takes the same params plus max_usd (default 2, cap 8): it refuses when the estimate exceeds it and stops when metered spend does.
  *   POST ?action=promote&config=ID&approved_by=NAME   Only a `shadow` candidate with a `recommend` verdict can go live (two-family judge
  *                                   agreement: Claude AND Gemini). `evaluate&auto=1` promotes automatically with approved_by=auto:claude+gemini;
  *                                   the previous live version is retired and remembered as parent for rollback.
@@ -19,7 +22,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { anthropicClient, serviceClient } from "../../../../lib/agent/adapters";
 import { checkCronOrAdminBearer } from "../../../../lib/agent/auth";
+import { estimateGate, meter } from "../../../../lib/eval/cost";
 import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
+import { OCCASION_BATCH_SOURCE } from "../../../../lib/eval/occasion-briefs";
+import { runPolishGate, type GateCase, type GateDeps, type PairJudgment, type Winner } from "../../../../lib/eval/polish-gate";
 import { DEFAULT_POLISH_TEMPLATE, polishLyrics, validatePolishTemplate } from "../../../../lib/lyrics/polish";
 
 export const dynamic = "force-dynamic";
@@ -57,6 +63,7 @@ export async function POST(req: NextRequest) {
       model: PROPOSER_MODEL, max_tokens: 6000,
       messages: [{ role: "user", content: `You improve a prompt template used by a lyric-polishing step for Indian-language songs. Keep every placeholder ({{language}}, {{style}}, {{brief}}, {{lyrics}}). Do not add URLs, do not mention system prompts, keys or safety. The step must stay a minimal edit that preserves imagery and section tags; its measured weakness is PROSODY (singable meter, equal syllable counts in paired lines) while imagery/originality are strengths to keep.\n\nCurrent template:\n<<<\n${live.template}\n>>>\n\nWorst-prosody training pairs:\n${examples}\n\nReply with ONLY JSON: {"template": string, "rationale": string (<=60 words)}.` }],
     });
+    meter.record(PROPOSER_MODEL, res.usage);
     const text = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
     let cand: { template?: string; rationale?: string };
     try { cand = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)); } catch { return NextResponse.json({ error: "unparseable proposal" }, { status: 502 }); }
@@ -67,49 +74,67 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ config_id: (ins as { id: string }).id, rationale: cand.rationale, trained_on: train.map((t) => t.brief_id) });
   }
 
-  if (action === "evaluate") {
+  if (action === "register") {
+    // Put a hand-written template (for example managed-agents/candidates/polish-tail-safe.md) into the gate as a draft.
+    // POST body: {"template": string, "rationale"?: string}. It never goes live without evaluate + promote.
+    const body = (await req.json().catch(() => ({}))) as { template?: string; rationale?: string };
+    const bad = validatePolishTemplate(body.template ?? "");
+    if (bad) return NextResponse.json({ error: "template_rejected", reason: bad }, { status: 422 });
+    const live = await liveTemplate(db);
+    const { data: ins, error } = await db.from("config_versions").insert({ kind: "polish_prompt", payload: { template: body.template, rationale: body.rationale ?? "", proposer: "manual" }, parent: live.id, status: "draft" }).select("id").single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ config_id: (ins as { id: string }).id });
+  }
+
+  if (action === "estimate" || action === "evaluate") {
+    meter.reset();
     const id = req.nextUrl.searchParams.get("config");
     const { data: cfg } = await db.from("config_versions").select("id,payload,status").eq("id", id ?? "").maybeSingle();
     const c = cfg as { id: string; payload: { template: string }; status: string } | null;
     if (!c || c.status !== "draft") return NextResponse.json({ error: "draft_not_found" }, { status: 404 });
-    const { data: all } = await db.from("eval_runs").select("brief_id,arm,lyrics,language,style_family,brief").eq("batch", "fullA").eq("status", "done");
-    const rows = (all ?? []) as Row[];
-    const ids = [...new Set(rows.map((r) => r.brief_id))].filter(isHeldOut).slice(0, Number(req.nextUrl.searchParams.get("n") ?? 30));
-    const { data: cur } = await db.from("eval_judgments").select("brief_id,winner,detail").eq("batch", "fullB").in("brief_id", ids);
-    const curMap = new Map(((cur ?? []) as { brief_id: string; winner: string; detail: { dim_diff?: Record<string, number> } }[]).map((j) => [j.brief_id, j]));
-    const tally = { cand: { pce: 0, other: 0, tie: 0 }, cur: { pce: 0, other: 0, tie: 0 } };
-    const gt = { cand: { pce: 0, other: 0, tie: 0 }, cur: { pce: 0, other: 0, tie: 0 } };
+    const set = req.nextUrl.searchParams.get("set") ?? "held"; // held | occasion | both
+    const n = Math.max(1, Math.min(60, Number(req.nextUrl.searchParams.get("n") ?? 12)));
+    const maxUsd = Math.min(Number(req.nextUrl.searchParams.get("max_usd") ?? process.env.EVAL_MAX_USD ?? 2), 8);
     const gkey = process.env.GEMINI_API_KEY;
-    const dimsC: Record<string, number[]> = {}; const dimsL: Record<string, number[]> = {};
-    for (let i = 0; i < ids.length; i += 5) {
-      await Promise.all(ids.slice(i, i + 5).map(async (bid) => {
+
+    const cases: GateCase[] = [];
+    if (set === "held" || set === "both") {
+      const { data: all } = await db.from("eval_runs").select("brief_id,arm,lyrics,language,style_family,brief").eq("batch", "fullA").eq("status", "done");
+      const rows = (all ?? []) as Row[];
+      const ids = [...new Set(rows.map((r) => r.brief_id))].filter(isHeldOut).sort().slice(0, n);
+      const { data: cur } = await db.from("eval_judgments").select("brief_id,winner,detail").eq("batch", "fullB").in("brief_id", ids);
+      const curMap = new Map(((cur ?? []) as { brief_id: string; winner: Winner; detail: PairJudgment["detail"] & { gemini?: { winner?: Winner } } }[]).map((j) => [j.brief_id, j]));
+      for (const bid of ids) {
         const pce = rows.find((r) => r.brief_id === bid && r.arm === "pce"); const base = rows.find((r) => r.brief_id === bid && r.arm === "single");
-        if (!pce || !base) return;
-        try {
-          const polished = await polishLyrics(client, { language: pce.language, style: pce.style_family, brief: pce.brief, lyrics: pce.lyrics }, c.payload.template);
-          const j = await judgePair(client, pce.language, pce.brief, polished, base.lyrics);
-          if (j.winner === "pce") tally.cand.pce++; else if (j.winner === "single") tally.cand.other++; else tally.cand.tie++;
-          for (const [k, v] of Object.entries((j.detail as { dim_diff?: Record<string, number> }).dim_diff ?? {})) (dimsC[k] ??= []).push(v);
-          if (gkey) {
-            const g = await judgePairGemini(pce.language, pce.brief, polished, base.lyrics, gkey);
-            if (g.winner === "pce") gt.cand.pce++; else if (g.winner === "single") gt.cand.other++; else gt.cand.tie++;
-          }
-          const l = curMap.get(bid);
-          const lg = (l?.detail as { gemini?: { winner?: string } } | undefined)?.gemini?.winner;
-          if (lg === "pce") gt.cur.pce++; else if (lg === "single") gt.cur.other++; else if (lg) gt.cur.tie++;
-          if (l) { if (l.winner === "pce") tally.cur.pce++; else if (l.winner === "single") tally.cur.other++; else tally.cur.tie++; for (const [k, v] of Object.entries(l.detail.dim_diff ?? {})) (dimsL[k] ??= []).push(v); }
-        } catch { /* a failed pair is dropped from both arms below via counts */ }
-      }));
+        if (!pce || !base) continue;
+        const l = curMap.get(bid);
+        cases.push({ set: "held", id: bid, language: pce.language, style: pce.style_family, brief: pce.brief, draft: pce.lyrics, baseline: base.lyrics, stored: l ? { claude: { winner: l.winner, detail: l.detail }, gemini: l.detail?.gemini?.winner } : undefined });
+      }
     }
-    const mean = (m: Record<string, number[]>) => Object.fromEntries(Object.entries(m).map(([k, v]) => [k, Math.round((v.reduce((a, b) => a + b, 0) / Math.max(1, v.length)) * 100) / 100]));
-    const dc = mean(dimsC), dl = mean(dimsL);
-    const worseDims = Object.keys(dl).filter((k) => (dc[k] ?? 0) < dl[k]! - 0.15);
-    const claudeOk = tally.cand.pce >= tally.cur.pce + 3 && worseDims.length === 0;
-    const geminiOk = Boolean(gkey) && gt.cand.pce >= gt.cur.pce + 2; // an independent family must also see a gain
-    const verdict = claudeOk && geminiOk ? "recommend" : "reject";
-    const report = { n: ids.length, candidate: tally, gemini: gt, claude_ok: claudeOk, gemini_ok: geminiOk, candidate_dims: dc, live_dims: dl, worse_dims: worseDims, verdict, rule: "candidate PCE wins >= live wins + 3 on held-out and no dimension worse than live by > 0.15; promotion still needs human approval" };
-    await db.from("config_versions").update({ eval_report: report, status: verdict === "recommend" ? "shadow" : "draft" }).eq("id", c.id);
-    if (verdict === "recommend" && req.nextUrl.searchParams.get("auto") === "1") {
+    if (set === "occasion" || set === "both") {
+      const { data: all } = await db.from("eval_runs").select("brief_id,arm,lyrics,language,style_family,brief").eq("batch", OCCASION_BATCH_SOURCE).eq("status", "done");
+      const rows = (all ?? []) as Row[];
+      for (const bid of [...new Set(rows.map((r) => r.brief_id))].sort().slice(0, n)) {
+        const pce = rows.find((r) => r.brief_id === bid && r.arm === "pce"); const base = rows.find((r) => r.brief_id === bid && r.arm === "single");
+        if (pce && base) cases.push({ set: "occasion", id: bid, language: pce.language, style: pce.style_family, brief: pce.brief, draft: pce.lyrics, baseline: base.lyrics });
+      }
+      if (!cases.some((x) => x.set === "occasion")) return NextResponse.json({ error: "no occasion drafts: run pce-eval POST ?action=start&batch=occA&set=occasion, then advance, first" }, { status: 409 });
+    }
+    const est = estimateGate({ briefs: cases.length, liveRecompute: cases.filter((x) => !x.stored).length });
+    if (action === "estimate") return NextResponse.json({ config_id: c.id, cases: cases.length, by_set: { held: cases.filter((x) => x.set === "held").length, occasion: cases.filter((x) => x.set === "occasion").length }, estimate: est, max_usd: maxUsd, would_run: est.claude_usd <= maxUsd, gemini_configured: Boolean(gkey) });
+    if (est.claude_usd > maxUsd) return NextResponse.json({ error: "over_budget", estimate: est, max_usd: maxUsd, hint: "lower n, or raise max_usd (cap 8) with S's approval" }, { status: 409 });
+
+    const live = await liveTemplate(db);
+    const deps: GateDeps = {
+      polish: (t, x) => polishLyrics(client, { language: x.language, style: x.style, brief: x.brief, lyrics: x.draft }, t ?? live.template),
+      judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
+      judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
+      spentUsd: () => meter.usd(),
+    };
+    const result = await runPolishGate(cases, c.payload.template, deps, { maxUsd });
+    const report = { ...result, estimate: est, spend: meter.snapshot(), max_usd: maxUsd, set };
+    await db.from("config_versions").update({ eval_report: report, status: report.verdict === "recommend" ? "shadow" : "draft" }).eq("id", c.id);
+    if (report.verdict === "recommend" && req.nextUrl.searchParams.get("auto") === "1") {
       await db.from("config_versions").update({ status: "retired" }).eq("kind", "polish_prompt").eq("status", "live");
       await db.from("config_versions").update({ status: "live", approved_by: "auto:claude+gemini", payload: { ...c.payload, promoted_at: new Date().toISOString() } }).eq("id", c.id);
       return NextResponse.json({ config_id: c.id, ...report, promoted: true });
