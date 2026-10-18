@@ -5,6 +5,8 @@
  *             meta: { id, source, language, title?, genre?, raga?, mood?, theme?, tempo_bpm?, duration_seconds?,
  *                     lyrics? | lyrics_from? {batch, brief_id}, diction_u?, diction_verdict?, judge_overall?,
  *                     kind? "vocal" (default) | "instrumental", daypart?, energy? }
+ *             Duration comes from the mp3 when meta omits it; energy and daypart are derived from mood, genre and theme when omitted.
+ *  json       { mode: "backfill_duration", limit? }   fills duration_seconds on pool rows that have none.
  *             kind "instrumental" (migration 0100): language is forced to "zxx", there is no diction gate, and admission
  *             needs a Gemini listen that finds no voice in the audio.
  *             With `lyrics` the track is scored here (Gemini transcript, order-free gate); without it the caller must
@@ -26,7 +28,8 @@ import { dictionVerdict, type DictionVerdict } from "../../../../lib/diction/gat
 import { scoreTranscriptUnordered } from "../../../../lib/diction";
 import { singableLines } from "../../../../lib/lyrics/singable";
 import { checkNoVocals } from "../../../../lib/pool/instrumental";
-import { POOL_MOODS, POOL_THEMES, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
+import { mp3DurationSeconds } from "../../../../lib/pool/mp3-duration";
+import { POOL_DAYPARTS, POOL_ENERGIES, POOL_MOODS, POOL_THEMES, deriveEnergyDaypart, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -48,6 +51,8 @@ interface FileMeta {
   score_only?: boolean;
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
   kind?: "vocal" | "instrumental";
+  /** Optional hand tags; when absent they are derived from mood, genre and theme. */
+  energy?: string; daypart?: string[];
 }
 
 async function admit(db: Db, row: Record<string, unknown>, qa: { unorderedPct: number | null; verdict: DictionVerdict | null }, instrumentalOk?: boolean) {
@@ -96,10 +101,18 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   const path = `pool/${meta.source}/${meta.id}.mp3`;
   const { error: upErr } = await db.storage.from("tracks").upload(path, audio, { contentType: file.type || "audio/mpeg", upsert: true });
   if (upErr) return NextResponse.json({ error: `upload: ${upErr.message}` }, { status: 502 });
+  const mood = pickVocab(meta.mood ?? [], POOL_MOODS);
+  const theme = pickVocab(meta.theme ?? [], POOL_THEMES);
+  const derived = deriveEnergyDaypart({ mood, theme, genre: meta.genre ?? null, tempo_bpm: meta.tempo_bpm ?? null });
+  const dayparts = pickVocab(meta.daypart ?? [], POOL_DAYPARTS);
+  const measured = mp3DurationSeconds(audio);
+  const duration = meta.duration_seconds ?? (measured !== null ? Math.round(measured) : null);
   const r = await admit(db, {
-    job_id: null, source: meta.source, audio_path: path, title: meta.title ?? null, duration_seconds: meta.duration_seconds ?? null,
+    job_id: null, source: meta.source, audio_path: path, title: meta.title ?? null, duration_seconds: duration,
     language, genre: meta.genre ?? null, raga: meta.raga ?? null,
-    mood: pickVocab(meta.mood ?? [], POOL_MOODS), theme: pickVocab(meta.theme ?? [], POOL_THEMES), tempo_bpm: meta.tempo_bpm ?? null,
+    mood, theme, tempo_bpm: meta.tempo_bpm ?? null,
+    energy: (POOL_ENERGIES as readonly string[]).includes(meta.energy ?? "") ? meta.energy : derived.energy,
+    daypart: dayparts.length ? dayparts : derived.daypart,
     judge_overall: meta.judge_overall ?? null,
     ...(instrumental ? { kind: "instrumental", vocals_absent: vocalsAbsent } : {}),
   }, qa, instrumental ? passesInstrumentalAdmission(vocalsAbsent) : undefined);
@@ -139,6 +152,20 @@ async function ingestProdJobs(db: Db, owners: string[], limit: number, geminiKey
   return NextResponse.json({ scored: scoredCount, results: out });
 }
 
+/** Sets duration_seconds on pool rows that have none, by reading the stored mp3. Never touches rows that already have one. */
+async function backfillDuration(db: Db, limit: number) {
+  const { data } = await db.from("pool_tracks").select("id,audio_path").is("duration_seconds", null).neq("status", "rejected").limit(limit);
+  const out: Array<Record<string, unknown>> = [];
+  for (const r of (data ?? []) as Array<{ id: string; audio_path: string }>) {
+    const { data: blob } = await db.storage.from("tracks").download(r.audio_path);
+    const secs = blob ? mp3DurationSeconds(new Uint8Array(await blob.arrayBuffer())) : null;
+    if (secs === null) { out.push({ audio_path: r.audio_path, skipped: blob ? "unreadable" : "no_audio" }); continue; }
+    const { error } = await db.from("pool_tracks").update({ duration_seconds: Math.round(secs) }).eq("id", r.id).is("duration_seconds", null);
+    out.push({ audio_path: r.audio_path, duration_seconds: Math.round(secs), ...(error ? { error: error.message } : {}) });
+  }
+  return NextResponse.json({ updated: out.filter((o) => typeof o.duration_seconds === "number" && !o.error).length, results: out });
+}
+
 export async function POST(req: NextRequest) {
   const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -152,5 +179,6 @@ export async function POST(req: NextRequest) {
     if (owners.length === 0) return NextResponse.json({ error: "owner_ids required: name the internal/test accounts whose songs may enter the shared pool" }, { status: 400 });
     return ingestProdJobs(db, owners, Math.min(Math.max(body.limit ?? 8, 1), 20), geminiKey);
   }
-  return NextResponse.json({ error: "send multipart (file, meta) or { mode: 'prod_jobs' }" }, { status: 400 });
+  if (body.mode === "backfill_duration") return backfillDuration(db, Math.min(Math.max(body.limit ?? 25, 1), 60));
+  return NextResponse.json({ error: "send multipart (file, meta) or { mode: 'prod_jobs' | 'backfill_duration' }" }, { status: 400 });
 }

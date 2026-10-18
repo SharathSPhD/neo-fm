@@ -110,3 +110,29 @@ export function passesAdmission(qa: PoolQa): boolean {
 export function passesInstrumentalAdmission(vocalsAbsent: boolean | null): boolean {
   return vocalsAbsent === true;
 }
+
+export const POOL_DAYPARTS = ["dawn", "morning", "midday", "evening", "dusk", "night"] as const;
+export const POOL_ENERGIES = ["low", "mid", "high"] as const;
+export type PoolEnergy = (typeof POOL_ENERGIES)[number];
+
+/**
+ * Energy and daypart from mood, genre and theme, so a new track never lands untagged. Same rule as the 0096 backfill
+ * (pool/tag-backfill-0096.sql), so it is as unverified as the tags it reads; tag_source says so.
+ */
+export function deriveEnergyDaypart(t: { mood: readonly string[]; theme: readonly string[]; genre: string | null; tempo_bpm: number | null }): { energy: PoolEnergy; daypart: string[] } {
+  const has = (list: readonly string[], ...v: string[]) => v.some((x) => list.includes(x));
+  const { mood, theme, genre } = t;
+  const energy: PoolEnergy =
+    has(mood, "energetic") || (has(mood, "celebratory") && (t.tempo_bpm ?? 0) >= 110) ? "high"
+    : has(mood, "calm", "devotional", "melancholic", "nostalgic", "romantic") && !has(mood, "joyful", "playful", "festive", "celebratory", "energetic") ? "low"
+    : "mid";
+  const parts = [
+    energy !== "high" && (has(mood, "devotional") || has(theme, "bhakti") || genre === "devotional" || genre === "keerthana") ? "dawn" : null,
+    energy !== "low" && (has(mood, "joyful", "playful", "festive", "energetic") || has(theme, "spring", "friendship", "travel")) ? "morning" : null,
+    energy !== "high" && has(mood, "calm", "joyful", "nostalgic") && ["classical", "light-classical", "folk", "bengali-folk", "tamil-folk"].includes(genre ?? "") ? "midday" : null,
+    has(mood, "nostalgic", "romantic") || has(theme, "village", "mother", "love") ? "evening" : null,
+    energy !== "high" && (has(mood, "devotional", "festive") || has(theme, "diwali", "bhakti", "wedding")) ? "dusk" : null,
+    energy === "low" && (has(mood, "calm", "melancholic", "nostalgic", "romantic") || genre === "lofi") ? "night" : null,
+  ].filter((x): x is string => x !== null);
+  return { energy, daypart: parts.length ? parts : ["evening"] };
+}
