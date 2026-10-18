@@ -890,6 +890,7 @@ export const en = {
   "gift.openSong": "Open song",
   "gift.copied": "Copied",
   "gift.preview": "Preview gift page",
+  "gift.makeClip": "Make a Reels clip",
   "gift.shareNote": "Anyone with the link can listen. You can unshare it any time from the song page.",
   "gift.preparing": "Preparing the gift page",
   "gift.cta": "Gift a song",

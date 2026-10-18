@@ -892,6 +892,7 @@ export const bn: Dict = {
   "gift.openSong": "গান খুলুন",
   "gift.copied": "কপি হয়েছে",
   "gift.preview": "উপহার পাতা দেখুন",
+  "gift.makeClip": "Reels ক্লিপ বানান",
   "gift.shareNote": "লিঙ্ক থাকলে যে কেউ শুনতে পারবে। গানের পাতা থেকে যেকোনো সময় শেয়ার বন্ধ করতে পারেন।",
   "gift.preparing": "উপহারের পাতা তৈরি হচ্ছে",
   "gift.cta": "একটি গান উপহার দিন",

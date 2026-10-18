@@ -53,6 +53,7 @@ export default async function GiftStatusPage(props: {
           songId={data.id}
           to={to ?? ""}
           occasionLabel={occasionLabel}
+          occasionId={occasion?.id ?? null}
           initialPublicId={data.published_visibility && data.published_visibility !== "private" ? data.public_id : null}
           dedicationFailed={searchParams?.ded === "failed"}
         />

@@ -24,12 +24,15 @@ export function ClipExportButton({
   title,
   to,
   message,
+  occasion,
   source,
 }: {
   songId: string;
   title: string;
   to: string;
   message: string;
+  /** Localised occasion label when the song came from /gift. */
+  occasion?: string | null;
   source: ClipSource;
 }) {
   const { t } = useUiLang();
@@ -75,6 +78,7 @@ export function ClipExportButton({
         window: pickClipWindow(lines, total),
         title,
         to: to.trim() ? t("clip.for", { to: to.trim() }) : null,
+        occasion: occasion ?? null,
         message: message.trim() || null,
         seed: songId,
         audioContext,
