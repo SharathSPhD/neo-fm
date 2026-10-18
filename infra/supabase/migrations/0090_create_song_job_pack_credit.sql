@@ -9,7 +9,8 @@
 -- PostgREST rpc() calls ambiguous). Grants are restated: authenticated may call it, anon and public may not.
 -- A credit spent on a job that later ends 'failed' with no audio is returned by a trigger, at most once per job
 -- (jobs.pack_refunded_at). There is no 'cancelled' status in job_status_enum; failed is the only terminal non-success.
--- A user who retries a refunded job through recover_song_job gets that attempt without a new charge.
+-- Retrying a refunded job through recover_song_job re-spends a credit first (no credit left: quota_exceeded, the job
+-- stays failed), so a refund plus a retry never gives two songs for one credit.
 
 alter table public.jobs
   add column if not exists pack_id uuid references public.song_packs(id) on delete set null,
@@ -189,3 +190,117 @@ create trigger jobs_refund_pack_credit
   when (new.status = 'failed' and old.status is distinct from 'failed'
         and new.pack_id is not null and new.pack_refunded_at is null)
   execute function public.refund_pack_credit_on_failure();
+
+-- ---------------------------------------------------------------------
+-- recover_song_job: retrying a refunded pack job re-spends a credit
+-- ---------------------------------------------------------------------
+-- Body is 0016's with the pack step added (see the comment inside). Checks and grants are unchanged.
+
+create or replace function public.recover_song_job(p_job_id uuid)
+returns table (job_id uuid, attempt_id uuid, status public.job_status_enum)
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_caller            uuid := auth.uid();
+  v_user_id           uuid;
+  v_song_document_id  uuid;
+  v_status            public.job_status_enum;
+  v_track_count       int;
+  v_new_attempt_id    uuid := gen_random_uuid();
+  v_new_trace_id      uuid := gen_random_uuid();
+  v_pack_id           uuid;
+  v_pack_refunded     timestamptz;
+  v_new_pack_id       uuid;
+begin
+  if v_caller is null then
+    raise exception 'unauthenticated';
+  end if;
+
+  select j.user_id, j.song_document_id, j.status, j.pack_id, j.pack_refunded_at
+    into v_user_id, v_song_document_id, v_status, v_pack_id, v_pack_refunded
+    from public.jobs j
+   where j.id = p_job_id
+   for update;
+
+  if v_user_id is null then
+    -- Don't leak existence to non-owners; behave as "not found".
+    raise exception 'job_not_found';
+  end if;
+  if v_user_id <> v_caller then
+    raise exception 'job_not_found';
+  end if;
+
+  select count(*) into v_track_count
+    from public.tracks
+   where tracks.job_id = p_job_id;
+
+  -- Recoverable only when:
+  --   (a) status='completed' AND no tracks row (the "Audio URL pending"
+  --       orphan -- bug b), or
+  --   (b) status='failed' (the user wants to retry an explicit failure).
+  -- Never recover queued/processing (would race the worker).
+  if not (
+    (v_status = 'completed'::public.job_status_enum and v_track_count = 0)
+    or v_status = 'failed'::public.job_status_enum
+  ) then
+    raise exception 'not_recoverable: status=%, tracks=%', v_status, v_track_count;
+  end if;
+
+  -- A pack job whose credit was refunded on failure must pay again to be retried, otherwise the refund plus a free
+  -- retry would give two songs for one credit. Any pack with credit will do (not necessarily the original one). With
+  -- none left the job stays failed. The advisory lock is the same per-user key create_song_job takes, so the spend is
+  -- serialised against new jobs.
+  if v_pack_id is not null and v_pack_refunded is not null then
+    perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(v_user_id::text, 0));
+    select id into v_new_pack_id
+      from public.song_packs
+     where user_id = v_user_id and songs_used < songs_total
+     order by created_at
+     limit 1
+     for update;
+    if v_new_pack_id is null then
+      raise exception 'quota_exceeded' using errcode = '22023';
+    end if;
+    update public.song_packs set songs_used = songs_used + 1 where id = v_new_pack_id;
+  end if;
+
+  update public.jobs
+     set status            = 'queued'::public.job_status_enum,
+         pack_id           = coalesce(v_new_pack_id, pack_id),
+         pack_refunded_at  = case when v_new_pack_id is not null then null else pack_refunded_at end,
+         attempt_id        = v_new_attempt_id,
+         trace_id          = v_new_trace_id::text,
+         error             = null,
+         progress          = 0,
+         started_at        = null,
+         finished_at       = null,
+         lease_renewed_at  = null,
+         recovered_at      = now()
+   where id = p_job_id;
+
+  -- Re-enqueue. The worker reads pgmq and trusts the queue payload's
+  -- user_id/song_document_id (claim_job_processing binds the claim to
+  -- both columns, ADR 0008).
+  perform pgmq.send(
+    'q_song_jobs',
+    jsonb_build_object(
+      'job_id', p_job_id::text,
+      'user_id', v_caller::text,
+      'song_document_id', v_song_document_id::text,
+      'attempt_id', v_new_attempt_id::text,
+      'trace_id', v_new_trace_id::text,
+      'reason', 'recover'
+    )
+  );
+
+  return query
+    select p_job_id, v_new_attempt_id, 'queued'::public.job_status_enum;
+end;
+$$;
+comment on function public.recover_song_job(uuid) is
+  'Atomically re-enqueues a stuck job (completed-without-tracks orphan, or failed). SECURITY DEFINER under explicit search_path. Only the job owner may invoke; ownership is checked against auth.uid() under FOR UPDATE. A pack job whose credit was refunded re-spends a credit first (migration 0090), raising quota_exceeded when none is left.';
+
+revoke execute on function public.recover_song_job(uuid) from public, anon;
+grant execute on function public.recover_song_job(uuid) to authenticated, service_role;

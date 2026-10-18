@@ -7,6 +7,9 @@
 begin;
 set local client_min_messages = warning;
 
+-- recover_song_job (0016) sends to queue 'q_song_jobs', which no migration creates; make it exist for this test only.
+select pgmq.create('q_song_jobs');
+
 insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
 values ('cccccccc-0000-4000-8000-00000000000c', 'pack@test.local', '{}', now());
 
@@ -24,6 +27,23 @@ create or replace function pg_temp.complete(j uuid) returns void language sql se
 
 create or replace function pg_temp.set_status(j uuid, st public.job_status_enum) returns void language sql security definer as $$
   update public.jobs set status = st where id = $1 $$;
+
+create or replace function pg_temp.recover(j uuid) returns void language plpgsql as $$
+begin perform * from public.recover_song_job(j); end $$;
+
+create or replace function pg_temp.status_of(j uuid) returns text language sql security definer as $$
+  select status::text from public.jobs where id = $1 $$;
+
+create or replace function pg_temp.job_pack(j uuid, out pid uuid, out refunded timestamptz) language sql security definer as $$
+  select pack_id, pack_refunded_at from public.jobs where id = $1 $$;
+
+create or replace function pg_temp.recover_fails(j uuid, want text) returns void language plpgsql as $$
+begin
+  perform pg_temp.recover(j);
+  raise exception 'FAIL: recover should have raised %', want;
+exception when sqlstate '22023' then
+  if sqlerrm not like '%' || want || '%' then raise exception 'FAIL: wanted % got %', want, sqlerrm; end if;
+end $$;
 
 create or replace function pg_temp.fails_with(use_pack boolean, want text) returns void language plpgsql as $$
 begin
@@ -56,6 +76,11 @@ begin
   j := pg_temp.new_job(true);
   if (select pack_id from public.jobs where id = j) is not null then raise exception 'FAIL: pack spent while quota had room'; end if;
   if pg_temp.used() <> 0 then raise exception 'FAIL: songs_used moved while quota had room'; end if;
+  -- a normal (non-pack) job that fails can be recovered exactly as before: no credit moves, no pack recorded
+  perform pg_temp.set_status(j, 'failed');
+  perform pg_temp.recover(j);
+  if pg_temp.status_of(j) <> 'queued' or (pg_temp.job_pack(j)).pid is not null or pg_temp.used() <> 0 then
+    raise exception 'FAIL: non-pack recover changed credit or pack state'; end if;
   perform pg_temp.complete(j);
   for n in 1..2 loop perform pg_temp.complete(pg_temp.new_job(false)); end loop;   -- quota (3) now used up
 
@@ -96,9 +121,25 @@ begin
   perform pg_temp.set_status(j2, 'failed');
   if pg_temp.used2() <> 1 then raise exception 'FAIL: credit refunded for a job with audio, songs_used=%', pg_temp.used2(); end if;
 
-  -- 9. credit runs out: pack 1 is full, pack 2 gives its last song, then quota_exceeded
-  perform pg_temp.complete(pg_temp.new_job(true));
-  if pg_temp.used2() <> 2 or pg_temp.used() <> 2 then raise exception 'FAIL: expected both packs spent'; end if;
+  -- 9. recover of a refunded pack job re-spends a credit (j was refunded in step 6, status failed)
+  if (pg_temp.job_pack(j)).refunded is null then raise exception 'FAIL: setup, j should be refunded'; end if;
+  perform pg_temp.recover(j);
+  if pg_temp.used2() <> 2 then raise exception 'FAIL: recover did not re-spend, songs_used=%', pg_temp.used2(); end if;
+  if (pg_temp.job_pack(j)).refunded is not null or pg_temp.status_of(j) <> 'queued' then raise exception 'FAIL: recover left refund flag or wrong status'; end if;
+
+  -- 10. fail again after the retry: refunded exactly once more
+  perform pg_temp.set_status(j, 'failed');
+  if pg_temp.used2() <> 1 then raise exception 'FAIL: second failure not refunded once, songs_used=%', pg_temp.used2(); end if;
+
+  -- 11. the refunded credit is spent elsewhere; recovering j now has no credit: quota_exceeded, job stays failed
+  j2 := pg_temp.new_job(true);
+  if pg_temp.used2() <> 2 then raise exception 'FAIL: expected both packs spent'; end if;
+  perform pg_temp.recover_fails(j, 'quota_exceeded');
+  if pg_temp.status_of(j) <> 'failed' or pg_temp.used2() <> 2 or pg_temp.used() <> 2 then
+    raise exception 'FAIL: rejected recover changed state'; end if;
+
+  -- 12. credit runs out for new jobs too
+  perform pg_temp.complete(j2);
   perform pg_temp.fails_with(true, 'quota_exceeded');
 
   raise warning 'pack_credit: PASS';
