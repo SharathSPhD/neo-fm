@@ -9,6 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { loadPool } from "@/lib/station/pool";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -60,8 +61,15 @@ export async function GET(req: NextRequest) {
   const signals = rowsToSignals(rows);
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
   const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
-  const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit });
+  // What this listener heard lately, oldest first, so rotation carries across refills and sessions.
+  const plays = signals.filter((x) => x.kind === "play").sort((a, b) => b.ageMs - a.ageMs);
   const byId = new Map(pool.map((t) => [t.id, t]));
+  const rotation = {
+    history: plays.slice(-10).flatMap((x) => byId.get(x.trackId) ?? []),
+    recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
+    languageLocked: !!lang,
+  };
+  const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit, rotation });
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {
