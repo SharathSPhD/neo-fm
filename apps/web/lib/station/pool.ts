@@ -69,3 +69,26 @@ export async function loadPool(): Promise<StationTrack[]> {
     return [];
   }
 }
+
+/** One admitted track by id for the public share page; null when missing, not admitted, or on any read failure. */
+export async function loadPoolTrack(id: string): Promise<StationTrack | null> {
+  try {
+    const { data, error } = await (
+      createServiceRoleClient().from as unknown as (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: string) => {
+            eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: PoolRow | null; error: unknown }> };
+          };
+        };
+      }
+    )("pool_tracks")
+      .select("id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band")
+      .eq("id", id)
+      .eq("status", "admitted")
+      .maybeSingle();
+    if (error || !data) return null;
+    return rowToTrack(data);
+  } catch {
+    return null;
+  }
+}
