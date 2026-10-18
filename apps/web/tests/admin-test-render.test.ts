@@ -26,3 +26,10 @@ describe("test-render guards", () => {
     expect(validateItems({ items: [{ label: "a", language: "hi" }] }, 3).ok).toBe(false);
   });
 });
+
+describe("test-render eval_batch", () => {
+  it("accepts a short alphanumeric batch and rejects anything else", () => {
+    expect(validateItems({ items: [{ label: "a", language: "hi", brief_id: "hi-1", eval_batch: "fullC" }] }, 3).ok).toBe(true);
+    expect(validateItems({ items: [{ label: "a", language: "hi", brief_id: "hi-1", eval_batch: "full C;" }] }, 3).ok).toBe(false);
+  });
+});
