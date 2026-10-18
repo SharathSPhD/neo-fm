@@ -994,6 +994,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      consume_pack_song: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      grant_song_pack: {
+        Args: { p_session_id: string; p_sku: string; p_songs: number; p_user_id: string }
+        Returns: undefined
+      }
       claim_stripe_event: {
         Args: { p_event_id: string; p_event_type: string }
         Returns: string

@@ -152,3 +152,52 @@ describe("POST /api/billing/webhook", () => {
     expect(rpc).toHaveBeenCalledWith("apply_stripe_subscription_state", expect.objectContaining({ p_user_id: "u1", p_status: "active", p_price_id: "price_p", p_pro_price_id: "price_p" }));
   });
 });
+
+describe("POST /api/billing/webhook: annual plans and gift packs", () => {
+  const listLineItems = vi.fn();
+  beforeEach(() => {
+    listLineItems.mockReset();
+    process.env.STRIPE_PRICE_PRO_ANNUAL_ID = "price_p_year";
+    process.env.STRIPE_PRICE_PACK_THREE_ID = "price_pack3";
+  });
+
+  it("maps an annual price to its tier by handing the RPC the purchased price id", async () => {
+    const yearly = { ...sub, items: { data: [{ price: { id: "price_p_year" }, current_period_end: 1800000000 }] } };
+    constructEvent.mockReturnValue({ id: "evt_y", type: "customer.subscription.created", data: { object: yearly } });
+    retrieve.mockResolvedValue(yearly);
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    await post(req());
+    expect(rpc).toHaveBeenCalledWith("apply_stripe_subscription_state", expect.objectContaining({ p_price_id: "price_p_year", p_pro_price_id: "price_p_year", p_creator_price_id: "price_c" }));
+  });
+
+  const packSession = (over: object = {}) => ({ id: "cs_1", mode: "payment", payment_status: "paid", client_reference_id: "u1", metadata: { pack: "single" }, ...over });
+  const mockStripe = () => vi.doMock("@/lib/billing/stripe", () => ({ getStripe: () => ({ webhooks: { constructEvent }, subscriptions: { retrieve }, checkout: { sessions: { listLineItems } } }) }));
+
+  it("grants songs from the purchased price, not from session metadata", async () => {
+    mockStripe();
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    constructEvent.mockReturnValue({ id: "evt_p", type: "checkout.session.completed", data: { object: packSession() } });
+    listLineItems.mockResolvedValue({ data: [{ price: { id: "price_pack3" } }] });
+    const res = await post(req());
+    expect(await res.json()).toMatchObject({ handled: true, user_id: "u1", pack: "three" });
+    expect(rpc).toHaveBeenCalledWith("grant_song_pack", { p_user_id: "u1", p_session_id: "cs_1", p_sku: "three", p_songs: 3 });
+  });
+
+  it("grants nothing until the payment is paid", async () => {
+    mockStripe();
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    constructEvent.mockReturnValue({ id: "evt_u", type: "checkout.session.completed", data: { object: packSession({ payment_status: "unpaid" }) } });
+    const res = await post(req());
+    expect(await res.json()).toMatchObject({ skipped: "payment_not_paid" });
+    expect(rpc).not.toHaveBeenCalledWith("grant_song_pack", expect.anything());
+  });
+
+  it("ignores a payment-mode session for a price that is not a pack", async () => {
+    mockStripe();
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    constructEvent.mockReturnValue({ id: "evt_n", type: "checkout.session.async_payment_succeeded", data: { object: packSession() } });
+    listLineItems.mockResolvedValue({ data: [{ price: { id: "price_other" } }] });
+    expect(await (await post(req())).json()).toMatchObject({ skipped: "not_a_pack_price" });
+    expect(rpc).not.toHaveBeenCalledWith("grant_song_pack", expect.anything());
+  });
+});

@@ -2,7 +2,8 @@
  * /api/admin/stripe-setup -- Stripe test-mode bootstrap. Auth: Bearer CRON_SECRET / AGENT_TICK_SECRET.
  *   GET   -> { mode: "test" | "live" | "missing" } (never echoes the key)
  *   POST  -> in TEST mode only: ensures Creator/Pro products + monthly INR and USD prices exist (idempotent by lookup_key)
- *            and returns the price ids (not secrets). Refuses in live mode.
+ *            plus yearly INR prices (10 x monthly, 2 months free) and the one-off gift-song packs, and returns the
+ *            price ids (not secrets). Refuses in live mode.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import Stripe from "stripe";
@@ -20,6 +21,12 @@ const PLANS = [
   { tier: "pro", name: "neo-fm Pro", inr: 79900, usd: 1799 },
 ] as const;
 
+// One-off gift-song packs (INR only, tax-inclusive working price; UPI is INR-only).
+const PACKS = [
+  { sku: "single", name: "neo-fm Gift Song", inr: 9900 },
+  { sku: "three", name: "neo-fm Gift Song x3", inr: 24900 },
+] as const;
+
 export async function GET(req: NextRequest) {
   const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -28,7 +35,7 @@ export async function GET(req: NextRequest) {
     mode: mode(key),
     has_webhook_secret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     has_publishable: Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    has_price_ids: { creator: Boolean(process.env.STRIPE_PRICE_CREATOR_ID), pro: Boolean(process.env.STRIPE_PRICE_PRO_ID) },
+    has_price_ids: { creator: Boolean(process.env.STRIPE_PRICE_CREATOR_ID), pro: Boolean(process.env.STRIPE_PRICE_PRO_ID), creator_annual: Boolean(process.env.STRIPE_PRICE_CREATOR_ANNUAL_ID), pro_annual: Boolean(process.env.STRIPE_PRICE_PRO_ANNUAL_ID), pack_single: Boolean(process.env.STRIPE_PRICE_PACK_SINGLE_ID), pack_three: Boolean(process.env.STRIPE_PRICE_PACK_THREE_ID) },
   });
 }
 
@@ -38,16 +45,25 @@ export async function POST(req: NextRequest) {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (mode(key) !== "test") return NextResponse.json({ error: "refusing", message: "STRIPE_SECRET_KEY is not a test-mode key" }, { status: 409 });
   const stripe = new Stripe(key!, { apiVersion: "2025-08-27.basil" });
-  const out: Record<string, { product: string; inr: string; usd: string }> = {};
+  const out: Record<string, { product: string; inr: string; usd: string; inr_annual?: string }> = {};
+  const packs: Record<string, { product: string; inr: string }> = {};
   for (const p of PLANS) {
     const found = await stripe.products.search({ query: `metadata['neofm_tier']:'${p.tier}'` });
     const product = found.data[0] ?? (await stripe.products.create({ name: p.name, metadata: { neofm_tier: p.tier } }));
-    const price = async (currency: "inr" | "usd", amount: number) => {
-      const lookup_key = `neofm_${p.tier}_${currency}_monthly`;
+    const price = async (currency: "inr" | "usd", amount: number, interval: "month" | "year" = "month") => {
+      const lookup_key = `neofm_${p.tier}_${currency}_${interval === "year" ? "yearly" : "monthly"}`;
       const existing = await stripe.prices.list({ lookup_keys: [lookup_key], limit: 1 });
-      return (existing.data[0] ?? (await stripe.prices.create({ product: product.id, currency, unit_amount: amount, recurring: { interval: "month" }, lookup_key }))).id;
+      return (existing.data[0] ?? (await stripe.prices.create({ product: product.id, currency, unit_amount: amount, recurring: { interval }, lookup_key }))).id;
     };
-    out[p.tier] = { product: product.id, inr: await price("inr", p.inr), usd: await price("usd", p.usd) };
+    out[p.tier] = { product: product.id, inr: await price("inr", p.inr), usd: await price("usd", p.usd), inr_annual: await price("inr", p.inr * 10, "year") };
   }
-  return NextResponse.json({ mode: "test", prices: out });
+  for (const k of PACKS) {
+    const found = await stripe.products.search({ query: `metadata['neofm_pack']:'${k.sku}'` });
+    const product = found.data[0] ?? (await stripe.products.create({ name: k.name, metadata: { neofm_pack: k.sku } }));
+    const lookup_key = `neofm_pack_${k.sku}_inr`;
+    const existing = await stripe.prices.list({ lookup_keys: [lookup_key], limit: 1 });
+    const price = existing.data[0] ?? (await stripe.prices.create({ product: product.id, currency: "inr", unit_amount: k.inr, lookup_key }));
+    packs[k.sku] = { product: product.id, inr: price.id };
+  }
+  return NextResponse.json({ mode: "test", prices: out, packs });
 }

@@ -47,6 +47,10 @@ export async function runPool<T>(items: T[], size: number, fn: (t: T) => Promise
   const worker = async () => { while (next < items.length) { const i = next++; await fn(items[i] as T); } };
   await Promise.all(Array.from({ length: Math.min(size, items.length) }, worker));
 }
+/** How often a held job re-checks its agent session inside one tick (was: once per cron minute). */
+export const POLL_INTERVAL_MS = 5_000;
+/** Stop polling this far into a tick: leaves room for an in-flight render, finalize and QA before the ~300 s kill. */
+export const POLL_DEADLINE_MS = 210_000;
 const LEASE_SECONDS = 280; // just under maxDuration (300s on Vercel Pro)
 
 export type ProcessEnv = { environmentId: string; geminiKey: string };
@@ -117,9 +121,9 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
       };
       let postRenderFrom = 0;
-      let rendered = false; // a render was just answered: the agent only needs one more turn to finish, so don't wait a cron minute
       const runAdvance = () => advance(job.id, {
-        sessions, store: runStore(db, plan.agent), environmentId,
+        sessions, // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
+        store: runStore(db, plan.agent === "free" ? "free" : "pro"), environmentId,
         agentId: agentIdFor(plan.agent),
         log: (m) => trace.push(m.slice(0, 600)),
         maxLyriaCalls: plan.maxLyriaCalls, maxOutcomeIterations: plan.maxOutcomeIterations,
@@ -153,30 +157,37 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         },
         gate: () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; },
         gateRelease: () => lyriaBreaker.release(),
+        finishOnRender: true,
         saveAudio: async (jobId, n, r) => {
           // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
           const path = `${jobId}/${n}.mp3`;
           const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
           if (error) throw new Error(error.message);
-          rendered = true;
           postRenderFrom = Date.now();
           return path;
         },
       });
       let outcome = await runAdvance();
-      // Handoff latency: after answering generate_music the agent finishes within seconds. Re-advance in this tick
-      // (bounded) instead of leaving the finished song waiting for the next cron minute.
-      for (let i = 0; i < 6 && rendered && outcome === "waiting" && Date.now() - tickStart < 200_000; i++) {
-        await new Promise((r) => setTimeout(r, 5_000));
+      let configAssigned = false;
+      // The agent drafts for minutes and the render request only reaches us when we look, so keep looking while we hold the
+      // lease instead of waiting for the next cron minute (adds up to 60 s per poll boundary: session start, render request).
+      for (;;) {
+        if (outcome === "started" && !configAssigned) { configAssigned = true; await assignConfig(db, job.id); }
+        if ((outcome !== "waiting" && outcome !== "started") || Date.now() - tickStart >= POLL_DEADLINE_MS) break;
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
         outcome = await runAdvance();
       }
       if (outcome === "done" && postRenderFrom) stages.post_render = Date.now() - postRenderFrom;
       results[job.id] = outcome;
-      if (outcome === "started") await assignConfig(db, job.id);
       if (outcome === "done") {
+        // The song is playable once finalize marks it completed; the Gemini audits are advisory, so they run after that
+        // (in parallel) instead of adding ~25 s before the listener sees the track.
         const cascade = await timed("finalize", () => finalize(db, job.id));
-        const qa = await timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey));
-        await timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, doc.document_json.target_duration_seconds ?? 30));
+        const targetS = doc.document_json.target_duration_seconds ?? 30;
+        const [qa] = await Promise.all([
+          timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey)),
+          timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, targetS)),
+        ]);
         await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: embedderUsed(!!safeEmbedUrl(process.env.EMBED_URL), cascade), stages_ms: stages });
       }
     } catch (e) {
