@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
+import { reportClientError } from "@/lib/obs/report-client-error";
+import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -48,6 +50,11 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  // The server programs by the listener's own clock; fall back silently if the browser will not say.
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) q.set("tz", tz);
+  } catch { /* no Intl: server falls back to India time */ }
   return `/api/station/queue?${q}`;
 }
 
@@ -83,6 +90,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
+      if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
       setQueue([]);
     }
@@ -129,6 +137,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   }
 
   function onTrackError() {
+    reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
       setFailed(true);
