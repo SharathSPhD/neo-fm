@@ -253,7 +253,7 @@ export function StationPlayer() {
             <button type="button" onClick={replay} className="rounded border px-3 py-2">Replay</button>
             <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
-            <button type="button" onClick={shareWhatsApp} className="rounded border px-3 py-2">WhatsApp</button>
+            <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
         </div>
