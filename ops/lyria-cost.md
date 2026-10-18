@@ -12,5 +12,5 @@ Refused renders (moderation, Lyria 400, no audio part) are not counted. Long tra
 | 2026-10-18 | P5 gap tracks | 11 | 2.75 | 9 | Diwali, Hinglish, energy, film |
 | 2026-10-18 | P3 long tracks (150 s) | 6 | 1.50 | 6 | 2 refused by moderation |
 
-Total estimated: GBP 32.75 (GBP 26 + 6.75 of the extra GBP 15 approved). Pool: 131 admitted, 24 retired duplicates, 23 rejected by the diction gate.
+Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 5.25 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 131 admitted, 24 retired duplicates, 23 rejected by the diction gate.
 Approvals: GBP 26 (pool), then GBP 15 more for gap and long tracks (S, 2026-10-18 13:35 UTC).
