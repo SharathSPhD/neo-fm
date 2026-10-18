@@ -83,10 +83,11 @@ test.describe("station (signed out)", () => {
     await livelier.click();
     await expect(livelier).toHaveAttribute("aria-pressed", "false");
 
+    // Chips carry the language's own name since #215 (not the code), whatever the site language.
     const language = page.getByRole("group", { name: "Language" });
     await expect(language.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "true");
-    await language.getByRole("button", { name: "hi", exact: true }).click();
-    await expect(language.getByRole("button", { name: "hi", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await language.getByRole("button", { name: "हिन्दी", exact: true }).click();
+    await expect(language.getByRole("button", { name: "हिन्दी", exact: true })).toHaveAttribute("aria-pressed", "true");
     await expect(language.getByRole("button", { name: "All" })).toHaveAttribute("aria-pressed", "false");
   });
 
