@@ -69,8 +69,9 @@ type PoolQuery = (c: string) => { eq: (k: string, v: string) => Promise<{ data: 
 
 async function readPool(): Promise<StationTrack[]> {
   try {
-    const from = createServiceRoleClient().from as unknown as (t: string) => { select: PoolQuery };
-    const read = (cols: string) => from("pool_tracks").select(cols).eq("status", "admitted");
+    // Keep the call on the client: a detached `.from` loses `this` and throws, which the catch below turns into an empty pool.
+    const client = createServiceRoleClient() as unknown as { from: (t: string) => { select: PoolQuery } };
+    const read = (cols: string) => client.from("pool_tracks").select(cols).eq("status", "admitted");
     let res = await read(COLUMNS);
     // Migration 0096 not applied here: the station must keep playing on tag-derived programming.
     if (res.error) res = await read(BASE_COLUMNS);

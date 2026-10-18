@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { rowToTrack } from "../lib/station/pool";
 
@@ -28,5 +28,24 @@ describe("rowToTrack tagger columns", () => {
   it("defaults to null and empty when the columns are absent or odd", () => {
     expect(rowToTrack(base)).toMatchObject({ energy: null, daypart: [] });
     expect(rowToTrack({ ...base, energy: "extreme", daypart: null })).toMatchObject({ energy: null, daypart: [] });
+  });
+});
+
+describe("loadPool", () => {
+  it("reads admitted rows through the client (regression: a detached .from threw and emptied the station)", async () => {
+    vi.resetModules();
+    const row = { id: "x", title: "t", audio_path: "a", duration_seconds: 60, language: "hi", genre: null, raga: null, mood: null, theme: null, tempo_band: null, energy: "mid", daypart: ["night"] };
+    vi.doMock("@/lib/supabase/server", () => ({
+      createServiceRoleClient: () => ({
+        marker: true,
+        from(this: { marker?: boolean }) {
+          if (!this?.marker) throw new TypeError("detached from");
+          return { select: () => ({ eq: async () => ({ data: [row], error: null }) }) };
+        },
+      }),
+    }));
+    const { loadPool } = await import("../lib/station/pool");
+    expect(await loadPool()).toHaveLength(1);
+    vi.doUnmock("@/lib/supabase/server");
   });
 });
