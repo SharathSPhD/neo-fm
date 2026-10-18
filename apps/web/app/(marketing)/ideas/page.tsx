@@ -135,7 +135,7 @@ export default async function IdeasPage(props: { searchParams: Promise<Search> }
       ) : (
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((i) => (
-            <li key={i.id} className="flex flex-col glass rounded-2xl p-5">
+            <li key={i.id} className="flex flex-col glass glass-hover rounded-2xl p-5">
               <p lang={i.lang} className="text-lg leading-relaxed">{i.text}</p>
               <p className="mt-3 text-sm text-foreground/70">{i.gloss}</p>
               <p className="mt-3 text-xs text-foreground/60">
