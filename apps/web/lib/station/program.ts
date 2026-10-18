@@ -4,6 +4,7 @@
  * and an energy arc. Tags are optional on pool rows, so every rule falls back to rank order when a track has none.
  */
 import type { PoolTrack, StationSignal } from "./rank";
+import { allowed, RELAXATION, type RotationState } from "./rotation";
 
 export type Daypart = "dawn" | "morning" | "midday" | "evening" | "dusk" | "night";
 export type Slot = "opener" | "familiar" | "exploration" | "occasion" | "repeat";
@@ -63,6 +64,18 @@ export interface ProgramContext {
   /** Where in the wheel the queue starts; lets a refill carry on from the previous one. */
   startSlot?: number;
   limit?: number;
+  /** Rotation rules (lib/station/rotation.ts); omit for none. */
+  rotation?: RotationState;
+}
+
+function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState, out: PoolTrack[]): PoolTrack[] {
+  for (const rules of RELAXATION) {
+    const a = preferred.filter((t) => allowed(t, state, out, rules));
+    if (a.length > 0) return a;
+    const b = all.filter((t) => allowed(t, state, out, rules));
+    if (b.length > 0) return b;
+  }
+  return all;
 }
 
 const isSlow = (t: PoolTrack) => t.tags.includes("slow");
@@ -77,6 +90,7 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
 
   const remaining = [...ranked];
   const out: PoolTrack[] = [];
+  const rotation: RotationState = ctx.rotation ?? { history: [], recentIds: new Set(), languageLocked: true };
   const limit = Math.min(ctx.limit ?? 10, n);
 
   while (out.length < limit && remaining.length > 0) {
@@ -84,7 +98,9 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
     const prev = out[out.length - 1];
     // Energy arc: at peak hours, after a slow track prefer anything that is not slow (if anything is left).
     const arcOk = PEAK.has(part) && prev && isSlow(prev) ? remaining.filter((t) => !isSlow(t)) : remaining;
-    const pool = arcOk.length > 0 ? arcOk : remaining;
+    const arcPool = arcOk.length > 0 ? arcOk : remaining;
+    // Rotation is stricter than the arc: relax the arc first, then the rotation rules one by one, never the dedupe.
+    const pool = pickPool(arcPool, remaining, rotation, out);
 
     let pick: PoolTrack[];
     if (slot === "familiar" || slot === "repeat") pick = pool.filter((t) => ctx.familiar.has(t.id));
