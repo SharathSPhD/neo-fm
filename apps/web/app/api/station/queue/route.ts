@@ -11,6 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { loadPool } from "@/lib/station/pool";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { parseSteer, steerQueue } from "@/lib/station/steer";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
@@ -65,10 +66,17 @@ export async function GET(req: NextRequest) {
   const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
   const { exclude, ...steer } = parseSteer(sp);
   const steered = Boolean(steer.energy || steer.moreLike);
-  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
-  const programmed = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit });
-  const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
+  // What this listener heard lately, oldest first, so rotation carries across refills and sessions.
+  const plays = signals.filter((x) => x.kind === "play").sort((a, b) => b.ageMs - a.ageMs);
   const byId = new Map(pool.map((t) => [t.id, t]));
+  const rotation = {
+    history: plays.slice(-10).flatMap((x) => byId.get(x.trackId) ?? []),
+    recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
+    languageLocked: !!lang,
+  };
+  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
+  const programmed = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
+  const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {

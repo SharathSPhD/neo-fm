@@ -7,6 +7,8 @@ export interface PoolTrack {
   id: string;
   language: string;
   tags: string[];
+  /** Stand-in for a prompt/artist-style family until pool rows carry one: tracks sharing it should not play close together. */
+  family?: string;
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";
