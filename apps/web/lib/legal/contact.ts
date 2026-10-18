@@ -7,6 +7,7 @@ export const LEGAL_CONTACT = {
   entity: process.env.NEXT_PUBLIC_LEGAL_ENTITY || "Technektar",
   address: process.env.NEXT_PUBLIC_LEGAL_ADDRESS || "",
   grievanceOfficerName: process.env.NEXT_PUBLIC_GRIEVANCE_OFFICER_NAME || "",
+  website: process.env.NEXT_PUBLIC_LEGAL_WEBSITE || "https://www.technektar.com/",
   email: process.env.NEXT_PUBLIC_GRIEVANCE_EMAIL || "info@technektar.com",
 } as const;
 

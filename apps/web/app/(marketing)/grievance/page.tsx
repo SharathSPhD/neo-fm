@@ -49,6 +49,7 @@ export default function GrievancePage() {
         <dl className="mt-3 space-y-1 text-sm text-foreground/80">
           <div><dt className="inline font-medium">Officer: </dt><dd className="inline">{c.grievanceOfficerName || "Grievance Officer"}, {c.entity}</dd></div>
           <div><dt className="inline font-medium">Email: </dt><dd className="inline"><a className="underline" href={`mailto:${c.email}`}>{c.email}</a></dd></div>
+          <div><dt className="inline font-medium">Operator: </dt><dd className="inline"><a className="underline" href={c.website} rel="noopener">{c.entity}, {c.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}</a></dd></div>
           {c.address ? <div><dt className="inline font-medium">Address: </dt><dd className="inline">{c.address}</dd></div> : null}
         </dl>
         <p className="mt-3 text-xs text-foreground/60">
