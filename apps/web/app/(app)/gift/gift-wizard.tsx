@@ -42,7 +42,7 @@ export function GiftWizard({ initialOccasion }: { initialOccasion: string }) {
     e.preventDefault();
     if (busy) return;
     setError(null);
-    const planned = planGift({ occasion, relationship, language, name, note });
+    const planned = planGift({ occasion, relationship, language, name, note }, { rich: process.env.NEXT_PUBLIC_GIFT_RICH_BRIEF === "1" });
     if (!planned.ok) {
       setError(t("gift.errInput"));
       return;

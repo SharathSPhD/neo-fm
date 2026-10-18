@@ -34,6 +34,20 @@ describe("planGift", () => {
     }
   });
 
+  it("rich brief adds imagery and tone, stays within 500 chars, and is off by default", () => {
+    const plain = planGift(base);
+    const rich = planGift({ ...base, occasion: "pongal" }, { rich: true });
+    expect(plain.ok && plain.plan.prompt).not.toContain("imagery");
+    expect(rich.ok && rich.plan.prompt).toContain("sugarcane");
+    expect(rich.ok && rich.plan.prompt).toContain("tender, grateful");
+    for (const o of OCCASIONS) {
+      for (const rel of RELATIONSHIPS) {
+        const r = planGift({ ...base, occasion: o.id, relationship: rel.id, name: "x".repeat(60), note: "y".repeat(GIFT_NOTE_MAX) }, { rich: true });
+        expect(r.ok && r.plan.prompt.length, `${o.id}/${rel.id}`).toBeLessThanOrEqual(500);
+      }
+    }
+  });
+
   it("strips control and bidi characters from name and note", () => {
     const r = planGift({ ...base, name: "  Priya‮ ", note: "hi\u0007 there" });
     expect(r.ok && [r.plan.to, r.plan.message]).toEqual(["Priya", "hi there"]);
