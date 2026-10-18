@@ -9,6 +9,10 @@ export interface PoolTrack {
   tags: string[];
   /** Stand-in for a prompt/artist-style family until pool rows carry one: tracks sharing it should not play close together. */
   family?: string;
+  /** Tagger energy band (pool_tracks.energy, migration 0096); absent or null means "derive it from tags". */
+  energy?: "low" | "mid" | "high" | null;
+  /** Parts of the day the tagger says this track suits (pool_tracks.daypart); absent or empty means "derive it from tags". */
+  daypart?: readonly string[];
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";

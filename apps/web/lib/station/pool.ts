@@ -20,6 +20,9 @@ export interface PoolRow {
   mood: string[] | null;
   theme: string[] | null;
   tempo_band: string | null;
+  /** Migration 0096. Absent when the column is not applied yet. */
+  energy?: string | null;
+  daypart?: string[] | null;
 }
 
 export type StationTrack = PoolTrack & {
@@ -53,20 +56,26 @@ export function rowToTrack(r: PoolRow): StationTrack {
     title: displayTitle(r),
     audioPath: r.audio_path,
     durationSeconds: r.duration_seconds,
+    energy: r.energy === "low" || r.energy === "mid" || r.energy === "high" ? r.energy : null,
+    daypart: r.daypart ?? [],
   };
 }
 
+const BASE_COLUMNS = "id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band";
+/** Tried first; if the columns are not applied in this database the read is repeated with BASE_COLUMNS. */
+const COLUMNS = `${BASE_COLUMNS},energy,daypart`;
+
+type PoolQuery = (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
+
 async function readPool(): Promise<StationTrack[]> {
   try {
-    const { data, error } = await (
-      createServiceRoleClient().from as unknown as (t: string) => {
-        select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
-      }
-    )("pool_tracks")
-      .select("id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band")
-      .eq("status", "admitted");
-    if (error || !data) return [];
-    return data.map(rowToTrack);
+    const from = createServiceRoleClient().from as unknown as (t: string) => { select: PoolQuery };
+    const read = (cols: string) => from("pool_tracks").select(cols).eq("status", "admitted");
+    let res = await read(COLUMNS);
+    // Migration 0096 not applied here: the station must keep playing on tag-derived programming.
+    if (res.error) res = await read(BASE_COLUMNS);
+    if (res.error || !res.data) return [];
+    return res.data.map(rowToTrack);
   } catch {
     return [];
   }
@@ -87,7 +96,7 @@ export async function loadPoolTrack(id: string): Promise<StationTrack | null> {
         };
       }
     )("pool_tracks")
-      .select("id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band")
+      .select(BASE_COLUMNS)
       .eq("id", id)
       .eq("status", "admitted")
       .maybeSingle();
