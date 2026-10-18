@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { CreateSongRequestSchema } from "@/lib/api/song-schemas";
+
 import {
   GIFT_LANGUAGES,
   GIFT_NOTE_MAX,
@@ -98,5 +100,14 @@ describe("giftPublicUrl", () => {
     expect(giftPublicUrl("https://neo.fm/", "abc")).toBe("https://neo.fm/s/abc");
     expect(giftPublicUrl(null, "abc")).toBeNull();
     expect(giftPublicUrl("https://neo.fm", null)).toBeNull();
+  });
+});
+
+describe("create-song request", () => {
+  const prompt = { prompt: "hello", language: "hi", style_family: "bollywood-ballad", target_duration_seconds: 60 };
+  it("accepts the /gift use_pack flag and rejects a non-boolean", () => {
+    expect(CreateSongRequestSchema.safeParse({ ...prompt, use_pack: true }).success).toBe(true);
+    expect(CreateSongRequestSchema.safeParse(prompt).success).toBe(true);
+    expect(CreateSongRequestSchema.safeParse({ ...prompt, use_pack: "yes" }).success).toBe(false);
   });
 });
