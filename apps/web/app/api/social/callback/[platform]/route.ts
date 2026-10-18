@@ -15,6 +15,7 @@ import { ADAPTERS } from "../../../../../lib/social/platforms";
 import { envWithApp, listenerSocialEnabled } from "../../../../../lib/social/listener/config";
 import { loadOwnApp, saveConnection } from "../../../../../lib/social/listener/store";
 import { siteBase } from "../../../../../lib/social/site";
+import { requireUser } from "../../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ platform:
   const code = q.get("code");
   if (st.u) {
     if (!listenerSocialEnabled()) return page("Connecting accounts is not available yet.", 404, listener);
+    // Login-CSRF guard: the signed state names who started the connect, and the browser finishing it must be that
+    // same signed-in user, or an attacker could plant a victim's callback URL and bind the victim's token to themselves.
+    const authed = await requireUser();
+    if (authed instanceof NextResponse || authed.user.id !== st.u) return page("Sign in as the account that started this connection, then try again.", 403, listener);
     if (!code) return page("The platform did not return a code (you may have cancelled).", 400, listener);
     try {
       const db = serviceClient();
