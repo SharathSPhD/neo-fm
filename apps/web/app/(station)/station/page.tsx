@@ -9,14 +9,29 @@ import { StationPlayer } from "./station-player";
 const TITLE = "Your personal 24/7 FM station";
 const DESCRIPTION = "Music tuned to your taste that never stops. Hindi, Tamil, Telugu, Kannada and Bengali first. All music is AI-generated.";
 
-// The card image comes from opengraph-image.tsx next to this file.
-export const metadata: Metadata = {
-  title: "Station",
-  description: DESCRIPTION,
-  alternates: { canonical: "/station" },
-  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
-};
+// The default card comes from opengraph-image.tsx next to this file; a named station points at its own card.
+export async function generateMetadata({ searchParams }: { searchParams?: Promise<{ s?: string }> }): Promise<Metadata> {
+  const station = findStation((await searchParams)?.s);
+  if (!station) {
+    return {
+      title: "Station",
+      description: DESCRIPTION,
+      alternates: { canonical: "/station" },
+      openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
+      twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
+    };
+  }
+  const title = `${station.name} on neo-fm Station`;
+  const description = `${station.tagline} Music tuned to your taste. All music is AI-generated.`;
+  const image = { url: `/station/og/${station.slug}`, width: 1200, height: 630, alt: title };
+  return {
+    title,
+    description,
+    alternates: { canonical: `/station?s=${station.slug}` },
+    openGraph: { title, description, type: "website", url: `/station?s=${station.slug}`, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
+  };
+}
 export const dynamic = "force-dynamic";
 
 export default async function StationPage({ searchParams }: { searchParams?: Promise<{ s?: string }> }) {
