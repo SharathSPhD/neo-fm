@@ -14,10 +14,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "neo-fm",
     short_name: "neo-fm",
     description:
-      "Your personal FM. Songs made for you in Kannada, Tamil, Telugu, Hindi and " +
-      "Bengali, with native lyrics and a pronunciation check.",
+      "Your personal 24/7 FM station. Music tuned to your taste, in Hindi, Tamil, " +
+      "Telugu, Kannada, Bengali and more. All music is AI-generated.",
     id: "/",
-    start_url: "/library",
+    start_url: "/station",
     scope: "/",
     lang: "en-IN",
     display: "standalone",
@@ -33,6 +33,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
+      { name: "Listen to your station", short_name: "Station", url: "/station", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
       { name: "Create a song", short_name: "Create", url: "/songs/new", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
       { name: "My library", short_name: "Library", url: "/library", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
     ],

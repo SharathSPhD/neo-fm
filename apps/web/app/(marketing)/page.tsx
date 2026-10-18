@@ -59,11 +59,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", languages: hreflangPaths() },
 };
 
+const WHAT = [
+  { title: "landing.what1.title", body: "landing.what1.body" },
+  { title: "landing.what2.title", body: "landing.what2.body" },
+  { title: "landing.what3.title", body: "landing.what3.body" },
+] as const;
+
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "neo-fm",
-  description: "A personal FM: songs made for you in Indian languages, with native lyrics and a pronunciation check.",
+  description: "Your personal 24/7 FM station: AI-generated music tuned to your taste, Indian languages first.",
   inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
   publisher: { "@type": "Organization", name: "Technektar" },
 };
@@ -74,6 +80,7 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
+      <WhatIs />
       <div className="mx-auto max-w-6xl px-6 pt-12">
         <SongOfTheDay />
       </div>
@@ -107,19 +114,37 @@ async function Hero() {
           {t("landing.subtitle")}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href={signedIn ? "/station" : "/sign-up?next=/songs/new"} className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
-            {signedIn ? t("landing.ctaStation") : t("landing.ctaPrimary")}
+          <Link href="/station" className="rounded-md bg-accent px-6 py-3 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+            {t("landing.ctaListen")}
           </Link>
-          {signedIn ? (
-            <Link href="/songs/new" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
-              {t("landing.ctaMake")}
-            </Link>
-          ) : null}
+          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+            {signedIn ? t("landing.ctaMake") : t("landing.ctaPrimary")}
+          </Link>
           <Link href="/discover" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             {t("landing.ctaSecondary")}
           </Link>
         </div>
+        <p className="text-xs text-foreground/60">{t("landing.notice")}</p>
         <LanguageSamples samples={samples} />
+      </div>
+    </section>
+  );
+}
+
+async function WhatIs() {
+  const { t } = await serverI18n();
+  return (
+    <section className="border-b border-muted/30" aria-labelledby="what-heading">
+      <div className="mx-auto max-w-6xl px-6 py-12">
+        <h2 id="what-heading" className="text-2xl font-semibold tracking-tight">{t("landing.whatTitle")}</h2>
+        <ul className="mt-6 grid gap-5 sm:grid-cols-3">
+          {WHAT.map((w) => (
+            <li key={w.title}>
+              <h3 className="font-medium">{t(w.title)}</h3>
+              <p className="mt-1 text-sm text-foreground/70">{t(w.body)}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

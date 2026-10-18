@@ -41,14 +41,14 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-8">
       <h1 className="text-2xl font-semibold">{track.title}</h1>
-      <p className="text-sm text-muted-foreground">AI-made music on neo-fm</p>
+      <p className="text-sm text-foreground/70">AI-made music on neo-fm</p>
       {data?.signedUrl ? (
         <audio controls preload="metadata" src={data.signedUrl} className="w-full" />
       ) : (
         <p>This song is not available right now.</p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Link href="/station" className="rounded bg-primary px-4 py-2 text-primary-foreground">
+        <Link href="/station" className="rounded bg-accent px-4 py-2 text-background">
           Tune in to your station
         </Link>
         <a

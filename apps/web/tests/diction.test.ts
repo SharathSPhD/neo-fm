@@ -79,14 +79,14 @@ import { auditDiction } from "../lib/diction/gemini";
 
 describe("gemini diction audit", () => {
   it("scores the transcript returned by the model", async () => {
-    const fake = (async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify({ transcript: "alpha beta\ngamma delta" }) }] } }] }), { status: 200 })) as unknown as typeof fetch;
+    const fake = (async () => new Response(JSON.stringify({ id: "i1", status: "completed", steps: [{ type: "model_output", content: [{ type: "text", text: JSON.stringify({ transcript: "alpha beta\ngamma delta" }) }] }] }), { status: 200, headers: { "content-type": "application/json" } })) as unknown as typeof fetch;
     const r = await auditDiction("alpha beta\ngamma delta", new Uint8Array([1, 2, 3]), "audio/mpeg", "English", "k", fake);
     expect(r.matchPct).toBe(100);
     expect(r.transcript).toContain("gamma");
   });
   it("surfaces API failures", async () => {
-    const bad = (async () => new Response("nope", { status: 500 })) as unknown as typeof fetch;
-    await expect(auditDiction("a", new Uint8Array(), "audio/mpeg", "x", "k", bad)).rejects.toThrow(/gemini qa 500/);
+    const bad = (async () => new Response("nope", { status: 500, headers: { "content-type": "application/json" } })) as unknown as typeof fetch;
+    await expect(auditDiction("a", new Uint8Array(), "audio/mpeg", "x", "k", bad)).rejects.toThrow(/500/);
   });
 });
 

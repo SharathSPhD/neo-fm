@@ -26,8 +26,9 @@ test("landing page leads with the personal station", async ({ page }) => {
 
   // Hard-coded substrings are intentional: the station framing is the
   // product, so a quiet edit that loses it should fail loudly.
-  await expect(h1).toContainText(/your own FM/i, { timeout: 10_000 });
-  await expect(h1).toContainText(/made for you/i);
+  await expect(h1).toContainText(/personal 24\/7 FM station/i, { timeout: 10_000 });
+  await expect(page.getByRole("link", { name: /listen now/i })).toHaveAttribute("href", "/station");
+  await expect(page.getByText(/AI-generated.*18/i)).toBeVisible();
 });
 
 test("landing page shows how it works and the supported languages", async ({ page }) => {
