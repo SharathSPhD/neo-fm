@@ -8,6 +8,7 @@
  */
 import Link from "next/link";
 
+import { BrandMark } from "@/components/brand-mark";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { serverI18n } from "@/lib/i18n/server";
 
@@ -20,15 +21,9 @@ export async function MarketingNav({
 }) {
   const { t } = await serverI18n();
   return (
-    <header className="border-b border-muted/30">
+    <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
-        <Link
-          href="/"
-          aria-label={t("nav.home")}
-          className="text-lg font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
-        >
-          neo-fm
-        </Link>
+        <BrandMark label={t("nav.home")} />
         <nav aria-label="Primary" className="flex items-center gap-1 text-sm sm:gap-3">
           {showSubLinks && (
             <>
@@ -62,7 +57,7 @@ export async function MarketingNav({
           {isSignedIn ? (
             <Link
               href="/library"
-              className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               {t("nav.library")}
             </Link>
@@ -70,13 +65,13 @@ export async function MarketingNav({
             <>
               <Link
                 href="/sign-in"
-                className="rounded-md border border-muted/40 px-3 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="whitespace-nowrap rounded-full border border-muted/40 px-3.5 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
-                className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t("nav.getStarted")}
               </Link>
