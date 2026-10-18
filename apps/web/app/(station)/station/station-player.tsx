@@ -339,9 +339,9 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           {anonymous && played >= NUDGE_AFTER ? (
             <div className="flex flex-col gap-2 rounded border border-accent/40 bg-accent/10 p-3 text-sm">
               <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
-              <div className="flex gap-3">
-                <a href="/sign-up?next=%2Fstation" className="rounded bg-accent px-3 py-1 text-background">Sign up free</a>
-                <a href="/sign-in?next=%2Fstation" className="px-1 py-1 underline">Sign in</a>
+              <div className="flex flex-wrap items-center gap-3">
+                <a href="/sign-up?next=%2Fstation" className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-background hover:bg-accent/90">Sign up free</a>
+                <a href="/sign-in?next=%2Fstation" className="inline-flex min-h-[44px] items-center px-2 underline">Sign in</a>
               </div>
             </div>
           ) : null}
