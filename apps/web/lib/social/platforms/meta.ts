@@ -28,7 +28,15 @@ async function exchange(code: string, redirectUri: string, env: NodeJS.ProcessEn
     "meta pages",
   );
   const want = (env.META_PAGE_ID ?? "").trim();
-  const page = pages.data.find((p) => (want ? p.id === want : true));
+  let page = pages.data.find((p) => (want ? p.id === want : true));
+  if (!page && want) {
+    // Business-portfolio Pages are not always listed by /me/accounts; ask for the configured Page directly.
+    const direct = await f(`${GRAPH}/${encodeURIComponent(want)}?${q({ fields: "id,name,access_token,instagram_business_account", access_token: long.access_token })}`);
+    if (direct.ok) {
+      const d = (await direct.json()) as { id?: string; name?: string; access_token?: string; instagram_business_account?: { id: string } };
+      if (d.id && d.access_token) page = { id: d.id, name: d.name ?? "Page", access_token: d.access_token, instagram_business_account: d.instagram_business_account };
+    }
+  }
   if (!page) throw new PlatformError("meta: no Facebook Page found for this login (create the Page and make this user an admin)", true);
   return {
     label: `${page.name}${page.instagram_business_account ? " + Instagram" : ""}`,
