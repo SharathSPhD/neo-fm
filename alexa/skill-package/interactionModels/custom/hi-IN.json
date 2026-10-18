@@ -1,0 +1,175 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "नियो एफ़एम",
+      "intents": [
+        {
+          "name": "AMAZON.PauseIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ResumeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": [
+            "अगला",
+            "अगला गाना",
+            "स्किप करो",
+            "दूसरा गाना चलाओ"
+          ]
+        },
+        {
+          "name": "AMAZON.PreviousIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.LoopOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.LoopOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.RepeatIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StartOverIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "PlayStationIntent",
+          "slots": [
+            {
+              "name": "language",
+              "type": "StationLanguage"
+            }
+          ],
+          "samples": [
+            "{language} गाने चलाओ",
+            "{language} गाने सुनाओ",
+            "{language} संगीत चलाओ",
+            "{language} चलाओ"
+          ]
+        },
+        {
+          "name": "LikeIntent",
+          "slots": [],
+          "samples": [
+            "मुझे यह पसंद है",
+            "ऐसे ही और गाने",
+            "ऐसा ही और चलाओ"
+          ]
+        },
+        {
+          "name": "CalmerIntent",
+          "slots": [],
+          "samples": [
+            "कुछ धीमा चलाओ",
+            "धीमे गाने चलाओ",
+            "थोड़ा धीमा करो"
+          ]
+        },
+        {
+          "name": "LivelierIntent",
+          "slots": [],
+          "samples": [
+            "कुछ तेज़ चलाओ",
+            "तेज़ गाने चलाओ",
+            "थोड़ा तेज़ करो"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "StationLanguage",
+          "values": [
+            {
+              "id": "hi",
+              "name": {
+                "value": "hindi",
+                "synonyms": [
+                  "हिंदी",
+                  "हिन्दी"
+                ]
+              }
+            },
+            {
+              "id": "ta",
+              "name": {
+                "value": "tamil",
+                "synonyms": [
+                  "तमिल"
+                ]
+              }
+            },
+            {
+              "id": "te",
+              "name": {
+                "value": "telugu",
+                "synonyms": [
+                  "तेलुगु"
+                ]
+              }
+            },
+            {
+              "id": "kn",
+              "name": {
+                "value": "kannada",
+                "synonyms": [
+                  "कन्नड़"
+                ]
+              }
+            },
+            {
+              "id": "bn",
+              "name": {
+                "value": "bengali",
+                "synonyms": [
+                  "bangla",
+                  "बंगाली"
+                ]
+              }
+            },
+            {
+              "id": "en",
+              "name": {
+                "value": "english",
+                "synonyms": [
+                  "अंग्रेज़ी"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

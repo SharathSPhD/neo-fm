@@ -39,6 +39,7 @@ describe("pickRule", () => {
     ["/api/station/ad-event", "station:ad-event", 60],
     ["/api/station/signal", "station:signal", 90],
     ["/api/station/signal/", "station:signal", 90],
+    ["/api/alexa", "alexa:skill", 600],
     ["/api/p/abc/audio-url", "public:read", 120],
     ["/api/p/abc", "public:read", 120],
     ["/api/p/abc/listen", "public:listen", 30],
