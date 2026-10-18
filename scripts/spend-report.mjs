@@ -86,6 +86,9 @@ export function renderMarkdown({ now, since, cost, tokens, ledger, notes }) {
     L.push(`## Billed (Admin API cost_report)`, ``);
     L.push(`- Spent: **${usd(cost.total)}** (${((cost.total / BUDGET_USD) * 100).toFixed(1)}% of budget)`);
     L.push(`- Remaining: **${usd(left)}** with ${p.daysLeft.toFixed(0)} days to go`);
+    const cut = now.getTime() - 7 * 864e5;
+    const last7 = [...cost.byDay].filter(([d]) => new Date(d).getTime() + 864e5 > cut).reduce((a, [, v]) => a + v, 0);
+    L.push(`- Last 7 days: **${usd(last7)}** (${usd(last7 / 7)}/day)`);
     L.push(`- Burn: ${usd(p.daily)}/day, projected total at end date ${usd(p.projected)}${p.projected > BUDGET_USD ? " **(over budget)**" : ""}`, ``);
     L.push(`| Bucket | Allocation | Note |`, `|---|---|---|`);
     for (const [k, v] of Object.entries(SPLIT_USD)) L.push(`| ${k} | ${usd(v)} | per-bucket spend is not separable without separate workspaces or keys |`);
