@@ -792,7 +792,7 @@ export const ta: Dict = {
   "clip.download": "கிளிப்பைப் பதிவிறக்கு",
   "clip.failed": "கிளிப்பை உருவாக்க முடியவில்லை. மீண்டும் முயலவும்.",
   "clip.unsupported": "இந்த உலாவியில் கிளிப் பதிவு செய்ய முடியாது. போனில் Chrome அல்லது Safari முயலவும்.",
-  "clip.webmNote": "இந்த உலாவி WebM கோப்பைச் சேமித்தது. Instagram அல்லது WhatsApp ஏற்கவில்லை என்றால், Android-ல் Chrome அல்லது iPhone-ல் Safari முயலவும்.",
+  "clip.compatNote": "இந்த உலாவியால் Instagram-க்குத் தயாரான MP4 உருவாக்க முடியவில்லை. Instagram அல்லது WhatsApp இந்தக் கோப்பை ஏற்கவில்லை என்றால், Android-ல் Chrome அல்லது iPhone-ல் Safari முயலவும்.",
   "clip.for": "{to}-க்கு",
   "profile.shareProfile": "சுயவிவரத்தைப் பகிர்",
   "profile.linkCopied": "இணைப்பு நகலெடுக்கப்பட்டது",

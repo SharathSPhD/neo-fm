@@ -792,7 +792,7 @@ export const bn: Dict = {
   "clip.download": "ক্লিপ ডাউনলোড করুন",
   "clip.failed": "ক্লিপ বানানো গেল না। আবার চেষ্টা করুন।",
   "clip.unsupported": "এই ব্রাউজার ক্লিপ রেকর্ড করতে পারে না। ফোনে Chrome বা Safari চেষ্টা করুন।",
-  "clip.webmNote": "এই ব্রাউজার WebM ফাইল সেভ করেছে। Instagram বা WhatsApp না নিলে Android-এ Chrome বা iPhone-এ Safari চেষ্টা করুন।",
+  "clip.compatNote": "এই ব্রাউজার Instagram-উপযোগী MP4 বানাতে পারেনি। Instagram বা WhatsApp এই ফাইল না নিলে Android-এ Chrome বা iPhone-এ Safari চেষ্টা করুন।",
   "clip.for": "{to}-এর জন্য",
   "profile.shareProfile": "প্রোফাইল শেয়ার করুন",
   "profile.linkCopied": "লিংক কপি হয়েছে",

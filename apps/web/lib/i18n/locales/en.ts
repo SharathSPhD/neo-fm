@@ -790,7 +790,7 @@ export const en = {
   "clip.download": "Download clip",
   "clip.failed": "Could not make the clip. Please try again.",
   "clip.unsupported": "This browser cannot record clips. Try Chrome or Safari on your phone.",
-  "clip.webmNote": "This browser saved a WebM file. If Instagram or WhatsApp will not take it, try Chrome on Android or Safari on iPhone.",
+  "clip.compatNote": "This browser could not make an Instagram-ready MP4. If Instagram or WhatsApp will not take this file, try Chrome on Android or Safari on iPhone.",
   "clip.for": "For {to}",
   "profile.shareProfile": "Share profile",
   "profile.linkCopied": "Link copied",

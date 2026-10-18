@@ -36,7 +36,7 @@ export function ClipExportButton({
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [clip, setClip] = useState<{ file: File; url: string; ext: string } | null>(null);
+  const [clip, setClip] = useState<{ file: File; url: string; safe: boolean } | null>(null);
   const abort = useRef<AbortController | null>(null);
 
   const lines = useMemo(
@@ -58,6 +58,9 @@ export function ClipExportButton({
 
   async function make() {
     if (busy) return;
+    // Created inside the tap, before any await: iOS Safari keeps a context made later suspended.
+    const audioContext = new AudioContext({ sampleRate: 48000 });
+    void audioContext.resume();
     setBusy(true);
     setError(null);
     setProgress(0);
@@ -74,11 +77,12 @@ export function ClipExportButton({
         to: to.trim() ? t("clip.for", { to: to.trim() }) : null,
         message: message.trim() || null,
         seed: songId,
+        audioContext,
         onProgress: setProgress,
         signal: abort.current.signal,
       });
       const file = new File([out.blob], `${title.replace(/[^\p{L}\p{N}]+/gu, "-").slice(0, 40) || "neo-fm"}.${out.ext}`, { type: out.blob.type });
-      setClip({ file, url: URL.createObjectURL(out.blob), ext: out.ext });
+      setClip({ file, url: URL.createObjectURL(out.blob), safe: out.instagramSafe });
     } catch (e) {
       if ((e as Error).name !== "AbortError") {
         setError((e as Error).message === "recorder_unsupported" ? t("clip.unsupported") : t("clip.failed"));
@@ -156,7 +160,7 @@ export function ClipExportButton({
           </>
         ) : null}
       </div>
-      {clip?.ext === "webm" ? <p className="text-[10px] text-foreground/50">{t("clip.webmNote")}</p> : null}
+      {clip && !clip.safe ? <p className="text-[10px] text-foreground/50">{t("clip.compatNote")}</p> : null}
     </div>
   );
 }

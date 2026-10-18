@@ -792,7 +792,7 @@ export const kn: Dict = {
   "clip.download": "ಕ್ಲಿಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
   "clip.failed": "ಕ್ಲಿಪ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "clip.unsupported": "ಈ ಬ್ರೌಸರ್ ಕ್ಲಿಪ್ ರೆಕಾರ್ಡ್ ಮಾಡಲಾಗದು. ಫೋನ್‌ನಲ್ಲಿ Chrome ಅಥವಾ Safari ಪ್ರಯತ್ನಿಸಿ.",
-  "clip.webmNote": "ಈ ಬ್ರೌಸರ್ WebM ಫೈಲ್ ಉಳಿಸಿದೆ. Instagram ಅಥವಾ WhatsApp ಸ್ವೀಕರಿಸದಿದ್ದರೆ, Android ನಲ್ಲಿ Chrome ಅಥವಾ iPhone ನಲ್ಲಿ Safari ಪ್ರಯತ್ನಿಸಿ.",
+  "clip.compatNote": "ಈ ಬ್ರೌಸರ್ Instagram-ಸಿದ್ಧ MP4 ಮಾಡಲಾಗಲಿಲ್ಲ. Instagram ಅಥವಾ WhatsApp ಈ ಫೈಲ್ ಸ್ವೀಕರಿಸದಿದ್ದರೆ, Android ನಲ್ಲಿ Chrome ಅಥವಾ iPhone ನಲ್ಲಿ Safari ಪ್ರಯತ್ನಿಸಿ.",
   "clip.for": "{to} ಅವರಿಗಾಗಿ",
   "profile.shareProfile": "ಪ್ರೊಫೈಲ್ ಹಂಚಿಕೊಳ್ಳಿ",
   "profile.linkCopied": "ಲಿಂಕ್ ನಕಲಾಗಿದೆ",

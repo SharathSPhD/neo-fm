@@ -792,7 +792,7 @@ export const te: Dict = {
   "clip.download": "క్లిప్ డౌన్‌లోడ్ చేయండి",
   "clip.failed": "క్లిప్ తయారు కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.",
   "clip.unsupported": "ఈ బ్రౌజర్ క్లిప్‌లను రికార్డ్ చేయలేదు. ఫోన్‌లో Chrome లేదా Safari ప్రయత్నించండి.",
-  "clip.webmNote": "ఈ బ్రౌజర్ WebM ఫైల్‌ను సేవ్ చేసింది. Instagram లేదా WhatsApp తీసుకోకపోతే, Androidలో Chrome లేదా iPhoneలో Safari ప్రయత్నించండి.",
+  "clip.compatNote": "ఈ బ్రౌజర్ Instagram-సిద్ధ MP4 తయారు చేయలేకపోయింది. Instagram లేదా WhatsApp ఈ ఫైల్ తీసుకోకపోతే, Androidలో Chrome లేదా iPhoneలో Safari ప్రయత్నించండి.",
   "clip.for": "{to} కోసం",
   "profile.shareProfile": "ప్రొఫైల్ షేర్ చేయండి",
   "profile.linkCopied": "లింక్ కాపీ అయింది",
