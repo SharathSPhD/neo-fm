@@ -51,7 +51,10 @@ export function StationPlayer() {
   const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
     try {
-      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
+      // The server programs by the listener's own clock; fall back silently if the browser will not say.
+      let tz = "";
+      try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone ?? ""; } catch { /* no Intl: server falls back to India time */ }
+      const qs = `limit=10${tz ? `&tz=${encodeURIComponent(tz)}` : ""}${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
       const res = await fetch(`/api/station/queue?${qs}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
