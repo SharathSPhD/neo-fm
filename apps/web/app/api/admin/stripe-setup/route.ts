@@ -2,7 +2,7 @@
  * /api/admin/stripe-setup -- Stripe test-mode bootstrap. Auth: Bearer CRON_SECRET / AGENT_TICK_SECRET.
  *   GET   -> { mode: "test" | "live" | "missing" } (never echoes the key)
  *   POST  -> in TEST mode only: ensures Creator/Pro products + monthly INR and USD prices exist (idempotent by lookup_key)
- *            plus yearly INR prices (10 x monthly, 2 months free) and the one-off gift-song packs, and returns the
+ *            plus the monthly INR station pass (STRIPE_PRICE_STATION_PASS_ID), yearly INR prices (10 x monthly, 2 months free) and the one-off gift-song packs, and returns the
  *            price ids (not secrets). Refuses in live mode.
  */
 import { NextResponse, type NextRequest } from "next/server";
@@ -27,6 +27,9 @@ const PACKS = [
   { sku: "three", name: "neo-fm Gift Song x3", inr: 24900 },
 ] as const;
 
+// Station pass: monthly INR, test mode only (this route refuses live keys). Working price; S sets the final one.
+const STATION_PASS = { name: "neo-fm Station Pass", inr: 14900 } as const;
+
 export async function GET(req: NextRequest) {
   const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -35,7 +38,7 @@ export async function GET(req: NextRequest) {
     mode: mode(key),
     has_webhook_secret: Boolean(process.env.STRIPE_WEBHOOK_SECRET),
     has_publishable: Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY),
-    has_price_ids: { creator: Boolean(process.env.STRIPE_PRICE_CREATOR_ID), pro: Boolean(process.env.STRIPE_PRICE_PRO_ID), creator_annual: Boolean(process.env.STRIPE_PRICE_CREATOR_ANNUAL_ID), pro_annual: Boolean(process.env.STRIPE_PRICE_PRO_ANNUAL_ID), pack_single: Boolean(process.env.STRIPE_PRICE_PACK_SINGLE_ID), pack_three: Boolean(process.env.STRIPE_PRICE_PACK_THREE_ID) },
+    has_price_ids: { creator: Boolean(process.env.STRIPE_PRICE_CREATOR_ID), pro: Boolean(process.env.STRIPE_PRICE_PRO_ID), creator_annual: Boolean(process.env.STRIPE_PRICE_CREATOR_ANNUAL_ID), pro_annual: Boolean(process.env.STRIPE_PRICE_PRO_ANNUAL_ID), pack_single: Boolean(process.env.STRIPE_PRICE_PACK_SINGLE_ID), pack_three: Boolean(process.env.STRIPE_PRICE_PACK_THREE_ID), station_pass: Boolean(process.env.STRIPE_PRICE_STATION_PASS_ID) },
   });
 }
 
@@ -65,5 +68,10 @@ export async function POST(req: NextRequest) {
     const price = existing.data[0] ?? (await stripe.prices.create({ product: product.id, currency: "inr", unit_amount: k.inr, lookup_key }));
     packs[k.sku] = { product: product.id, inr: price.id };
   }
-  return NextResponse.json({ mode: "test", prices: out, packs });
+  const passFound = await stripe.products.search({ query: "metadata['neofm_pass']:'station'" });
+  const passProduct = passFound.data[0] ?? (await stripe.products.create({ name: STATION_PASS.name, metadata: { neofm_pass: "station" } }));
+  const passKey = "neofm_station_pass_inr_monthly";
+  const passExisting = await stripe.prices.list({ lookup_keys: [passKey], limit: 1 });
+  const passPrice = passExisting.data[0] ?? (await stripe.prices.create({ product: passProduct.id, currency: "inr", unit_amount: STATION_PASS.inr, recurring: { interval: "month" }, lookup_key: passKey }));
+  return NextResponse.json({ mode: "test", prices: out, packs, station_pass: { product: passProduct.id, inr: passPrice.id } });
 }
