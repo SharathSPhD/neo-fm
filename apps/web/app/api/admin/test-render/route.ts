@@ -14,6 +14,7 @@ import { estimatedCostGbp, generateMusic, type SpendGuard } from "../../../../li
 import { dictionHints } from "../../../../lib/diction";
 import { ROMAN_HINT, singingScript } from "../../../../lib/diction/romanize";
 import { renderCap, validateItems } from "../../../../lib/admin/test-render";
+import { getLogger } from "../../../../lib/obs/log";
 import { screenRequest } from "../../../../lib/safety";
 
 export const dynamic = "force-dynamic";
@@ -59,10 +60,13 @@ export async function POST(req: NextRequest) {
     }
   }));
   const ok = results.filter((r) => "url" in r).length;
+  const est_cost_gbp = Math.round(ok * estimatedCostGbp("full") * 100) / 100;
+  // No ledger row backs these renders, so the log line is the only record of what an operator spent.
+  getLogger("/api/admin/test-render", req).info("admin_test_render", { requested: v.items.length, renders_ok: ok, est_cost_gbp, labels: v.items.map((i) => i.label) });
   return NextResponse.json({
     results,
     renders_ok: ok,
-    est_cost_gbp: Math.round(ok * estimatedCostGbp("full") * 100) / 100,
+    est_cost_gbp,
     cost_basis: "estimate (LYRIA_COST_GBP_FULL, default 0.25), not Google billing",
   });
 }
