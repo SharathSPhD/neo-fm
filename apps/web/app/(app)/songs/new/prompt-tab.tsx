@@ -1,5 +1,6 @@
 "use client";
 
+import type { Language } from "@neo-fm/song-doc";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -22,7 +23,6 @@ type StyleFamily =
   | "bengali-rabindrasangeet"
   | "telugu-keerthana";
 
-type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 type Duration = 30 | 60 | 90 | 180;
 
 const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
@@ -54,13 +54,17 @@ const DURATION_OPTIONS: Duration[] = [30, 60, 90, 180];
 const DEFAULT_STYLE: Record<Language, StyleFamily> = {
   hi: "bollywood-ballad", kn: "kannada-light-classical", ta: "tamil-folk", te: "telugu-keerthana",
   bn: "bengali-rabindrasangeet", sa: "sanskrit-shloka", en: "western",
+  // Expansion languages have no style family of their own yet; these are the closest existing ones (placeholder until
+  // the council's per-language genres become style presets).
+  mr: "bollywood-ballad", pa: "bollywood-ballad", gu: "bollywood-ballad", bho: "bollywood-ballad",
+  ml: "carnatic", or: "hindustani", ur: "hindustani", as: "hindustani",
 };
 
 const PROMPT_MAX_CHARS = 500;
 
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: boolean; initialIdea?: { prompt: string; language: Language } }) {
+export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [] }: { showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
   // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
@@ -257,6 +261,11 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
             {LANGUAGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
+              </option>
+            ))}
+            {extraLanguages.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.name}
               </option>
             ))}
           </select>

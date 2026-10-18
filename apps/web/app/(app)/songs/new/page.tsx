@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ideaById } from "@/lib/ideas/catalog";
 import { serverI18n } from "@/lib/i18n/server";
+import { enabledExpansionLanguages } from "@/lib/languages/registry";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { CreationCanvas } from "./creation-canvas";
@@ -39,7 +40,7 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
           {t("gift.cta")}
         </Link>
       </header>
-      <CreationCanvas firstRun={firstRun} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
+      <CreationCanvas firstRun={firstRun} extraLanguages={enabledExpansionLanguages(process.env.LANG_WAVES).map(({ code, name }) => ({ code, name }))} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>
   );
 }

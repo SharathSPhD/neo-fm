@@ -16,6 +16,7 @@
  * Admission is the diction gate: pool_tracks only accepts status=admitted at U >= 80 and verdict pass, and
  * admit_pool_track() is the only path in. Tracks that fail stay as `rejected` rows so they are not re-scored.
  */
+import { EXPANSION_LANGUAGES } from "@/lib/languages/registry";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
@@ -33,7 +34,7 @@ export const maxDuration = 300;
 
 const SOURCES = ["prod_job", "eval_render", "new_render"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const INDIC = ["hi", "ta", "te", "kn", "bn"];
+const INDIC = ["hi", "ta", "te", "kn", "bn", ...EXPANSION_LANGUAGES.map((l) => l.code as string)];
 type Db = ReturnType<typeof serviceClient>;
 
 interface FileMeta {

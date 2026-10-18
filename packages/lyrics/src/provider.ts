@@ -55,6 +55,15 @@ const DEFAULT_SCRIPT_BY_LANGUAGE: Record<Language, Script> = {
   bn: "bengali",
   // Sanskrit is canonically rendered in Devanagari; see ADR 0026.
   sa: "devanagari",
+  // Language expansion: Assamese is written in the Bengali-Assamese script, Bhojpuri in Devanagari.
+  mr: "devanagari",
+  pa: "gurmukhi",
+  gu: "gujarati",
+  ml: "malayalam",
+  bho: "devanagari",
+  or: "odia",
+  ur: "arabic",
+  as: "bengali",
 };
 
 export interface PublicLyricsLibraryProviderOptions {

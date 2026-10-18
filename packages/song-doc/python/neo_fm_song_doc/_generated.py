@@ -22,7 +22,7 @@ class Section(BaseModel):
     id: str = Field(min_length=1, max_length=64)
     type: Literal['intro', 'verse', 'chorus', 'bridge', 'outro', 'pallavi', 'anupallavi', 'charanam', 'mukhda', 'antara', 'saranam', 'alaap', 'sargam', 'folk_refrain', 'folk_stanza', 'shloka_verse', 'shloka_refrain', 'phalashruti']
     lyrics: str | None = Field(default=None, max_length=1000)
-    script: Literal['latin', 'devanagari', 'tamil', 'kannada', 'telugu', 'bengali'] | None = None
+    script: Literal['latin', 'devanagari', 'tamil', 'kannada', 'telugu', 'bengali', 'gurmukhi', 'gujarati', 'malayalam', 'odia', 'arabic'] | None = None
     transliteration: str | None = None
     swara_sequence: str | None = None
     phonemes: list[str] | None = None
@@ -66,7 +66,7 @@ class _SongDocumentBase(BaseModel):
     id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
     user_id: str | None = Field(default=None, pattern=r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
     title: str | None = Field(default=None, min_length=1, max_length=120)
-    language: Literal['en', 'hi', 'kn', 'ta', 'bn', 'te', 'sa']
+    language: Literal['en', 'hi', 'kn', 'ta', 'bn', 'te', 'sa', 'mr', 'pa', 'gu', 'ml', 'bho', 'or', 'ur', 'as']
     style_family: Literal['western', 'carnatic', 'hindustani', 'kannada-folk', 'kannada-light-classical', 'tamil-folk', 'bollywood-ballad', 'sanskrit-shloka', 'bengali-rabindrasangeet', 'telugu-keerthana']
     tempo_bpm: int | None = Field(default=None, ge=30, le=240)
     time_signature: str | None = None

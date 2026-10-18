@@ -10,7 +10,13 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 // presets that Sprint 6 + Sprint 14 ship. Adding them at the schema
 // level (not just metadata) keeps the co-composer + lyric-provider +
 // G2P routing aligned to the same language tag.
-export const LanguageSchema = z.enum(["en", "hi", "kn", "ta", "bn", "te", "sa"]);
+//
+// Language expansion (strategy/language-expansion.md): mr/pa/gu/ml (wave 1),
+// bho/or/ur (wave 2) and as (wave 3). The schema accepts them so the type is
+// complete, but routes must check `isEnabledLanguage` (apps/web/lib/languages)
+// because the Postgres language_enum only gains them once the expansion
+// migration is applied.
+export const LanguageSchema = z.enum(["en", "hi", "kn", "ta", "bn", "te", "sa", "mr", "pa", "gu", "ml", "bho", "or", "ur", "as"]);
 export type Language = z.infer<typeof LanguageSchema>;
 
 // v1.3 Sprint 2: split the misclassified bhavageete and Tamil-folk
@@ -79,6 +85,12 @@ export const ScriptSchema = z.enum([
   "kannada",
   "telugu",
   "bengali",
+  // Language expansion scripts (Assamese reuses "bengali").
+  "gurmukhi",
+  "gujarati",
+  "malayalam",
+  "odia",
+  "arabic",
 ]);
 export type Script = z.infer<typeof ScriptSchema>;
 
