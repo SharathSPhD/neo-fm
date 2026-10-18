@@ -19,6 +19,8 @@ export const PUBLIC_PATHS = [
   { path: "/ideas", changeFrequency: "monthly", priority: 0.7 },
   { path: "/trust", changeFrequency: "monthly", priority: 0.6 },
   { path: "/help", changeFrequency: "monthly", priority: 0.5 },
+  { path: "/ai-disclosure", changeFrequency: "yearly", priority: 0.3 },
+  { path: "/grievance", changeFrequency: "yearly", priority: 0.2 },
   { path: "/terms", changeFrequency: "yearly", priority: 0.2 },
   { path: "/privacy", changeFrequency: "yearly", priority: 0.2 },
 ] as const;
