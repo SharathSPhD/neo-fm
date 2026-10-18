@@ -7,10 +7,13 @@
 --
 -- Adding a parameter creates a new overload, so the 7-argument version is dropped first (two overloads would make
 -- PostgREST rpc() calls ambiguous). Grants are restated: authenticated may call it, anon and public may not.
--- A credit spent on a job that later fails is not refunded here (follow-up).
+-- A credit spent on a job that later ends 'failed' with no audio is returned by a trigger, at most once per job
+-- (jobs.pack_refunded_at). There is no 'cancelled' status in job_status_enum; failed is the only terminal non-success.
+-- A user who retries a refunded job through recover_song_job gets that attempt without a new charge.
 
 alter table public.jobs
-  add column if not exists pack_id uuid references public.song_packs(id) on delete set null;
+  add column if not exists pack_id uuid references public.song_packs(id) on delete set null,
+  add column if not exists pack_refunded_at timestamptz;
 
 drop function if exists public.create_song_job(
   jsonb, public.language_enum, public.style_family_enum, integer, integer, uuid, text);
@@ -158,3 +161,31 @@ grant execute on function public.create_song_job(jsonb, public.language_enum, pu
 
 comment on function public.create_song_job(jsonb, public.language_enum, public.style_family_enum, integer, integer, uuid, text, boolean) is
   'SECURITY DEFINER -- the only path that can insert into public.jobs. Per-user advisory lock + monthly quota (or one gift-pack credit when p_use_pack) + concurrent cap + storage check. ADR 0008 / 0021; migration 0090.';
+
+create or replace function public.refund_pack_credit_on_failure()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  -- Idempotent: the WHEN clause admits only the first transition to failed, and pack_refunded_at stops a second refund
+  -- if the job is retried and fails again. Jobs that produced a track keep their credit spent.
+  if exists (select 1 from public.tracks where job_id = new.id) then
+    return null;
+  end if;
+  update public.song_packs set songs_used = greatest(songs_used - 1, 0) where id = new.pack_id;
+  update public.jobs set pack_refunded_at = now() where id = new.id;
+  return null;
+end;
+$$;
+
+revoke execute on function public.refund_pack_credit_on_failure() from public, anon, authenticated;
+
+drop trigger if exists jobs_refund_pack_credit on public.jobs;
+create trigger jobs_refund_pack_credit
+  after update of status on public.jobs
+  for each row
+  when (new.status = 'failed' and old.status is distinct from 'failed'
+        and new.pack_id is not null and new.pack_refunded_at is null)
+  execute function public.refund_pack_credit_on_failure();
