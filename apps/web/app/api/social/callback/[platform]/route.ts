@@ -20,7 +20,8 @@ const page = (msg: string, status = 200) =>
     headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" },
   });
 
-export async function GET(req: NextRequest, { params }: { params: { platform: string } }) {
+export async function GET(req: NextRequest, props: { params: Promise<{ platform: string }> }) {
+  const params = await props.params;
   if (!isPlatform(params.platform)) return page("Unknown platform.", 404);
   const q = req.nextUrl.searchParams;
   const secret = cleanSecret(process.env.ADMIN_SECRET) || cleanSecret(process.env.CRON_SECRET);

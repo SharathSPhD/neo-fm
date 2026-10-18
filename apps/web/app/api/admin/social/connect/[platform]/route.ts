@@ -9,7 +9,8 @@ import { siteBase } from "../../../../../../lib/social/site";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest, { params }: { params: { platform: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ platform: string }> }) {
+  const params = await props.params;
   if (!checkAdminBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!isPlatform(params.platform)) return NextResponse.json({ error: "unknown platform" }, { status: 404 });
   const adapter = ADAPTERS[params.platform];
