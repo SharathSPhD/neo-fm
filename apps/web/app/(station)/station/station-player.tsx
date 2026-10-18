@@ -239,7 +239,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           type="button"
           aria-pressed={moods.includes(m)}
           onClick={() => setMoods((cur) => toggleMood(cur, m))}
-          className={`rounded-full border px-3 py-1 text-sm ${moods.includes(m) ? "bg-primary text-primary-foreground" : ""}`}
+          className={`rounded-full border px-3 py-1 text-sm ${moods.includes(m) ? "bg-accent text-background" : ""}`}
         >
           {m}
         </button>
@@ -253,7 +253,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     return (
       <section aria-label="Set up your station" className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">What do you want to hear?</h2>
-        <p className="text-sm text-muted-foreground">Pick a language and up to two moods. You can change them any time.</p>
+        <p className="text-sm text-foreground/70">Pick a language and up to two moods. You can change them any time.</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button
@@ -261,14 +261,14 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
               type="button"
               aria-pressed={lang === l}
               onClick={() => setLang(l)}
-              className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-primary text-primary-foreground" : ""}`}
+              className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
             >
               {l || "All"}
             </button>
           ))}
         </div>
         {moodChips}
-        <button type="button" onClick={() => setOnboarded(true)} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
+        <button type="button" onClick={() => setOnboarded(true)} className="self-start rounded bg-accent px-4 py-2 text-background">
           Start my station
         </button>
       </section>
@@ -285,7 +285,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             type="button"
             aria-pressed={lang === l}
             onClick={() => setLang(l)}
-            className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-primary text-primary-foreground" : ""}`}
+            className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
           >
             {l || "All"}
           </button>
@@ -298,9 +298,9 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
-          {hostLine ? <p role="status" className="text-sm italic text-muted-foreground">{hostLine}</p> : null}
+          {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
           <p className="text-lg font-medium">{current.title}</p>
-          <p className="text-xs text-muted-foreground">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
+          <p className="text-xs text-foreground/70">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
           <audio
             ref={audioRef}
             controls
@@ -312,7 +312,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           />
           {queue[1] ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
-            <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-primary px-3 py-2 text-primary-foreground">
+            <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-accent px-3 py-2 text-background">
               Tap to play
             </button>
           ) : null}
@@ -332,15 +332,15 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
             <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
-            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-primary text-primary-foreground" : ""}`}>Calmer</button>
-            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>Calmer</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>Livelier</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {anonymous && played >= NUDGE_AFTER ? (
-            <div className="flex flex-col gap-2 rounded border border-primary/40 bg-primary/5 p-3 text-sm">
+            <div className="flex flex-col gap-2 rounded border border-accent/40 bg-accent/10 p-3 text-sm">
               <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
               <div className="flex gap-3">
-                <a href="/sign-up?next=%2Fstation" className="rounded bg-primary px-3 py-1 text-primary-foreground">Sign up free</a>
+                <a href="/sign-up?next=%2Fstation" className="rounded bg-accent px-3 py-1 text-background">Sign up free</a>
                 <a href="/sign-in?next=%2Fstation" className="px-1 py-1 underline">Sign in</a>
               </div>
             </div>
