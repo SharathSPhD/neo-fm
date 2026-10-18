@@ -13,6 +13,9 @@ export interface PoolTrack {
   energy?: "low" | "mid" | "high" | null;
   /** Parts of the day the tagger says this track suits (pool_tracks.daypart); absent or empty means "derive it from tags". */
   daypart?: readonly string[];
+  /** Migration 0100: instrumentals ('zxx', no vocals) are language-neutral. Absent means vocal. */
+  kind?: "vocal" | "instrumental";
+  durationSeconds?: number | null;
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { sendFunnelEvent } from "@/components/funnel-beacon";
+import { canSetVolume, rampVolume } from "@/lib/station/fade";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
@@ -24,6 +25,9 @@ interface Track {
   /** Templated host line from the queue API; shown as text on some track changes. */
   host?: string;
   durationSeconds?: number;
+  /** Sets (lib/station/sets.ts, STATION_SETS=1): crossfade hints for tracks inside a block of same-language tracks. */
+  fadeInMs?: number;
+  fadeOutMs?: number;
   /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
   type?: "ad";
   ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
@@ -145,6 +149,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
   const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
   const currentId = useRef<string | null>(null);
+  const fadeCancel = useRef<() => void>(() => undefined);
+  const fadeOutStarted = useRef(false);
   const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
@@ -225,6 +231,15 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     adSession.current.played += 1;
     adSession.current.since += 1;
     audioRef.current.src = current.url;
+    // Tracks in a set dip out and in around the join; anything else always starts at full volume.
+    fadeCancel.current();
+    fadeOutStarted.current = false;
+    if (current.fadeInMs && canSetVolume(audioRef.current)) {
+      audioRef.current.volume = 0;
+      fadeCancel.current = rampVolume(audioRef.current, 1, current.fadeInMs);
+    } else {
+      try { audioRef.current.volume = 1; } catch { /* read-only on iOS */ }
+    }
     // A host line on the first track and then every third, so the station has a voice without chattering.
     const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
     tracksStarted.current += 1;
@@ -503,6 +518,15 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             onEnded={() => advance("finish")}
             onPlaying={() => { errorsInARow.current = 0; setBlocked(false); setMediaPlaybackState(true); }}
             onPause={() => setMediaPlaybackState(false)}
+            onTimeUpdate={(e) => {
+              const a = e.currentTarget;
+              if (!current.fadeOutMs || fadeOutStarted.current || !Number.isFinite(a.duration)) return;
+              if ((a.duration - a.currentTime) * 1000 <= current.fadeOutMs && canSetVolume(a)) {
+                fadeOutStarted.current = true;
+                fadeCancel.current();
+                fadeCancel.current = rampVolume(a, 0, current.fadeOutMs);
+              }
+            }}
             onError={onTrackError}
           />
           {queue[1]?.url ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}

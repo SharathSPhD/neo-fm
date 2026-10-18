@@ -23,6 +23,8 @@ export interface PoolRow {
   /** Migration 0096. Absent when the column is not applied yet. */
   energy?: string | null;
   daypart?: string[] | null;
+  /** Migration 0100. Absent when the column is not applied yet. */
+  kind?: string | null;
 }
 
 export type StationTrack = PoolTrack & {
@@ -59,12 +61,14 @@ export function rowToTrack(r: PoolRow): StationTrack {
     durationSeconds: r.duration_seconds,
     energy: r.energy === "low" || r.energy === "mid" || r.energy === "high" ? r.energy : null,
     daypart: r.daypart ?? [],
+    kind: r.kind === "instrumental" ? "instrumental" : "vocal",
   };
 }
 
 const BASE_COLUMNS = "id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band";
 /** Tried first; if the columns are not applied in this database the read is repeated with BASE_COLUMNS. */
-const COLUMNS = `${BASE_COLUMNS},energy,daypart`;
+const TAGGED_COLUMNS = `${BASE_COLUMNS},energy,daypart`;
+const COLUMNS = `${TAGGED_COLUMNS},kind`;
 
 type PoolQuery = (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
 
@@ -74,7 +78,8 @@ async function readPool(): Promise<StationTrack[]> {
     const client = createServiceRoleClient() as unknown as { from: (t: string) => { select: PoolQuery } };
     const read = (cols: string) => client.from("pool_tracks").select(cols).eq("status", "admitted");
     let res = await read(COLUMNS);
-    // Migration 0096 not applied here: the station must keep playing on tag-derived programming.
+    // Migration 0100 (kind) or 0096 (energy, daypart) not applied here: fall back one step at a time.
+    if (res.error) res = await read(TAGGED_COLUMNS);
     if (res.error) res = await read(BASE_COLUMNS);
     if (res.error || !res.data) return [];
     return res.data.map(rowToTrack);

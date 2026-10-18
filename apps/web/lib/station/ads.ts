@@ -137,9 +137,11 @@ const hits = (tags: string[], list: string[]) => tags.some((t) => list.includes(
  * play before it. Starts at the earliest cap-allowed position and slides later past neighbours that forbid it.
  * Null when the slice is too short: the next refill will carry larger counters and try again.
  */
-export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[] }[], ctx: Pick<AdContext, "played" | "sinceBreak" | "tier">): number | null {
+export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[]; joinedToPrev?: boolean }[], ctx: Pick<AdContext, "played" | "sinceBreak" | "tier">): number | null {
   const blocked = [...NEVER_NEXT_TO, ...slot.excludedTags.map((t) => t.toLowerCase())];
   for (let p = tracksBeforeBreak(ctx); p < tracks.length; p++) {
+    // Never split a set: its tracks crossfade into each other.
+    if (tracks[p]?.joinedToPrev) continue;
     const before = tracks[p - 1]?.tags ?? [];
     const after = tracks[p]?.tags ?? [];
     if (hits(before, blocked) || hits(after, blocked) || hits(before, NEVER_AFTER)) continue;
@@ -163,7 +165,7 @@ export function weightedPick<T extends { weight: number }>(items: T[], rand: () 
 export interface AdPlacement { slot: AdSlot; index: number }
 
 /** The one break (if any) to put into this slice of the queue. */
-export function pickAd(slots: AdSlot[], tracks: { tags: string[] }[], ctx: AdContext, rand: () => number = Math.random): AdPlacement | null {
+export function pickAd(slots: AdSlot[], tracks: { tags: string[]; joinedToPrev?: boolean }[], ctx: AdContext, rand: () => number = Math.random): AdPlacement | null {
   if (!ctx.enabled || !ctx.tier) return null;
   const candidates = eligibleSlots(slots, ctx).filter((s) => capsAllow(ctx, s));
   // Try slots in weighted order until one fits next to its neighbours.

@@ -8,6 +8,8 @@
  * re-order the programmed list so the listener's tap shows in the very next tracks.
  * Each track carries a templated `host` line (lib/station/host.ts: daypart greeting, edge city if any, AI-made label; no model call)
  * and a short-lived signed URL. Empty list when the pool or signal table is unavailable.
+ * With STATION_SETS=1 (lib/station/sets.ts) the queue is arranged into sets: 2-3 same-language vocal tracks per block with a
+ * crossfade hint (`set`, `fadeInMs`, `fadeOutMs`), instrumentals between blocks within a daypart share cap, ads never inside a set.
  * With ADS_ENABLED=1, free and signed-out listeners may get one `type: "ad"` item spliced in (lib/station/ads.ts caps); the
  * player sends its session counters (`played`, `since`, `adAge`, `adSec`, `seen`). Any ad failure leaves the queue unchanged.
  */
@@ -22,6 +24,7 @@ import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
+import { arrangeSets, crossfadeFor, setsEnabled } from "@/lib/station/sets";
 import { parseSteer, steerQueue } from "@/lib/station/steer";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
@@ -84,9 +87,22 @@ export async function GET(req: NextRequest) {
     recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
     languageLocked: !!lang,
   };
-  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
-  const programmed = programQueue(slate, { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
-  const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
+  const programOpts = { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), rotation };
+  const sets = setsEnabled();
+  // Instrumentals are language-neutral ('zxx'), so a language-locked listener still gets them; ranked and programmed apart from the vocals.
+  const instrumentals = sets ? pool.filter((t) => t.kind === "instrumental") : [];
+  const vocalSlate = sets ? slate.filter((t) => t.kind !== "instrumental") : slate;
+  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later; sets need a wider list too.
+  const programmed = programQueue(vocalSlate, { ...programOpts, limit: steered || sets ? Math.min(limit * 3, 60) : limit });
+  const steeredList = steered || exclude ? steerQueue(programmed, pool, steer, exclude) : programmed;
+  let setInfo = new Map<string, { id: string; index: number; size: number }>();
+  let ranked = steeredList.slice(0, limit);
+  if (sets) {
+    const instrSlate = rankTracks(instrumentals, signals, { language: null, wantTags: [], limit: 20 });
+    const arranged = arrangeSets(steeredList, programQueue(instrSlate, { ...programOpts, limit: 6 }), { hour: programOpts.hour, limit });
+    ranked = arranged.tracks;
+    setInfo = arranged.sets;
+  }
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {
@@ -94,13 +110,15 @@ export async function GET(req: NextRequest) {
         const { data } = await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
         if (!data?.signedUrl) return null;
         const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
-        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url: data.signedUrl };
+        const info = setInfo.get(t.id);
+        const fade = crossfadeFor(info);
+        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url: data.signedUrl, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
       }),
     )
   ).filter((t) => t !== null);
   if (adsEnabled() && tracks.length > 1) {
     try {
-      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks });
+      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks: tracks.map((t, i) => ({ tags: t.tags, joinedToPrev: i > 0 && !!t.set && t.set.id === tracks[i - 1]!.set?.id })) });
       if (ad) return NextResponse.json({ tracks: [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)] });
     } catch { /* ads are optional: serve the plain queue */ }
   }

@@ -122,7 +122,7 @@ export async function adForQueue(args: {
   state: AdClientState;
   language: string | null;
   hour: number;
-  tracks: { tags: string[] }[];
+  tracks: { tags: string[]; joinedToPrev?: boolean }[];
   now?: number;
   nonce?: string;
 }): Promise<AdInsertion | null> {
