@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlayer } from "@/components/player/player-provider";
+import { reportClientError } from "@/lib/obs/report-client-error";
+import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
 interface Track {
@@ -48,6 +50,7 @@ export function StationPlayer() {
       const res = await fetch(`/api/station/queue?limit=10${language ? `&lang=${language}` : ""}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
+      if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
       setQueue([]);
     }
@@ -79,6 +82,7 @@ export function StationPlayer() {
   }
 
   function onTrackError() {
+    reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
       setFailed(true);
