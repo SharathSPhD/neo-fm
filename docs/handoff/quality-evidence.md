@@ -1,12 +1,12 @@
 # Handoff: quality evidence, review kit, help FAQ
 
-State (2026-10-12): three draft PRs, all with CI green, none merged. No prod changes made by this area.
+State (2026-10-18): #27 and #54 are open drafts, rebased onto main by merge (main's site-wide i18n and pricing packs integrated), typecheck, lint and tests green locally. #46 is closed: superseded by merged #134. No prod changes made by this area.
 
 | PR | What | Merge notes |
 |---|---|---|
 | #27 | PCE blind-eval evidence on `/trust` and `/pricing`; numbers in `apps/web/lib/eval/pce-results.ts`, test checks them against `managed-agents/EVAL-PCE.md` | Wording was tightened per lead review (AI judges, Kannada caveat, Sonnet polishes and judges). |
-| #46 | Native-speaker review kit: `/native-review/<token>`, `/api/native-review/*`, `/api/admin/review-kit` (seed/token/revoke/report) | Migration `0072_review_kit.sql` must be applied before use. Rate-limit line for `lib/rate-limit.ts` is in the PR thread, not applied. |
-| #54 | `/help` rewrite, 15 questions, machine-translated hi/ta/te/kn/bn behind a notice | Translations are model-made; keep the notice until native review. |
+| #46 | Closed, superseded by merged #134 (same kit, rebased). Kit: `/native-review/<token>`, `/api/admin/review-kit` | Migration `0072_review_kit.sql` must still be applied to prod before use. Rate-limit line for `lib/rate-limit.ts` was given to the lead, not applied. |
+| #54 | `/help` rewrite, 15 questions, machine-translated hi/ta/te/kn/bn behind a notice | Replaces the old `help.*` keys in the i18n locale files; defaults to the site language cookie, `?lang=` overrides. Translations are model-made; keep the notice until native review. |
 
 ## Run and verify locally
 ```sh
@@ -26,6 +26,6 @@ The kit page, seed query and ratings upsert have only been unit-tested, never ru
 - `/trust` does not yet show the new diction numbers from `managed-agents/QUALITY-REPORT.md`.
 
 ## Next 3 steps
-1. Merge #27, #54, then apply 0072 and merge #46; add the `native-review` rate-limit rule.
+1. Merge #27 and #54; apply 0072 (kit already on main via #134); add the `native-review` rate-limit rule.
 2. Seed 5 songs per language, mint reviewer links, collect ratings; compute native kappa against the go/no-go in `EVAL-PCE.md` (>= 0.4, per-language lower CI >= 45%).
 3. Add the 30 s diction table to `/trust` (small sample, strict and order-insensitive scores, upper bound because Gemini transcription is lenient; 60 s pending), and have native reviewers check the help translations before removing the notice.
