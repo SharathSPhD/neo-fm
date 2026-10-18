@@ -894,6 +894,7 @@ export const hi: Dict = {
   "station.mood.devotional": "भक्ति",
   "station.mood.energetic": "जोशीला",
   "station.mood.nostalgic": "पुरानी यादें",
+  "station.queueError": "अभी स्टेशन से जुड़ नहीं पा रहे। इंटरनेट देखें और फिर कोशिश करें।",
   "station.empty": "अभी बजाने को कुछ नहीं है। थोड़ी देर बाद देखें।",
   "station.tapToPlay": "बजाने के लिए दबाएँ",
   "station.failed": "अभी गाने लोड नहीं हो रहे।",

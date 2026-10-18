@@ -94,6 +94,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [queueError, setQueueError] = useState(false);
   const [plays, setPlays] = useState(0);
   const [energy, setEnergy] = useState<Energy | null>(null);
   // Refills read it through a ref so a chip tap never restarts the language effect.
@@ -105,13 +106,17 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
 
   const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
+    setQueueError(false);
     try {
       const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
+      if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
       if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
+      // Offline or a server error: say so and offer a retry instead of the "nothing to play" message.
       setQueue([]);
+      setQueueError(true);
     }
     setLoading(false);
   }, []);
@@ -320,7 +325,12 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       {moodChips}
 
       {loading && !current ? <p>{t("station.loading")}</p> : null}
-      {!loading && !current ? <p>{t("station.empty")}</p> : null}
+      {!loading && !current && queueError ? (
+        <p role="alert" className="text-sm">
+          {t("station.queueError")} <button type="button" onClick={retry} className="underline">{t("station.retry")}</button>
+        </p>
+      ) : null}
+      {!loading && !current && !queueError ? <p>{t("station.empty")}</p> : null}
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">

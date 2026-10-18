@@ -894,6 +894,7 @@ export const bn: Dict = {
   "station.mood.devotional": "ভক্তিমূলক",
   "station.mood.energetic": "তেজি",
   "station.mood.nostalgic": "পুরনো দিনের",
+  "station.queueError": "এখন স্টেশনে পৌঁছনো যাচ্ছে না। ইন্টারনেট দেখে আবার চেষ্টা করুন।",
   "station.empty": "এখন বাজানোর মতো কিছু নেই। একটু পরে দেখুন।",
   "station.tapToPlay": "বাজাতে ট্যাপ করুন",
   "station.failed": "এখন গান লোড হচ্ছে না।",
