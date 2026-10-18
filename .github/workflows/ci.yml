@@ -87,6 +87,8 @@ jobs:
       # A new table or view that is not classified in infra/supabase/tests/rls_audit.sql fails here.
       - run: psql --version
       - run: scripts/rls-audit.sh
+      # Behaviour of the gift-pack credit inside create_song_job (migration 0090), on the migrated database.
+      - run: psql "$RLS_AUDIT_DB_URL" -X -q -v ON_ERROR_STOP=1 -f infra/supabase/tests/pack_credit.sql
 
   agents:
     name: managed agents (web unit + skill drift)

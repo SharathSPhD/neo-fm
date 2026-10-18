@@ -310,6 +310,7 @@ export async function POST(request: NextRequest) {
       p_priority: 0,
       p_attempt_id: attempt_id,
       p_trace_id: trace_id,
+      p_use_pack: parsed.data.use_pack === true,
     } as never,
   );
 

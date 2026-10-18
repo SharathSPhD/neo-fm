@@ -21,6 +21,8 @@ export const CreateSongRequestSchema = z
     target_duration_seconds: DurationSchema.optional(),
     /** Job this song is a new-language version of (prompt branch only). */
     version_of: z.string().uuid().optional(),
+    /** /gift only: spend a gift-pack credit once the monthly quota is used up. */
+    use_pack: z.boolean().optional(),
   })
   .superRefine((value, ctx) => {
     const has_doc = !!value.song_document;

@@ -58,6 +58,7 @@ export function GiftWizard({ initialOccasion }: { initialOccasion: string }) {
           language: plan.language,
           style_family: plan.styleFamily,
           target_duration_seconds: GIFT_DURATION_SECONDS,
+          use_pack: true,
         }),
       });
       if (created.status === 429) return setError(t("gift.errQuota"));

@@ -1043,6 +1043,7 @@ export type Database = {
           p_style_family: Database["public"]["Enums"]["style_family_enum"]
           p_target_duration_seconds: number
           p_trace_id?: string
+          p_use_pack?: boolean
         }
         Returns: {
           job_id: string
