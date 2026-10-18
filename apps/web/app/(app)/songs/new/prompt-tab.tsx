@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { EXAMPLE_IDEAS } from "@/lib/first-run/examples";
-import { isUiLang } from "@/lib/i18n/ui-strings";
+import { isUiLang, type UiKey } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+
+import type { VoiceChoice } from "@/lib/voice";
 
 import { FirstRunGuide } from "./first-run-guide";
 
@@ -62,9 +64,13 @@ const DEFAULT_STYLE: Record<Language, StyleFamily> = {
 
 const PROMPT_MAX_CHARS = 500;
 
+const VOICE_LABEL_KEY = {
+  station: "prompt.voiceAuto", female: "prompt.voiceFemale", male: "prompt.voiceMale", duet: "prompt.voiceDuet",
+} as const satisfies Record<VoiceChoice, UiKey>;
+
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [] }: { showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
+export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices }: { voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
   // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
@@ -75,6 +81,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [] 
   const [styleTouched, setStyleTouched] = useState(false);
   const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
+  const [voice, setVoice] = useState<VoiceChoice>("station");
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -133,6 +140,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [] 
         language,
         style_family: styleFamily,
         target_duration_seconds: duration,
+        ...(voice !== "station" ? { voice: { choice: voice } } : {}),
       }),
     });
 
@@ -292,6 +300,28 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [] 
           </select>
         </div>
       </div>
+
+      {voiceChoices ? (
+        <div className="flex flex-col gap-1.5 sm:max-w-xs">
+          <label htmlFor="prompt-voice" className="text-xs uppercase tracking-widest text-foreground/50">
+            {t("prompt.voice")}
+          </label>
+          <select
+            id="prompt-voice"
+            value={voice}
+            disabled={voiceChoices.length <= 1}
+            onChange={(e) => setVoice(e.target.value as VoiceChoice)}
+            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent disabled:opacity-60"
+          >
+            {voiceChoices.map((c) => (
+              <option key={c} value={c}>
+                {t(VOICE_LABEL_KEY[c])}
+              </option>
+            ))}
+          </select>
+          {voiceChoices.length <= 1 ? <p className="text-xs text-foreground/50">{t("prompt.voiceUpgrade")}</p> : null}
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-300">

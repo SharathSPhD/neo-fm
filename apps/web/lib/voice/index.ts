@@ -26,12 +26,13 @@ export interface VoiceEntitlement {
 }
 
 /**
- * Free: the station mix (no hint, Lyria picks). Creator and Station pass: male or female lead. Pro: duet and delivery styles.
- * Developer accounts match Pro.
+ * Free: the station mix (no hint, Lyria picks). Creator: male or female lead. Station pass: adds duet. Pro: duet and
+ * delivery styles. Developer accounts match Pro. A pass holder on a higher tier keeps that tier's choices.
  */
 export function voiceEntitlement(tier: UserTier | null | undefined, hasPass = false): VoiceEntitlement {
   if (tier === "pro" || tier === "developer") return { choices: VOICE_CHOICES, styles: VOICE_STYLES };
-  if (tier === "creator" || hasPass) return { choices: ["station", "female", "male"], styles: [] };
+  if (hasPass) return { choices: VOICE_CHOICES, styles: [] };
+  if (tier === "creator") return { choices: ["station", "female", "male"], styles: [] };
   return { choices: ["station"], styles: [] };
 }
 
