@@ -25,8 +25,8 @@ describe("language registry", () => {
   });
 
   it("enables waves cumulatively", () => {
-    expect(enabledExpansionLanguages("1").map((l) => l.code)).toEqual(["mr", "pa", "gu", "ml"]);
-    expect(enabledExpansionLanguages("2").map((l) => l.code)).toEqual(["mr", "pa", "gu", "ml", "bho", "or", "ur"]);
+    expect(enabledExpansionLanguages("1").map((l) => l.code)).toEqual(["mr", "pa", "ml", "gu"]);
+    expect(enabledExpansionLanguages("2").map((l) => l.code)).toEqual(["mr", "pa", "ml", "gu", "or", "ur", "bho"]);
     expect(enabledExpansionLanguages("3")).toHaveLength(EXPANSION_LANGUAGES.length);
   });
 

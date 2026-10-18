@@ -22,11 +22,11 @@ export interface ExpansionLanguage {
 export const EXPANSION_LANGUAGES: readonly ExpansionLanguage[] = [
   { code: "mr", name: "Marathi", endonym: "मराठी", script: "devanagari", wave: 1 },
   { code: "pa", name: "Punjabi", endonym: "ਪੰਜਾਬੀ", script: "gurmukhi", wave: 1 },
-  { code: "gu", name: "Gujarati", endonym: "ગુજરાતી", script: "gujarati", wave: 1 },
   { code: "ml", name: "Malayalam", endonym: "മലയാളം", script: "malayalam", wave: 1 },
-  { code: "bho", name: "Bhojpuri", endonym: "भोजपुरी", script: "devanagari", wave: 2 },
+  { code: "gu", name: "Gujarati", endonym: "ગુજરાતી", script: "gujarati", wave: 1 },
   { code: "or", name: "Odia", endonym: "ଓଡ଼ିଆ", script: "odia", wave: 2 },
   { code: "ur", name: "Urdu", endonym: "اردو", script: "arabic", wave: 2 },
+  { code: "bho", name: "Bhojpuri", endonym: "भोजपुरी", script: "devanagari", wave: 2 },
   { code: "as", name: "Assamese", endonym: "অসমীয়া", script: "bengali", wave: 3 },
 ];
 
