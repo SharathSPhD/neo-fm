@@ -5,6 +5,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
+import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
@@ -29,6 +31,21 @@ const HOST_EVERY = 3;
 const HOST_VISIBLE_MS = 12_000;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
+
+/** Mood values are the tags sent to the server; these keys are only their labels. */
+const MOOD_LABEL: Record<(typeof STATION_MOODS)[number], UiKey> = {
+  joyful: "station.mood.joyful",
+  calm: "station.mood.calm",
+  romantic: "station.mood.romantic",
+  devotional: "station.mood.devotional",
+  energetic: "station.mood.energetic",
+  nostalgic: "station.mood.nostalgic",
+};
+
+/** A pool language written in its own script when we have the name (hi, ta, ...), else as stored. */
+function languageName(code: string): string {
+  return isUiLang(code) ? UI_LANG_ENDONYM[code] : code;
+}
 
 function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
   void fetch("/api/station/signal", {
@@ -61,6 +78,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
 
 export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
+  const { t } = useUiLang();
   const sendSignal = anonymous ? () => {} : postSignal;
   const [played, setPlayed] = useState(0);
   const globalPlayer = usePlayer();
@@ -196,14 +214,14 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     const next = energy === dir ? null : dir;
     setEnergy(next);
     energyRef.current = next;
-    setNote(next ? (next === "up" ? "Livelier tracks coming up" : "Calmer tracks coming up") : "Back to the usual mix");
+    setNote(next ? (next === "up" ? t("station.note.livelier") : t("station.note.calmer")) : t("station.note.usual"));
     void steerTail(next);
   }
 
   function moreLikeThis() {
     if (!current) return;
     if (!liked.has(current.id)) like();
-    setNote("More like this coming up");
+    setNote(t("station.note.more"));
     void steerTail(energyRef.current, current.id);
   }
 
@@ -222,11 +240,11 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
 
   async function share() {
     if (!current) return;
-    const text = `${current.title} on neo-fm Station`;
+    const text = t("station.shareText", { title: current.title });
     const url = trackShareUrl(current.id, location.origin);
     try {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
-      else { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Link copied"); }
+      else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }
       sendSignal(current.id, "share", audioRef.current);
       sendFunnelEvent("station_share");
     } catch { /* share sheet dismissed */ }
@@ -240,7 +258,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   }
 
   const moodChips = (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Mood (pick up to two)">
+    <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.mood.label")}>
       {STATION_MOODS.map((m) => (
         <button
           key={m}
@@ -249,20 +267,20 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           onClick={() => setMoods((cur) => toggleMood(cur, m))}
           className={`rounded-full border px-3 py-1 text-sm ${moods.includes(m) ? "bg-accent text-background" : ""}`}
         >
-          {m}
+          {t(MOOD_LABEL[m])}
         </button>
       ))}
     </div>
   );
 
-  if (!ready) return <p>Loading…</p>;
+  if (!ready) return <p>{t("station.loading")}</p>;
 
   if (!onboarded) {
     return (
-      <section aria-label="Set up your station" className="flex flex-col gap-4 rounded-lg border p-4">
-        <h2 className="text-lg font-medium">What do you want to hear?</h2>
-        <p className="text-sm text-foreground/70">Pick a language and up to two moods. You can change them any time.</p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
+      <section aria-label={t("station.setup.label")} className="flex flex-col gap-4 rounded-lg border p-4">
+        <h2 className="text-lg font-medium">{t("station.setup.title")}</h2>
+        <p className="text-sm text-foreground/70">{t("station.setup.hint")}</p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
           {LANGS.map((l) => (
             <button
               key={l || "all"}
@@ -271,22 +289,22 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
               onClick={() => setLang(l)}
               className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
             >
-              {l || "All"}
+              {l ? languageName(l) : t("station.lang.all")}
             </button>
           ))}
         </div>
         {moodChips}
         <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded bg-accent px-4 py-2 text-background">
-          Start my station
+          {t("station.setup.start")}
         </button>
       </section>
     );
   }
 
   return (
-    <section aria-label="Station player" className="flex flex-col gap-4">
+    <section aria-label={t("station.player.label")} className="flex flex-col gap-4">
       <InstallPrompt plays={plays} minPlays={2} />
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
+      <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
         {LANGS.map((l) => (
           <button
             key={l || "all"}
@@ -295,20 +313,20 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             onClick={() => setLang(l)}
             className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
           >
-            {l || "All"}
+            {l ? languageName(l) : t("station.lang.all")}
           </button>
         ))}
       </div>
       {moodChips}
 
-      {loading && !current ? <p>Loading…</p> : null}
-      {!loading && !current ? <p>Nothing to play yet. Check back soon.</p> : null}
+      {loading && !current ? <p>{t("station.loading")}</p> : null}
+      {!loading && !current ? <p>{t("station.empty")}</p> : null}
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
           <p className="text-lg font-medium">{current.title}</p>
-          <p className="text-xs text-foreground/70">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
+          <p className="text-xs text-foreground/70">{languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}</p>
           <audio
             ref={audioRef}
             controls
@@ -321,35 +339,35 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           {queue[1] ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
             <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-accent px-3 py-2 text-background">
-              Tap to play
+              {t("station.tapToPlay")}
             </button>
           ) : null}
           {failed ? (
             <p role="alert" className="text-sm">
-              Songs are not loading right now. <button type="button" onClick={retry} className="underline">Try again</button>
+              {t("station.failed")} <button type="button" onClick={retry} className="underline">{t("station.retry")}</button>
             </p>
           ) : null}
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="rounded border px-3 py-2">
-              {liked.has(current.id) ? "Liked" : "Like"}
+              {liked.has(current.id) ? t("station.liked") : t("station.like")}
             </button>
-            <button type="button" onClick={replay} className="rounded border px-3 py-2">Replay</button>
-            <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
-            <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
+            <button type="button" onClick={replay} className="rounded border px-3 py-2">{t("station.replay")}</button>
+            <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">{t("station.skip")}</button>
+            <button type="button" onClick={share} className="rounded border px-3 py-2">{t("station.share")}</button>
             <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
-            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
-            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>Calmer</button>
-            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>Livelier</button>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")}>
+            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">{t("station.steer.more")}</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>{t("station.steer.calmer")}</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>{t("station.steer.livelier")}</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {nudging ? (
             <div className="flex flex-col gap-2 rounded border border-accent/40 bg-accent/10 p-3 text-sm">
-              <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
+              <p>{t("station.nudge.text")}</p>
               <div className="flex flex-wrap items-center gap-3">
-                <a href="/sign-up?next=%2Fstation" onClick={() => sendFunnelEvent("nudge_clicked")} className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-background hover:bg-accent/90">Sign up free</a>
-                <a href="/sign-in?next=%2Fstation" className="inline-flex min-h-[44px] items-center px-2 underline">Sign in</a>
+                <a href="/sign-up?next=%2Fstation" onClick={() => sendFunnelEvent("nudge_clicked")} className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-background hover:bg-accent/90">{t("station.nudge.signUp")}</a>
+                <a href="/sign-in?next=%2Fstation" className="inline-flex min-h-[44px] items-center px-2 underline">{t("station.nudge.signIn")}</a>
               </div>
             </div>
           ) : null}
