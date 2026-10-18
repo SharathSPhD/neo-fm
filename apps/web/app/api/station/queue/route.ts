@@ -2,10 +2,12 @@
  * GET /api/station/queue?lang=hi&tags=birthday,upbeat&limit=10 -- the next tracks for this listener.
  * Ranking (lib/station/rank.ts) scores the pool from the requested language/tags and this listener's signals from the last 30 days;
  * the clock wheel (lib/station/program.ts) then orders the queue for the listener-local hour (`hour=0-23`, India time if absent).
- * Each track carries a short-lived signed URL. Empty list when the pool or signal table is unavailable.
+ * Each track carries a templated `host` line (lib/station/host.ts: daypart greeting, edge city if any, AI-made label; no model call)
+ * and a short-lived signed URL. Empty list when the pool or signal table is unavailable.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { loadPool } from "@/lib/station/pool";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
@@ -61,6 +63,8 @@ export async function GET(req: NextRequest) {
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
   const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
   const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit });
+  const clock = localClock(sp.get("hour"));
+  const city = cityFromHeader(req.headers.get("x-vercel-ip-city"));
   const byId = new Map(pool.map((t) => [t.id, t]));
   const tracks = (
     await Promise.all(
@@ -68,7 +72,8 @@ export async function GET(req: NextRequest) {
         const t = byId.get(r.id)!;
         const { data } = await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
         if (!data?.signedUrl) return null;
-        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, url: data.signedUrl };
+        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
+        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url: data.signedUrl };
       }),
     )
   ).filter((t) => t !== null);

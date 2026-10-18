@@ -12,12 +12,16 @@ interface Track {
   language: string;
   tags: string[];
   url: string;
+  /** Templated host line from the queue API; shown as text on some track changes. */
+  host?: string;
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
 
 /** After this many tracks in a row fail to load, stop skipping and tell the listener instead of looping. */
 const MAX_CONSECUTIVE_ERRORS = 3;
+const HOST_EVERY = 3;
+const HOST_VISIBLE_MS = 12_000;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
 
@@ -41,6 +45,8 @@ export function StationPlayer() {
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
   const errorsInARow = useRef(0);
+  const tracksStarted = useRef(0);
+  const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
   const refill = useCallback(async (language: string) => {
@@ -62,6 +68,10 @@ export function StationPlayer() {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
     audioRef.current.src = current.url;
+    // A host line on the first track and then every third, so the station has a voice without chattering.
+    const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
+    tracksStarted.current += 1;
+    setHostLine(showHost ? current.host! : null);
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
     void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => setBlocked(true));
@@ -87,6 +97,12 @@ export function StationPlayer() {
     }
     advance("error");
   }
+
+  useEffect(() => {
+    if (!hostLine) return;
+    const id = setTimeout(() => setHostLine(null), HOST_VISIBLE_MS);
+    return () => clearTimeout(id);
+  }, [hostLine]);
 
   // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
   const controls = useRef({ skip: () => {} });
@@ -163,6 +179,7 @@ export function StationPlayer() {
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
+          {hostLine ? <p role="status" className="text-sm italic text-muted-foreground">{hostLine}</p> : null}
           <p className="text-lg font-medium">{current.title}</p>
           <p className="text-xs text-muted-foreground">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
           <audio
