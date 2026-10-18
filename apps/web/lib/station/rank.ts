@@ -13,6 +13,11 @@ export interface PoolTrack {
   energy?: "low" | "mid" | "high" | null;
   /** Parts of the day the tagger says this track suits (pool_tracks.daypart); absent or empty means "derive it from tags". */
   daypart?: readonly string[];
+  /** Migration 0100: instrumentals ('zxx', no vocals) are language-neutral. Absent means vocal. */
+  kind?: "vocal" | "instrumental";
+  durationSeconds?: number | null;
+  /** Migration 0104: lead voice from the voice judge. Absent or null means untagged; programming then ignores voice. */
+  voice?: "female" | "male" | "mixed" | null;
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";

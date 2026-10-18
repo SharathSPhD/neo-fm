@@ -23,6 +23,10 @@ export interface PoolRow {
   /** Migration 0096. Absent when the column is not applied yet. */
   energy?: string | null;
   daypart?: string[] | null;
+  /** Migration 0100. Absent when the column is not applied yet. */
+  kind?: string | null;
+  /** Migration 0104. Absent when the column is not applied yet. */
+  voice_gender?: string | null;
 }
 
 export type StationTrack = PoolTrack & {
@@ -33,6 +37,7 @@ export type StationTrack = PoolTrack & {
 
 const LANGUAGE_NAMES: Record<string, string> = {
   hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", bn: "Bengali", en: "English", sa: "Sanskrit", hinglish: "Hinglish",
+  mr: "Marathi", pa: "Punjabi", gu: "Gujarati", ml: "Malayalam", bho: "Bhojpuri", or: "Odia", ur: "Urdu", as: "Assamese",
 };
 
 /** Most pool rows have no title yet; "Kannada folk" reads better than "Untitled" on the player. */
@@ -58,21 +63,28 @@ export function rowToTrack(r: PoolRow): StationTrack {
     durationSeconds: r.duration_seconds,
     energy: r.energy === "low" || r.energy === "mid" || r.energy === "high" ? r.energy : null,
     daypart: r.daypart ?? [],
+    kind: r.kind === "instrumental" ? "instrumental" : "vocal",
+    voice: r.voice_gender === "female" || r.voice_gender === "male" || r.voice_gender === "mixed" ? r.voice_gender : null,
   };
 }
 
 const BASE_COLUMNS = "id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band";
 /** Tried first; if the columns are not applied in this database the read is repeated with BASE_COLUMNS. */
-const COLUMNS = `${BASE_COLUMNS},energy,daypart`;
+const TAGGED_COLUMNS = `${BASE_COLUMNS},energy,daypart`;
+const KIND_COLUMNS = `${TAGGED_COLUMNS},kind`;
+const COLUMNS = `${KIND_COLUMNS},voice_gender`;
 
 type PoolQuery = (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
 
 async function readPool(): Promise<StationTrack[]> {
   try {
-    const from = createServiceRoleClient().from as unknown as (t: string) => { select: PoolQuery };
-    const read = (cols: string) => from("pool_tracks").select(cols).eq("status", "admitted");
+    // Keep the call on the client: a detached `.from` loses `this` and throws, which the catch below turns into an empty pool.
+    const client = createServiceRoleClient() as unknown as { from: (t: string) => { select: PoolQuery } };
+    const read = (cols: string) => client.from("pool_tracks").select(cols).eq("status", "admitted");
     let res = await read(COLUMNS);
-    // Migration 0096 not applied here: the station must keep playing on tag-derived programming.
+    // Migration 0104 (voice_gender), 0100 (kind) or 0096 (energy, daypart) not applied here: fall back one step at a time.
+    if (res.error) res = await read(KIND_COLUMNS);
+    if (res.error) res = await read(TAGGED_COLUMNS);
     if (res.error) res = await read(BASE_COLUMNS);
     if (res.error || !res.data) return [];
     return res.data.map(rowToTrack);
@@ -83,6 +95,13 @@ async function readPool(): Promise<StationTrack[]> {
 
 /** The pool changes only when admin ingest runs, so a minute of staleness per instance is harmless and saves a read per queue call. */
 export const loadPool = ttlCache(readPool, 60_000);
+
+/** Admitted tracks per language, from the same cached read as the queue. */
+export async function admittedLanguageCounts(): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  for (const t of await loadPool()) counts[t.language] = (counts[t.language] ?? 0) + 1;
+  return counts;
+}
 
 /** One admitted track by id for the public share page; null when missing, not admitted, or on any read failure. */
 export async function loadPoolTrack(id: string): Promise<StationTrack | null> {

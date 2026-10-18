@@ -130,7 +130,7 @@ export function AdvancedDisclosure({
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-muted/20 bg-muted/5 p-4">
+    <section className="flex flex-col gap-3 glass rounded-2xl p-4">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}

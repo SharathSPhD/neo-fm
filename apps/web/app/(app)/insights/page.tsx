@@ -58,14 +58,14 @@ export default async function InsightsPage() {
       </header>
 
       {list.length === 0 && !top ? (
-        <section data-testid="insights-empty" className="rounded-lg border border-muted/20 bg-muted/5 p-6 text-sm text-foreground/70">
+        <section data-testid="insights-empty" className="glass rounded-2xl p-6 text-sm text-foreground/70">
           No plays or likes yet. Publish a song from its page and share the link; counts show up here as people listen.
         </section>
       ) : (
         <>
           <section aria-label="Totals" className="grid grid-cols-3 gap-3">
             {([["Plays", totals.plays], ["Likes", totals.likes], ["Shares", totals.shares]] as const).map(([label, n]) => (
-              <div key={label} className="rounded-lg border border-muted/20 bg-muted/5 p-4">
+              <div key={label} className="glass rounded-2xl p-4">
                 <p className="text-xs uppercase tracking-wide text-foreground/50">{label}</p>
                 <p className="mt-1 text-2xl font-semibold">{n}</p>
               </div>

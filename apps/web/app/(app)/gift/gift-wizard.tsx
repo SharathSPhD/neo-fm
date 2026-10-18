@@ -23,7 +23,7 @@ const LANGUAGE_NAME: Record<GiftLanguage, string> = {
   bn: "বাংলা",
 };
 
-const field = "rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent";
+const field = "rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent";
 const label = "text-xs uppercase tracking-widest text-foreground/50";
 
 export function GiftWizard({ initialOccasion }: { initialOccasion: string }) {

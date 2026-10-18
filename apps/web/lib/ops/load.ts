@@ -1,7 +1,7 @@
 /** Shared read paths for the ops routes and the daily snapshot. Read-only. */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import { buildFunnel, type FunnelRow, type FunnelSummary } from "./funnel";
+import { buildFunnel, type CampaignRow, type FunnelRow, type FunnelSummary } from "./funnel";
 import { lyriaBudgetGbp } from "./spend-cap";
 import { summarize, type DictionRow, type HealthSummary, type JobRow } from "./health-summary";
 
@@ -45,11 +45,14 @@ export async function loadHealthSummary(db: SupabaseClient, hours: number, env =
 
 export async function loadFunnel(db: SupabaseClient, days: number): Promise<FunnelSummary & { cohort_truncated: boolean }> {
   const sinceTs = new Date(Date.now() - days * 86_400_000);
-  const [views, cohort, shared, gifted] = await Promise.all([
+  const [views, cohort, shared, gifted, campaigns] = await Promise.all([
     db.from("funnel_daily").select("day,event,n").gte("day", sinceTs.toISOString().slice(0, 10)),
     db.from("users").select("id,created_at").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
     db.from("jobs").select("id", { count: "exact", head: true }).in("published_visibility", ["public", "unlisted"]).gte("published_at", sinceTs.toISOString()),
     db.from("jobs").select("id", { count: "exact", head: true }).not("dedication_to", "is", null).gte("created_at", sinceTs.toISOString()),
+    // Migration 0105; a missing table just means no campaign rows.
+    (db as unknown as { from: (t: string) => { select: (c: string) => { gte: (k: string, v: string) => Promise<{ data: unknown[] | null; error: unknown }> } } })
+      .from("funnel_campaign_daily").select("event,source,medium,campaign,content,n").gte("day", sinceTs.toISOString().slice(0, 10)),
   ]);
   const err = [views, cohort, shared, gifted].find((r) => r.error)?.error;
   if (err) throw new OpsQueryError(err.message);
@@ -67,7 +70,7 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
     paidUsers = new Set((data ?? []).map((b) => String(b.user_id))).size;
   }
   return {
-    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers, signupDays: (cohort.data ?? []).map((u) => String(u.created_at).slice(0, 10)) }, days),
+    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers, signupDays: (cohort.data ?? []).map((u) => String(u.created_at).slice(0, 10)) }, days, campaigns.error ? [] : ((campaigns.data ?? []) as CampaignRow[])),
     cohort_truncated: ids.length >= COHORT_CAP,
   };
 }

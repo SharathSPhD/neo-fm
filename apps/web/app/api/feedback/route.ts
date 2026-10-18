@@ -3,11 +3,16 @@
  *
  * Captures user feedback via the `submit_feedback` RPC (migration
  * 0021). Anonymous-safe. Returns 200 with `{ id }` on success.
+ *
+ * The RPC is called with the service role: migration 0101 revokes EXECUTE from anon/authenticated so it cannot be
+ * hit directly over /rest/v1/rpc (bypassing the per-IP limiter in middleware). The role grant exists before and
+ * after 0101, so this works either way. auth.uid() is null under the service role, so the signed-in user is
+ * attached afterwards.
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +36,8 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
-  const supabase = createServerClient();
+  const { data: auth } = await createServerClient().auth.getUser();
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase.rpc("submit_feedback", {
     p_subject: parsed.data.subject,
     p_body: parsed.data.body,
@@ -49,6 +55,9 @@ export async function POST(request: NextRequest) {
       { error: "submit_feedback_failed" },
       { status: 500 },
     );
+  }
+  if (auth?.user) {
+    await supabase.from("feedback").update({ user_id: auth.user.id }).eq("id", row.id);
   }
   return NextResponse.json({ id: row.id });
 }

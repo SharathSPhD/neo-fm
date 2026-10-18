@@ -37,12 +37,29 @@ export function AuthListener() {
       });
       unsubscribe = () => sub.subscription.unsubscribe();
     };
+    let began = false;
+    const begin = () => {
+      if (began) return;
+      began = true;
+      void start();
+    };
+    // Signed-in visitors (a Supabase auth cookie) subscribe once the page is idle. Signed-out visitors have nothing to
+    // react to until they act, so the auth client waits for their first interaction (or a long fallback) and stays out
+    // of the landing page's load.
+    const signedIn = /(?:^|;\s*)sb-[^=]*auth-token/.test(document.cookie);
+    const events = ["pointerdown", "keydown", "touchstart"] as const;
     const idle = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    const handle = idle ? idle(() => void start(), { timeout: 4000 }) : window.setTimeout(() => void start(), 2000);
+    const timer = signedIn
+      ? idle
+        ? idle(begin, { timeout: 4000 })
+        : window.setTimeout(begin, 2000)
+      : window.setTimeout(begin, 20_000);
+    if (!signedIn) for (const e of events) window.addEventListener(e, begin, { once: true, passive: true });
     return () => {
       cancelled = true;
-      if (idle) (window as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(handle);
-      else window.clearTimeout(handle);
+      if (signedIn && idle) (window as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(timer);
+      else window.clearTimeout(timer);
+      for (const e of events) window.removeEventListener(e, begin);
       unsubscribe?.();
     };
   }, [router]);

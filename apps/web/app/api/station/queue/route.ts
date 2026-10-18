@@ -8,9 +8,18 @@
  * re-order the programmed list so the listener's tap shows in the very next tracks.
  * Each track carries a templated `host` line (lib/station/host.ts: daypart greeting, edge city if any, AI-made label; no model call)
  * and a short-lived signed URL. Empty list when the pool or signal table is unavailable.
+ * With STATION_SETS=1 (lib/station/sets.ts) the queue is arranged into sets: 2-3 same-language vocal tracks per block with a
+ * crossfade hint (`set`, `fadeInMs`, `fadeOutMs`), instrumentals between blocks within a daypart share cap, ads never inside a set.
+ * With ADS_ENABLED=1, free and signed-out listeners may get one `type: "ad"` item spliced in (lib/station/ads.ts caps); the
+ * player sends its session counters (`played`, `since`, `adAge`, `adSec`, `seen`). Any ad failure leaves the queue unchanged.
+ * With STATION_VOICE_LINKS=1, one `type: "voice"` item (a pre-rendered AI host link or ident, lib/station/voice-links.ts) may be spliced
+ * between songs; the player sends `vsince`, `vn`, `vseen`, `vhr`. It never sits inside a set or next to an ad, and a failure leaves the queue unchanged.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { adsEnabled } from "@/lib/station/ads";
+import { adForQueue, parseAdState } from "@/lib/station/ads-server";
+import { poolCdnUrl } from "@/lib/station/cdn";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
@@ -18,6 +27,8 @@ import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
+import { parseVoiceState, pickVoice, timeChecksEnabled, voiceItem, voiceLinksEnabled, VOICE_LINES } from "@/lib/station/voice-links";
+import { arrangeSets, crossfadeFor, setsEnabled } from "@/lib/station/sets";
 import { parseSteer, steerQueue } from "@/lib/station/steer";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
@@ -27,6 +38,8 @@ export const dynamic = "force-dynamic";
 
 const SIGNAL_WINDOW_MS = 30 * 86_400_000;
 const URL_TTL_SECONDS = 60 * 60;
+/** Plays older than this no longer count toward the instrumental share of a new queue. */
+const RECENT_PLAY_MS = 2 * 3_600_000;
 
 /** The listener's own signals from the last 30 days; empty when the table is missing or the read fails. */
 async function loadSignalRows(admin: ReturnType<typeof createServiceRoleClient>, userId: string): Promise<SignalRow[]> {
@@ -80,19 +93,55 @@ export async function GET(req: NextRequest) {
     recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
     languageLocked: !!lang,
   };
-  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
-  const programmed = programQueue(slate, { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
-  const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
+  const programOpts = { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), rotation };
+  const sets = setsEnabled();
+  // Instrumentals are language-neutral ('zxx'), so a language-locked listener still gets them; ranked and programmed apart from the vocals.
+  const instrumentals = sets ? pool.filter((t) => t.kind === "instrumental") : [];
+  const vocalSlate = sets ? slate.filter((t) => t.kind !== "instrumental") : slate;
+  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later; sets need a wider list too.
+  const programmed = programQueue(vocalSlate, { ...programOpts, limit: steered || sets ? Math.min(limit * 3, 60) : limit });
+  const steeredList = steered || exclude ? steerQueue(programmed, pool, steer, exclude) : programmed;
+  let setInfo = new Map<string, { id: string; index: number; size: number }>();
+  let ranked = steeredList.slice(0, limit);
+  if (sets) {
+    const instrSlate = rankTracks(instrumentals, signals, { language: null, wantTags: [], limit: 20 });
+    const arranged = arrangeSets(steeredList, programQueue(instrSlate, { ...programOpts, limit: 6 }), {
+      hour: programOpts.hour,
+      limit,
+      recent: plays.filter((x) => x.ageMs < RECENT_PLAY_MS).slice(-10).flatMap((x) => byId.get(x.trackId) ?? []),
+    });
+    ranked = arranged.tracks;
+    setInfo = arranged.sets;
+  }
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {
         const t = byId.get(r.id)!;
-        const { data } = await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
-        if (!data?.signedUrl) return null;
+        const cdnUrl = poolCdnUrl(t.audioPath);
+        const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
+        const url = cdnUrl ?? signed;
+        if (!url) return null;
         const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
-        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url: data.signedUrl };
+        const info = setInfo.get(t.id);
+        const fade = crossfadeFor(info);
+        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
       }),
     )
   ).filter((t) => t !== null);
-  return NextResponse.json({ tracks });
+  let out: Array<(typeof tracks)[number] | ReturnType<typeof voiceItem> | NonNullable<Awaited<ReturnType<typeof adForQueue>>>["item"]> = tracks;
+  if (adsEnabled() && tracks.length > 1) {
+    try {
+      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks: tracks.map((t, i) => ({ tags: t.tags, joinedToPrev: i > 0 && !!t.set && t.set.id === tracks[i - 1]!.set?.id })) });
+      if (ad) out = [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)];
+    } catch { /* ads are optional: serve the plain queue */ }
+  }
+  if (voiceLinksEnabled() && out.length > 1) {
+    try {
+      // Spoken links are static files; they go in after any ad so the two never touch.
+      const slots = out.map((t, i) => ({ language: t.language, type: "type" in t ? t.type : undefined, kind: "kind" in t ? t.kind : undefined, joinedToPrev: i > 0 && "set" in t && !!t.set && "set" in out[i - 1]! && (out[i - 1] as { set?: { id: string } }).set?.id === t.set.id }));
+      const v = pickVoice(VOICE_LINES, slots, { hour: clock.hour, language: lang, state: parseVoiceState(sp), timeChecks: timeChecksEnabled() });
+      if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
+    } catch { /* voice links are optional: serve the queue as it is */ }
+  }
+  return NextResponse.json({ tracks: out });
 }

@@ -94,10 +94,18 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('ui_review_edits',       'service', null,      null, 'reviewer verdicts on UI strings; service role only'),
   ('feedback',              'service', 'user_id', null, 'submitted via submit_feedback(); read by service role only'),
   ('funnel_daily',          'service', null,      null, null),
+  ('funnel_campaign_daily', 'service', null,      null, null),
+  ('provider_daily_usage',  'service', null,      null, null),
   ('pool_tracks',           'service', null,      null, 'station pool; the station route reads admitted rows with the service role'),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
   ('song_listens_daily',    'service', null,      null, 'daily roll-up of song_listens; service role only'),
   ('station_signals',       'service', 'user_id', null, 'per-listener station log; API routes with the service role only'),
+  ('ad_slots',              'service', null,      null, 'house ads and sponsor spots; service role only'),
+  ('ad_events',             'service', 'user_id', null, 'ad start/complete/tap log; service role only'),
+  ('social_accounts',       'service', null,      null, 'sealed OAuth tokens for the video publisher; service role only'),
+  ('social_posts',          'service', null,      null, 'video publish queue; service role only'),
+  ('user_social_accounts',  'service', 'user_id',     null, 'listener-connected social tokens, sealed; service role only'),
+  ('user_social_apps',      'service', 'user_id',     null, 'listener own-app credentials, sealed; service role only'),
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
@@ -133,6 +141,8 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('eval_runs',              'status',       '''pending'''),
   ('feedback_events',        'kind',         '''like'''),
   ('funnel_daily',           'event',        '''landing_view'''),
+  ('provider_daily_usage',   'bucket',       '''user'''),
+  ('provider_daily_usage',   'provider',     '''lyria'''),
   ('pool_tracks',           'source',       '''new_render'''),
   ('pool_tracks',           'language',     '''hi'''),
   ('song_packs',             'sku',          '''single'''),
@@ -146,6 +156,12 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('song_listens',          'kind',         '''play'''),
   ('song_listens_daily',    'kind',         '''play'''),
   ('station_signals',       'kind',         '''play'''),
+  ('ad_slots',              'kind',         '''house'''),
+  ('ad_events',             'event',        '''start'''),
+  ('social_accounts',       'platform',     '''youtube'''),
+  ('social_posts',          'platform',     '''youtube'''),
+  ('user_social_accounts',  'platform',     '''youtube'''),
+  ('user_social_apps',      'platform',     '''youtube'''),
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id
@@ -263,19 +279,16 @@ begin
                 'enqueue_cover_art_job','record_cover_art_template','toggle_favorite','save_user_preset','delete_user_preset',
                 'record_preference_pair',
                 -- read-only aggregates over the caller's own songs (auth.uid() filter inside; anon has no execute)
-                'creator_insights_daily','creator_top_languages','creator_best_song_week',
-                -- anonymous-safe by design (validate + insert only)
-                'join_waitlist','submit_feedback'])
+                'creator_insights_daily','creator_top_languages','creator_best_song_week'])
   loop
     bad := bad || format('SECURITY DEFINER function %s is executable by anon/authenticated and not in the audit allowlist', r.sig);
   end loop;
 
-  -- anon may execute only the two anonymous-safe definer functions above
+  -- anon may not execute any SECURITY DEFINER function (join_waitlist / submit_feedback are service-role only, 0101)
   for r in select p.oid::regprocedure::text as sig
              from pg_proc p join pg_namespace n on n.oid = p.pronamespace
             where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
               and has_function_privilege('anon', p.oid, 'execute')
-              and p.proname <> all (array['join_waitlist','submit_feedback'])
   loop
     bad := bad || format('anon can execute SECURITY DEFINER function %s', r.sig);
   end loop;

@@ -40,6 +40,7 @@ import { LyricsMeaning } from "./lyrics-meaning";
 import { VariationButton } from "./variation-button";
 import { CoverArtPanel } from "./cover-art-panel";
 import Link from "next/link";
+import { AmbientTint } from "@/components/ambient-tint";
 
 export const dynamic = "force-dynamic";
 
@@ -272,6 +273,7 @@ export default async function SongDetailPage(
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <AmbientTint seed={params.id} />
       <Breadcrumbs
         items={[
           { href: "/library", label: t("nav.library") },
@@ -282,6 +284,7 @@ export default async function SongDetailPage(
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
           <p className="text-sm text-foreground/60">
+            <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
             {doc
               ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · ${data.status}`
               : data.status}

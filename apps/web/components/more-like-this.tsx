@@ -102,7 +102,7 @@ export async function MoreLikeThis({
             <li key={p.public_id}>
               <Link
                 href={`/s/${p.public_id}`}
-                className="block rounded-lg border border-muted/20 bg-muted/5 p-4 hover:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="block glass rounded-2xl p-4 hover:border-accent/50 focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 <span className="font-medium">{p.title || tr("song.untitled")}</span>
                 <span className="mt-1 block text-xs text-foreground/60">

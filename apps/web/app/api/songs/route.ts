@@ -290,6 +290,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         ...(song_document.metadata ?? {}),
         prompt: parsed.data.prompt,
+        ...(parsed.data.voice ? { voice: parsed.data.voice } : {}),
       },
     };
   }

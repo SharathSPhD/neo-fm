@@ -114,6 +114,6 @@ export const config = {
     // image/font/etc. We *do* keep /api/health(z) in the matcher
     // because security headers should still apply there, but the
     // handler above bypasses the auth touch for both.
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|woff2?|mp3)$).*)",
   ],
 };

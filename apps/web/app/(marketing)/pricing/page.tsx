@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
+import { passMonthlyTracks } from "@/lib/billing/pass";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
@@ -135,10 +136,10 @@ export default async function PricingPage() {
         {TIERS.map((tier) => (
           <article
             key={tier.id}
-            className={`flex flex-col gap-5 rounded-xl border p-7 transition ${
+            className={`flex flex-col gap-5 rounded-2xl p-7 transition ${
               tier.id === "creator"
-                ? "border-accent/40 bg-accent/5 shadow-lg shadow-accent/10"
-                : "border-muted/30 bg-muted/5 hover:border-muted/50"
+                ? "glass border-accent/50 shadow-[0_0_48px_-12px_hsl(var(--accent))]"
+                : "glass glass-hover"
             }`}
           >
             <header className="flex items-baseline justify-between gap-3">
@@ -212,7 +213,7 @@ export default async function PricingPage() {
           </header>
           <div className="mx-auto grid w-full max-w-3xl gap-6 sm:grid-cols-2">
             {PACKS.filter((p) => billing?.packPrices[p.sku]).map((p) => (
-              <article key={p.sku} className="flex flex-col gap-4 rounded-xl border border-muted/30 bg-muted/5 p-7">
+              <article key={p.sku} className="flex flex-col gap-4 glass rounded-2xl p-7">
                 <h3 className="text-lg font-medium">{t(p.name)}</h3>
                 <span className="text-3xl font-medium">{p.price}</span>
                 <p className="text-sm text-foreground/70">{t(p.desc)}</p>
@@ -226,10 +227,11 @@ export default async function PricingPage() {
         </section>
       ) : null}
       {billingEnabled && signedIn && billing?.stationPassPrice ? (
-        <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-accent/30 bg-accent/5 p-7">
+        <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 glass rounded-2xl border-accent/30 p-7">
           <h2 className="text-2xl font-medium tracking-tight">{t("pricing.pass.title")}</h2>
           <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
           <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
           <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
           <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
         </section>

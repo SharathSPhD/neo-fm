@@ -13,6 +13,9 @@ Refused renders (moderation, Lyria 400, no audio part) are not counted. Long tra
 | 2026-10-18 | P3 long tracks (150 s) | 6 | 1.50 | 6 | 2 refused by moderation |
 | 2026-10-18 | gap tracks in ta/te/kn/bn (stored PCE lyrics) | 15 | 3.75 | 14 | Diwali, wedding, harvest, joyful |
 | 2026-10-18 | English tracks | 4 | 1.00 | 4 | 6 lyrics refused by moderation (4 English, 2 long), not billed |
+| 2026-10-18 | style coverage ta/te/kn/bn (stored PCE lyrics, new style hints) | 18 | 4.50 | 16 | S tapped GBP 5 at 16:39Z; 1 refused by moderation, 1 Lyria 429 quota error (not billed); rejected by the diction gate: ta-7 lullaby, bn-30 nazrul geeti |
+| 2026-10-18 | Lyria language A/B (ta/te/kn/bn, not pooled) | 16 | 4.00 | n/a | scored only, see pool/lyria-lang-ab.md |
 
-Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 10.00 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 149 admitted, 24 retired duplicates, 23 rejected by the diction gate.
+Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 14.00 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 149 admitted, 24 retired duplicates, 23 rejected by the diction gate.
 Approvals: GBP 26 (pool), then GBP 15 more for gap and long tracks (S, 2026-10-18 13:35 UTC).
+Style coverage: GBP 4.50 of the GBP 5 S approved on 2026-10-18 (tap, 16:39Z). Google returned a 429 quota error on the last render, so further renders may be blocked until the quota resets.

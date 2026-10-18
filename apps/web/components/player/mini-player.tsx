@@ -28,7 +28,7 @@ export function MiniPlayer() {
       <section
         aria-label={t("player.openSong")}
         data-testid="mini-player"
-        className="fixed inset-x-2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 overflow-hidden rounded-xl border border-muted/40 bg-background/95 shadow-xl backdrop-blur sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96"
+        className="fixed inset-x-2 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-40 overflow-hidden glass rounded-2xl shadow-2xl sm:inset-x-auto sm:bottom-4 sm:right-4 sm:w-96"
       >
         <div className="flex items-center gap-3 px-3 py-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -44,7 +44,12 @@ export function MiniPlayer() {
             href={`/songs/${track.songId}`}
             className="min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <span className="block truncate text-sm font-medium">{track.title}</span>
+            <span className="flex items-center gap-2 truncate text-sm font-medium">
+              <span className="eq text-accent" data-paused={p.playing ? "false" : "true"} aria-hidden>
+                <i /><i /><i /><i />
+              </span>
+              <span className="truncate">{track.title}</span>
+            </span>
             <span className="block truncate text-xs text-foreground/60">
               {formatTime(p.currentTime)} / {formatTime(p.duration)}
               {track.subtitle ? ` · ${track.subtitle}` : ""}
@@ -98,7 +103,7 @@ export function MiniPlayer() {
           </div>
         ) : null}
         <div aria-hidden className="h-1 bg-muted/30">
-          <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
+          <div className="h-full bg-gradient-to-r from-accent to-pink-500" style={{ width: `${pct}%` }} />
         </div>
       </section>
     </>

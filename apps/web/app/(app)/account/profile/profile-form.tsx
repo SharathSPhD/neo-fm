@@ -165,7 +165,7 @@ export function ProfileForm({
           value={bio}
           onChange={(e) => setBio(e.target.value)}
           rows={3}
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-sm focus:border-accent focus:outline-none"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm focus:border-accent focus:outline-none"
           aria-describedby="bio-help"
         />
         <div className="flex items-center justify-between">

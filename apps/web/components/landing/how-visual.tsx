@@ -8,7 +8,7 @@ export function HowVisual() {
   return (
     <figure className="mt-10" aria-labelledby="how-visual-caption">
       <div className="grid items-stretch gap-3 lg:grid-cols-[1fr_auto_1.2fr_auto_1fr]">
-        <div className="rounded-xl border border-muted/30 bg-muted/5 p-5">
+        <div className="glass rounded-2xl p-5">
           <p className="text-[11px] font-medium uppercase tracking-widest text-foreground/60">1 · Your brief</p>
           <p className="mt-3 text-sm leading-relaxed text-foreground/90">
             &ldquo;A tender bhavageete about a daughter leaving home after marriage, remembering the courtyard and her mother&apos;s lullabies.&rdquo;
@@ -30,7 +30,7 @@ export function HowVisual() {
 
         <Arrow />
 
-        <div className="rounded-xl border border-muted/30 bg-muted/5 p-5">
+        <div className="glass rounded-2xl p-5">
           <p className="text-[11px] font-medium uppercase tracking-widest text-foreground/60">3 · Your song</p>
           <div className="mt-4 flex h-12 items-end gap-1" aria-hidden>
             {BARS.map((h, i) => (

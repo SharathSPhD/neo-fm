@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 
+import { headers } from "next/headers";
+
+import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { siteUrl } from "@/lib/seo/site";
+import { AmbientBackground } from "@/components/ambient-background";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
 import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
@@ -55,13 +59,16 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const lang = await getUiLang();
+  // The per-language SEO pages are written in that language, whatever the visitor's UI language is.
+  const htmlLang = languageCodeForPath((await headers()).get("x-pathname")) ?? lang;
   return (
-    <html lang={lang}>
+    <html lang={htmlLang}>
       <body>
         <UiLangProvider initial={lang}>
         {/* Applies persisted theme before paint; static file served from
             /public so no inline-script audit surface. */}
         <Script src="/theme-boot.js" strategy="beforeInteractive" />
+        <AmbientBackground />
         <AuthListener />
         <ClientErrorListener />
         {children}

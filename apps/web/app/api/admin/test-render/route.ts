@@ -12,9 +12,11 @@ import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { estimatedCostGbp, generateMusic, type SpendGuard } from "../../../../lib/agent/lyria";
 import { NATIVE_LABELS, nativeStyle } from "../../../../lib/agent/lyria-native";
-import { dictionHints } from "../../../../lib/diction";
+import { dictionHints, scoreTranscriptUnordered } from "../../../../lib/diction";
+import { transcribeSung } from "../../../../lib/diction/gemini";
 import { ROMAN_HINT, singingScript } from "../../../../lib/diction/romanize";
 import { renderCap, validateItems } from "../../../../lib/admin/test-render";
+import { dailyCap } from "../../../../lib/ops/provider-cap";
 import { getLogger } from "../../../../lib/obs/log";
 import { screenRequest } from "../../../../lib/safety";
 
@@ -54,14 +56,19 @@ export async function POST(req: NextRequest) {
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
       const r = await generateMusic(
-        { stylePrompt: [style, native ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
-        { guard, apiKey: key },
+        { stylePrompt: [style, native || it.hints === false ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
+        { guard, dailyCap: dailyCap(db, "lyria", "batch"), apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
       const up = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });
       if (up.error) return { label: it.label, error: `upload: ${up.error.message}` };
       const signed = await db.storage.from("tracks").createSignedUrl(path, 86400);
-      return { label: it.label, model: r.model, bytes: r.audio.length, render_ms: Date.now() - started, url: signed.data?.signedUrl ?? null };
+      // The probe arm: Gemini transcribes the render and the order-free match against the written lyrics is the score (same measure as the diction gate).
+      let diction_match_pct: number | null = null;
+      if (it.score) {
+        try { diction_match_pct = scoreTranscriptUnordered(lyrics, await transcribeSung(r.audio, r.mimeType, it.language, key)).matchPct; } catch { /* unscored */ }
+      }
+      return { label: it.label, model: r.model, bytes: r.audio.length, render_ms: Date.now() - started, url: signed.data?.signedUrl ?? null, hints: it.hints !== false, diction_match_pct };
     } catch (e) {
       return { label: it.label, error: String((e as Error).message).slice(0, 200) };
     }

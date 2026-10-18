@@ -4,6 +4,7 @@
  * and an energy arc. Tags are optional on pool rows, so every rule falls back to rank order when a track has none.
  */
 import type { PoolTrack, StationSignal } from "./rank";
+import { clashes, transitionCost } from "./flow";
 import { allowed, RELAXATION, type RotationState } from "./rotation";
 
 export type Daypart = "dawn" | "morning" | "midday" | "evening" | "dusk" | "night";
@@ -31,6 +32,12 @@ const PROFILE: Record<Daypart, Record<string, number>> = {
 
 /** At peak hours two slow tracks in a row feel like dead air. */
 const PEAK: ReadonlySet<Daypart> = new Set(["morning", "midday", "evening"]);
+
+/** Sized below the rank bonus (max 2) plus a daypart match, so a strong fit still beats rotation. */
+const VOICE_RUN_PENALTY = 1.5;
+
+/** Per unit of transition cost (lib/station/flow.ts): a devotional-to-dance clash (10) outweighs any daypart fit, a one-step energy change (1) barely registers. */
+const TRANSITION_WEIGHT = 0.7;
 
 const WHEEL: readonly Slot[] = ["opener", "familiar", "familiar", "exploration", "occasion", "repeat"];
 
@@ -95,7 +102,15 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
   const themes = new Set(ctx.themes ?? occasionThemes(ctx.month, ctx.day));
   const n = ranked.length;
   const rankBonus = new Map(ranked.map((t, i) => [t.id, n > 1 ? 2 * (1 - i / (n - 1)) : 2]));
-  const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0);
+  // Voice rotation (migration 0104 tags): after two same-gender leads in a row, nudge the next pick toward another voice.
+  // A nudge, not a rule: untagged tracks and a one-voice pool are unaffected, and rank/daypart can still win.
+  const voiceRun = (out: PoolTrack[]) => {
+    const a = out[out.length - 1]?.voice, b = out[out.length - 2]?.voice;
+    return a && a === b && a !== "mixed" ? a : null;
+  };
+  const lastPlayed = () => out[out.length - 1] ?? ctx.rotation?.history[ctx.rotation.history.length - 1];
+  const score = (t: PoolTrack) =>
+    daypartFit(t, part) + (rankBonus.get(t.id) ?? 0) - (t.voice && t.voice === voiceRun(out) ? VOICE_RUN_PENALTY : 0) - TRANSITION_WEIGHT * transitionCost(lastPlayed(), t);
 
   const remaining = [...ranked];
   const out: PoolTrack[] = [];
@@ -108,8 +123,12 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
     // Energy arc: at peak hours, after a slow track prefer anything that is not slow (if anything is left).
     const arcOk = PEAK.has(part) && prev && isSlow(prev) ? remaining.filter((t) => !isSlow(t)) : remaining;
     const arcPool = arcOk.length > 0 ? arcOk : remaining;
+    // Flow: drop candidates that clash with the previous track (devotional into dance, low energy into high) while any other exists.
+    const before = lastPlayed();
+    const smooth = arcPool.filter((t) => !clashes(before, t));
+    const flowPool = smooth.length > 0 ? smooth : arcPool;
     // Rotation is stricter than the arc: relax the arc first, then the rotation rules one by one, never the dedupe.
-    const pool = pickPool(arcPool, remaining, rotation, out);
+    const pool = pickPool(flowPool, remaining, rotation, out);
 
     let pick: PoolTrack[];
     if (slot === "familiar" || slot === "repeat") pick = pool.filter((t) => ctx.familiar.has(t.id));
