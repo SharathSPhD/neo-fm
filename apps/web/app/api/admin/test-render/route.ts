@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/test-render (Bearer ADMIN_SECRET via checkAdminBearer)
- *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style?, target_seconds? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
+ *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style?, target_seconds?, native? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
  * Renders each item with the same Lyria path a user job takes (moderation screen, romanized singing script, diction hints,
  * the 60 s full model) so operators can measure render cost and quality. There is no user, job or quota here, so the cap
  * above and the spend estimate in the response are the only guards: the caller owns the budget. `brief_id` loads the stored
@@ -11,6 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { estimatedCostGbp, generateMusic, type SpendGuard } from "../../../../lib/agent/lyria";
+import { NATIVE_LABELS, nativeStyle } from "../../../../lib/agent/lyria-native";
 import { dictionHints } from "../../../../lib/diction";
 import { ROMAN_HINT, singingScript } from "../../../../lib/diction/romanize";
 import { renderCap, validateItems } from "../../../../lib/admin/test-render";
@@ -44,12 +45,14 @@ export async function POST(req: NextRequest) {
         family = (data as { style_family?: string } | null)?.style_family ?? "";
       }
       if (!lyrics) return { label: it.label, error: "no_lyrics" };
-      const style = it.style ?? (family ? `A ${family.replace(/-/g, " ")} song with idiomatic instruments, a clear lead vocal, suited to the language and occasion.` : DEFAULT_STYLE);
+      const native = it.native ? { labels: NATIVE_LABELS[it.language], style: nativeStyle(it.language, family) } : null;
+      if (it.native && (!native?.labels || !native.style)) return { label: it.label, error: "no_native_preset" };
+      const style = native?.style ?? it.style ?? (family ? `A ${family.replace(/-/g, " ")} song with idiomatic instruments, a clear lead vocal, suited to the language and occasion.` : DEFAULT_STYLE);
       const verdict = await screenRequest(`${style}\n${lyrics}`, "lyrics");
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
       const r = await generateMusic(
-        { stylePrompt: [style, dictionHints(it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS },
+        { stylePrompt: [style, native ? "" : dictionHints(it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
         { guard, apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
