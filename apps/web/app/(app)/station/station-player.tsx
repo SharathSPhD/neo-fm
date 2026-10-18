@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
@@ -57,6 +58,7 @@ export function StationPlayer() {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [plays, setPlays] = useState(0);
   const [energy, setEnergy] = useState<Energy | null>(null);
   // Refills read it through a ref so a chip tap never restarts the language effect.
   const energyRef = useRef<Energy | null>(null);
@@ -94,7 +96,7 @@ export function StationPlayer() {
     audioRef.current.src = current.url;
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
-    void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => setBlocked(true));
+    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
 
@@ -243,6 +245,7 @@ export function StationPlayer() {
 
   return (
     <section aria-label="Station player" className="flex flex-col gap-4">
+      <InstallPrompt plays={plays} minPlays={2} />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
         {LANGS.map((l) => (
           <button

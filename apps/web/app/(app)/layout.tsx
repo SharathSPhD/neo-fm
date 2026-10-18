@@ -9,7 +9,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
-import { InstallPrompt } from "@/components/install-prompt";
 import { NetworkBanner } from "@/components/network-banner";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { PlayerProvider } from "@/components/player/player-provider";
@@ -37,7 +36,6 @@ export default async function AppGroupLayout({
     <PlayerProvider>
       <NetworkBanner />
       <AppShell user={user}>
-        <InstallPrompt />
         {children}
       </AppShell>
       <MiniPlayer />
