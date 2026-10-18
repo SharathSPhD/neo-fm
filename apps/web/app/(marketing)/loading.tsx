@@ -7,7 +7,7 @@ export default function MarketingLoading() {
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-32 animate-pulse rounded-xl border border-muted/30 bg-muted/15"
+            className="h-32 animate-pulse glass rounded-2xl"
           />
         ))}
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { expansionLanguage } from "@/lib/languages/registry";
 import type { Language } from "@neo-fm/song-doc";
 import { useEffect, useMemo, useState } from "react";
 
@@ -18,7 +19,7 @@ const LANGUAGE_LABEL_KEYS = {
   bn: "libpick.lang.bn",
   te: "libpick.lang.te",
   sa: "libpick.lang.sa",
-} as const satisfies Record<Language, string>;
+} as const satisfies Partial<Record<Language, string>>;
 
 /**
  * M2 library picker side panel.
@@ -145,7 +146,7 @@ export function LibraryPicker({
         <div className="flex flex-col">
           <h2 className="text-base font-medium">{t("libpick.title")}</h2>
           <p className="text-[11px] text-foreground/50">
-            {LANGUAGE_LABEL_KEYS[language] ? t(LANGUAGE_LABEL_KEYS[language]) : language}
+            {language in LANGUAGE_LABEL_KEYS ? t(LANGUAGE_LABEL_KEYS[language as keyof typeof LANGUAGE_LABEL_KEYS]) : (expansionLanguage(language)?.name ?? language)}
             {" · "}
             {t("libpick.verified")}
           </p>

@@ -5,6 +5,8 @@
  * GBP cap holds under concurrency.
  */
 import { isOutage, type CircuitBreaker } from "./circuit-breaker";
+import type { DailyCap } from "../ops/provider-cap";
+import type { PromptLabels } from "./lyria-native";
 
 export type DurationClass = "clip" | "full";
 
@@ -40,30 +42,46 @@ export class SpendCapError extends Error {
   }
 }
 
+/** Today's provider request cap is spent (lib/ops/provider-cap.ts). A SpendCapError so callers refuse the render the same way; the message is what failureCode() turns into the "busy, try later" copy. */
+export class DailyCapError extends SpendCapError {
+  constructor() {
+    super();
+    this.message = "Lyria daily cap reached";
+    this.name = "DailyCapError";
+  }
+}
+
 /**
  * Lyria 3.5 honours an explicit length instruction (measured: "exactly 60 seconds total" -> 62.7 s; without it a
  * 60 s request produced ~170 s). The clip model is fixed at ~30 s, so no instruction is added for it.
  */
-export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?: number, cls: DurationClass = "full"): string {
-  const len = cls === "full" && targetSeconds && targetSeconds > 0
-    ? `Duration: exactly ${Math.round(targetSeconds)} seconds total, do not exceed ${Math.round(targetSeconds)} seconds. `
+export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?: number, cls: DurationClass = "full", labels?: PromptLabels): string {
+  const secs = Math.round(targetSeconds ?? 0);
+  const len = cls === "full" && secs > 0
+    ? (labels ? labels.duration(secs) : `Duration: exactly ${secs} seconds total, do not exceed ${secs} seconds. `)
     : "";
-  return `${len}${stylePrompt.trim()}\n\nLyrics:\n${lyrics.trim()}`;
+  return `${len}${stylePrompt.trim()}\n\n${labels?.lyrics ?? "Lyrics:"}\n${lyrics.trim()}`;
 }
 
 export async function generateMusic(
-  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number },
-  deps: { guard: SpendGuard; breaker?: Pick<CircuitBreaker, "onSuccess" | "onFailure">; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv; attempts?: number; retryDelayMs?: number },
+  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number; labels?: PromptLabels },
+  deps: { guard: SpendGuard; dailyCap?: DailyCap; breaker?: Pick<CircuitBreaker, "onSuccess" | "onFailure">; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv; attempts?: number; retryDelayMs?: number },
 ): Promise<LyriaResult> {
   const f = deps.fetchImpl ?? fetch;
   const cost = estimatedCostGbp(args.durationClass, deps.env);
   if (!(await deps.guard.reserve(cost))) throw new SpendCapError();
+  // Each provider request counts against the day's cap, so a retry takes another. The first is taken before any call.
+  if (deps.dailyCap && !(await deps.dailyCap.reserve())) {
+    await deps.guard.release(cost);
+    throw new DailyCapError();
+  }
   const model = LYRIA_MODEL[args.durationClass];
   const attempts = Math.max(1, deps.attempts ?? 3);
   let lastErr: unknown = new Error("lyria failed");
   // One reservation covers the retries: the provider bills only a render that returns audio, and a user's song
   // must not be lost to a single transient miss (every tier allows just one render slot).
   for (let i = 0; i < attempts; i++) {
+    if (i > 0 && deps.dailyCap && !(await deps.dailyCap.reserve())) { lastErr = new DailyCapError(); break; }
     try {
       const res = await f(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
@@ -71,13 +89,13 @@ export async function generateMusic(
           method: "POST",
           headers: { "content-type": "application/json", "x-goog-api-key": deps.apiKey },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics, args.targetSeconds, args.durationClass) }] }],
+            contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics, args.targetSeconds, args.durationClass, args.labels) }] }],
             generationConfig: { responseModalities: ["AUDIO", "TEXT"] },
           }),
         },
       );
       if (!res.ok) {
-        const e = new Error(`lyria ${res.status}: ${(await res.text()).slice(0, 300)}`);
+        const e = new Error(`lyria ${res.status}: ${(await res.text()).slice(0, 1200)}`);
         // 4xx other than rate limiting will not change on retry.
         if (res.status >= 400 && res.status < 500 && res.status !== 429) { lastErr = e; break; }
         throw e;

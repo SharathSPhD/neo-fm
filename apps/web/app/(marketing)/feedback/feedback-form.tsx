@@ -84,7 +84,7 @@ export function FeedbackForm() {
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder={t("feedback.subjectPh")}
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           required
         />
       </label>
@@ -98,7 +98,7 @@ export function FeedbackForm() {
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder={t("feedback.detailsPh")}
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           required
         />
         <span className="self-end text-[10px] text-foreground/40">

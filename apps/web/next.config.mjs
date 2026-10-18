@@ -14,6 +14,10 @@ const nextConfig = {
     "/api/recap/image": ["./lib/share/fonts/*.ttf"],
     "/c/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
   },
+  // Next streams <title>/<meta description> into the body for browser user agents, so Lighthouse and some link-preview
+  // crawlers saw no description. Treat every UA as "HTML limited" to keep metadata in <head> (a few ms of TTFB on
+  // pages whose metadata is computed; the home page metadata is static).
+  htmlLimitedBots: /.*/,
   transpilePackages: ["@neo-fm/song-doc"],
 };
 

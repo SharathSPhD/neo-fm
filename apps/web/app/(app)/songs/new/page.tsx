@@ -4,7 +4,11 @@ import { redirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { ideaById } from "@/lib/ideas/catalog";
 import { serverI18n } from "@/lib/i18n/server";
-import { createServerClient } from "@/lib/supabase/server";
+import { betaLanguages, enabledExpansionLanguages } from "@/lib/languages/registry";
+import { hasStationPass } from "@/lib/billing/pass";
+import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
+import type { UserTier } from "@/lib/agent/tiers";
+import { type VoiceChoice, voiceChoiceEnabled, voiceEntitlement } from "@/lib/voice";
 
 import { CreationCanvas } from "./creation-canvas";
 
@@ -25,6 +29,19 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
     .eq("user_id", data.user.id);
   const firstRun = (count ?? 0) === 0;
 
+  // Voice choice (VOICE_CHOICE=1): the picker offers what the listener's tier and pass include; Free sees "Auto" only.
+  let voiceChoices: readonly VoiceChoice[] | undefined;
+  if (voiceChoiceEnabled()) {
+    const { data: row } = await supabase.from("users").select("tier").eq("id", data.user.id).maybeSingle();
+    const pass = await hasStationPass(createServiceRoleClient(), data.user.id);
+    voiceChoices = voiceEntitlement((row as { tier?: UserTier } | null)?.tier, pass).choices;
+  }
+
+  // Every expansion language is labelled beta until a native read passes and its code is listed in LANG_REVIEWED.
+  const expansion = enabledExpansionLanguages(process.env.LANG_WAVES);
+  const beta = new Set(betaLanguages(expansion.map((l) => l.code), process.env.LANG_REVIEWED));
+  const extraLanguages = expansion.map(({ code, name }) => ({ code, name: beta.has(code) ? `${name} (beta)` : name }));
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <Breadcrumbs
@@ -39,7 +56,7 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
           {t("gift.cta")}
         </Link>
       </header>
-      <CreationCanvas firstRun={firstRun} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
+      <CreationCanvas voiceChoices={voiceChoices} firstRun={firstRun} extraLanguages={extraLanguages} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>
   );
 }

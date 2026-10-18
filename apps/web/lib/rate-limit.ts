@@ -28,6 +28,7 @@
  *   - /api/songs/.../regenerate : 6
  *   - /api/lyrics               : 60
  *   - /api/station/queue        : 30 (open to signed-out visitors)
+ *   - /api/station/ad-event     : 60
  *   - /api/station/signal       : 90
  *   - /api/alexa                : 600 (shared Amazon source IPs)
  *   - /api/p/*  (public reads)  : 120
@@ -96,6 +97,10 @@ export function pickRule(
   // Anonymous client telemetry: cheap per call but unauthenticated.
   if (/^\/api\/events\/?$/.test(pathname)) {
     return { bucket: "anon:events", limit: 20 };
+  }
+  // House-ad log: small writes, open to signed-out listeners.
+  if (/^\/api\/station\/ad-event\/?$/.test(pathname)) {
+    return { bucket: "station:ad-event", limit: 60 };
   }
   // Native-review links are token-gated, not login-gated, so cap both the
   // rating writes and the page itself to blunt token guessing.

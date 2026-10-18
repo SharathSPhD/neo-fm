@@ -1,5 +1,7 @@
 "use client";
 
+import type { VoiceLanguage } from "@neo-fm/co-composer";
+import type { Language } from "@neo-fm/song-doc";
 import type { Section, SongDocument } from "@neo-fm/song-doc";
 import { SONG_TITLE_MAX_CHARS } from "@neo-fm/song-doc";
 import type { StylePreset } from "@neo-fm/style-presets";
@@ -18,6 +20,8 @@ import {
 } from "./advanced-disclosure";
 import { LibraryPicker } from "./library-picker";
 import { PresetGallery } from "./preset-gallery";
+import type { VoiceChoice } from "@/lib/voice";
+
 import { PromptTab } from "./prompt-tab";
 import { LYRIC_MAX_CHARS, SectionEditor } from "./section-editor";
 import { VoicePicker } from "./voice-picker";
@@ -37,7 +41,6 @@ type StyleFamily =
   | "sanskrit-shloka"
   | "bengali-rabindrasangeet"
   | "telugu-keerthana";
-type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 
 const STYLE_OPTIONS: { value: StyleFamily; label: UiKey }[] = [
   { value: "carnatic", label: "create.style.carnatic" },
@@ -51,6 +54,11 @@ const STYLE_OPTIONS: { value: StyleFamily; label: UiKey }[] = [
   { value: "sanskrit-shloka", label: "create.style.shloka" },
   { value: "western", label: "create.style.western" },
 ];
+
+const VOICE_LANGUAGES: readonly Language[] = ["en", "hi", "kn", "ta", "te", "bn", "sa"];
+function isVoiceLanguage(l: Language): l is VoiceLanguage {
+  return VOICE_LANGUAGES.includes(l);
+}
 
 const LANGUAGE_OPTIONS: { value: Language; label: UiKey }[] = [
   { value: "hi", label: "create.lang.hi" },
@@ -99,7 +107,7 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
 
 type CreationMode = "compose" | "describe";
 
-export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: boolean; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
+export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages = [], voiceChoices }: { voiceChoices?: readonly VoiceChoice[]; firstRun?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
   const router = useRouter();
   const { t } = useUiLang();
   const [creationMode, setCreationMode] = useState<CreationMode>("describe");
@@ -144,6 +152,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
   }
   function setLanguage(language: Language) {
     setForm({ ...form, language });
+    if (!isVoiceLanguage(language)) setVoiceId("");
     if (activePreset && activePreset.song_document.language !== language) {
       setActivePreset(null);
     }
@@ -350,7 +359,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
       <div
         role="tablist"
         aria-label={t("create.modeLabel")}
-        className="flex gap-1 rounded-lg border border-muted/20 bg-muted/10 p-1 mb-4"
+        className="flex gap-1 glass rounded-2xl p-1 mb-4"
       >
         {(["compose", "describe"] as const).map((mode) => (
           <button
@@ -372,7 +381,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
       </div>
 
       {creationMode === "describe" ? (
-        <PromptTab showGuide={firstRun} initialIdea={initialIdea} />
+        <PromptTab voiceChoices={voiceChoices} showGuide={firstRun} initialIdea={initialIdea} extraLanguages={extraLanguages} />
       ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
@@ -390,7 +399,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
             maxLength={SONG_TITLE_MAX_CHARS}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("create.titlePlaceholder")}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           />
           <span className="text-[10px] text-foreground/40">
             {t("create.titleHint", { n: SONG_TITLE_MAX_CHARS - title.length })}
@@ -403,7 +412,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
               name="style_family"
               value={form.style_family}
               onChange={(e) => setStyle(e.target.value as StyleFamily)}
-              className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+              className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
             >
               {STYLE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -417,11 +426,16 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
               name="language"
               value={form.language}
               onChange={(e) => setLanguage(e.target.value as Language)}
-              className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+              className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
             >
               {LANGUAGE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
                   {t(o.label)}
+                </option>
+              ))}
+              {extraLanguages.map((o) => (
+                <option key={o.code} value={o.code}>
+                  {o.name}
                 </option>
               ))}
             </select>
@@ -433,7 +447,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
             name="target_duration_seconds"
             value={form.target_duration_seconds}
             onChange={(e) => setDuration(Number(e.target.value) as Duration)}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -443,12 +457,15 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
           </select>
         </Field>
 
-        <VoicePicker
-          value={voiceId}
-          onChange={setVoiceId}
-          language={form.language}
-          previewBaseUrl={getVoicePreviewBaseUrl()}
-        />
+        {/* Voice personas exist only for the launch languages; an expansion language sings in the model's default voice. */}
+        {isVoiceLanguage(form.language) ? (
+          <VoicePicker
+            value={voiceId}
+            onChange={setVoiceId}
+            language={form.language}
+            previewBaseUrl={getVoicePreviewBaseUrl()}
+          />
+        ) : null}
 
         <AdvancedDisclosure
           styleFamily={form.style_family}

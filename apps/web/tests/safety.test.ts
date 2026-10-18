@@ -16,12 +16,29 @@ describe("screenText", () => {
     blocked("in the voice of Taylor Swift", "artist_impersonation");
     blocked("voice clone of my favourite singer", "artist_impersonation");
   });
+  it("allows traditional forms and genres but blocks capitalised person names", () => {
+    ok("A calm devotional song in the style of Dasa padas with a tambura drone");
+    ok("in the style of old Carnatic keerthanas, qawwali energy, a lavani rhythm");
+    ok("in the style of Hindustani Classical at dawn");
+    blocked("in the style of Kishore Kumar", "artist_impersonation");
+  });
   it("blocks copyrighted lyric reproduction", () => {
     blocked("give me the exact lyrics of Kun Faya Kun", "copyrighted_lyrics");
   });
   it("blocks sexual content involving minors in either word order", () => {
     blocked("erotic song about a 15-year-old", "sexual_minors");
     blocked("a schoolgirl and a sensual dance", "sexual_minors");
+  });
+  it("blocks real-person likeness and election persuasion but not dedications, satire or issue songs", () => {
+    blocked("a deepfake of the prime minister singing", "real_person_likeness");
+    blocked("campaign jingle for our party's rally", "election_persuasion");
+    blocked("vote for Modi catchy chorus", "election_persuasion");
+    ok("A song about my first time getting to vote for the first time, nervous and proud");
+    ok("Grandma taught us to vote for what is right");
+    blocked("vote for the BJP jingle", "election_persuasion");
+    ok("A birthday song for my sister Meena who loves mangoes");
+    ok("A protest song about rising onion prices and the city's broken roads");
+    ok("A funny satire about people who never reply to WhatsApp groups");
   });
   it("resists zero-width evasion and flags injection", () => {
     blocked("sing li​ke Drake", "artist_impersonation");

@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
+
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
 import { jsonLdString } from "@/lib/seo/jsonld";
 
@@ -41,7 +42,7 @@ function Accented({ text }: { text: string }) {
     <>
       {text.split(/\[\[|\]\]/).map((part, i) =>
         i % 2 === 1 ? (
-          <span key={i} className="text-accent">
+          <span key={i} className="text-aurora">
             {part}
           </span>
         ) : (
@@ -76,7 +77,7 @@ const JSON_LD = {
 
 export default async function Page() {
   return (
-    <main className="min-h-screen">
+    <main className="relative min-h-screen">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
@@ -100,27 +101,26 @@ async function Hero() {
   const { data: auth } = await createServerClient().auth.getUser();
   const signedIn = Boolean(auth?.user);
   return (
-    <section className="relative overflow-hidden border-b border-muted/30" aria-labelledby="hero-heading">
-      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.15),_transparent_55%)]" />
+    <section className="relative overflow-hidden" aria-labelledby="hero-heading">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-20 sm:py-28">
         <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-accent">
-          <span aria-hidden>♬</span>
+          <span className="eq" aria-hidden><i /><i /><i /><i /></span>
           {t("landing.badge")}
         </span>
-        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl md:text-6xl">
+        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl md:text-7xl">
           <Accented text={t("landing.title")} />
         </h1>
         <p className="max-w-2xl text-lg text-foreground/75 sm:text-xl">
           {t("landing.subtitle")}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/station" className="rounded-md bg-accent px-6 py-3 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+          <Link href="/station" className="rounded-full bg-accent px-6 py-3 font-medium text-background shadow-[0_0_36px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 hover:shadow-[0_0_44px_-4px_hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
             {t("landing.ctaListen")}
           </Link>
-          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             {signedIn ? t("landing.ctaMake") : t("landing.ctaPrimary")}
           </Link>
-          <Link href="/discover" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+          <Link href="/discover" className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             {t("landing.ctaSecondary")}
           </Link>
         </div>
@@ -153,12 +153,12 @@ async function WhatIs() {
 async function HowItWorks() {
   const { t } = await serverI18n();
   return (
-    <section className="border-t border-muted/30" aria-labelledby="how-heading">
+    <section aria-labelledby="how-heading">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <h2 id="how-heading" className="text-3xl font-semibold tracking-tight">{t("landing.howTitle")}</h2>
         <ol className="mt-8 grid gap-5 sm:grid-cols-3">
           {STEPS.map((s) => (
-            <li key={s.n} className="rounded-xl border border-muted/30 bg-muted/5 p-6">
+            <li key={s.n} className="glass glass-hover rounded-2xl p-6">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/15 text-sm font-medium text-accent" aria-hidden>{s.n}</span>
               <h3 className="mt-4 text-lg font-medium">{t(s.title)}</h3>
               <p className="mt-2 text-sm text-foreground/70">{t(s.body)}</p>
@@ -174,12 +174,12 @@ async function HowItWorks() {
 async function Different() {
   const { t } = await serverI18n();
   return (
-    <section className="border-t border-muted/30" aria-labelledby="diff-heading">
+    <section aria-labelledby="diff-heading">
       <div className="mx-auto max-w-6xl px-6 py-16">
         <h2 id="diff-heading" className="text-sm font-medium uppercase tracking-widest text-foreground/50">{t("landing.diffTitle")}</h2>
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {DIFFERENT.map((d) => (
-            <article key={d.title} className="rounded-xl border border-muted/30 bg-muted/5 p-6">
+            <article key={d.title} className="glass glass-hover rounded-2xl p-6">
               <h3 className="text-base font-medium">{t(d.title)}</h3>
               <p className="mt-2 text-sm text-foreground/70">{t(d.body)}</p>
             </article>
@@ -193,7 +193,7 @@ async function Different() {
 async function PricingTeaser() {
   const { t } = await serverI18n();
   return (
-    <section className="border-t border-muted/30" aria-labelledby="price-heading">
+    <section aria-labelledby="price-heading">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 px-6 py-16 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 id="price-heading" className="text-2xl font-semibold tracking-tight">{t("landing.priceTitle")}</h2>
@@ -258,6 +258,12 @@ async function Footer() {
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.terms")}
+          </Link>
+          <Link
+            href="/ai-disclosure"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            {t("footer.ai")}
           </Link>
           <Link
             href="/help"

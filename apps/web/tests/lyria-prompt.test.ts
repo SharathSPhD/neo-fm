@@ -11,3 +11,15 @@ describe("lyria prompt", () => {
     expect(buildPrompt("Hindi folk", "x")).toBe("Hindi folk\n\nLyrics:\nx");
   });
 });
+
+describe("native prompt labels", () => {
+  it("replaces the English label and duration line without touching the default path", async () => {
+    const { NATIVE_LABELS } = await import("../lib/agent/lyria-native");
+    const p = buildPrompt("x", "y", 60, "full", NATIVE_LABELS.ta);
+    expect(p).toContain("வினாடிகள்");
+    expect(p).toContain("பாடல் வரிகள்:");
+    expect(p).not.toContain("Lyrics:");
+    expect(p).not.toContain("Duration:");
+    expect(buildPrompt("x", "y")).toBe("x\n\nLyrics:\ny");
+  });
+});

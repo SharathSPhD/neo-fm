@@ -78,3 +78,28 @@ describe("helpers", () => {
     expect([...f]).toEqual(["a"]);
   });
 });
+
+describe("tagger daypart and energy (migration 0096)", () => {
+  const tagged = (id: string, daypart: string[], energy: PoolTrack["energy"] = null, tags: string[] = []): PoolTrack => ({
+    id, language: "hi", tags, daypart, energy,
+  });
+
+  it("prefers the tagger's daypart over tag-derived fit", () => {
+    // Tags say energetic (bad for dawn) but the tagger placed it at dawn.
+    expect(daypartFit(tagged("a", ["dawn"], null, ["energetic", "fast"]), "dawn")).toBeGreaterThan(0);
+    expect(daypartFit(tagged("b", ["night"], null, ["devotional", "calm"]), "dawn")).toBeLessThan(0);
+  });
+  it("falls back to tags when the daypart set is empty or missing", () => {
+    expect(daypartFit(tagged("c", [], null, ["devotional", "calm"]), "dawn")).toBeGreaterThan(0);
+    expect(daypartFit({ id: "d", language: "hi", tags: ["energetic", "fast"] }, "dawn")).toBeLessThan(0);
+  });
+  it("runs the energy arc on the tagger's band, falling back to the slow tag", () => {
+    const ranked = [tagged("l1", ["morning"], "low"), tagged("l2", ["morning"], "low"), tagged("h1", ["morning"], "high"), tagged("h2", ["morning"], "mid")];
+    const q = programQueue(ranked, ctx({ hour: 9 }));
+    for (let i = 1; i < q.length; i++) expect(q[i]!.energy === "low" && q[i - 1]!.energy === "low").toBe(false);
+    // A "low" band beats a missing "slow" tag; a null band still reads the tag.
+    const mixed = [tagged("s1", [], null, ["slow"]), tagged("s2", [], null, ["slow"]), tagged("m1", [], "high"), tagged("m2", [], "mid")];
+    const q2 = programQueue(mixed, ctx({ hour: 13 }));
+    for (let i = 1; i < q2.length; i++) expect(q2[i]!.tags.includes("slow") && q2[i - 1]!.tags.includes("slow")).toBe(false);
+  });
+});

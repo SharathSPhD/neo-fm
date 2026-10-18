@@ -180,7 +180,7 @@ export function SongGrid({
         <li key={s.id} className="group flex flex-col gap-2">
           <Link
             href={`/songs/${s.id}`}
-            className="relative block aspect-square overflow-hidden rounded-lg border border-muted/30 bg-muted/10 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="relative block aspect-square overflow-hidden glass glass-hover rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label={t("lib.openDetail", { title: s.title ?? t("song.song") })}
           >
             <CoverArt
@@ -227,6 +227,7 @@ export function SongGrid({
                 {s.title ?? songFallbackTitle(s, t("lib.songLower"))}
               </span>
               <span className="text-xs text-foreground/55">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {[s.style_family, s.language].filter(Boolean).join(" · ") ||
                   "—"}
               </span>

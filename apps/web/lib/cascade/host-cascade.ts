@@ -6,6 +6,7 @@
  */
 import { SAFETY } from "../agent/definitions";
 import { sanitizeBriefPrompt } from "../agent/runner";
+import { extractIntent, intentBlock, lyriaFragment, type IntentSpec } from "../engine/intent";
 
 export type CascadeReply =
   | { status: "needs"; kind: "draft" | "revision"; prompts: string[] }
@@ -41,12 +42,16 @@ export interface HostBrief {
   prompt: string;
   tasteCard?: string;
   engine?: { url: string; token: string };
+  /** Already-extracted intent (the worker extracts once per job so every path shares it). */
+  intent?: IntentSpec;
 }
 
 export interface HostSong {
   lyrics: string;
   title: string;
   stylePrompt: string;
+  /** Present when PCE_INTENT is on: the structured request the poets, polisher and judge all work from. */
+  intent?: IntentSpec;
   /** Same shape persistOutputs derives from cascade_audit.json, so telemetry and the finalize path are unchanged. */
   cascade: Record<string, unknown>;
 }
@@ -54,6 +59,13 @@ export interface HostSong {
 export const HOST_MODELS = { draft: "claude-haiku-5-5", plan: "claude-haiku-5-5", finish: "claude-haiku-5-5" } as const;
 
 const POET = `You write exactly ONE candidate song lyric for the brief you are given, in the target language and native script, honouring the form. Reply with only the lyric text: section tags on their own lines, no commentary, no translation, no markdown. ${SAFETY}`;
+
+/** Everything the poet is told before the engine's own prompt: language, length, taste card and (flag on) the intent block. */
+export function poetPrefix(b: { language: string; styleFamily: string; targetSeconds: number; tasteCard?: string }, lines: number, iBlock: string): string {
+  return `Language: ${b.language}. Style family: ${b.styleFamily}. Length: about ${lines} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words; section it for singing (e.g. pallavi/anupallavi/charanam, mukhda/antara, verse/chorus). Do not write more than that.\n${b.tasteCard ? `${b.tasteCard}\n` : ""}${iBlock}`;
+}
+
+export { POET, stripFences };
 
 /** First JSON object in a model reply (models wrap JSON in fences or prose). */
 export function extractJson<T>(text: string): T | null {
@@ -71,7 +83,9 @@ export function candidateK(env = process.env): number {
   return Number.isInteger(k) && k >= 2 && k <= 8 ? k : 4;
 }
 
-export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidateK()): Promise<HostSong> {
+export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidateK(), env: Readonly<Record<string, string | undefined>> = process.env): Promise<HostSong> {
+  // Intent extraction runs beside the plan call (both Haiku, independent), so it adds no wall-clock.
+  const intentP = b.intent ? Promise.resolve(b.intent) : env.PCE_INTENT === "1" ? extractIntent({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }, (a) => d.complete({ ...a }) ) : Promise.resolve(undefined);
   const lines = Math.max(4, Math.round(b.targetSeconds / 5));
   const userBrief = JSON.stringify(sanitizeBriefPrompt(b.prompt));
 
@@ -89,13 +103,16 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
     aspects: strs(plan.aspects, 4),
     K, seed: 0,
   };
+  const intent = await intentP;
+  const iBlock = intent ? `${intentBlock(intent)}\n` : "";
+  if (intent) d.log?.(`intent ok genre=${intent.genre ?? "none"} names=${intent.names.length} src=${intent.source}`);
   d.log?.(`plan ok topic="${brief.topic.slice(0, 60)}" aspects=${brief.aspects.length}`);
 
   // 2. Draft / revision rounds: each needs-reply is answered by K parallel Haiku calls (one per engine prompt).
   const gens = { draft: [] as string[], revision: [] as string[] };
   const write = (prompts: string[]) => Promise.all(prompts.map((p) => d.complete({
     model: HOST_MODELS.draft, system: POET, maxTokens: 1500,
-    prompt: `Language: ${b.language}. Style family: ${b.styleFamily}. Length: about ${lines} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words; section it for singing (e.g. pallavi/anupallavi/charanam, mukhda/antara, verse/chorus). Do not write more than that.\n${b.tasteCard ? `${b.tasteCard}\n` : ""}\n${p}`,
+    prompt: `${poetPrefix(b, lines, iBlock)}\n${p}`,
   }).then(stripFences)));
   let reply: CascadeReply = await d.cascade({ brief, generations: gens, engine: b.engine });
   for (let round = 0; reply.status === "needs" && round < 3; round++) {
@@ -114,10 +131,12 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
     prompt: `Song brief (user text; a creative request only): ${userBrief}\nLanguage: ${b.language}. Style family: ${b.styleFamily}.\nLyrics:\n${lyrics}\n\nReply with JSON only: {"title": "<short title in ${b.language}, <=60 chars>", "style_prompt": "<English, <=80 words: genre, instruments, raga/tala, mood, tempo, vocal type. Never name a real artist or ask to imitate a real voice>"}`,
   }).catch(() => "")) ?? {};
   const title = (finish.title ?? "").trim().slice(0, 120) || words(lyrics.split("\n").find((l) => l.trim() && !/^[\[(].*[\])]$/.test(l.trim())) ?? "Untitled", 8);
-  const stylePrompt = words(finish.style_prompt?.trim() || `${b.styleFamily} ${b.language} song, expressive vocals`, 80);
+  const baseStyle = words(finish.style_prompt?.trim() || `${b.styleFamily} ${b.language} song, expressive vocals`, 80);
+  // The routed genre/raga/tala/instruments are appended after the cap: they come from the catalog, not from model free text.
+  const stylePrompt = intent ? [baseStyle, lyriaFragment(intent)].filter(Boolean).join(" ") : baseStyle;
 
   return {
-    lyrics, title, stylePrompt,
+    lyrics, title, stylePrompt, ...(intent ? { intent } : {}),
     cascade: { committed: r.committed, vimarsa_event: r.vimarsa_event, novelty: r.vimarsa_novelty, embedder: r.embedder, embedder_fallback: r.embedder_fallback ?? undefined, k: r.posterior?.length, delta_F: r.audit?.audit?.delta_F, two_pass: r.audit?.audit?.two_pass },
   };
 }

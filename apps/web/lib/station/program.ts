@@ -32,9 +32,18 @@ const PROFILE: Record<Daypart, Record<string, number>> = {
 /** At peak hours two slow tracks in a row feel like dead air. */
 const PEAK: ReadonlySet<Daypart> = new Set(["morning", "midday", "evening"]);
 
+/** Sized below the rank bonus (max 2) plus a daypart match, so a strong fit still beats rotation. */
+const VOICE_RUN_PENALTY = 1.5;
+
 const WHEEL: readonly Slot[] = ["opener", "familiar", "familiar", "exploration", "occasion", "repeat"];
 
+/** Fit of a tagger-assigned daypart set: a listed part is a strong match, an unlisted one a mild mismatch. */
+const TAGGED_MATCH = 4;
+const TAGGED_MISS = -1;
+
 export function daypartFit(track: PoolTrack, part: Daypart): number {
+  // Tagger output (migration 0096) wins; rows it has not reached keep the tag-derived profile.
+  if (track.daypart && track.daypart.length > 0) return track.daypart.includes(part) ? TAGGED_MATCH : TAGGED_MISS;
   const profile = PROFILE[part];
   let fit = 0;
   for (const tag of track.tags) fit += profile[tag] ?? 0;
@@ -66,6 +75,8 @@ export interface ProgramContext {
   limit?: number;
   /** Rotation rules (lib/station/rotation.ts); omit for none. */
   rotation?: RotationState;
+  /** Occasion themes to favour regardless of the calendar (named stations, e.g. Diwali Radio). */
+  themes?: readonly string[];
 }
 
 function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState, out: PoolTrack[]): PoolTrack[] {
@@ -78,15 +89,22 @@ function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState
   return all;
 }
 
-const isSlow = (t: PoolTrack) => t.tags.includes("slow");
+/** Tagger energy when present, else the "slow" tempo tag. */
+const isSlow = (t: PoolTrack) => (t.energy ? t.energy === "low" : t.tags.includes("slow"));
 
 /** `ranked` is best-first from rankTracks; its order is the tie-breaker for everything here. */
 export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrack[] {
   const part = daypartOf(ctx.hour);
-  const themes = new Set(occasionThemes(ctx.month, ctx.day));
+  const themes = new Set(ctx.themes ?? occasionThemes(ctx.month, ctx.day));
   const n = ranked.length;
   const rankBonus = new Map(ranked.map((t, i) => [t.id, n > 1 ? 2 * (1 - i / (n - 1)) : 2]));
-  const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0);
+  // Voice rotation (migration 0104 tags): after two same-gender leads in a row, nudge the next pick toward another voice.
+  // A nudge, not a rule: untagged tracks and a one-voice pool are unaffected, and rank/daypart can still win.
+  const voiceRun = (out: PoolTrack[]) => {
+    const a = out[out.length - 1]?.voice, b = out[out.length - 2]?.voice;
+    return a && a === b && a !== "mixed" ? a : null;
+  };
+  const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0) - (t.voice && t.voice === voiceRun(out) ? VOICE_RUN_PENALTY : 0);
 
   const remaining = [...ranked];
   const out: PoolTrack[] = [];

@@ -7,10 +7,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import Sanscript from "@indic-transliteration/sanscript";
 
+import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { generateMusic, type SpendGuard } from "../../../../lib/agent/lyria";
 import { charErrorRate } from "../../../../lib/diction";
 import { transcribeSung } from "../../../../lib/diction/gemini";
+import { dailyCap } from "../../../../lib/ops/provider-cap";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -35,9 +37,10 @@ export async function POST(req: NextRequest) {
     roman: `Lyrics (${language}, romanized):\n${lines.map((l) => roman(l, scheme)).join("\n")}`,
   };
   const out: Record<string, unknown> = {};
+  const cap = dailyCap(serviceClient(), "lyria", "batch");
   await Promise.all(Object.entries(variants).map(async ([name, body]) => {
     try {
-      const r = await generateMusic({ stylePrompt: st, lyrics: body, durationClass: "clip" }, { guard: noGuard, apiKey: key });
+      const r = await generateMusic({ stylePrompt: st, lyrics: body, durationClass: "clip" }, { guard: noGuard, dailyCap: cap, apiKey: key });
       const tr = await transcribeSung(r.audio, r.mimeType, language, key);
       out[name] = { cer: Math.round(charErrorRate(lines.join(" "), tr) * 1000) / 1000, transcript: tr.slice(0, 160) };
     } catch (e) { out[name] = { error: String((e as Error).message).slice(0, 120) }; }

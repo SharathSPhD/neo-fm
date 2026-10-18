@@ -1,12 +1,15 @@
 "use client";
 
+import type { Language } from "@neo-fm/song-doc";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
 import { EXAMPLE_IDEAS } from "@/lib/first-run/examples";
-import { isUiLang } from "@/lib/i18n/ui-strings";
+import { isUiLang, type UiKey } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+
+import { duetHeld, type VoiceChoice } from "@/lib/voice";
 
 import { FirstRunGuide } from "./first-run-guide";
 
@@ -22,7 +25,6 @@ type StyleFamily =
   | "bengali-rabindrasangeet"
   | "telugu-keerthana";
 
-type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 type Duration = 30 | 60 | 90 | 180;
 
 const STYLE_OPTIONS: { value: StyleFamily; label: string }[] = [
@@ -54,13 +56,21 @@ const DURATION_OPTIONS: Duration[] = [30, 60, 90, 180];
 const DEFAULT_STYLE: Record<Language, StyleFamily> = {
   hi: "bollywood-ballad", kn: "kannada-light-classical", ta: "tamil-folk", te: "telugu-keerthana",
   bn: "bengali-rabindrasangeet", sa: "sanskrit-shloka", en: "western",
+  // Expansion languages have no style family of their own yet; these are the closest existing ones (placeholder until
+  // the council's per-language genres become style presets).
+  mr: "bollywood-ballad", pa: "bollywood-ballad", gu: "bollywood-ballad", bho: "bollywood-ballad",
+  ml: "carnatic", or: "hindustani", ur: "hindustani", as: "hindustani",
 };
 
 const PROMPT_MAX_CHARS = 500;
 
+const VOICE_LABEL_KEY = {
+  station: "prompt.voiceAuto", female: "prompt.voiceFemale", male: "prompt.voiceMale", duet: "prompt.voiceDuet",
+} as const satisfies Record<VoiceChoice, UiKey>;
+
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: boolean; initialIdea?: { prompt: string; language: Language } }) {
+export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices }: { voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
   // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
@@ -71,6 +81,9 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
   const [styleTouched, setStyleTouched] = useState(false);
   const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
+  const [voice, setVoice] = useState<VoiceChoice>("station");
+  const shownVoices = voiceChoices?.filter((c) => !(c === "duet" && duetHeld(language)));
+  const voiceNow: VoiceChoice = shownVoices?.includes(voice) ? voice : "station";
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -129,6 +142,7 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
         language,
         style_family: styleFamily,
         target_duration_seconds: duration,
+        ...(voiceNow !== "station" ? { voice: { choice: voiceNow } } : {}),
       }),
     });
 
@@ -199,7 +213,7 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
           maxLength={PROMPT_MAX_CHARS + 50}
           rows={5}
           placeholder="e.g. A melancholic Carnatic raga about the monsoon season and longing for home, with a female vocalist in the Kalyani raga, 90 seconds long"
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base leading-relaxed outline-none focus:border-accent resize-none"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base leading-relaxed outline-none focus:border-accent resize-none"
           lang={language}
         />
         <span
@@ -231,7 +245,7 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
             id="prompt-style"
             value={styleFamily}
             onChange={(e) => { setStyleTouched(true); setStyleFamily(e.target.value as StyleFamily); }}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           >
             {STYLE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -252,11 +266,16 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
             id="prompt-language"
             value={language}
             onChange={(e) => { const l = e.target.value as Language; setLanguage(l); if (!styleTouched) setStyleFamily(DEFAULT_STYLE[l]); }}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           >
             {LANGUAGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
+              </option>
+            ))}
+            {extraLanguages.map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.name}
               </option>
             ))}
           </select>
@@ -273,7 +292,7 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
             id="prompt-duration"
             value={duration}
             onChange={(e) => setDuration(Number(e.target.value) as Duration)}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -283,6 +302,28 @@ export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: bool
           </select>
         </div>
       </div>
+
+      {voiceChoices ? (
+        <div className="flex flex-col gap-1.5 sm:max-w-xs">
+          <label htmlFor="prompt-voice" className="text-xs uppercase tracking-widest text-foreground/50">
+            {t("prompt.voice")}
+          </label>
+          <select
+            id="prompt-voice"
+            value={voiceNow}
+            disabled={voiceChoices.length <= 1}
+            onChange={(e) => setVoice(e.target.value as VoiceChoice)}
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent disabled:opacity-60"
+          >
+            {(shownVoices ?? voiceChoices).map((c) => (
+              <option key={c} value={c}>
+                {t(VOICE_LABEL_KEY[c])}
+              </option>
+            ))}
+          </select>
+          {voiceChoices.length <= 1 ? <p className="text-xs text-foreground/50">{t("prompt.voiceUpgrade")}</p> : null}
+        </div>
+      ) : null}
 
       {error ? (
         <p role="alert" className="text-sm text-red-300">

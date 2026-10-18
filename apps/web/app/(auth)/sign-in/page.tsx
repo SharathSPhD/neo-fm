@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { safeNext } from "@/lib/auth/safe-next";
 import { createServerClient } from "@/lib/supabase/server";
 
+import { BrandMark } from "@/components/brand-mark";
 import { SignInForm } from "./sign-in-form";
 import { serverI18n } from "@/lib/i18n/server";
 
@@ -29,13 +30,16 @@ export default async function SignInPage(
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-8 px-6">
+      <BrandMark />
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-medium tracking-tight">{t("auth.signIn.title")}</h1>
         <p className="text-sm text-foreground/60">
           {t("auth.signIn.subtitle")}
         </p>
       </header>
-      <SignInForm next={safeNext(searchParams?.next)} initialError={initialError} />
+      <div className="glass rounded-3xl p-6">
+        <SignInForm next={safeNext(searchParams?.next)} initialError={initialError} />
+      </div>
       <footer className="text-sm text-foreground/60">
         {t("auth.signIn.noAccount")}{" "}
         <Link className="underline" href="/sign-up">

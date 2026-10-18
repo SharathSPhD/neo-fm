@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { FunnelSummary } from "../../../lib/ops/funnel";
 import type { ErrorGroup } from "../../../lib/obs/group-errors";
+import type { AdReportRow } from "../../../lib/ops/ads-report";
 import type { StationHealth } from "../../../lib/ops/station-health";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
 import type { TrendPoint } from "../../../lib/ops/snapshot";
@@ -24,6 +25,7 @@ export default function HealthPage() {
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [station, setStation] = useState<StationHealth | null>(null);
+  const [ads, setAds] = useState<AdReportRow[] | null>(null);
   const [errors, setErrors] = useState<{ groups: ErrorGroup[]; total: number; truncated: boolean } | null>(null);
 
   const load = useCallback(async (s: string, h: number, td: number) => {
@@ -47,6 +49,12 @@ export default function HealthPage() {
       setStation(r.ok ? await r.json() : null);
     } catch {
       setStation(null);
+    }
+    try {
+      const r = await fetch(`/api/admin/ads?days=${Math.max(1, Math.round(h / 24))}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setAds(r.ok ? ((await r.json()) as { slots: AdReportRow[] }).slots : null);
+    } catch {
+      setAds(null);
     }
     try {
       const r = await fetch(`/api/admin/client-errors?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
@@ -149,6 +157,10 @@ export default function HealthPage() {
             ]} />
           )}
           {funnel && <LaunchFunnel funnel={funnel} />}
+          {ads && ads.length > 0 && (
+            <Table title="House ads" head={["Ad", "Kind", "Languages", "On", "Starts", "Completes", "Taps", "Tap rate"]}
+              rows={ads.map((a) => [a.headline, a.kind, a.languages.join(", ") || "any", a.active ? "yes" : "no", String(a.starts), String(a.completes), String(a.taps), pct(a.tapRate)])} />
+          )}
           <section>
             <div className="mb-2 flex items-center gap-3">
               <h2 className="font-medium">Trends</h2>
@@ -249,17 +261,28 @@ const LAUNCH_COLUMNS: { label: string; event?: keyof FunnelSummary["views"] }[] 
 
 /** Launch funnel: one row per UTC day, newest first. Counters are anonymous per-day counts; sign-ups come from the users table. */
 function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
+  const campaigns = funnel.by_campaign ?? [];
   const days = [...new Set([...Object.keys(funnel.by_day), ...Object.keys(funnel.signups_by_day)])].sort().reverse();
   const cell = (day: string, c: (typeof LAUNCH_COLUMNS)[number]) =>
     String(c.event ? (funnel.by_day[day]?.[c.event] ?? 0) : (funnel.signups_by_day[day] ?? 0));
+  const eventColumns = LAUNCH_COLUMNS.filter((c) => c.event);
   return (
-    <Table
-      title={`Launch funnel by day (${funnel.window_days}d)`}
-      head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
-      rows={[
-        ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
-        ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
-      ]}
-    />
+    <>
+      <Table
+        title={`Launch funnel by day (${funnel.window_days}d)`}
+        head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
+        rows={[
+          ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
+          ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
+        ]}
+      />
+      {campaigns.length > 0 && (
+        <Table
+          title={`Funnel by campaign, first touch (${funnel.window_days}d)`}
+          head={["Campaign", "Source / medium", ...eventColumns.map((c) => c.label)]}
+          rows={campaigns.map((k) => [k.campaign || "(none)", [k.source, k.medium].filter(Boolean).join(" / ") || "-", ...eventColumns.map((c) => String(k.events[c.event!] ?? 0))])}
+        />
+      )}
+    </>
   );
 }

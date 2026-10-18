@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 
 import { serverI18n } from "@/lib/i18n/server";
+import { betaLanguages, stationChipLanguages } from "@/lib/languages/registry";
+import { admittedLanguageCounts } from "@/lib/station/pool";
+import { findStation } from "@/lib/station/named";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { StationPlayer } from "./station-player";
@@ -8,29 +11,50 @@ import { StationPlayer } from "./station-player";
 const TITLE = "Your personal 24/7 FM station";
 const DESCRIPTION = "Music tuned to your taste that never stops. Hindi, Tamil, Telugu, Kannada and Bengali first. All music is AI-generated.";
 
-// The card image comes from opengraph-image.tsx next to this file.
-export const metadata: Metadata = {
-  title: "Station",
-  description: DESCRIPTION,
-  alternates: { canonical: "/station" },
-  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
-  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
-};
+// The default card comes from opengraph-image.tsx next to this file; a named station points at its own card.
+export async function generateMetadata({ searchParams }: { searchParams?: Promise<{ s?: string }> }): Promise<Metadata> {
+  const station = findStation((await searchParams)?.s);
+  if (!station) {
+    return {
+      title: "neo-fm Station, your 24/7 personal FM",
+      description: DESCRIPTION,
+      alternates: { canonical: "/station" },
+      openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
+      twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
+    };
+  }
+  const title = `${station.name} on neo-fm Station`;
+  const description = `${station.tagline} Music tuned to your taste. All music is AI-generated.`;
+  const image = { url: `/station/og/${station.slug}`, width: 1200, height: 630, alt: title };
+  return {
+    title,
+    description,
+    alternates: { canonical: `/station?s=${station.slug}` },
+    openGraph: { title, description, type: "website", url: `/station?s=${station.slug}`, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image.url] },
+  };
+}
 export const dynamic = "force-dynamic";
 
-export default async function StationPage() {
+export default async function StationPage({ searchParams }: { searchParams?: Promise<{ s?: string }> }) {
+  // `/station?s=subah` opens a named station; anything unknown opens the listener's own station.
+  const initialStation = findStation((await searchParams)?.s)?.slug ?? "";
   const { data } = await createServerClient().auth.getUser();
   const anonymous = !data?.user;
   const { t } = await serverI18n();
+  // Empty unless LANG_WAVES is set, so the default page needs no pool read.
+  const extraLangs = process.env.LANG_WAVES
+    ? stationChipLanguages(process.env.LANG_WAVES, process.env.LANG_MIN_POOL, await admittedLanguageCounts()).map((l) => l.code)
+    : [];
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-      <h1 className="text-2xl font-semibold">{t("station.title")}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("station.title")}</h1>
       <p className="text-sm text-foreground/70">
         {anonymous
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer anonymous={anonymous} />
+      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} />
     </main>
   );
 }
