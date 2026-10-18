@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
 import { reportClientError } from "@/lib/obs/report-client-error";
@@ -120,9 +121,14 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     setHostLine(showHost ? current.host! : null);
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
-    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
+    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); sendFunnelEvent(anonymous ? "station_play_anon" : "station_play_user"); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
+
+  // Anonymous counters only (see /api/events): the third finished or skipped track, and the nudge appearing.
+  useEffect(() => { if (played === NUDGE_AFTER) sendFunnelEvent("listened_3", { once: true }); }, [played]);
+  const nudging = anonymous && played >= NUDGE_AFTER;
+  useEffect(() => { if (nudging) sendFunnelEvent("nudge_shown", { once: true }); }, [nudging]);
 
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
@@ -222,6 +228,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Link copied"); }
       sendSignal(current.id, "share", audioRef.current);
+      sendFunnelEvent("station_share");
     } catch { /* share sheet dismissed */ }
   }
 
@@ -229,6 +236,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     if (!current) return;
     window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin)), "_blank", "noopener,noreferrer");
     sendSignal(current.id, "share", audioRef.current);
+    sendFunnelEvent("whatsapp_click");
   }
 
   const moodChips = (
@@ -268,7 +276,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
           ))}
         </div>
         {moodChips}
-        <button type="button" onClick={() => setOnboarded(true)} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
+        <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
           Start my station
         </button>
       </section>
@@ -336,11 +344,11 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
-          {anonymous && played >= NUDGE_AFTER ? (
+          {nudging ? (
             <div className="flex flex-col gap-2 rounded border border-primary/40 bg-primary/5 p-3 text-sm">
               <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
               <div className="flex gap-3">
-                <a href="/sign-up?next=%2Fstation" className="rounded bg-primary px-3 py-1 text-primary-foreground">Sign up free</a>
+                <a href="/sign-up?next=%2Fstation" onClick={() => sendFunnelEvent("nudge_clicked")} className="rounded bg-primary px-3 py-1 text-primary-foreground">Sign up free</a>
                 <a href="/sign-in?next=%2Fstation" className="px-1 py-1 underline">Sign in</a>
               </div>
             </div>

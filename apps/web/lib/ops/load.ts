@@ -47,7 +47,7 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
   const sinceTs = new Date(Date.now() - days * 86_400_000);
   const [views, cohort, shared, gifted] = await Promise.all([
     db.from("funnel_daily").select("day,event,n").gte("day", sinceTs.toISOString().slice(0, 10)),
-    db.from("users").select("id").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
+    db.from("users").select("id,created_at").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
     db.from("jobs").select("id", { count: "exact", head: true }).in("published_visibility", ["public", "unlisted"]).gte("published_at", sinceTs.toISOString()),
     db.from("jobs").select("id", { count: "exact", head: true }).not("dedication_to", "is", null).gte("created_at", sinceTs.toISOString()),
   ]);
@@ -67,7 +67,7 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
     paidUsers = new Set((data ?? []).map((b) => String(b.user_id))).size;
   }
   return {
-    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers }, days),
+    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers, signupDays: (cohort.data ?? []).map((u) => String(u.created_at).slice(0, 10)) }, days),
     cohort_truncated: ids.length >= COHORT_CAP,
   };
 }
