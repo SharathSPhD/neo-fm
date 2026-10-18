@@ -41,3 +41,15 @@ describe("parseSteer", () => {
     expect(parseSteer(new URLSearchParams({ energy: "max", like: "x", exclude: "y" }))).toEqual({ energy: null, moreLike: null, exclude: null });
   });
 });
+
+describe("steer uses tagger energy when present", () => {
+  it("orders by band for up and down, ignoring tags", () => {
+    const q = [
+      { id: "lo", language: "hi", tags: ["energetic"], energy: "low" as const },
+      { id: "hi", language: "hi", tags: ["calm"], energy: "high" as const },
+      { id: "mid", language: "hi", tags: [], energy: "mid" as const },
+    ];
+    expect(steerQueue(q, q, { energy: "up" }).map((x) => x.id)).toEqual(["hi", "mid", "lo"]);
+    expect(steerQueue(q, q, { energy: "down" }).map((x) => x.id)).toEqual(["lo", "mid", "hi"]);
+  });
+});

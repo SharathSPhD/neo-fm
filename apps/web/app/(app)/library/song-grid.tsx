@@ -227,6 +227,7 @@ export function SongGrid({
                 {s.title ?? songFallbackTitle(s, t("lib.songLower"))}
               </span>
               <span className="text-xs text-foreground/55">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {[s.style_family, s.language].filter(Boolean).join(" · ") ||
                   "—"}
               </span>

@@ -20,6 +20,7 @@ import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
+import { hasStationPass, withPassCap } from "../billing/pass";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -113,7 +114,11 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         db.from("users").select("*").eq("id", job.user_id).single(),
       ]);
       if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
-      const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan);
+      // A Station pass raises the monthly personal-track envelope; without migration 0098 this is just the tier plan.
+      const plan = withPassCap(
+        planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan),
+        await hasStationPass(db, job.user_id),
+      );
       const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }

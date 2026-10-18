@@ -123,9 +123,17 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 7. Only when #128 calls `consume_pack_song`: add `STRIPE_PRICE_PACK_SINGLE_ID` and `STRIPE_PRICE_PACK_THREE_ID` (from `packs.single.inr`, `packs.three.inr`) in Vercel, plus `STRIPE_PACK_UPI=1` if step 5 worked. Redeploy.
 
 **E. Station pass (test mode only, #159)**
-8. Run `POST /api/admin/stripe-setup` (test key). Add `STRIPE_PRICE_STATION_PASS_ID` from `station_pass.inr` in Vercel, redeploy. /pricing then shows the pass at ₹149 a month for signed-in users. The variable is ignored under a live key, and the webhook records nothing for the pass yet (no entitlement or tier change). S sets the final price and the entitlement design before live mode.
+8. Run `POST /api/admin/stripe-setup` (test key). Add `STRIPE_PRICE_STATION_PASS_ID` from `station_pass.inr` in Vercel, redeploy. /pricing then shows the pass at ₹149 a month for signed-in users. The variable is ignored under a live key. S sets the final price before live mode.
+9. Entitlement (#issue below): apply migration `0098_station_passes` when S names it. Until then the webhook acknowledges pass events without storing them and nobody gets pass perks. After applying it, resend the test-mode `customer.subscription.*` events for any pass bought earlier (Stripe dashboard > Developers > Events > Resend). Pass holders then get no ad breaks and a monthly allowance of personal tracks (default 4; set `STATION_PASS_MONTHLY_TRACKS` in Vercel to change it). The allowance is the per-user Lyria envelope (about 4 x 0.25 ledger GBP); the free tier's 3 songs a month row quota still applies on top.
 
 **D. UPI AutoPay on subscriptions (flag, test mode only)**
 8. Needs step 5. In Vercel add `STRIPE_SUBSCRIPTION_UPI=1`; it has no effect with a live key. Redeploy. Creator/Pro checkout then lists UPI next to card.
 9. Test it: sign in, upgrade, pick UPI, use Stripe's test VPAs from `docs.stripe.com/payments/upi` (do not use a real UPI app). Confirm the account page shows the plan and the subscription appears in the test dashboard.
 10. Not signed off for live mode: Stripe requires a pre-debit SMS or app notification at least 24 hours before each recurring charge with the exact amount, and a mandate cap (₹15,000 per Chargebee's docs). Claude has not verified Stripe sends the notification for you; check the AutoPay page in the Stripe docs before any live use.
+
+**F. House ads (off by default, #212)**
+1. Say which migration to apply: `0099_ad_slots` (creates `ad_slots` and `ad_events`, service role only, plus 12 inactive card-only house ads). Nothing is served before this, and the queue works without it.
+2. Have a native speaker read the Indic headlines in the seed rows. Then set `reviewed_by`, `reviewed_at` and `active = true` on the ones to run. Keep the two Station pass ads off until the pass is on sale (it is test mode only and has no entitlement yet).
+3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Paid tiers never hear ads; Station pass holders are not recognised yet because the webhook stores no pass.
+4. Phone test: a card-only spot leaves about 6 seconds without audio. The player drops it when the page is hidden (or ends it if the phone locks mid-card), but check on a locked phone that the next track starts by itself.
+
