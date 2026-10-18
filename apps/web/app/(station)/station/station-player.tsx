@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
+import { expansionLanguage } from "@/lib/languages/registry";
 import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
@@ -35,7 +36,7 @@ const MAX_CONSECUTIVE_ERRORS = 3;
 const HOST_EVERY = 3;
 const HOST_VISIBLE_MS = 12_000;
 
-const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
+const BASE_LANGS = ["", "hi", "ta", "te", "kn", "bn"];
 
 /** Mood values are the tags sent to the server; these keys are only their labels. */
 const MOOD_LABEL: Record<(typeof STATION_MOODS)[number], UiKey> = {
@@ -49,7 +50,7 @@ const MOOD_LABEL: Record<(typeof STATION_MOODS)[number], UiKey> = {
 
 /** A pool language written in its own script when we have the name (hi, ta, ...), else as stored. */
 function languageName(code: string): string {
-  return isUiLang(code) ? UI_LANG_ENDONYM[code] : code;
+  return isUiLang(code) ? UI_LANG_ENDONYM[code] : (expansionLanguage(code)?.endonym ?? code);
 }
 
 function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
@@ -112,7 +113,9 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false, initialStation = "" }: { anonymous?: boolean; initialStation?: string }) {
+export function StationPlayer({ anonymous = false, extraLangs = [], initialStation = "" }: { anonymous?: boolean; extraLangs?: string[]; initialStation?: string }) {
+  const extraKey = extraLangs.join(",");
+  const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
   const { t } = useUiLang();
   const sendSignal = anonymous ? () => {} : postSignal;
@@ -177,11 +180,11 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
 
   useEffect(() => {
     const saved = loadPrefs();
-    if (saved) { setLang(saved.lang); setMoods(saved.moods); setOnboarded(true); }
+    if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); setOnboarded(true); }
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
     setReady(true);
-  }, [initialStation]);
+  }, [LANGS, initialStation]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;

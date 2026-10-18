@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { serverI18n } from "@/lib/i18n/server";
+import { stationChipLanguages } from "@/lib/languages/registry";
+import { admittedLanguageCounts } from "@/lib/station/pool";
 import { findStation } from "@/lib/station/named";
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -40,6 +42,10 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
   const { data } = await createServerClient().auth.getUser();
   const anonymous = !data?.user;
   const { t } = await serverI18n();
+  // Empty unless LANG_WAVES is set, so the default page needs no pool read.
+  const extraLangs = process.env.LANG_WAVES
+    ? stationChipLanguages(process.env.LANG_WAVES, process.env.LANG_MIN_POOL, await admittedLanguageCounts()).map((l) => l.code)
+    : [];
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
       <h1 className="text-2xl font-semibold">{t("station.title")}</h1>
@@ -48,7 +54,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer anonymous={anonymous} initialStation={initialStation} />
+      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} initialStation={initialStation} />
     </main>
   );
 }

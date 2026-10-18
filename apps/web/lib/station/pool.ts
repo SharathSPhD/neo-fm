@@ -33,6 +33,7 @@ export type StationTrack = PoolTrack & {
 
 const LANGUAGE_NAMES: Record<string, string> = {
   hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", bn: "Bengali", en: "English", sa: "Sanskrit", hinglish: "Hinglish",
+  mr: "Marathi", pa: "Punjabi", gu: "Gujarati", ml: "Malayalam", bho: "Bhojpuri", or: "Odia", ur: "Urdu", as: "Assamese",
 };
 
 /** Most pool rows have no title yet; "Kannada folk" reads better than "Untitled" on the player. */
@@ -84,6 +85,13 @@ async function readPool(): Promise<StationTrack[]> {
 
 /** The pool changes only when admin ingest runs, so a minute of staleness per instance is harmless and saves a read per queue call. */
 export const loadPool = ttlCache(readPool, 60_000);
+
+/** Admitted tracks per language, from the same cached read as the queue. */
+export async function admittedLanguageCounts(): Promise<Record<string, number>> {
+  const counts: Record<string, number> = {};
+  for (const t of await loadPool()) counts[t.language] = (counts[t.language] ?? 0) + 1;
+  return counts;
+}
 
 /** One admitted track by id for the public share page; null when missing, not admitted, or on any read failure. */
 export async function loadPoolTrack(id: string): Promise<StationTrack | null> {

@@ -16,6 +16,7 @@
  * Admission is the diction gate: pool_tracks only accepts status=admitted at U >= 80 and verdict pass, and
  * admit_pool_track() is the only path in. Tracks that fail stay as `rejected` rows so they are not re-scored.
  */
+import { enabledExpansionLanguages } from "@/lib/languages/registry";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
@@ -33,7 +34,9 @@ export const maxDuration = 300;
 
 const SOURCES = ["prod_job", "eval_render", "new_render"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const INDIC = ["hi", "ta", "te", "kn", "bn"];
+const LAUNCH_INDIC = ["hi", "ta", "te", "kn", "bn"];
+/** Languages whose finished prod songs may be pulled into the pool: the launch five plus enabled expansion waves. */
+const indic = (): string[] => [...LAUNCH_INDIC, ...enabledExpansionLanguages(process.env.LANG_WAVES).map((l) => l.code as string)];
 type Db = ReturnType<typeof serviceClient>;
 
 interface FileMeta {
@@ -115,7 +118,7 @@ async function ingestProdJobs(db: Db, owners: string[], limit: number, geminiKey
     const j = (jobs ?? [])[0] as unknown as { user_id: string; status: string; moderation_status: string | null; taken_down_at: string | null; song_documents: { title: string | null; document_json: Parameters<typeof tagsFromDocument>[0] } | null } | undefined;
     if (!j || !owners.includes(j.user_id) || j.status !== "completed" || j.moderation_status !== "ok" || j.taken_down_at || !j.song_documents) continue;
     const tags = tagsFromDocument(j.song_documents.document_json);
-    if (!tags || !INDIC.includes(tags.language)) continue;
+    if (!tags || !indic().includes(tags.language)) continue;
     let qa = { unorderedPct: r.diction_qa?.unorderedPct ?? null, verdict: r.diction_qa?.verdict ?? null } as { unorderedPct: number | null; verdict: DictionVerdict | null };
     if (qa.verdict === null) {
       if (!geminiKey || !r.lyrics || scoredCount >= limit) { out.push({ job_id: r.job_id, skipped: !r.lyrics ? "no_lyrics" : "scoring_limit" }); continue; }
