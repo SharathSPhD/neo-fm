@@ -88,6 +88,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('review_tokens',         'service', null,      null, 'hashed reviewer links; service role only'),
   ('review_ratings',        'service', null,      null, 'reviewer ratings; service role only'),
   ('song_lyric_meanings',   'service', null,      null, 'meaning cache; ownership is checked by the route with the caller RLS, rows are service role only'),
+  ('ui_review_tokens',      'service', null,      null, 'hashed UI-translation reviewer links; service role only'),
+  ('ui_review_edits',       'service', null,      null, 'reviewer verdicts on UI strings; service role only'),
   ('feedback',              'service', 'user_id', null, 'submitted via submit_feedback(); read by service role only'),
   ('funnel_daily',          'service', null,      null, null),
   ('health_snapshots',      'service', null,      null, null),
@@ -129,6 +131,8 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('review_items',          'language',     '''hi'''),
   ('review_tokens',         'language',     '''hi'''),
   ('song_lyric_meanings',   'lines',        '''[]''::jsonb'),
+  ('ui_review_tokens',      'language',     '''hi'''),
+  ('ui_review_edits',       'action',       '''approve'''),
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id
