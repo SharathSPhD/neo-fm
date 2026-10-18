@@ -28,7 +28,11 @@ function similarity(a: PoolTrack, b: PoolTrack): number {
   return (union ? shared / union : 0) * SIMILARITY_WEIGHT + (a.language === b.language ? SAME_LANGUAGE_BONUS : 0);
 }
 
+/** Tagger energy band mapped onto the tag scale (+/- ENERGY_TAG_CAP); mid is neutral. */
+const BAND_SCORE = { low: -ENERGY_TAG_CAP, mid: 0, high: ENERGY_TAG_CAP } as const;
+
 function energyScore(t: PoolTrack, energy: Energy): number {
+  if (t.energy) return ENERGY_WEIGHT * (energy === "up" ? BAND_SCORE[t.energy] : -BAND_SCORE[t.energy]);
   const up = Math.min(ENERGY_TAG_CAP, t.tags.filter((x) => ENERGY_UP_TAGS.has(x)).length);
   const down = Math.min(ENERGY_TAG_CAP, t.tags.filter((x) => ENERGY_DOWN_TAGS.has(x)).length);
   return ENERGY_WEIGHT * (energy === "up" ? up - down : down - up);
