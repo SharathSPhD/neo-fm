@@ -33,3 +33,12 @@ describe("test-render eval_batch", () => {
     expect(validateItems({ items: [{ label: "a", language: "hi", brief_id: "hi-1", eval_batch: "full C;" }] }, 3).ok).toBe(false);
   });
 });
+
+describe("test-render target_seconds", () => {
+  it("accepts 30 to 180 seconds and rejects the rest", () => {
+    const one = (target_seconds: number) => validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", target_seconds }] }, 3).ok;
+    expect(one(150)).toBe(true);
+    expect(one(20)).toBe(false);
+    expect(one(300)).toBe(false);
+  });
+});

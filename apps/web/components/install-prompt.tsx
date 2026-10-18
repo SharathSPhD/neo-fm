@@ -32,8 +32,10 @@ function snoozed(): boolean {
  * Install banner. Chromium browsers hand us `beforeinstallprompt`; iOS
  * Safari has no such event, so there we show the manual "Add to Home
  * Screen" hint. Hidden once installed or after "Not now" (14 days).
+ * `minPlays`/`plays` hold it back until the listener has heard that many
+ * tracks, so the station asks only after it has earned the ask.
  */
-export function InstallPrompt() {
+export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: number; minPlays?: number } = {}) {
   const { t } = useUiLang();
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   const [ios, setIos] = useState(false);
@@ -76,7 +78,7 @@ export function InstallPrompt() {
     setHidden(true);
   }
 
-  if (hidden || (!deferred && !ios)) return null;
+  if (hidden || plays < minPlays || (!deferred && !ios)) return null;
 
   return (
     <aside

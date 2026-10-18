@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { safeNext } from "@/lib/auth/safe-next";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { SignInForm } from "./sign-in-form";
@@ -16,7 +17,7 @@ export default async function SignInPage(
   const supabase = createServerClient();
   const { data } = await supabase.auth.getUser();
   if (data?.user) {
-    redirect(searchParams?.next ?? "/library");
+    redirect(safeNext(searchParams?.next));
   }
 
   // /auth/callback bounces here with `error_description` when the code
@@ -34,7 +35,7 @@ export default async function SignInPage(
           {t("auth.signIn.subtitle")}
         </p>
       </header>
-      <SignInForm next={searchParams?.next} initialError={initialError} />
+      <SignInForm next={safeNext(searchParams?.next)} initialError={initialError} />
       <footer className="text-sm text-foreground/60">
         {t("auth.signIn.noAccount")}{" "}
         <Link className="underline" href="/sign-up">

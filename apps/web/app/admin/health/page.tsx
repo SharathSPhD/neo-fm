@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { FunnelSummary } from "../../../lib/ops/funnel";
 import type { ErrorGroup } from "../../../lib/obs/group-errors";
+import type { StationHealth } from "../../../lib/ops/station-health";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
 import type { TrendPoint } from "../../../lib/ops/snapshot";
 
@@ -22,6 +23,7 @@ export default function HealthPage() {
   const [trendDays, setTrendDays] = useState(7);
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [station, setStation] = useState<StationHealth | null>(null);
   const [errors, setErrors] = useState<{ groups: ErrorGroup[]; total: number; truncated: boolean } | null>(null);
 
   const load = useCallback(async (s: string, h: number, td: number) => {
@@ -40,6 +42,12 @@ export default function HealthPage() {
       setErr((e as Error).message);
     }
     // Independent of the job summary: a failure here must not hide the rest of the dashboard.
+    try {
+      const r = await fetch(`/api/admin/station-health?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setStation(r.ok ? await r.json() : null);
+    } catch {
+      setStation(null);
+    }
     try {
       const r = await fetch(`/api/admin/client-errors?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       setErrors(r.ok ? await r.json() : null);
@@ -111,6 +119,21 @@ export default function HealthPage() {
           <Table title="Failure reasons" head={["Reason", "Jobs"]} rows={Object.entries(data.failures_by_code).map(([k, v]) => [k, String(v)])} />
           <Table title="Diction match" head={["Language", "Avg match %", "Audited", "QA errors"]}
             rows={Object.entries(data.diction_by_language).map(([l, d]) => [l, d.avg_match_pct === null ? "-" : String(d.avg_match_pct), String(d.n), String(d.errors)])} />
+          {station && (
+            <>
+              {station.alerts.length > 0 && <ul role="alert" className="list-disc pl-5 text-sm text-red-700">{station.alerts.map((a) => <li key={a}>{a}</li>)}</ul>}
+              <Table title="Station" head={["Metric", "Value"]} rows={[
+                ["Listeners with signals", String(station.listeners)],
+                ["Signals per listener", station.signals_per_listener === null ? "-" : station.signals_per_listener.toFixed(1)],
+                ["Plays", String(station.plays)],
+                ["Skip rate", pct(station.skip_rate)],
+                ["Finish rate", pct(station.finish_rate)],
+                ["Audio load failures (page loads)", String(station.audio_load_failures)],
+                ["Audio failure rate", pct(station.audio_failure_rate)],
+                ["Empty queue (page loads)", String(station.queue_empty)],
+              ]} />
+            </>
+          )}
           {funnel && (
             <Table title={`Funnel (${funnel.window_days}d)`} head={["Step", "Count", "Conversion"]} rows={[
               ["Landing views", String(funnel.views.landing_view), ""],
