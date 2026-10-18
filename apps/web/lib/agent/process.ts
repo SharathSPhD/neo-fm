@@ -14,6 +14,7 @@ import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHints, scoreTranscriptUnordered } from "../diction";
+import { voiceHintFor } from "../voice";
 import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
@@ -115,11 +116,12 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       ]);
       if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
       // A Station pass raises the monthly personal-track envelope; without migration 0098 this is just the tier plan.
+      const hasPass = await hasStationPass(db, job.user_id);
       const plan = withPassCap(
         planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan),
-        await hasStationPass(db, job.user_id),
+        hasPass,
       );
-      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
+      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string; voice?: unknown }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
@@ -160,7 +162,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
-        return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
+        return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHintFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass), dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
       };
       const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
         // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
