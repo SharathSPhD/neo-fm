@@ -8,7 +8,10 @@ Off by default. Nothing here changes production until all of the following, whic
 
 1. Deploy. The Dockerfile copies the engine, so build from the repo root: `docker build -f services/pce-cascade/Dockerfile -t <image> .`
    (or Cloud Build with the same file), push, then `gcloud run deploy neo-fm-pce-cascade --image <image> --region asia-south1
-   --memory 1Gi --concurrency 4 --timeout 60 --set-env-vars CASCADE_TOKEN=<new secret>`.
+   --memory 1Gi --concurrency 4 --timeout 60 --min-instances 1 --allow-unauthenticated --set-env-vars CASCADE_TOKEN=<new secret>,EMBED_ALLOWED_HOST=<embedder host>`.
+   `--allow-unauthenticated` is how the Vercel caller gets past Cloud Run IAM; the service authenticates every call with its bearer token
+   (constant-time compare, fails closed if `CASCADE_TOKEN` is unset). `--min-instances 1` keeps a cold start out of the latency this exists to cut.
+   `EMBED_ALLOWED_HOST` pins the embedder host the service may call; without it the service still refuses non-https and private/metadata addresses.
 2. Vercel env: `PCE_CASCADE_URL` (https service URL), `PCE_CASCADE_TOKEN` (same secret).
 3. Canary one account first: `update users set agent_plan = 'host' where id = '<id>'`. Compare `job_telemetry.metrics.plan = 'host'`
    stages_ms (`agent_draft` now covers plan + drafts + scoring + revisions + title) against `pro`.

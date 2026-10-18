@@ -36,3 +36,15 @@ def test_rejects_oversized_input() -> None:
     assert client.post("/cascade", json={"brief": {**BRIEF, "K": 99}}, headers=H).status_code == 422
     assert client.post("/cascade", json={"brief": BRIEF, "generations": {"draft": ["x" * 7000]}}, headers=H).status_code == 422
     assert client.post("/cascade", json={"brief": BRIEF, "generations": {"bogus": ["x"]}}, headers=H).status_code == 422
+
+
+def test_engine_url_ssrf_guard(monkeypatch) -> None:
+    monkeypatch.setattr(svc, "_resolve", lambda host: {"embed.example.com": ["34.1.2.3"], "rebind.example.com": ["169.254.169.254"]}.get(host, ["10.0.0.5"]))
+    bad = ["http://embed.example.com", "https://localhost", "https://metadata.google.internal", "https://169.254.169.254/computeMetadata/v1",
+           "https://127.0.0.1", "https://10.1.2.3", "https://[::1]", "https://u:p@embed.example.com", "https://rebind.example.com", "https://embed.example.com:8443", "not a url", "https://x.local"]
+    for url in bad:
+        r = client.post("/cascade", json={"brief": BRIEF, "engine": {"url": url, "token": "x"}}, headers=H)
+        assert r.status_code == 422, url
+    assert svc._safe_engine_url("https://embed.example.com/")
+    monkeypatch.setenv("EMBED_ALLOWED_HOST", "other.example.com")
+    assert not svc._safe_engine_url("https://embed.example.com")
