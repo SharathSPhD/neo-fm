@@ -28,6 +28,7 @@ import { dictionVerdict, type DictionVerdict } from "../../../../lib/diction/gat
 import { scoreTranscriptUnordered } from "../../../../lib/diction";
 import { singableLines } from "../../../../lib/lyrics/singable";
 import { checkNoVocals } from "../../../../lib/pool/instrumental";
+import { mirrorAdmittedTrack } from "../../../../lib/pool/mirror";
 import { mp3DurationSeconds } from "../../../../lib/pool/mp3-duration";
 import { POOL_DAYPARTS, POOL_ENERGIES, POOL_MOODS, POOL_THEMES, deriveEnergyDaypart, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
@@ -59,13 +60,18 @@ async function admit(db: Db, row: Record<string, unknown>, qa: { unorderedPct: n
   const { data: ins, error } = await db.from("pool_tracks").upsert({ ...row, diction_u: qa.unorderedPct, diction_verdict: qa.verdict }, { onConflict: "audio_path" }).select("id,status").single();
   if (error || !ins) return { ok: false as const, error: error?.message ?? "insert_failed" };
   const id = (ins as { id: string }).id;
-  if ((ins as { status: string }).status === "admitted") return { ok: true as const, id, status: "admitted" };
+  if ((ins as { status: string }).status === "admitted") {
+    await mirrorAdmittedTrack(db, String(row.audio_path));
+    return { ok: true as const, id, status: "admitted" };
+  }
   if (!(instrumentalOk ?? passesAdmission(qa))) {
     await db.from("pool_tracks").update({ status: "rejected" }).eq("id", id).eq("status", "candidate");
     return { ok: true as const, id, status: "rejected" };
   }
   const { data: res, error: rpcErr } = await db.rpc("admit_pool_track", { p_id: id });
   if (rpcErr) return { ok: false as const, error: rpcErr.message };
+  // New pool tracks go to R2 as they are admitted (best effort, no-op without R2 env) so the CDN never 404s on them.
+  if (String(res) === "admitted") await mirrorAdmittedTrack(db, String(row.audio_path));
   return { ok: true as const, id, status: String(res) };
 }
 

@@ -20,6 +20,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { adsEnabled } from "@/lib/station/ads";
 import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { poolCdnUrl } from "@/lib/station/cdn";
+import { cdnWithinBudget, signals30d } from "@/lib/station/cdn-guard";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
@@ -113,11 +114,13 @@ export async function GET(req: NextRequest) {
     ranked = arranged.tracks;
     setInfo = arranged.sets;
   }
+  // Near the R2 free limits the CDN is skipped and listeners get Supabase signed URLs instead (lib/station/cdn-guard.ts).
+  const cdnOn = poolCdnUrl("x") !== null && cdnWithinBudget({ signals30d: await signals30d(admin), poolTracks: fullPool.length });
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {
         const t = byId.get(r.id)!;
-        const cdnUrl = poolCdnUrl(t.audioPath);
+        const cdnUrl = cdnOn ? poolCdnUrl(t.audioPath) : null;
         const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
         const url = cdnUrl ?? signed;
         if (!url) return null;
