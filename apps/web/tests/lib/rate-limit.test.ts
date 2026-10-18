@@ -37,6 +37,7 @@ describe("pickRule", () => {
     ["/api/songs/abc-123/cover-art", "songs:gen-aux", 6],
     ["/api/p/abc/audio-url", "public:read", 120],
     ["/api/p/abc", "public:read", 120],
+    ["/api/p/abc/listen", "public:listen", 30],
     ["/api/lyrics", "api:default", 60],
     ["/api/me", "api:default", 60],
   ])("picks rule for %s", (p, bucket, limit) => {
