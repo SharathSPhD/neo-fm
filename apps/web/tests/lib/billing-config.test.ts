@@ -56,7 +56,25 @@ describe("isBillingEnabled", () => {
       webhookSecret: "whsec_full",
       publishableKey: "pk_test_full",
       prices: { creator: "price_creator_123", pro: "price_pro_456" },
+      annualPrices: {},
+      packPrices: {},
+      packUpi: false,
     });
+  });
+
+  it("maps annual prices to their tier and pack prices to their sku", async () => {
+    Object.assign(process.env, FULL_ENV, { STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_y", STRIPE_PRICE_PACK_THREE_ID: "price_p3", STRIPE_PACK_UPI: "1" });
+    try {
+      const m = await loadConfig();
+      expect(m.getTierForPriceId("price_pro_y")).toBe("pro");
+      expect(m.getPlanPriceId("pro", "year")).toBe("price_pro_y");
+      expect(m.getPlanPriceId("creator", "year")).toBeNull();
+      expect(m.getPackForPriceId("price_p3")).toBe("three");
+      expect(m.getPackForPriceId("price_pro_y")).toBeNull();
+      expect(m.getBillingConfigOrNull()?.packUpi).toBe(true);
+    } finally {
+      for (const k of ["STRIPE_PRICE_PRO_ANNUAL_ID", "STRIPE_PRICE_PACK_THREE_ID", "STRIPE_PACK_UPI"]) delete process.env[k];
+    }
   });
 
   for (const missing of [

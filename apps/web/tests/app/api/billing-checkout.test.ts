@@ -10,7 +10,7 @@ vi.mock("../../../lib/supabase/auth", async () => {
 });
 import { requireUser } from "../../../lib/supabase/auth";
 
-const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example" };
+const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example", STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_year", STRIPE_PRICE_PACK_SINGLE_ID: "price_pack1", STRIPE_PACK_UPI: "1" };
 
 async function load(env: Partial<typeof ENV> | null) {
   vi.resetModules();
@@ -80,5 +80,33 @@ describe("POST /api/billing/checkout", () => {
     const b = await POST(body({ tier: "pro" }));
     expect(b.status).toBe(502);
     expect((await b.json()).error).toBe("stripe_session_no_url");
+  });
+  it("uses the yearly price when asked, and refuses a yearly plan that is not configured", async () => {
+    const POST = await load(ENV); user();
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/y" });
+    await POST(body({ tier: "pro", interval: "year" }));
+    expect(create.mock.calls[0]![0].line_items[0].price).toBe("price_pro_year");
+    const missing = await POST(body({ tier: "creator", interval: "year" }));
+    expect(missing.status).toBe(503);
+    expect(create).toHaveBeenCalledTimes(1);
+  });
+  it("sells a pack as a one-off payment with UPI, even to a subscriber", async () => {
+    listSubs.mockClear();
+    const POST = await load(ENV); user("cus_9");
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/pack" });
+    const res = await POST(body({ pack: "single" }));
+    expect(await res.json()).toEqual({ url: "https://checkout.stripe.test/pack" });
+    expect(create.mock.calls[0]![0]).toMatchObject({
+      mode: "payment", payment_method_types: ["card", "upi"], customer: "cus_9", client_reference_id: "u1",
+      line_items: [{ price: "price_pack1", quantity: 1 }], metadata: { user_id: "u1", pack: "single" },
+    });
+    expect(listSubs).not.toHaveBeenCalled();
+  });
+  it("offers cards only for packs until UPI is switched on, and 503s an unconfigured pack", async () => {
+    const POST = await load({ ...ENV, STRIPE_PACK_UPI: "" }); user();
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/pack" });
+    await POST(body({ pack: "single" }));
+    expect(create.mock.calls[0]![0].payment_method_types).toEqual(["card"]);
+    expect((await POST(body({ pack: "three" }))).status).toBe(503);
   });
 });
