@@ -144,8 +144,11 @@ async function exportViaRecorder(o: ExportClipOptions): Promise<ExportedClip> {
     src.start(now, o.window.start, duration);
 
     await new Promise<void>((resolve, reject) => {
+      const wallStart = performance.now();
       const tick = () => {
         if (o.signal?.aborted) { reject(new DOMException("aborted", "AbortError")); return; }
+        // A context that never leaves "suspended" (iOS without a gesture) keeps currentTime at 0 forever.
+        if (ac.currentTime <= now && performance.now() - wallStart > 2000) { reject(new Error("recorder_unsupported")); return; }
         const elapsed = Math.max(0, ac.currentTime - now);
         frame(o.window.start + Math.min(elapsed, duration));
         o.onProgress?.(Math.min(1, elapsed / duration));

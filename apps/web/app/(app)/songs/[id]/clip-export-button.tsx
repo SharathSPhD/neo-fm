@@ -60,7 +60,7 @@ export function ClipExportButton({
     if (busy) return;
     // Created inside the tap, before any await: iOS Safari keeps a context made later suspended.
     const audioContext = new AudioContext({ sampleRate: 48000 });
-    void audioContext.resume();
+    await audioContext.resume().catch(() => undefined);
     setBusy(true);
     setError(null);
     setProgress(0);
