@@ -20,10 +20,11 @@
  *
  * Routes that need to be embeddable (`/embed/*`) get a relaxed
  * `frame-ancestors *` and no `X-Frame-Options`. Everything else
- * gets `frame-ancestors 'self'` and `X-Frame-Options: DENY`.
+ * gets `frame-ancestors 'self'` plus Telegram Web's origins (Mini App iframe); no X-Frame-Options.
  */
 import { REQUEST_ID_HEADER } from "./obs/request-id";
 import type { NextResponse } from "next/server";
+import { TELEGRAM_FRAME_ORIGINS } from "./telegram/mini-app";
 
 const HSTS = "max-age=63072000; includeSubDomains; preload";
 
@@ -78,7 +79,8 @@ function csp({
   nonce?: string;
 }): string {
   const connect = connectSources(supabaseHost);
-  const frameAncestors = isEmbed ? "*" : "'self'";
+  // Telegram Web frames Mini Apps in an iframe, so its origins may frame the app (the native apps use a webview).
+  const frameAncestors = isEmbed ? "*" : ["'self'", ...TELEGRAM_FRAME_ORIGINS].join(" ");
   // 'unsafe-inline' for scripts is regrettable but Next.js still
   // emits inline RSC payloads + chunked hydration code without
   // nonces in the App Router edge runtime. Tracking nonces /
@@ -94,7 +96,7 @@ function csp({
     "form-action 'self'",
     `frame-ancestors ${frameAncestors}`,
     "object-src 'none'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://telegram.org",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "media-src 'self' data: blob: https:",
@@ -129,9 +131,9 @@ export function strictCsp({
     "default-src 'self'",
     "base-uri 'none'",
     "form-action 'self'",
-    `frame-ancestors ${isEmbed ? "*" : "'none'"}`,
+    `frame-ancestors ${isEmbed ? "*" : ["'self'", ...TELEGRAM_FRAME_ORIGINS].join(" ")}`,
     "object-src 'none'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://telegram.org`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "media-src 'self' data: blob: https:",
@@ -170,11 +172,9 @@ export function applySecurityHeaders(
       strictCsp({ supabaseHost: opts.supabaseHost, isEmbed, nonce: opts.nonce }),
     );
   }
-  if (!isEmbed) {
-    response.headers.set("X-Frame-Options", "DENY");
-  } else {
-    response.headers.delete("X-Frame-Options");
-  }
+  // X-Frame-Options cannot name Telegram Web, and browsers that know frame-ancestors ignore it, so it is dropped
+  // for every framable path and the CSP above is the single framing rule.
+  response.headers.delete("X-Frame-Options");
   response.headers.set(
     "Content-Security-Policy",
     csp({ supabaseHost: opts.supabaseHost, isEmbed, nonce: opts.nonce }),
