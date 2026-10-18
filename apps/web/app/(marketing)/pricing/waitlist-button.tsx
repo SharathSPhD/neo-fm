@@ -87,7 +87,7 @@ export function WaitlistButton({ tier, label }: Props) {
         placeholder="you@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+        className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm outline-none focus:border-accent"
       />
       <button
         type="submit"

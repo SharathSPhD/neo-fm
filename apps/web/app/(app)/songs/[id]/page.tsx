@@ -40,6 +40,7 @@ import { LyricsMeaning } from "./lyrics-meaning";
 import { VariationButton } from "./variation-button";
 import { CoverArtPanel } from "./cover-art-panel";
 import Link from "next/link";
+import { AmbientTint } from "@/components/ambient-tint";
 
 export const dynamic = "force-dynamic";
 
@@ -272,6 +273,7 @@ export default async function SongDetailPage(
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <AmbientTint seed={params.id} />
       <Breadcrumbs
         items={[
           { href: "/library", label: t("nav.library") },

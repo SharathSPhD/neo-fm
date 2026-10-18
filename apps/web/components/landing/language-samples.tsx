@@ -102,7 +102,7 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
         ))}
       </div>
 
-      <div id="lang-panel" role="tabpanel" aria-labelledby={`lang-tab-${meta.code}`} className="mt-4 rounded-xl border border-muted/30 bg-muted/5 p-5">
+      <div id="lang-panel" role="tabpanel" aria-labelledby={`lang-tab-${meta.code}`} className="mt-4 glass rounded-2xl p-5">
         {song ? (
           <>
             <div className="flex items-start justify-between gap-4">

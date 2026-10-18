@@ -64,7 +64,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("lib.searchPlaceholder")}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm outline-none focus:border-accent"
           />
         </label>
         <Select

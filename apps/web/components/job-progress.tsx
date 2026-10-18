@@ -72,7 +72,7 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
       : t("job.etaLonger")
     : t("job.etaDefault");
   return (
-    <section data-testid="job-progress" aria-live="polite" className="rounded-lg border border-muted/20 bg-muted/5 p-5">
+    <section data-testid="job-progress" aria-live="polite" className="glass rounded-2xl p-5">
       <ol className="flex flex-col gap-3">
         {STEPS.map((s, i) => {
           const state = i < current ? "done" : i === current ? "active" : "todo";

@@ -179,6 +179,13 @@ a:focus {
 :root[data-theme="light"] .ambient {
   --aurora-strength: 0.16;
 }
+/* A page can tint the aurora (see useAmbientTint); wins over the daypart palette. */
+:root[data-tint] .ambient {
+  --aurora-a: var(--tint-a);
+  --aurora-b: var(--tint-b);
+  --aurora-c: var(--tint-c);
+  --aurora-strength: 0.4;
+}
 .ambient::after {
   /* Film grain: breaks gradient banding on 8-bit panels. */
   content: "";
@@ -297,3 +304,40 @@ a:focus {
 @keyframes live-ping {
   75%, 100% { transform: scale(2.6); opacity: 0; }
 }
+
+/* Chips and pills used by the station and filters. */
+.chip {
+  border: 1px solid hsl(var(--foreground) / 0.18);
+  border-radius: 9999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chip:hover { border-color: hsl(var(--accent) / 0.6); }
+.chip[aria-pressed="true"] {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--accent));
+  color: hsl(var(--background));
+}
+
+/* Now-playing orb: a soft breathing disc coloured from the aurora. */
+.orb {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+  flex: none;
+  border-radius: 9999px;
+  background: conic-gradient(from 180deg, hsl(var(--aurora-a)), hsl(var(--aurora-b)), hsl(var(--aurora-c)), hsl(var(--aurora-a)));
+  box-shadow: 0 0 60px -8px hsl(var(--aurora-b) / 0.7);
+  animation: orb-spin 24s linear infinite;
+}
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: inherit;
+  background: hsl(var(--background));
+  opacity: 0.88;
+}
+.orb[data-paused="true"] { animation-play-state: paused; }
+@keyframes orb-spin { to { transform: rotate(360deg); } }

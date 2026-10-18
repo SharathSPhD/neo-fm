@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 
 import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { siteUrl } from "@/lib/seo/site";
+import { AmbientBackground } from "@/components/ambient-background";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
 import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
@@ -67,6 +68,7 @@ export default async function RootLayout({
         {/* Applies persisted theme before paint; static file served from
             /public so no inline-script audit surface. */}
         <Script src="/theme-boot.js" strategy="beforeInteractive" />
+        <AmbientBackground />
         <AuthListener />
         <ClientErrorListener />
         {children}

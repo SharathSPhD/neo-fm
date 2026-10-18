@@ -359,7 +359,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
       <div
         role="tablist"
         aria-label={t("create.modeLabel")}
-        className="flex gap-1 rounded-lg border border-muted/20 bg-muted/10 p-1 mb-4"
+        className="flex gap-1 glass rounded-2xl p-1 mb-4"
       >
         {(["compose", "describe"] as const).map((mode) => (
           <button
@@ -399,7 +399,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
             maxLength={SONG_TITLE_MAX_CHARS}
             onChange={(e) => setTitle(e.target.value)}
             placeholder={t("create.titlePlaceholder")}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           />
           <span className="text-[10px] text-foreground/40">
             {t("create.titleHint", { n: SONG_TITLE_MAX_CHARS - title.length })}
@@ -412,7 +412,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
               name="style_family"
               value={form.style_family}
               onChange={(e) => setStyle(e.target.value as StyleFamily)}
-              className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+              className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
             >
               {STYLE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -426,7 +426,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
               name="language"
               value={form.language}
               onChange={(e) => setLanguage(e.target.value as Language)}
-              className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+              className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
             >
               {LANGUAGE_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -447,7 +447,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
             name="target_duration_seconds"
             value={form.target_duration_seconds}
             onChange={(e) => setDuration(Number(e.target.value) as Duration)}
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
