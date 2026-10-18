@@ -84,7 +84,12 @@ a:focus {
 :root .text-foreground\/35,
 :root .text-foreground\/40,
 :root .text-foreground\/45 {
-  color: hsl(var(--foreground) / 0.55);
+  color: hsl(var(--foreground) / 0.7);
+}
+/* /50 and /55 also sit on the aurora, where the effective background is lighter than --background. */
+:root:not([data-theme="light"]) .text-foreground\/50,
+:root:not([data-theme="light"]) .text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.7);
 }
 :root[data-theme="light"] .text-foreground\/30,
 :root[data-theme="light"] .text-foreground\/35,
@@ -320,24 +325,34 @@ a:focus {
   color: hsl(var(--background));
 }
 
-/* Now-playing orb: a soft breathing disc coloured from the aurora. */
+/* Now-playing orb: a spinning aurora ring around a tinted disc with a note, until cover art exists in the queue API. */
 .orb {
   position: relative;
   width: 7rem;
   height: 7rem;
   flex: none;
   border-radius: 9999px;
-  background: conic-gradient(from 180deg, hsl(var(--aurora-a)), hsl(var(--aurora-b)), hsl(var(--aurora-c)), hsl(var(--aurora-a)));
   box-shadow: 0 0 60px -8px hsl(var(--aurora-b) / 0.7);
+}
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 180deg, hsl(var(--aurora-a)), hsl(var(--aurora-b)), hsl(var(--aurora-c)), hsl(var(--aurora-a)));
   animation: orb-spin 24s linear infinite;
 }
 .orb::after {
-  content: "";
+  content: "\266A";
   position: absolute;
-  inset: 22%;
+  inset: 12%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: inherit;
-  background: hsl(var(--background));
-  opacity: 0.88;
+  font-size: 2.25rem;
+  color: hsl(0 0% 100% / 0.92);
+  background: radial-gradient(circle at 30% 25%, hsl(var(--aurora-a) / 0.95), hsl(var(--aurora-c) / 0.75) 80%);
 }
-.orb[data-paused="true"] { animation-play-state: paused; }
+.orb[data-paused="true"]::before { animation-play-state: paused; }
 @keyframes orb-spin { to { transform: rotate(360deg); } }
