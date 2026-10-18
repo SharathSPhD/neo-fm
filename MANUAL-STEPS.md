@@ -129,3 +129,10 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 8. Needs step 5. In Vercel add `STRIPE_SUBSCRIPTION_UPI=1`; it has no effect with a live key. Redeploy. Creator/Pro checkout then lists UPI next to card.
 9. Test it: sign in, upgrade, pick UPI, use Stripe's test VPAs from `docs.stripe.com/payments/upi` (do not use a real UPI app). Confirm the account page shows the plan and the subscription appears in the test dashboard.
 10. Not signed off for live mode: Stripe requires a pre-debit SMS or app notification at least 24 hours before each recurring charge with the exact amount, and a mandate cap (₹15,000 per Chargebee's docs). Claude has not verified Stripe sends the notification for you; check the AutoPay page in the Stripe docs before any live use.
+
+**F. House ads (off by default, #212)**
+1. Say which migration to apply: `0099_ad_slots` (creates `ad_slots` and `ad_events`, service role only, plus 12 inactive card-only house ads). Nothing is served before this, and the queue works without it.
+2. Have a native speaker read the Indic headlines in the seed rows. Then set `reviewed_by`, `reviewed_at` and `active = true` on the ones to run. Keep the two Station pass ads off until the pass is on sale (it is test mode only and has no entitlement yet).
+3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Paid tiers never hear ads; Station pass holders are not recognised yet because the webhook stores no pass.
+4. Phone test: a card-only spot leaves about 6 seconds without audio, so check on a locked phone that the next track starts by itself.
+

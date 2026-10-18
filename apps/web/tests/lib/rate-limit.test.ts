@@ -36,6 +36,7 @@ describe("pickRule", () => {
     ["/api/songs/abc-123/remix", "songs:gen-aux", 6],
     ["/api/songs/abc-123/cover-art", "songs:gen-aux", 6],
     ["/api/station/queue", "station:queue", 30],
+    ["/api/station/ad-event", "station:ad-event", 60],
     ["/api/station/signal", "station:signal", 90],
     ["/api/station/signal/", "station:signal", 90],
     ["/api/p/abc/audio-url", "public:read", 120],
