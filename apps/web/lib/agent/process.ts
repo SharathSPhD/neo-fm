@@ -5,7 +5,9 @@
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
 import { lyriaBreaker } from "./circuit-breaker";
 import { generateMusic } from "./lyria";
-import { advance } from "./runner";
+import { advance, type AdvanceDeps } from "./runner";
+import { hostAdvance } from "../cascade/host-run";
+import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from "../cascade/host-io";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
@@ -121,52 +123,58 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
       };
       let postRenderFrom = 0;
-      const runAdvance = () => advance(job.id, {
-        sessions, // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
-        store: runStore(db, plan.agent === "free" ? "free" : "pro"), environmentId,
-        agentId: agentIdFor(plan.agent),
-        log: (m) => trace.push(m.slice(0, 600)),
-        maxLyriaCalls: plan.maxLyriaCalls, maxOutcomeIterations: plan.maxOutcomeIterations,
-        brief: {
-          language: doc.language, styleFamily: doc.style_family,
-          targetSeconds: doc.document_json.target_duration_seconds ?? 30,
-          prompt: doc.document_json.metadata?.prompt ?? "",
-          tasteCard: tasteCard || undefined,
-          engine: embedEngine(job.id),
-        },
-        music: async (a0) => {
-          let a = a0;
-          // Time from the job starting to the agent asking for a render (tick granularity: +-1 cron minute).
-          if (job.started_at && stages.agent_draft === undefined) stages.agent_draft = Math.max(0, Date.now() - new Date(job.started_at).getTime());
-          // Last gate before spend: the agent's own output is untrusted too.
-          const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
-          if (!v.allowed) throw new SafetyRefusal(v.reason);
-          // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
-          if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
-            try {
-              a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
-              const v2 = await screenRequest(a.lyrics, "lyrics");
-              if (!v2.allowed) throw new SafetyRefusal(v2.reason);
-              await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
-            } catch (e) { if (e instanceof SafetyRefusal) throw e; /* polish is best-effort; sing the engine's own lyrics */ }
-          }
-          // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
-          const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
-          const sung = ss?.romanized ? ss.text : a.lyrics;
-          return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
-        },
-        gate: () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; },
-        gateRelease: () => lyriaBreaker.release(),
-        finishOnRender: true,
-        saveAudio: async (jobId, n, r) => {
-          // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
-          const path = `${jobId}/${n}.mp3`;
-          const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
-          if (error) throw new Error(error.message);
-          postRenderFrom = Date.now();
-          return path;
-        },
-      });
+      const brief = {
+        language: doc.language, styleFamily: doc.style_family,
+        targetSeconds: doc.document_json.target_duration_seconds ?? 30,
+        prompt: doc.document_json.metadata?.prompt ?? "",
+        tasteCard: tasteCard || undefined,
+        engine: embedEngine(job.id),
+      };
+      // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
+      const store = runStore(db, plan.agent === "free" ? "free" : "pro");
+      const gate = () => { const g = lyriaBreaker.acquire(); return g.ok ? null : `lyria circuit open, retry in ${Math.ceil(g.retryInMs / 1000)}s`; };
+      const log = (m: string) => trace.push(m.slice(0, 600));
+      const music: AdvanceDeps["music"] = async (a0) => {
+        let a = a0;
+        // Time from the job starting to the agent asking for a render (tick granularity: +-1 cron minute).
+        if (job.started_at && stages.agent_draft === undefined) stages.agent_draft = Math.max(0, Date.now() - new Date(job.started_at).getTime());
+        // Last gate before spend: the agent's own output is untrusted too.
+        const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
+        if (!v.allowed) throw new SafetyRefusal(v.reason);
+        // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
+        if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
+          try {
+            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db))) };
+            const v2 = await screenRequest(a.lyrics, "lyrics");
+            if (!v2.allowed) throw new SafetyRefusal(v2.reason);
+            await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
+          } catch (e) { if (e instanceof SafetyRefusal) throw e; /* polish is best-effort; sing the engine's own lyrics */ }
+        }
+        // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
+        const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
+        const sung = ss?.romanized ? ss.text : a.lyrics;
+        return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
+      };
+      const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
+        // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
+        const path = `${jobId}/${n}.mp3`;
+        const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
+        if (error) throw new Error(error.message);
+        postRenderFrom = Date.now();
+        return path;
+      };
+      const runAdvance = plan.agent === "host"
+        ? () => hostAdvance(job.id, {
+          store, maxLyriaCalls: plan.maxLyriaCalls, brief, music, saveAudio, gate, gateRelease: () => lyriaBreaker.release(), timed, log,
+          cascade: hostCascadeDeps(anthropicClient(), log),
+          loadSong: () => loadHostSong(db, job.id),
+          saveSong: (song) => saveHostSong(db, job.id, job.song_document_id, song),
+        })
+        : () => advance(job.id, {
+          sessions, store, environmentId, agentId: agentIdFor(plan.agent), log,
+          maxLyriaCalls: plan.maxLyriaCalls, maxOutcomeIterations: plan.maxOutcomeIterations,
+          brief, music, gate, gateRelease: () => lyriaBreaker.release(), finishOnRender: true, saveAudio,
+        });
       let outcome = await runAdvance();
       let configAssigned = false;
       // The agent drafts for minutes and the render request only reaches us when we look, so keep looking while we hold the
@@ -182,7 +190,9 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       if (outcome === "done") {
         // The song is playable once finalize marks it completed; the Gemini audits are advisory, so they run after that
         // (in parallel) instead of adding ~25 s before the listener sees the track.
-        const cascade = await timed("finalize", () => finalize(db, job.id));
+        if (plan.agent === "host") await adoptPolishedLyrics(db, job.id, job.song_document_id);
+        const finalized = await timed("finalize", () => finalize(db, job.id));
+        const cascade = finalized ?? (plan.agent === "host" ? (await loadHostSong(db, job.id))?.cascade ?? null : null);
         const targetS = doc.document_json.target_duration_seconds ?? 30;
         const [qa] = await Promise.all([
           timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey)),
