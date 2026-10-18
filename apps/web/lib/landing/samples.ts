@@ -7,6 +7,7 @@ import { unstable_cache } from "next/cache";
 
 import { EXAMPLE_IDEAS } from "@/lib/first-run/examples";
 import { HERO_LANGS, type LanguageSample } from "./langs";
+import { loadPool } from "@/lib/station/pool";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 type SectionLike = { type?: string; lyrics?: string | null };
@@ -35,8 +36,8 @@ export interface SongRow {
   } | null;
 }
 
-/** Newest-first rows in, one sample per hero language out. Rows without lyric lines are skipped. */
-export function pickSamples(rows: readonly SongRow[]): LanguageSample[] {
+/** Newest-first rows in, one sample per hero language out. Rows without lyric lines are skipped. `poolLangs` are the languages with an admitted station track. */
+export function pickSamples(rows: readonly SongRow[], poolLangs: ReadonlySet<string> = new Set()): LanguageSample[] {
   return HERO_LANGS.map(({ code }) => {
     let song: LanguageSample["song"] = null;
     for (const r of rows) {
@@ -47,7 +48,7 @@ export function pickSamples(rows: readonly SongRow[]): LanguageSample[] {
       song = { publicId: r.public_id, title: doc.title?.trim() || "Untitled", lines };
       break;
     }
-    return { code, song, idea: EXAMPLE_IDEAS[code][0] };
+    return { code, song, pool: poolLangs.has(code), idea: EXAMPLE_IDEAS[code][0] };
   });
 }
 
@@ -71,5 +72,6 @@ const loadRows = unstable_cache(
 
 /** Never throws: a database problem just yields idea-only cards. */
 export async function loadLanguageSamples(): Promise<LanguageSample[]> {
-  return pickSamples(await loadRows().catch(() => [] as SongRow[]));
+  const [rows, pool] = await Promise.all([loadRows().catch(() => [] as SongRow[]), loadPool().catch(() => [])]);
+  return pickSamples(rows, new Set(pool.map((t) => t.language)));
 }
