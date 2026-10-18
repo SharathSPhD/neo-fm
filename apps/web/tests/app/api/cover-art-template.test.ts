@@ -61,7 +61,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
     authed(s);
     serviceFake.value = makeFakeSupabase();
     const res = await POST(new Request("http://x"), {
-      params: { id: "nope" },
+      params: Promise.resolve({ id: "nope" }),
     });
     expect(res.status).toBe(400);
   });
@@ -71,7 +71,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(401);
   });
@@ -82,7 +82,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
     authed(s);
     serviceFake.value = makeFakeSupabase();
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(404);
   });
@@ -125,7 +125,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
     serviceFake.value = service;
 
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -170,7 +170,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
     })) as never;
     serviceFake.value = service;
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(500);
     const body = await res.json();
@@ -195,7 +195,7 @@ describe("POST /api/songs/[id]/cover-art-template", () => {
     authed(s);
     serviceFake.value = makeFakeSupabase();
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(500);
     const body = await res.json();

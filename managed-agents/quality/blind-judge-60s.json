@@ -1,0 +1,132 @@
+[
+ {
+  "file": "hi-1.mp3",
+  "language": "Hindi",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 4,
+  "worst_issue": "Slightly unnatural vowel sustain and rigid rhythmic transitions between lines."
+ },
+ {
+  "file": "te-10.mp3",
+  "language": "Telugu",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slightly unnatural vowel stretching and mechanical meter alignment on certain word endings."
+ },
+ {
+  "file": "kn-1.mp3",
+  "language": "Kannada",
+  "pronunciation": 4,
+  "stress_rhythm": 4,
+  "clarity": 4,
+  "overall": 4,
+  "worst_issue": "Slight artificial rigidity in vowel sustains and minor phrase transitions."
+ },
+ {
+  "file": "bn-1.mp3",
+  "language": "Bengali",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slightly mechanical phrasing and unnatural vowel elongation on sustained notes."
+ },
+ {
+  "file": "ta-10.mp3",
+  "language": "Tamil",
+  "pronunciation": 3,
+  "stress_rhythm": 4,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Synthetic pitch bending and unnatural vowel elongation during the high melodic transitions."
+ },
+ {
+  "file": "ta-1.mp3",
+  "language": "Tamil",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slightly mechanical phrasing and unnatural vowel sustain on line endings."
+ },
+ {
+  "file": "kn-10.mp3",
+  "language": "Kannada",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Minor robotic artifacts on sustained vowels and unnatural vibrato decay."
+ },
+ {
+  "file": "te-1.mp3",
+  "language": "Telugu",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slight synthetic rigidity and unnatural sustaining in melodic vowel glides."
+ },
+ {
+  "file": "bn-11.mp3",
+  "language": "Bengali",
+  "pronunciation": 3,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slightly robotic phrasing and awkward metric elongation on certain syllables."
+ },
+ {
+  "file": "hi-10.mp3",
+  "language": "Hindi",
+  "pronunciation": 4,
+  "stress_rhythm": 4,
+  "clarity": 4,
+  "overall": 4,
+  "worst_issue": "Slight artificial timbre and pitch smoothing on sustained notes."
+ },
+ {
+  "file": "te-11.mp3",
+  "language": "Telugu",
+  "pronunciation": 3,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Unnatural vowel elongation and robotic rhythmic cadence on phrase endings."
+ },
+ {
+  "file": "hi-11.mp3",
+  "error": "unparseable"
+ },
+ {
+  "file": "bn-10.mp3",
+  "language": "Bengali",
+  "pronunciation": 4,
+  "stress_rhythm": 4,
+  "clarity": 3,
+  "overall": 3,
+  "worst_issue": "Slight synthetic artifacts and unnatural modulation during prolonged melodic glides."
+ },
+ {
+  "file": "ta-11.mp3",
+  "language": "Tamil",
+  "pronunciation": 4,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 4,
+  "worst_issue": "Mildly synthetic phrasing and slightly unnatural vowel sustains in the faster lines."
+ },
+ {
+  "file": "kn-11.mp3",
+  "language": "Kannada",
+  "pronunciation": 3,
+  "stress_rhythm": 3,
+  "clarity": 4,
+  "overall": 3,
+  "worst_issue": "Slightly mechanical phrasing with unnatural vowel length across melodic transitions."
+ }
+]

@@ -11,9 +11,23 @@
  */
 import { useEffect, useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 const STORAGE_KEY = "neo-fm:library-onboarded";
 
+/** Renders "plain [[bold]] plain" with the marked parts in <strong>. */
+function Rich({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/\[\[|\]\]/).map((part, i) =>
+        i % 2 === 1 ? <strong key={i}>{part}</strong> : <span key={i}>{part}</span>,
+      )}
+    </>
+  );
+}
+
 export function LibraryOnboardingModal() {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -50,28 +64,27 @@ export function LibraryOnboardingModal() {
           id="library-onboarding-title"
           className="text-xl font-medium tracking-tight"
         >
-          Welcome to your library
+          {t("lib.onb.title")}
         </h2>
         <p className="mt-2 text-sm text-foreground/70">
-          A few things you can do here:
+          {t("lib.onb.intro")}
         </p>
         <ul className="mt-4 flex flex-col gap-2 text-sm text-foreground/80">
           <li>
             <span className="text-amber-300">★</span>{" "}
-            <strong>Favorite</strong> a song to pin it.
+            <Rich text={t("lib.onb.fav")} />
           </li>
           <li>
             <span className="text-accent">🔎</span>{" "}
-            <strong>Filter</strong> by style or language, search by title.
+            <Rich text={t("lib.onb.filter")} />
           </li>
           <li>
             <span className="text-accent">⋯</span>{" "}
-            <strong>Rename</strong> or <strong>delete</strong> a song from the
-            row menu.
+            <Rich text={t("lib.onb.rename")} />
           </li>
           <li>
             <span className="text-accent">↻</span>{" "}
-            <strong>Recover</strong> appears when a song gets stuck.
+            <Rich text={t("lib.onb.recover")} />
           </li>
         </ul>
         <button
@@ -79,7 +92,7 @@ export function LibraryOnboardingModal() {
           onClick={close}
           className="mt-6 w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
         >
-          Got it
+          {t("lib.onb.gotIt")}
         </button>
       </div>
     </div>

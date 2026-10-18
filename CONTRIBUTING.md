@@ -6,7 +6,7 @@
 - pnpm 9 via `corepack enable && corepack prepare pnpm@9 --activate`.
 - Python 3.12+.
 - [uv](https://github.com/astral-sh/uv) for Python dependency management.
-- Docker 25+ with NVIDIA Container Runtime (for DGX-side services).
+- Docker is only needed for the legacy DGX services under `services/`.
 
 ## First-time setup
 

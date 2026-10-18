@@ -9,15 +9,18 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export function RecoverButton({
   songId,
-  label = "Recover",
+  label,
   className = "",
 }: {
   songId: string;
   label?: string;
   className?: string;
 }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,7 +62,7 @@ export function RecoverButton({
         disabled={busy}
         className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] font-medium text-accent hover:bg-accent/20 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       >
-        {busy ? "Re-queuing…" : label}
+        {busy ? t("lib.recover.busy") : (label ?? t("song.recover"))}
       </button>
       {error ? (
         <span role="alert" className="text-[10px] text-red-300">

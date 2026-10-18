@@ -9,6 +9,10 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 import { AppShell } from "@/components/app-shell";
+import { InstallPrompt } from "@/components/install-prompt";
+import { NetworkBanner } from "@/components/network-banner";
+import { MiniPlayer } from "@/components/player/mini-player";
+import { PlayerProvider } from "@/components/player/player-provider";
 import { fetchShellUser } from "@/lib/supabase/shell-user";
 
 export default async function AppGroupLayout({
@@ -20,12 +24,23 @@ export default async function AppGroupLayout({
   if (!user) {
     // Preserve the path the user originally requested so the sign-in
     // form can bounce them back after a successful auth.
-    const h = headers();
+    const h = await headers();
     const path = h.get("x-invoke-path") ?? h.get("next-url") ?? "/library";
     redirect(`/sign-in?next=${encodeURIComponent(path)}`);
   }
 
   // Active-nav detection happens at the page level via aria-current; the
   // shell honours an optional `active` override but defaults to none.
-  return <AppShell user={user}>{children}</AppShell>;
+  // PlayerProvider sits in the layout (not the page) so the audio element
+  // survives client-side navigation between app pages.
+  return (
+    <PlayerProvider>
+      <NetworkBanner />
+      <AppShell user={user}>
+        <InstallPrompt />
+        {children}
+      </AppShell>
+      <MiniPlayer />
+    </PlayerProvider>
+  );
 }

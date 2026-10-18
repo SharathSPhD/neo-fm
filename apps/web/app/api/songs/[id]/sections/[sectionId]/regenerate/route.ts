@@ -31,8 +31,9 @@ const SectionIdSchema = z.string().min(1).max(64);
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { id: string; sectionId: string } },
+  props: { params: Promise<{ id: string; sectionId: string }> }
 ) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;

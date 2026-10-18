@@ -21,17 +21,26 @@
  */
 import { useState, useTransition } from "react";
 
+import { sendFunnelEvent } from "@/components/funnel-beacon";
+import { checkoutErrorView } from "@/lib/billing/checkout-guard";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 interface Props {
   tier: "creator" | "pro";
   label: string;
 }
 
 export function UpgradeButton({ tier, label }: Props) {
+  const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [manageUrl, setManageUrl] = useState<string | null>(null);
 
   function start() {
     setError(null);
+    setManageUrl(null);
+    // Anonymous daily count of upgrade clicks; no tier, user or session is sent.
+    sendFunnelEvent("checkout_started");
     startTransition(async () => {
       try {
         const res = await fetch("/api/billing/checkout", {
@@ -49,17 +58,16 @@ export function UpgradeButton({ tier, label }: Props) {
             .catch(() => ({}))) as {
             error?: string;
             details?: string;
+            manage_url?: string;
           };
-          setError(
-            body.details ??
-              body.error ??
-              "Couldn't start checkout. Try again in a minute.",
-          );
+          const view = checkoutErrorView(res.status, body);
+          setError(view.message || t("pub.upgrade.failed"));
+          setManageUrl(view.manageUrl ?? null);
           return;
         }
         const body = (await res.json()) as { url?: string };
         if (!body.url) {
-          setError("Checkout returned no URL. Try again.");
+          setError(t("pub.upgrade.noUrl"));
           return;
         }
         window.location.assign(body.url);
@@ -77,12 +85,17 @@ export function UpgradeButton({ tier, label }: Props) {
         disabled={pending}
         className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60"
       >
-        {pending ? "Opening checkout…" : label}
+        {pending ? t("pub.upgrade.opening") : label}
       </button>
       {error ? (
         <p role="alert" className="text-xs text-red-300">
           {error}
         </p>
+      ) : null}
+      {manageUrl ? (
+        <a href={manageUrl} className="text-xs font-medium text-accent hover:underline">
+          Manage your plan
+        </a>
       ) : null}
     </div>
   );

@@ -15,6 +15,8 @@
   --foreground: 0 0% 96%;
   --accent: 28 92% 60%;
   --muted: 240 4% 22%;
+  /* Amber notice text (amber-200 on dark: 11:1). */
+  --warn: 48 96% 80%;
 }
 
 /*
@@ -27,6 +29,8 @@
   --foreground: 240 10% 12%;
   --accent: 28 92% 42%;
   --muted: 240 5% 86%;
+  /* Dark amber for notices on cream (~9:1). */
+  --warn: 30 90% 22%;
 }
 
 html,
@@ -64,5 +68,69 @@ a:focus {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+  }
+}
+
+/*
+ * Accessibility: contrast floor for de-emphasised text (WCAG 1.4.3, 4.5:1).
+ * Many components use `text-foreground/30..55` for secondary copy; those
+ * alphas fall below 4.5:1 against the page background. Rather than edit
+ * every call site we clamp them here, keeping the visual hierarchy
+ * (secondary text stays lighter than primary) while passing AA.
+ */
+:root .text-foreground\/30,
+:root .text-foreground\/35,
+:root .text-foreground\/40,
+:root .text-foreground\/45 {
+  color: hsl(var(--foreground) / 0.55);
+}
+:root[data-theme="light"] .text-foreground\/30,
+:root[data-theme="light"] .text-foreground\/35,
+:root[data-theme="light"] .text-foreground\/40,
+:root[data-theme="light"] .text-foreground\/45,
+:root[data-theme="light"] .text-foreground\/50,
+:root[data-theme="light"] .text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.68);
+}
+
+/*
+ * Embedded player themes (/s/<id>/embed?theme=light|dark|auto). Scoped to
+ * the embed root so the host page's and the app's own theme toggle never
+ * leak in; "auto" follows the visitor's OS setting.
+ */
+.embed-root {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.embed-root[data-embed-theme="light"] {
+  --background: 0 0% 99%;
+  --foreground: 240 10% 12%;
+  --accent: 28 92% 42%;
+  --muted: 240 5% 86%;
+  --warn: 30 90% 22%;
+}
+.embed-root[data-embed-theme="dark"] {
+  --background: 240 6% 8%;
+  --foreground: 0 0% 96%;
+  --accent: 28 92% 60%;
+  --muted: 240 4% 22%;
+  --warn: 48 96% 80%;
+}
+@media (prefers-color-scheme: light) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 12%;
+    --accent: 28 92% 42%;
+    --muted: 240 5% 86%;
+    --warn: 30 90% 22%;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 240 6% 8%;
+    --foreground: 0 0% 96%;
+    --accent: 28 92% 60%;
+    --muted: 240 4% 22%;
+    --warn: 48 96% 80%;
   }
 }

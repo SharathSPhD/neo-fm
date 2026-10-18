@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { collect, renderMarkdown, sumCostUsd, projection } from "../spend-report.mjs";
+import { BUDGET_USD, SPLIT_USD, collect, renderMarkdown, sumCostUsd, projection } from "../spend-report.mjs";
 
 const now = new Date("2026-10-20T00:00:00Z");
 const since = new Date("2026-10-10T00:00:00Z");
@@ -40,4 +40,8 @@ test("with a key it pages cost_report and sends the key only as a header", async
   const r = await collect({ env: { MA_ADMIN_KEY: "k" }, fetchImpl, now, since });
   assert.equal(r.cost.total, 3);
   assert.match(renderMarkdown(r), /USD 3\.00/);
+});
+
+test("budget split sums to the budget", () => {
+  assert.equal(Object.values(SPLIT_USD).reduce((a, b) => a + b, 0), BUDGET_USD);
 });

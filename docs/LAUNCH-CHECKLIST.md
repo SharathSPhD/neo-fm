@@ -7,7 +7,7 @@ Target: soft launch before the Claude credit ends on 2026-11-05. Items marked **
 | # | Item | Owner | State on main (2026-10-18) |
 |---|---|---|---|
 | 1 | Delete prod test accounts `lat-bot@neo-fm.test` (Pro), `e2e-bot@neo-fm.test`, `showcase-a`, `showcase-b` | **S** | Still in prod per handover. They hold quota and skew funnel numbers. |
-| 2 | Upstash env vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) in Vercel Production | **S** | Without them `lib/rate-limit.ts` falls back to in-process limits, which do not hold across serverless instances. `/api/health` reports upstash reachability once set. |
+| 2 | Upstash env vars | done | Done per MANUAL-STEPS step 8; `/api/health` reports upstash ok. |
 | 3 | `ADMIN_SECRET` in Vercel Production | **S** | Not referenced on main; it arrives with one of the open PRs. Confirm which PR reads it before setting it. |
 | 4 | Supabase leaked-password protection (Auth, Passwords) | **S** | Off. Dashboard toggle, needs the Supabase Pro plan (MANUAL-STEPS step 2.4). |
 | 5 | Migrations 0072, 0076, 0078, 0086 applied to `neo-fm-prod` | **S**, after the lead's PR review | Not applied. Each belongs to an open PR (#46, #56, #62/#76, #88); apply only with the PR that needs it. |

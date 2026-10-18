@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 /**
  * Heart-shaped like button. Hosted on the public song page
  * (/s/[publicId]) and -- in v1.2 -- on /discover cards.
@@ -24,6 +26,7 @@ export function LikeButton({
   signedIn: boolean;
 }) {
   const router = useRouter();
+  const { t } = useUiLang();
   const [liked, setLiked] = useState(initialLiked);
   const [count, setCount] = useState(initialCount);
   const [pending, startTransition] = useTransition();
@@ -57,7 +60,7 @@ export function LikeButton({
       onClick={click}
       disabled={pending}
       aria-pressed={liked}
-      aria-label={liked ? "Unlike" : "Like"}
+      aria-label={liked ? t("songact.unlike") : t("songact.like")}
       className={
         liked
           ? "inline-flex items-center gap-2 rounded-full border border-red-400/40 bg-red-400/10 px-3 py-1 text-sm text-red-300 transition hover:bg-red-400/20 disabled:opacity-50"

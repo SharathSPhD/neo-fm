@@ -26,6 +26,9 @@ import {
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
 import {
   DEFAULT_REMIX_DISTANCE,
   DEFAULT_VARIATION_DISTANCE,
@@ -61,30 +64,37 @@ export interface ForkSongDialogProps {
 const KIND_COPY: Record<
   Kind,
   {
-    cta: string;
-    submitting: string;
-    title: string;
-    blurb: string;
-    distanceCopy: { close: string; far: string };
+    cta: UiKey;
+    submitting: UiKey;
+    title: UiKey;
+    blurb: UiKey;
+    distanceCopy: { close: UiKey; far: UiKey };
+    applyError: UiKey;
+    kickoffError: UiKey;
     distanceDefault: number;
   }
 > = {
   variation: {
-    cta: "Make a variation",
-    submitting: "Generating…",
-    title: "Make a variation",
-    blurb:
-      "A variation re-renders the same composition with the model's natural stochasticity. Tweak any control below; leave them empty for a faithful re-roll.",
-    distanceCopy: { close: "Same composition", far: "Looser interpretation" },
+    cta: "fork.variation.cta",
+    submitting: "fork.variation.submitting",
+    title: "fork.variation.cta",
+    blurb: "fork.variation.blurb",
+    distanceCopy: {
+      close: "fork.variation.close",
+      far: "fork.variation.far",
+    },
+    applyError: "fork.variation.applyError",
+    kickoffError: "fork.variation.kickoffError",
     distanceDefault: DEFAULT_VARIATION_DISTANCE,
   },
   remix: {
-    cta: "Make a remix",
-    submitting: "Forking…",
-    title: "Make a remix",
-    blurb:
-      "A remix forks the song with creative pivots. Override tempo, key, or raga; pick a subset of sections to regenerate.",
-    distanceCopy: { close: "Recognisable", far: "Bold reinterpretation" },
+    cta: "fork.remix.cta",
+    submitting: "fork.remix.submitting",
+    title: "fork.remix.cta",
+    blurb: "fork.remix.blurb",
+    distanceCopy: { close: "fork.remix.close", far: "fork.remix.far" },
+    applyError: "fork.remix.applyError",
+    kickoffError: "fork.remix.kickoffError",
     distanceDefault: DEFAULT_REMIX_DISTANCE,
   },
 };
@@ -133,6 +143,7 @@ export function ForkSongDialog({
   language,
 }: ForkSongDialogProps) {
   const router = useRouter();
+  const { t } = useUiLang();
   const copy = KIND_COPY[kind];
 
   const [open, setOpen] = useState(false);
@@ -260,9 +271,7 @@ export function ForkSongDialog({
         return;
       }
       if (res.status === 429) {
-        setError(
-          "You've hit your monthly quota. Free tier is 3 songs / month.",
-        );
+        setError(t("fork.err.quota"));
         return;
       }
       if (res.status === 422) {
@@ -271,7 +280,7 @@ export function ForkSongDialog({
           message?: string;
         };
         setError(
-          data.message ?? data.error ?? `Couldn't apply the ${kind} overrides.`,
+          data.message ?? data.error ?? t(copy.applyError),
         );
         return;
       }
@@ -283,7 +292,7 @@ export function ForkSongDialog({
         setError(
           typeof data.details === "string"
             ? data.details
-            : data.error ?? `Couldn't kick off the ${kind}.`,
+            : data.error ?? t(copy.kickoffError),
         );
         return;
       }
@@ -305,7 +314,7 @@ export function ForkSongDialog({
         disabled={pending}
         className={triggerClass}
       >
-        {pending ? copy.submitting : copy.cta}
+        {pending ? t(copy.submitting) : t(copy.cta)}
       </button>
 
       {open ? (
@@ -319,26 +328,26 @@ export function ForkSongDialog({
           >
             <header className="flex items-center justify-between">
               <h2 className="text-sm font-medium tracking-tight">
-                {copy.title}
+                {t(copy.title)}
               </h2>
               <button
                 type="button"
                 onClick={close}
                 className="text-foreground/40 hover:text-foreground/80"
-                aria-label="Close"
+                aria-label={t("fork.close")}
               >
                 ×
               </button>
             </header>
 
-            <p className="text-xs text-foreground/60">{copy.blurb}</p>
+            <p className="text-xs text-foreground/60">{t(copy.blurb)}</p>
 
             <fieldset className="flex flex-col gap-2">
               <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Distance
+                {t("fork.distance")}
               </legend>
               <input
-                aria-label="Distance from the original"
+                aria-label={t("fork.distanceAria")}
                 type="range"
                 min={0}
                 max={100}
@@ -348,16 +357,16 @@ export function ForkSongDialog({
                 className="w-full accent-accent"
               />
               <div className="flex justify-between text-[10px] text-foreground/40">
-                <span>{copy.distanceCopy.close}</span>
+                <span>{t(copy.distanceCopy.close)}</span>
                 <span>{distance}</span>
-                <span>{copy.distanceCopy.far}</span>
+                <span>{t(copy.distanceCopy.far)}</span>
               </div>
             </fieldset>
 
             <div className="grid grid-cols-2 gap-3">
               <label className="flex flex-col gap-1 text-xs">
                 <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                  Tempo (BPM)
+                  {t("fork.tempo")}
                 </span>
                 <input
                   // text + inputMode="numeric" keeps the mobile numeric
@@ -373,8 +382,8 @@ export function ForkSongDialog({
                   }
                   placeholder={
                     initialTempo
-                      ? `(inherit ${initialTempo})`
-                      : "(inherit)"
+                      ? t("fork.inheritVal", { value: initialTempo })
+                      : t("fork.inherit")
                   }
                   className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
                 />
@@ -383,7 +392,7 @@ export function ForkSongDialog({
               {supportsKey ? (
                 <label className="flex flex-col gap-1 text-xs">
                   <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                    Key
+                    {t("fork.key")}
                   </span>
                   <input
                     type="text"
@@ -391,7 +400,9 @@ export function ForkSongDialog({
                     value={keyOverride}
                     onChange={(e) => setKeyOverride(e.target.value)}
                     placeholder={
-                      initialKey ? `(inherit ${initialKey})` : "(inherit, e.g. F#m)"
+                      initialKey
+                        ? t("fork.inheritVal", { value: initialKey })
+                        : t("fork.inheritKeyEg")
                     }
                     className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 font-mono text-xs"
                   />
@@ -399,10 +410,10 @@ export function ForkSongDialog({
               ) : (
                 <div className="flex flex-col gap-1 text-xs opacity-50">
                   <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                    Key
+                    {t("fork.key")}
                   </span>
                   <p className="rounded-md border border-muted/20 bg-muted/5 px-2 py-1 font-mono text-[10px] text-foreground/40">
-                    Western-only
+                    {t("fork.westernOnly")}
                   </p>
                 </div>
               )}
@@ -411,7 +422,7 @@ export function ForkSongDialog({
             {supportsRaga ? (
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-                  Raga
+                  {t("fork.raga")}
                 </legend>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <select
@@ -419,9 +430,9 @@ export function ForkSongDialog({
                     onChange={(e) => selectRagaByName(e.target.value)}
                     className="col-span-2 rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
                     data-testid="fork-raga-name"
-                    aria-label="Raga"
+                    aria-label={t("fork.raga")}
                   >
-                    <option value="">(inherit)</option>
+                    <option value="">{t("fork.inherit")}</option>
                     {ragaOptions.map((r) => (
                       <option key={r.name} value={r.name}>
                         {r.label}
@@ -435,9 +446,9 @@ export function ForkSongDialog({
                     }
                     className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
                     data-testid="fork-raga-system"
-                    aria-label="Raga system"
+                    aria-label={t("fork.ragaSystem")}
                   >
-                    <option value="">(system)</option>
+                    <option value="">{t("fork.system")}</option>
                     {FORK_RAGA_SYSTEM_VALUES.filter((s) =>
                       allowedRagaSystems.includes(s),
                     ).map((s) => (
@@ -452,21 +463,25 @@ export function ForkSongDialog({
 
             <label className="flex flex-col gap-1 text-xs">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Voice
+                {t("fork.voice")}
               </span>
               <select
                 value={voiceId}
                 onChange={(e) => setVoiceId(e.target.value)}
                 className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
                 data-testid="fork-voice"
-                aria-label="Voice"
+                aria-label={t("fork.voice")}
               >
                 <option value="">
-                  {initialVoiceId ? `(inherit ${initialVoiceId})` : "(inherit)"}
+                  {initialVoiceId
+                    ? t("fork.inheritVal", { value: initialVoiceId })
+                    : t("fork.inherit")}
                 </option>
                 {suggestedVoices.length > 0 ? (
                   <optgroup
-                    label={`Suggested for ${(language ?? "").toUpperCase()}`}
+                    label={t("fork.suggestedFor", {
+                      lang: (language ?? "").toUpperCase(),
+                    })}
                   >
                     {suggestedVoices.map((v) => (
                       <option key={v.voice_id} value={v.voice_id}>
@@ -475,7 +490,7 @@ export function ForkSongDialog({
                     ))}
                   </optgroup>
                 ) : null}
-                <optgroup label="All voices">
+                <optgroup label={t("fork.allVoices")}>
                   {otherVoices.map((v) => (
                     <option key={v.voice_id} value={v.voice_id}>
                       {v.label}
@@ -488,10 +503,10 @@ export function ForkSongDialog({
             {sections && sections.length > 0 ? (
               <fieldset className="flex flex-col gap-2">
                 <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-                  Sections to regenerate
+                  {t("fork.sections")}
                 </legend>
                 <p className="text-[10px] text-foreground/40">
-                  Empty = regenerate everything.
+                  {t("fork.sectionsHint")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {sections.map((s) => {
@@ -517,14 +532,14 @@ export function ForkSongDialog({
 
             <label className="flex flex-col gap-1 text-xs">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Title
+                {t("fork.title")}
               </span>
               <input
                 type="text"
                 maxLength={120}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="(inherit)"
+                placeholder={t("fork.inherit")}
                 className="rounded-md border border-muted/30 bg-muted/10 px-2 py-1 text-xs"
               />
             </label>
@@ -545,7 +560,7 @@ export function ForkSongDialog({
                 disabled={pending}
                 className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:bg-muted/10 disabled:opacity-50"
               >
-                Cancel
+                {t("fork.cancel")}
               </button>
               <button
                 type="button"
@@ -553,7 +568,7 @@ export function ForkSongDialog({
                 disabled={pending}
                 className="rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
               >
-                {pending ? copy.submitting : copy.cta}
+                {pending ? t(copy.submitting) : t(copy.cta)}
               </button>
             </footer>
           </div>

@@ -14,8 +14,8 @@ export const BUDGET_USD = 88;
 export const BUDGET_END = "2026-11-05";
 const API = "https://api.anthropic.com/v1/organizations";
 
-// Suggested split from the old lead; the reserve is what remains unallocated.
-export const SPLIT_USD = { prod: 40, "test/eval gate": 20, dev: 10, reserve: 18 };
+// Agreed split of the budget.
+export const SPLIT_USD = { prod: 32, "test/eval gate": 16, dev: 10, reserve: 30 };
 
 async function getJson(url, headers, fetchImpl) {
   const res = await fetchImpl(url, { headers });
@@ -117,7 +117,7 @@ export function renderMarkdown({ now, since, cost, tokens, ledger, notes }) {
 export async function collect({ env = process.env, fetchImpl = fetch, now = new Date(), since }) {
   const notes = [];
   let cost, tokens, ledger;
-  const key = env.MA_ADMIN_KEY ?? env.ANTHROPIC_ADMIN_KEY;
+  const key = env.MA_ADMIN_KEY;
   if (key) {
     const headers = { "x-api-key": key, "anthropic-version": "2023-06-01" };
     const range = { starting_at: since.toISOString(), ending_at: now.toISOString() };

@@ -10,7 +10,11 @@
  * `globals.css` and respect the `data-theme` attribute toggled via
  * `<ThemeToggle>`.
  */
+import { NotificationBell } from "@/components/notifications/bell";
 import Link from "next/link";
+
+import { serverI18n } from "@/lib/i18n/server";
+import type { UiKey } from "@/lib/i18n/ui-strings";
 
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
@@ -22,23 +26,24 @@ type NavUser = {
   plan?: string;
 };
 
-const TOP_NAV_LINKS = [
-  { href: "/library", label: "Library", icon: "▲" },
-  { href: "/discover", label: "Discover", icon: "◎" },
-] as const;
+const TOP_NAV_LINKS: readonly { href: string; label: UiKey; icon: string }[] = [
+  { href: "/library", label: "nav.library", icon: "▲" },
+  { href: "/discover", label: "nav.discover", icon: "◎" },
+  { href: "/collections", label: "nav.collections", icon: "☰" },
+];
 
 type BottomLink = {
   href: string;
-  label: string;
+  label: UiKey;
   icon: string;
   primary?: boolean;
 };
 
 const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
-  { href: "/library", label: "Library", icon: "♪" },
-  { href: "/discover", label: "Discover", icon: "◎" },
-  { href: "/songs/new", label: "Create", icon: "+", primary: true },
-  { href: "/account", label: "Account", icon: "◐" },
+  { href: "/library", label: "nav.library", icon: "♪" },
+  { href: "/discover", label: "nav.discover", icon: "◎" },
+  { href: "/songs/new", label: "nav.create", icon: "+", primary: true },
+  { href: "/account", label: "nav.account", icon: "◐" },
 ];
 
 export function AppShell({
@@ -54,7 +59,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopNav user={user} active={active} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
         {children}
       </div>
       <MobileBottomNav active={active} />
@@ -63,7 +68,8 @@ export function AppShell({
   );
 }
 
-function TopNav({ user, active }: { user: NavUser; active?: string }) {
+async function TopNav({ user, active }: { user: NavUser; active?: string }) {
+  const { t } = await serverI18n();
   return (
     <header className="sticky top-0 z-30 border-b border-muted/30 bg-background/85 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
@@ -90,7 +96,7 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
                     isActive ? "bg-muted/20 text-foreground" : "",
                   ].join(" ")}
                 >
-                  {l.label}
+                  {t(l.label)}
                 </Link>
               );
             })}
@@ -98,11 +104,12 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
         </div>
         <div className="flex items-center gap-2">
           <CommandPaletteTrigger />
+          <NotificationBell />
           <Link
             href="/songs/new"
             className="hidden h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
           >
-            New song
+            {t("nav.newSong")}
           </Link>
           <UserMenu
             email={user.email}
@@ -115,11 +122,12 @@ function TopNav({ user, active }: { user: NavUser; active?: string }) {
   );
 }
 
-function MobileBottomNav({ active }: { active?: string }) {
+async function MobileBottomNav({ active }: { active?: string }) {
+  const { t } = await serverI18n();
   return (
     <nav
       aria-label="Primary mobile"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 backdrop-blur-md sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
     >
       <ul className="mx-auto flex max-w-6xl items-stretch justify-around">
         {BOTTOM_NAV_LINKS.map((l) => {
@@ -131,7 +139,7 @@ function MobileBottomNav({ active }: { active?: string }) {
                   href={l.href}
                   aria-current={isActive ? "page" : undefined}
                   className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent text-2xl font-semibold leading-none text-background shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  aria-label={l.label}
+                  aria-label={t(l.label)}
                 >
                   <span aria-hidden>{l.icon}</span>
                 </Link>
@@ -151,7 +159,7 @@ function MobileBottomNav({ active }: { active?: string }) {
                 <span aria-hidden className="text-base">
                   {l.icon}
                 </span>
-                {l.label}
+                {t(l.label)}
               </Link>
             </li>
           );

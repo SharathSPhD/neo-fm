@@ -17,6 +17,12 @@
  * caller doesn't burn a different user's /api/lyrics budget.
  *
  * Per-route limits (per IP, per minute):
+ *   - /auth/*, /sign-out      : 30
+ *   - /sign-in, /sign-up (POST): 10
+ *   - /api/report              : 5
+ *   - /api/client-errors       : 10
+ *   - /api/events              : 20
+ *   - native-review ratings API and /native-review/<token> page : 30
  *   - /api/songs (POST)         : 6
  *   - /api/songs/.../publish    : 30
  *   - /api/songs/.../regenerate : 6
@@ -60,10 +66,56 @@ function clientIp(headers: Headers): string {
   );
 }
 
-export function pickRule(pathname: string): RateLimitRule {
-  // POST /api/songs (creation) -- expensive, tight budget.
+/**
+ * Pick the budget for a request, or `null` when the route is not limited
+ * (e.g. GET page views of the sign-in / sign-up forms).
+ */
+export function pickRule(
+  pathname: string,
+  method: string = "POST",
+): RateLimitRule | null {
+  const m = method.toUpperCase();
+  const isRead = m === "GET" || m === "HEAD";
+  // Auth surface: the OAuth/magic-link callback and sign-out sit outside
+  // /api, so they need explicit coverage. Tight enough to blunt code
+  // guessing and mail-bombing, loose enough for a shared NAT.
+  if (/^\/auth\//.test(pathname) || pathname === "/sign-out") {
+    return { bucket: "auth:flow", limit: 30 };
+  }
+  if (pathname === "/sign-in" || pathname === "/sign-up") {
+    return isRead ? null : { bucket: "auth:submit", limit: 10 };
+  }
+  // Browser error reports: anonymous and cheap to spam, and a crash loop can
+  // legitimately send a few, so keep it tight but not zero.
+  if (/^\/api\/client-errors\/?$/.test(pathname)) {
+    return { bucket: "anon:client-errors", limit: 10 };
+  }
+  // Anonymous client telemetry: cheap per call but unauthenticated.
+  if (/^\/api\/events\/?$/.test(pathname)) {
+    return { bucket: "anon:events", limit: 20 };
+  }
+  // Native-review links are token-gated, not login-gated, so cap both the
+  // rating writes and the page itself to blunt token guessing.
+  if (/^\/api\/native-review\/[^/]+\/ratings\/?$/.test(pathname)) {
+    return { bucket: "review:rate", limit: 30 };
+  }
+  if (/^\/native-review\/[^/]+\/?$/.test(pathname)) {
+    return { bucket: "review:page", limit: 30 };
+  }
+  // Browser CSP violation reports: anonymous and unbounded in a hostile page, so cap hard.
+  if (/^\/api\/csp-report\/?$/.test(pathname)) {
+    return { bucket: "anon:csp", limit: 30 };
+  }
+  // Public abuse reports are anonymous writes into a moderation queue.
+  if (/^\/api\/report\/?$/.test(pathname)) {
+    return { bucket: "anon:report", limit: 5 };
+  }
+  // Only the POST creates a song; listing (GET /api/songs) must not burn
+  // the generation budget.
   if (/^\/api\/songs\/?$/.test(pathname)) {
-    return { bucket: "songs:create", limit: 6 };
+    return isRead
+      ? { bucket: "api:default", limit: 60 }
+      : { bucket: "songs:create", limit: 6 };
   }
   // Section regeneration -- same envelope as song creation.
   if (/^\/api\/songs\/[^/]+\/sections\/[^/]+\/regenerate\/?$/.test(pathname)) {
@@ -89,11 +141,13 @@ export function pickRule(pathname: string): RateLimitRule {
     return { bucket: "songs:gen-aux", limit: 6 };
   }
   // Public share-surface reads.
-  if (pathname.startsWith("/api/p/")) {
+  if (pathname.startsWith("/api/p/") || pathname === "/api/oembed") {
     return { bucket: "public:read", limit: 120 };
   }
-  // Lyric / preview / library + everything else.
-  return { bucket: "api:default", limit: 60 };
+  // Lyric / preview / library + everything else under /api. Pages, RSC
+  // payloads and prefetches (any non-/api path) are not limited here: one
+  // navigation fires several requests and would exhaust a shared budget.
+  return pathname.startsWith("/api/") ? { bucket: "api:default", limit: 60 } : null;
 }
 
 async function upstashIncrement(
@@ -103,6 +157,7 @@ async function upstashIncrement(
   const baseUrl = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!baseUrl || !token) return null;
+  if (Date.now() < upstashDownUntilMs) return null;
   try {
     // Pipeline: INCR + EXPIRE NX + TTL. Upstash REST supports this with
     // a single POST to /pipeline.
@@ -120,7 +175,10 @@ async function upstashIncrement(
       // Keep this snappy; do NOT make the user wait on a flaky Redis.
       signal: AbortSignal.timeout(150),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      upstashDownUntilMs = Date.now() + UPSTASH_COOLDOWN_MS;
+      return null;
+    }
     const payload = (await res.json()) as Array<{ result?: number | string }>;
     const count =
       typeof payload[0]?.result === "number" ? payload[0]!.result : -1;
@@ -129,8 +187,21 @@ async function upstashIncrement(
     if (count < 0) return null;
     return { count, ttl: ttl > 0 ? ttl : windowSeconds };
   } catch {
+    upstashDownUntilMs = Date.now() + UPSTASH_COOLDOWN_MS;
     return null;
   }
+}
+
+// After an Upstash failure, skip it briefly so a Redis outage costs one
+// timeout per cooldown instead of 150ms on every request.
+const UPSTASH_COOLDOWN_MS = 10_000;
+let upstashDownUntilMs = 0;
+const MEM_SWEEP_THRESHOLD = 5_000;
+
+/** Test hook: clear in-memory state and the circuit breaker. */
+export function __resetRateLimitState(): void {
+  memBuckets.clear();
+  upstashDownUntilMs = 0;
 }
 
 function memIncrement(
@@ -138,6 +209,11 @@ function memIncrement(
   windowSeconds: number,
 ): { count: number; ttl: number } {
   const now = Date.now();
+  if (memBuckets.size > MEM_SWEEP_THRESHOLD) {
+    for (const [k, v] of memBuckets) {
+      if (v.expiresAtMs <= now) memBuckets.delete(k);
+    }
+  }
   const ent = memBuckets.get(key);
   if (!ent || ent.expiresAtMs <= now) {
     const expiresAtMs = now + windowSeconds * 1000;

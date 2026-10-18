@@ -16,19 +16,35 @@
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
 import { ReportButton } from "./report-button";
+import { serverI18n } from "@/lib/i18n/server";
+import { translate } from "@/lib/i18n/ui-strings";
+import { FunnelBeacon } from "@/components/funnel-beacon";
+import { MoreLikeThis } from "@/components/more-like-this";
+import { loadDedication } from "@/lib/share/load";
+import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
+import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
 
+import { requestOrigin } from "@/lib/embed/origin";
+
 import {
   createServerClient,
   createServiceRoleClient,
 } from "@/lib/supabase/server";
+import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { LikeButton } from "@/components/like-button";
+import { PublicShareButton } from "@/components/public-share-button";
 import { RemixButton } from "@/app/(app)/songs/[id]/remix-button";
 import { VariationButton } from "@/app/(app)/songs/[id]/variation-button";
+
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
 
 import { PublicSongAudio } from "./public-song-audio";
 
@@ -126,11 +142,12 @@ async function loadPublicSong(publicId: string): Promise<PublicSongRow | null> {
   return data ?? null;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { publicId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) {
     return { title: "neo-fm" };
@@ -139,23 +156,38 @@ export async function generateMetadata({
   if (!data || !data.song_documents) {
     return { title: "neo-fm" };
   }
+  const enT: TFn = (k, v) => translate("en", k, v);
   const doc = data.song_documents.document_json;
   const stored = data.song_documents.title?.trim();
   const title =
     stored && stored.length > 0
       ? stored
-      : `${prettyStyle(doc.style_family)} song in ${prettyLanguage(doc.language)}`;
+      : `${prettyStyle(doc.style_family, enT)} song in ${prettyLanguage(doc.language, enT)}`;
   const description = doc.raga
     ? `Composed in raga ${doc.raga.name} (${doc.raga.system}). Generated on neo-fm.`
     : `${doc.target_duration_seconds}s composition generated on neo-fm.`;
+  const dedication = await loadDedication(idCheck.data);
+  // A dedication names a person: never index it, even on a public song.
   const robots =
-    data.published_visibility === "unlisted"
+    data.published_visibility === "unlisted" || dedication
       ? { index: false, follow: false }
       : { index: true, follow: true };
+  // oEmbed discovery (https://oembed.com/#section4): lets Notion, Substack,
+  // WordPress etc. turn a pasted link into the embedded player.
+  const origin = await requestOrigin();
+  const oembed = origin
+    ? `${origin}/api/oembed?url=${encodeURIComponent(`${origin}/s/${data.public_id}`)}`
+    : null;
   return {
-    title,
-    description,
+    title: dedication ? `A song for ${dedication.to}` : title,
+    description: dedication?.message
+      ? dedication.message.slice(0, 160)
+      : description,
     robots,
+    alternates: {
+      canonical: `/s/${idCheck.data}`,
+      ...(oembed ? { types: { "application/json+oembed": oembed } } : {}),
+    },
     openGraph: {
       title,
       description,
@@ -169,24 +201,28 @@ export async function generateMetadata({
   };
 }
 
-export default async function PublicSongPage({
-  params,
-}: {
-  params: { publicId: string };
-}) {
+export default async function PublicSongPage(
+  props: {
+    params: Promise<{ publicId: string }>;
+  }
+) {
+  const params = await props.params;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
 
   const data = await loadPublicSong(idCheck.data);
   if (!data) notFound();
+  const { t } = await serverI18n();
   const doc = data.song_documents?.document_json;
   const storedTitle = data.song_documents?.title?.trim();
   const displayTitle =
     storedTitle && storedTitle.length > 0
       ? storedTitle
       : doc
-        ? prettyStyle(doc.style_family)
-        : "Song";
+        ? prettyStyle(doc.style_family, t)
+        : t("song.song");
+
+  const dedication = await loadDedication(idCheck.data);
 
   let signedUrl: string | null = null;
   let latestTrack: PublicSongRow["tracks"] extends (infer T)[] | null
@@ -256,8 +292,35 @@ export default async function PublicSongPage({
     initiallyLiked = !!probe.data;
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    publishedOnly: true,
+    viewerId: currentUserId,
+  });
+  // Structured data only where the page is indexable: public and not dedicated (a dedication names a person).
+  const recordingLd =
+    doc && data.published_visibility === "public" && !dedication
+      ? musicRecordingLd({
+          base: siteUrl(),
+          publicId: data.public_id,
+          name: displayTitle,
+          language: doc.language,
+          genre: styleLabel(doc.style_family),
+          durationSeconds: latestTrack?.duration_seconds ?? doc.target_duration_seconds,
+          datePublished: data.published_at,
+          lyrics: doc.sections
+            .map((sec) => sec.lyrics?.trim())
+            .filter(Boolean)
+            .join("\n\n"),
+          hasAudio: Boolean(latestTrack && data.status === "completed"),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-8 px-6 py-12">
+      {recordingLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(recordingLd) }} />
+      ) : null}
+      <FunnelBeacon event="share_view" />
       <header className="flex flex-col gap-2">
         <Link
           href="/"
@@ -270,15 +333,33 @@ export default async function PublicSongPage({
         </h1>
         <p className="text-sm text-foreground/60">
           {doc
-            ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s`
+            ? `${prettyStyle(doc.style_family, t)} · ${prettyLanguage(doc.language, t)} · ${doc.target_duration_seconds}s`
             : ""}
           {data.published_visibility === "unlisted" ? (
             <span className="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">
-              unlisted
+              {t("pub.unlisted")}
             </span>
           ) : null}
         </p>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
+
+      {dedication ? (
+        <section
+          aria-label={t("ded.pageLabel")}
+          className="flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent/5 p-5"
+        >
+          <p className="text-[11px] uppercase tracking-widest text-accent/80">
+            {t("ded.pageEyebrow")}
+          </p>
+          <p className="text-2xl font-medium tracking-tight">{dedication.to}</p>
+          {dedication.message ? (
+            <p className="whitespace-pre-line text-base text-foreground/80">
+              {dedication.message}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {signedUrl && latestTrack ? (
         <section className="flex flex-col gap-3">
@@ -287,6 +368,7 @@ export default async function PublicSongPage({
             initialUrl={signedUrl}
             durationSeconds={latestTrack.duration_seconds}
             format={latestTrack.format}
+            feedbackSongId={currentUserId ? data.id : undefined}
           />
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton
@@ -295,6 +377,31 @@ export default async function PublicSongPage({
               initialLiked={initiallyLiked}
               initialCount={likeCount}
               signedIn={!!currentUserId}
+            />
+            {data.status === "completed" && data.song_documents ? (
+              <MakeInLanguageButton
+                songId={data.id}
+                title={displayTitle}
+                sourceLanguage={data.song_documents.language}
+                sourceStyle={data.song_documents.style_family}
+                durationSeconds={
+                  ([30, 60, 90, 180].includes(doc?.target_duration_seconds ?? 0)
+                    ? doc?.target_duration_seconds
+                    : 60) as 30 | 60 | 90 | 180
+                }
+                existingLanguages={versionSiblings.map((v) => v.language)}
+                signedIn={!!currentUserId}
+                nextPath={`/s/${data.public_id}`}
+              />
+            ) : null}
+            <AddToCollectionButton
+              jobId={data.id}
+              signedIn={!!currentUserId}
+              nextPath={`/s/${data.public_id}`}
+            />
+            <PublicShareButton
+              title={displayTitle}
+              feedbackSongId={currentUserId ? data.id : undefined}
             />
             <VariationButton
               songId={data.id}
@@ -337,19 +444,19 @@ export default async function PublicSongPage({
         // being prepared. Refresh in a moment." for any song without a
         // track, including seeded catalog rows that will never get one.
         // Branch by status so the message is honest.
-        <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+        <p className="rounded-md border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-warn">
           {data.status === "queued" || data.status === "processing"
-            ? "Rendering now. Refresh in a moment."
-            : "Audio preview not available for this song."}
+            ? t("pub.rendering")
+            : t("pub.noPreview")}
         </p>
       )}
 
-      {doc ? <SongMetadata doc={doc} /> : null}
+      {doc ? <SongMetadata doc={doc} t={t} /> : null}
 
       {doc ? (
         <section className="flex flex-col gap-3">
           <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-            Sections
+            {t("song.sections")}
           </h2>
           <ol className="flex flex-col gap-3">
             {doc.sections.map((s, idx) => (
@@ -372,6 +479,7 @@ export default async function PublicSongPage({
                 </div>
                 {s.lyrics ? (
                   <pre
+                    lang={doc?.language}
                     className={`whitespace-pre-wrap rounded-md bg-background/60 px-3 py-2 text-sm leading-relaxed text-foreground/85 ${
                       s.script === "devanagari" || s.script === "kannada"
                         ? "font-sans"
@@ -387,11 +495,19 @@ export default async function PublicSongPage({
         </section>
       ) : null}
 
+      {doc ? (
+        <MoreLikeThis
+          publicId={data.public_id}
+          language={doc.language}
+          style={doc.style_family}
+        />
+      ) : null}
+
       <footer className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-muted/10 pt-4 text-[10px] text-foreground/40">
-        <span>AI-generated music and lyrics, made on neo-fm (a Technektar product) · <Link href="/trust" className="underline hover:text-foreground/70">how we keep it safe</Link></span>
+        <span>{t("pub.footer.ai")} · <Link href="/trust" className="underline hover:text-foreground/70">{t("pub.footer.safe")}</Link></span>
         <ReportButton publicId={params.publicId} />
         <Link href="/" className="hover:text-foreground/70">
-          Make your own →
+          {t("pub.makeYourOwn")}
         </Link>
       </footer>
           <ProCta />
@@ -399,38 +515,40 @@ export default async function PublicSongPage({
   );
 }
 
-function SongMetadata({ doc }: { doc: SongDocumentView }) {
+type TFn = Awaited<ReturnType<typeof serverI18n>>["t"];
+
+function SongMetadata({ doc, t }: { doc: SongDocumentView; t: TFn }) {
   const rows: { label: string; value: string }[] = [];
-  if (doc.tempo_bpm) rows.push({ label: "Tempo", value: `${doc.tempo_bpm} BPM` });
+  if (doc.tempo_bpm) rows.push({ label: t("pub.meta.tempo"), value: `${doc.tempo_bpm} BPM` });
   if (doc.time_signature)
-    rows.push({ label: "Time signature", value: doc.time_signature });
-  if (doc.tala) rows.push({ label: "Tala", value: doc.tala });
+    rows.push({ label: t("pub.meta.timeSig"), value: doc.time_signature });
+  if (doc.tala) rows.push({ label: t("pub.meta.tala"), value: doc.tala });
   if (doc.raga) {
     rows.push({
-      label: "Raga",
+      label: t("pub.meta.raga"),
       value: `${doc.raga.name} (${doc.raga.system})`,
     });
     if (doc.raga.arohana?.length)
-      rows.push({ label: "Arohana", value: doc.raga.arohana.join(" ") });
+      rows.push({ label: t("pub.meta.arohana"), value: doc.raga.arohana.join(" ") });
     if (doc.raga.avarohana?.length)
-      rows.push({ label: "Avarohana", value: doc.raga.avarohana.join(" ") });
+      rows.push({ label: t("pub.meta.avarohana"), value: doc.raga.avarohana.join(" ") });
   }
   if (doc.orchestration) {
     if (doc.orchestration.lead_vocal)
-      rows.push({ label: "Lead vocal", value: doc.orchestration.lead_vocal });
+      rows.push({ label: t("pub.meta.leadVocal"), value: doc.orchestration.lead_vocal });
     if (doc.orchestration.instruments?.length)
       rows.push({
-        label: "Instruments",
+        label: t("pub.meta.instruments"),
         value: doc.orchestration.instruments.join(", "),
       });
     if (doc.orchestration.texture)
-      rows.push({ label: "Texture", value: doc.orchestration.texture });
+      rows.push({ label: t("pub.meta.texture"), value: doc.orchestration.texture });
   }
   if (rows.length === 0) return null;
   return (
     <section className="flex flex-col gap-2">
       <h2 className="text-xs uppercase tracking-widest text-foreground/50">
-        Composition
+        {t("song.composition")}
       </h2>
       <dl className="grid gap-1 sm:grid-cols-2">
         {rows.map((r) => (
@@ -449,18 +567,18 @@ function SongMetadata({ doc }: { doc: SongDocumentView }) {
   );
 }
 
-function prettyStyle(s: string): string {
-  if (s === "western") return "Western";
-  if (s === "carnatic") return "Carnatic";
-  if (s === "hindustani") return "Hindustani";
-  if (s === "kannada-folk") return "Kannada folk";
+function prettyStyle(s: string, t: TFn): string {
+  if (s === "western") return t("pub.style.western");
+  if (s === "carnatic") return t("pub.style.carnatic");
+  if (s === "hindustani") return t("pub.style.hindustani");
+  if (s === "kannada-folk") return t("pub.style.kannadaFolk");
   return s;
 }
 
-function prettyLanguage(l: string): string {
-  if (l === "en") return "English";
-  if (l === "hi") return "Hindi";
-  if (l === "kn") return "Kannada";
+function prettyLanguage(l: string, t: TFn): string {
+  if (l === "en") return t("pub.lang.en");
+  if (l === "hi") return t("pub.lang.hi");
+  if (l === "kn") return t("pub.lang.kn");
   return l;
 }
 

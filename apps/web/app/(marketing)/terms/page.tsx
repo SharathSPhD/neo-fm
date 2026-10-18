@@ -1,7 +1,10 @@
+import { LegalSummary } from "@/components/legal-summary";
+import { serverI18n } from "@/lib/i18n/server";
 import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/terms" },
   title: "Terms -- neo-fm",
   description: "The rules for using neo-fm: your songs, acceptable use, plans and refunds.",
 };
@@ -15,17 +18,19 @@ const SECTIONS: { h: string; body: string[] }[] = [
     "Do not use neo-fm to imitate a real artist's voice or style as a target, reproduce copyrighted lyrics, target or demean real people, create hateful, sexual-minors, self-harm-encouraging or extremist content, or attempt to bypass our safety checks or limits.",
     "We screen briefs and outputs automatically and may refuse a request, remove content, or suspend an account that breaks these rules." ] },
   { h: "Plans, credits and fair use", body: ["Free and paid plans include a monthly allowance of credits; unused credits do not roll over unless the plan says so. We may change limits with notice. Abuse of free allowances (multiple accounts, automation) can lead to suspension."] },
-  { h: "Billing and refunds", body: ["Paid plans renew monthly through Stripe until cancelled; cancel any time from your account, effective at the end of the period. If a technical fault on our side prevents you using a paid period, contact us for a pro-rata refund. Taxes (including GST) are added where applicable."] },
+  { h: "Billing and refunds", body: ["Paid plans renew monthly through Stripe until cancelled; cancel any time from your account, effective at the end of the period. If a technical fault on our side prevents you using a paid period, contact us for a pro-rata refund. Prices shown include applicable GST."] },
   { h: "Takedowns", body: ["If you believe a song infringes your rights or breaks these terms, tell us through the Contact page with the song link; we review reports promptly and remove content where appropriate."] },
   { h: "Availability and liability", body: ["The service is provided as is. Music generation depends on third-party AI services and may be delayed or unavailable. To the extent permitted by law, our liability is limited to the amount you paid in the 3 months before the claim."] },
   { h: "Law", body: ["These terms are governed by the laws of India; courts in Bengaluru have jurisdiction, subject to any mandatory consumer rights you have where you live."] },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const { t } = await serverI18n();
   return (
     <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight">Terms of use</h1>
-      <p className="mt-3 text-sm text-foreground/60">Last updated: October 2026</p>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("legal.terms.title")}</h1>
+      <p className="mt-3 text-sm text-foreground/60">{t("legal.updated")}</p>
+      <LegalSummary kind="terms" />
       <div className="mt-8 space-y-8">
         {SECTIONS.map((s) => (
           <section key={s.h}>
