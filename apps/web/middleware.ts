@@ -14,20 +14,25 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { resolveRequestId, REQUEST_ID_HEADER } from "./lib/obs/request-id";
 import { enforceRateLimit, pickRule } from "./lib/rate-limit";
-import { applySecurityHeaders, supabaseHost } from "./lib/security-headers";
+import { applySecurityHeaders, CSP_REPORT_PATH, newNonce, strictCsp, isEmbedPath, supabaseHost } from "./lib/security-headers";
 import type { Database } from "./lib/supabase/database.types";
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  // Correlation id: forwarded to route handlers (request header) and echoed on every response.
+  const requestId = resolveRequestId(request.headers);
+  // Mutate (not copy) so the Supabase cookie refresh below still reaches route handlers via the same headers object.
+  request.headers.set(REQUEST_ID_HEADER, requestId);
   const sbHost = supabaseHost();
 
-  // Per-IP edge rate-limit for /api/* (Sprint 4). Upstash when wired,
+  // Per-IP edge rate-limit for /api/* plus the auth surface (Sprint 4). Upstash when wired,
   // in-memory fallback otherwise. Static routes and Server Component
   // navigation are not rate-limited here -- they remain Supabase-quota
   // and DGX-worker bound at deeper layers.
-  if (pathname.startsWith("/api/")) {
-    const rule = pickRule(pathname);
+  const rule = pickRule(pathname, request.method);
+  if (rule) {
     const verdict = await enforceRateLimit(request, rule);
     if (!verdict.ok) {
       const blocked = new NextResponse(
@@ -49,12 +54,21 @@ export async function middleware(request: NextRequest) {
       return applySecurityHeaders(blocked, {
         pathname,
         supabaseHost: sbHost,
+        requestId,
       });
     }
   }
 
+  // Per-request nonce: Next reads it from the request's CSP header and stamps its own inline scripts.
+  const nonce = newNonce();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set(
+    "content-security-policy-report-only",
+    strictCsp({ supabaseHost: sbHost, isEmbed: isEmbedPath(pathname), nonce }),
+  );
   const response = NextResponse.next({
-    request: { headers: request.headers },
+    request: { headers: requestHeaders },
   });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -64,12 +78,12 @@ export async function middleware(request: NextRequest) {
 
   if (!url || !key) {
     // Don't take the whole site down because env isn't wired locally.
-    return applySecurityHeaders(response, { pathname, supabaseHost: sbHost });
+    return applySecurityHeaders(response, { pathname, supabaseHost: sbHost, nonce, requestId });
   }
 
   // Skip the session-touch for healthchecks so they stay cheap and
   // don't allocate a Supabase client per probe.
-  const skipAuth = pathname === "/api/healthz" || pathname === "/api/health";
+  const skipAuth = pathname === "/api/healthz" || pathname === "/api/health" || pathname === CSP_REPORT_PATH;
   if (!skipAuth) {
     const supabase = createServerClient<Database>(url, key, {
       cookies: {
@@ -89,7 +103,7 @@ export async function middleware(request: NextRequest) {
     await supabase.auth.getUser();
   }
 
-  return applySecurityHeaders(response, { pathname, supabaseHost: sbHost });
+  return applySecurityHeaders(response, { pathname, supabaseHost: sbHost, nonce, requestId });
 }
 
 export const config = {

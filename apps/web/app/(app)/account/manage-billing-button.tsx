@@ -13,7 +13,10 @@
  */
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export function ManageBillingButton() {
+  const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,9 +27,7 @@ export function ManageBillingButton() {
         const res = await fetch("/api/billing/portal", { method: "POST" });
         if (!res.ok) {
           if (res.status === 404) {
-            setError(
-              "No Stripe customer is linked yet. Start a checkout from /pricing first.",
-            );
+            setError(t("acct.billing.noCustomer"));
             return;
           }
           const body = (await res.json().catch(() => ({}))) as {
@@ -36,13 +37,13 @@ export function ManageBillingButton() {
           setError(
             body.details ??
               body.error ??
-              "Couldn't open the portal. Try again in a minute.",
+              t("acct.billing.portalFail"),
           );
           return;
         }
         const body = (await res.json()) as { url?: string };
         if (!body.url) {
-          setError("Portal returned no URL. Try again.");
+          setError(t("acct.billing.noUrl"));
           return;
         }
         window.location.assign(body.url);
@@ -60,7 +61,7 @@ export function ManageBillingButton() {
         disabled={pending}
         className="self-start rounded-md border border-muted/40 px-3 py-1.5 text-xs font-medium text-foreground/80 transition hover:border-accent/40 hover:bg-accent/10 hover:text-accent disabled:cursor-progress disabled:opacity-60"
       >
-        {pending ? "Opening…" : "Manage subscription"}
+        {pending ? t("acct.billing.opening") : t("acct.billing.manage")}
       </button>
       {error ? (
         <p role="alert" className="text-xs text-red-300">

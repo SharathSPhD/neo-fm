@@ -1,20 +1,23 @@
 /**
  * /help -- FAQ grounded in /pricing, /terms, /privacy and /trust (content: lib/help/faq.ts).
- * `?lang=hi|ta|te|kn|bn` shows a machine translation with a notice; English is authoritative.
+ * `?lang=hi|ta|te|kn|bn` (else the site language cookie) shows a machine translation with a notice; English is authoritative.
  */
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { getUiLang } from "@/lib/i18n/server";
 import { HELP_COPY, HELP_LANGS, HELP_LANG_NAMES, MORE_LINKS, parseHelpLang, SECTIONS } from "@/lib/help/faq";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/help" },
   title: "Help -- neo-fm",
   description:
     "How neo-fm makes songs, what each plan includes, who owns your songs, languages supported, and how safety and takedowns work.",
 };
 
-export default function HelpPage({ searchParams }: { searchParams: { lang?: string | string[] } }) {
-  const lang = parseHelpLang(searchParams.lang);
+export default async function HelpPage(props: { searchParams: Promise<{ lang?: string | string[] }> }) {
+  const { lang: q } = await props.searchParams;
+  const lang = parseHelpLang(q ?? (await getUiLang()));
   const copy = HELP_COPY[lang];
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-12">

@@ -16,6 +16,7 @@
  * 401  -> caller is unauthenticated
  * 404  -> job not owned by caller (RPC: 'job_not_found')
  * 409  -> job is not in a recoverable state (RPC: 'not_recoverable: ...')
+ * 429  -> a refunded gift-pack job needs a credit to retry and none is left (RPC: 'quota_exceeded')
  * 500  -> anything else
  */
 import { NextResponse, type NextRequest } from "next/server";
@@ -25,10 +26,8 @@ import { requireUser } from "../../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const { supabase } = authed;
@@ -57,6 +56,9 @@ export async function POST(
         { error: "not_recoverable", details: msg },
         { status: 409 },
       );
+    }
+    if (msg.includes("quota_exceeded")) {
+      return NextResponse.json({ error: "quota_exceeded", reason: "pack_credit" }, { status: 429 });
     }
     return NextResponse.json(
       { error: "recover_failed", details: msg },

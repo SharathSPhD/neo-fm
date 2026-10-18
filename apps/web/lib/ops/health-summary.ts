@@ -9,10 +9,10 @@ export interface JobRow {
 }
 export interface DictionRow {
   language: string | null;
-  diction_qa: { matchPct?: number; error?: string } | null;
+  diction_qa: { matchPct?: number; error?: string; verdict?: "pass" | "review" | "rerender" } | null;
 }
 export interface SpendInput {
-  global: { provider: string; reserved_gbp: number }[];
+  global: { provider: string; reserved_gbp: number; cap_gbp?: number }[];
   topUsersThisMonth: { user_id: string; reserved_gbp: number }[];
 }
 
@@ -24,11 +24,13 @@ export interface HealthSummary {
   failures_by_code: Record<string, number>;
   latency_s: { n: number; p50: number | null; p90: number | null; p95: number | null; max: number | null };
   diction_by_language: Record<string, { n: number; avg_match_pct: number | null; errors: number }>;
+  /** Shadow diction-gate verdicts in the window (managed-agents/DICTION-GATE.md); `ungated` = scored before the gate existed. */
+  diction_gate: { pass: number; review: number; rerender: number; ungated: number };
   spend: { global: SpendInput["global"]; top_users_this_month: SpendInput["topUsersThisMonth"] };
   alerts: string[];
 }
 
-export const THRESHOLDS = { queuedAgeS: 600, failureRate: 0.2, minJobsForRate: 5, p90S: 900 };
+export const THRESHOLDS = { queuedAgeS: 600, failureRate: 0.2, minJobsForRate: 5, p90S: 900, spendRatio: 0.8 };
 
 export function percentile(sorted: number[], p: number): number | null {
   if (sorted.length === 0) return null;
@@ -54,6 +56,11 @@ export function buildAlerts(s: Omit<HealthSummary, "alerts">): string[] {
   if (total >= THRESHOLDS.minJobsForRate && failed / total > THRESHOLDS.failureRate) {
     out.push(`failure rate ${Math.round((failed / total) * 100)}% (${failed}/${total}) in last ${s.window_hours}h`);
   }
+  for (const g of s.spend.global) {
+    if (g.cap_gbp && g.reserved_gbp / g.cap_gbp >= THRESHOLDS.spendRatio) {
+      out.push(`${g.provider} spend ${Math.round((g.reserved_gbp / g.cap_gbp) * 100)}% of cap (${g.reserved_gbp.toFixed(2)}/${g.cap_gbp})`);
+    }
+  }
   if (s.latency_s.p90 !== null && s.latency_s.p90 > THRESHOLDS.p90S) {
     out.push(`p90 latency ${Math.round(s.latency_s.p90 / 60)} min over ${s.latency_s.n} songs`);
   }
@@ -78,12 +85,14 @@ export function summarize(
   }
   lat.sort((a, b) => a - b);
   const byLang: HealthSummary["diction_by_language"] = {};
+  const gate = { pass: 0, review: 0, rerender: 0, ungated: 0 };
   const sums: Record<string, number> = {};
   for (const d of diction) {
     const l = d.language ?? "unknown";
     const e = (byLang[l] ??= { n: 0, avg_match_pct: null, errors: 0 });
     if (typeof d.diction_qa?.matchPct === "number") { e.n++; sums[l] = (sums[l] ?? 0) + d.diction_qa.matchPct; }
     else if (d.diction_qa?.error) e.errors++;
+    if (typeof d.diction_qa?.matchPct === "number") gate[d.diction_qa.verdict ?? "ungated"]++;
   }
   for (const [l, e] of Object.entries(byLang)) e.avg_match_pct = e.n ? Math.round((sums[l]! / e.n) * 10) / 10 : null;
   const base = {
@@ -98,6 +107,7 @@ export function summarize(
       max: lat.length ? lat[lat.length - 1]! : null,
     },
     diction_by_language: byLang,
+    diction_gate: gate,
     spend: { global: spend.global, top_users_this_month: spend.topUsersThisMonth },
   };
   return { ...base, alerts: buildAlerts(base) };

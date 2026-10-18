@@ -11,12 +11,19 @@
 import { useEffect, useRef, useState } from "react";
 
 import { AudioSpectrogram } from "@/components/audio-spectrogram";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 interface PublicSongAudioProps {
   publicId: string;
   initialUrl: string;
   durationSeconds: number | null;
   format: string;
+  /** Set for signed-in listeners: finished listens feed the weekly chart. */
+  feedbackSongId?: string;
+  /** Called with the playhead (seconds) as it moves; used by the embed's synced lyrics. */
+  onTime?: (seconds: number) => void;
+  /** Hide the spectrogram and the footer line (compact embed). */
+  minimal?: boolean;
 }
 
 export function PublicSongAudio({
@@ -24,7 +31,11 @@ export function PublicSongAudio({
   initialUrl,
   durationSeconds,
   format,
+  feedbackSongId,
+  onTime,
+  minimal = false,
 }: PublicSongAudioProps) {
+  const { t } = useUiLang();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [src, setSrc] = useState(initialUrl);
   const [refreshing, setRefreshing] = useState(false);
@@ -35,6 +46,39 @@ export function PublicSongAudio({
     setError(null);
   }, [initialUrl]);
 
+  // Furthest play fraction, sent when playback pauses/ends. Signed-in
+  // listeners only (the chart dedupes per user); anonymous plays are not recorded.
+  const sentRef = useRef(0);
+  function reportPlay() {
+    const el = audioRef.current;
+    if (!feedbackSongId || !el || !el.duration || !isFinite(el.duration)) return;
+    const pct = Math.min(1, el.currentTime / el.duration);
+    if (pct <= sentRef.current + 0.2) return;
+    sentRef.current = pct;
+    void fetch(`/api/songs/${encodeURIComponent(feedbackSongId)}/feedback`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      keepalive: true,
+      body: JSON.stringify({ kind: "play_pct", value: Number(pct.toFixed(2)) }),
+    }).catch(() => undefined);
+  }
+
+  const counted = useRef(false);
+  // Anonymous play counter for the creator's insights: once per page view, skipped when the browser says Do Not Track
+  // or Global Privacy Control. Sends nothing about the listener (the server keeps only the language subtag).
+  function onFirstPlay() {
+    if (counted.current) return;
+    counted.current = true;
+    const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
+    if (nav.doNotTrack === "1" || nav.globalPrivacyControl) return;
+    void fetch(`/api/p/${publicId}/listen`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "play" }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }
+
   async function onError() {
     if (refreshing) return;
     setRefreshing(true);
@@ -43,12 +87,12 @@ export function PublicSongAudio({
         cache: "no-store",
       });
       if (!res.ok) {
-        setError(`refresh failed (${res.status})`);
+        setError(t("pub.audio.refreshFailed", { status: res.status }));
         return;
       }
       const payload = (await res.json()) as { url?: string };
       if (!payload.url) {
-        setError("refresh returned no url");
+        setError(t("pub.audio.noUrl"));
         return;
       }
       setSrc(payload.url);
@@ -63,7 +107,7 @@ export function PublicSongAudio({
         }
       }
     } catch (e) {
-      setError(`refresh failed: ${(e as Error).message}`);
+      setError(t("pub.audio.refreshFailedMsg", { message: (e as Error).message }));
     } finally {
       setRefreshing(false);
     }
@@ -74,19 +118,27 @@ export function PublicSongAudio({
       <audio
         ref={audioRef}
         controls
+        aria-label="Song audio player"
         preload="metadata"
         src={src}
         onError={onError}
+        onPlay={onFirstPlay}
+        onPause={reportPlay}
+        onEnded={reportPlay}
+        onTimeUpdate={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
+        onSeeked={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}
         crossOrigin="anonymous"
         className="w-full"
       />
-      <AudioSpectrogram audioRef={audioRef} height={72} />
-      <div className="flex items-center justify-between gap-2 text-[10px] text-foreground/40">
+      {minimal ? null : <AudioSpectrogram audioRef={audioRef} height={72} />}
+      <div
+        className={`items-center justify-between gap-2 text-[10px] text-foreground/60 ${minimal && !refreshing && !error ? "hidden" : "flex"}`}
+      >
         <span>
           {durationSeconds ? `${durationSeconds}s · ` : ""}
           {format.toUpperCase()}
         </span>
-        {refreshing ? <span>refreshing signed URL…</span> : null}
+        {refreshing ? <span>{t("pub.audio.refreshing")}</span> : null}
         {error ? <span className="text-red-300">{error}</span> : null}
       </div>
     </div>

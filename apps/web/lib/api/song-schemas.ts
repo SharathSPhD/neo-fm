@@ -19,6 +19,10 @@ export const CreateSongRequestSchema = z
     language: LanguageSchema.optional(),
     style_family: StyleFamilySchema.optional(),
     target_duration_seconds: DurationSchema.optional(),
+    /** Job this song is a new-language version of (prompt branch only). */
+    version_of: z.string().uuid().optional(),
+    /** /gift only: spend a gift-pack credit once the monthly quota is used up. */
+    use_pack: z.boolean().optional(),
   })
   .superRefine((value, ctx) => {
     const has_doc = !!value.song_document;
@@ -31,6 +35,13 @@ export const CreateSongRequestSchema = z
         path: [],
       });
       return;
+    }
+    if (value.version_of && !has_prompt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "version_of requires the prompt branch",
+        path: ["version_of"],
+      });
     }
     if (
       has_prompt &&

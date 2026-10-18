@@ -11,6 +11,18 @@
     {
       "path": "/api/admin/spend-monitor",
       "schedule": "23 7 * * *"
+    },
+    {
+      "path": "/api/admin/health-snapshot",
+      "schedule": "40 8 * * *"
+    },
+    {
+      "path": "/api/admin/purge-listens",
+      "schedule": "41 3 * * *"
+    },
+    {
+      "path": "/api/notifications/push-drain",
+      "schedule": "* * * * *"
     }
   ]
 }

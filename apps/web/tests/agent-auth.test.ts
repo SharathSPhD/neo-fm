@@ -1,6 +1,8 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { checkBearer, cleanSecret } from "../lib/agent/auth";
+import { checkAdminBearer, checkBearer, checkCronOrAdminBearer, cleanSecret } from "../lib/agent/auth";
 
 const env = (v?: string) => ({ CRON_SECRET: v }) as unknown as NodeJS.ProcessEnv;
 
@@ -49,5 +51,65 @@ describe("plan override", () => {
     expect(planForTier("free", "pro").agent).toBe("pro");
     expect(planForTier("pro", "weird").agent).toBe("pro");
     expect(planForTier("free", null).agent).toBe("free");
+  });
+});
+
+describe("admin secret", () => {
+  const e = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  it("falls back to the cron/tick secrets while ADMIN_SECRET is unset", () => {
+    expect(checkAdminBearer("Bearer aaa", e({ CRON_SECRET: "aaa" })).ok).toBe(true);
+  });
+  it("accepts only ADMIN_SECRET once it is set", () => {
+    const env = e({ CRON_SECRET: "aaa", AGENT_TICK_SECRET: "bbb", ADMIN_SECRET: "adm" });
+    expect(checkAdminBearer("Bearer adm", env).ok).toBe(true);
+    expect(checkAdminBearer("Bearer aaa", env).ok).toBe(false);
+    expect(checkAdminBearer("Bearer bbb", env).ok).toBe(false);
+  });
+});
+
+describe("cron-invoked admin routes", () => {
+  const e = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  const env = e({ CRON_SECRET: "aaa", AGENT_TICK_SECRET: "bbb", ADMIN_SECRET: "adm" });
+  it("with ADMIN_SECRET set, CRON_SECRET still passes the cron routes but fails operator routes", () => {
+    expect(checkCronOrAdminBearer("Bearer aaa", env).ok).toBe(true);
+    expect(checkCronOrAdminBearer("Bearer adm", env).ok).toBe(true);
+    expect(checkCronOrAdminBearer("Bearer nope", env).ok).toBe(false);
+    expect(checkAdminBearer("Bearer aaa", env).ok).toBe(false);
+  });
+  it("works unchanged when ADMIN_SECRET is unset", () => {
+    expect(checkCronOrAdminBearer("Bearer aaa", e({ CRON_SECRET: "aaa" })).ok).toBe(true);
+    expect(checkCronOrAdminBearer(null, e({ CRON_SECRET: "aaa" })).ok).toBe(false);
+  });
+  it("the routes Vercel Cron calls use the cron-or-admin check, the rest are ADMIN_SECRET-only", () => {
+    const dir = join(__dirname, "../app/api/admin");
+    const cron = new Set(["health-snapshot", "self-improve", "spend-monitor", "purge-listens"]);
+    const crons = (JSON.parse(readFileSync(join(__dirname, "../vercel.json"), "utf8")).crons as { path: string }[])
+      .map((c) => c.path).filter((p) => p.startsWith("/api/admin/")).map((p) => p.slice("/api/admin/".length));
+    expect(new Set(crons)).toEqual(cron);
+    for (const f of readdirSync(dir, { recursive: true }) as string[]) {
+      if (!f.endsWith("route.ts")) continue;
+      const src = readFileSync(join(dir, f), "utf8");
+      const name = f.replace(/\/?route\.ts$/, "");
+      if (cron.has(name)) expect(src, f).toContain("checkCronOrAdminBearer(");
+      else { expect(src, f).toContain("checkAdminBearer("); expect(src, f).not.toContain("checkCronOrAdminBearer("); }
+    }
+  });
+});
+
+describe("pro_fast selection", () => {
+  const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  it("is inert without the agent id, even when flagged", () => {
+    expect(planForTier("pro", null, env({ PRO_AGENT_VARIANT: "fast" })).agent).toBe("pro");
+    expect(planForTier("free", "pro_fast", env({})).agent).toBe("pro");
+  });
+  it("moves paid tiers with the flag and canaries one user via agent_plan", () => {
+    const e = env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast", PRO_AGENT_VARIANT: "fast" });
+    expect(planForTier("creator", null, e)).toMatchObject({ agent: "pro_fast", userLyriaCapGbp: 0.75 });
+    expect(planForTier("free", null, e).agent).toBe("free");
+    expect(planForTier("pro", null, env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro");
+    expect(planForTier("pro", "pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro_fast");
+  });
+  it("resolves its agent id", () => {
+    expect(agentIdFor("pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" }))).toBe("agent_01Fast");
   });
 });

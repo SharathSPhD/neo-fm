@@ -23,6 +23,7 @@ import {
 } from "@neo-fm/co-composer";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import {
   FAKE_PREVIEW_BYTES,
   isFakePreview,
@@ -41,8 +42,6 @@ export interface VoicePickerProps {
 
 const NEUTRAL_OPTION = {
   voice_id: "",
-  label: "Auto · Match language",
-  persona: "language-default",
   gender: "androgynous" as const,
 } as const;
 
@@ -60,6 +59,7 @@ export function VoicePicker({
   language,
   previewBaseUrl,
 }: VoicePickerProps) {
+  const { t } = useUiLang();
   const [playing, setPlaying] = useState<string | null>(null);
   // voice_id -> reason the most recent preview attempt failed.
   const [previewErrors, setPreviewErrors] = useState<Record<string, string>>(
@@ -154,16 +154,16 @@ export function VoicePicker({
       a.addEventListener("ended", () => setPlaying(null), { once: true });
       a.addEventListener(
         "error",
-        () => markFailed(entry.voice_id, "Preview unavailable"),
+        () => markFailed(entry.voice_id, t("voice.previewUnavailable")),
         { once: true },
       );
       audioRef.current = a;
       void a.play().catch(() =>
-        markFailed(entry.voice_id, "Preview unavailable"),
+        markFailed(entry.voice_id, t("voice.previewUnavailable")),
       );
       setPlaying(entry.voice_id);
     },
-    [playing, previewBaseUrl, stop, markFailed, clearError, fakeVoiceIds],
+    [playing, previewBaseUrl, stop, markFailed, clearError, fakeVoiceIds, t],
   );
 
   // Stop any in-flight preview when the picker unmounts.
@@ -173,7 +173,7 @@ export function VoicePicker({
     <div className="flex flex-col gap-3" data-testid="voice-picker">
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Voice
+          {t("voice.title")}
         </span>
         {value && (
           <button
@@ -184,13 +184,17 @@ export function VoicePicker({
               stop();
             }}
           >
-            Clear
+            {t("voice.clear")}
           </button>
         )}
       </div>
 
       <VoiceRow
-        entry={NEUTRAL_OPTION}
+        entry={{
+          ...NEUTRAL_OPTION,
+          label: t("voice.auto"),
+          persona: t("voice.autoPersona"),
+        }}
         selected={value === ""}
         onSelect={() => {
           onChange("");
@@ -201,7 +205,7 @@ export function VoicePicker({
       {suggested.length > 0 && (
         <fieldset className="flex flex-col gap-1.5">
           <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-            Suggested for {language.toUpperCase()}
+            {t("voice.suggestedFor", { language: language.toUpperCase() })}
           </legend>
           {suggested.map((entry) => (
             <VoiceRow
@@ -220,7 +224,7 @@ export function VoicePicker({
 
       <fieldset className="flex flex-col gap-1.5">
         <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-          All voices
+          {t("voice.allVoices")}
         </legend>
         {others.map((entry) => (
           <VoiceRow
@@ -260,6 +264,7 @@ function VoiceRow({
   onSelect,
   onPreview,
 }: VoiceRowProps) {
+  const { t } = useUiLang();
   return (
     <div
       className={`flex flex-col gap-1 rounded-md border px-3 py-2 transition-colors ${
@@ -293,9 +298,9 @@ function VoiceRow({
             onClick={onPreview}
             className="rounded-md border border-muted/30 px-2 py-1 text-[10px] uppercase tracking-widest text-foreground/70 hover:border-accent hover:text-accent"
             data-testid={`voice-preview-${entry.voice_id}`}
-            title={simulated ? "Simulated timbre — real preview generating on DGX" : undefined}
+            title={simulated ? t("voice.simulatedTitle") : undefined}
           >
-            {playing ? "Stop" : "Preview"}
+            {playing ? t("voice.stop") : t("voice.preview")}
           </button>
         )}
       </div>
@@ -305,7 +310,7 @@ function VoiceRow({
           className="text-[10px] text-amber-400/70"
           data-testid={`voice-preview-simulated-${entry.voice_id}`}
         >
-          Simulated timbre · real preview generating
+          {t("voice.simulatedNotice")}
         </p>
       )}
       {/* aria-live error region for network/decode failures. */}

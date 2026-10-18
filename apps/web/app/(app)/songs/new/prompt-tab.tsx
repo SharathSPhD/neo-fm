@@ -1,9 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
+import { EXAMPLE_IDEAS } from "@/lib/first-run/examples";
+import { isUiLang } from "@/lib/i18n/ui-strings";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+
+import { FirstRunGuide } from "./first-run-guide";
 
 type StyleFamily =
   | "western"
@@ -53,24 +58,49 @@ const DEFAULT_STYLE: Record<Language, StyleFamily> = {
 
 const PROMPT_MAX_CHARS = 500;
 
-const EXAMPLE_PROMPTS: string[] = [
-  "A melancholic Carnatic raga about the monsoon season and longing for home",
-  "An energetic Bhangra-inspired folk song celebrating the harvest festival",
-  "A devotional Sanskrit shloka invoking Saraswati, goddess of knowledge",
-  "A soulful Hindi love song in the style of classic 1960s Bollywood",
-  "A Kannada Bhavageete about the beauty of the Western Ghats at sunset",
-];
+const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab() {
+export function PromptTab({ showGuide = false, initialIdea }: { showGuide?: boolean; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
+  const { t, lang: uiLang } = useUiLang();
+  // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
+  const [guideOpen, setGuideOpen] = useState(showGuide && !initialIdea);
   const [pending, startTransition] = useTransition();
-  const [prompt, setPrompt] = useState("");
-  const [styleFamily, setStyleFamily] = useState<StyleFamily>(DEFAULT_STYLE.hi);
+  const [prompt, setPrompt] = useState(initialIdea?.prompt ?? "");
+  const [styleFamily, setStyleFamily] = useState<StyleFamily>(DEFAULT_STYLE[initialIdea?.language ?? "hi"]);
   const [styleTouched, setStyleTouched] = useState(false);
-  const [language, setLanguage] = useState<Language>("hi");
+  const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!showGuide) return;
+    try {
+      if (window.localStorage.getItem(GUIDE_DISMISSED_KEY)) setGuideOpen(false);
+    } catch {
+      // storage blocked: keep the guide visible
+    }
+  }, [showGuide]);
+
+  // Seed the song language from the saved UI language the first time the
+  // guide mounts, so a returning visitor who chose Tamil lands on Tamil.
+  useEffect(() => {
+    if (showGuide && !initialIdea && isUiLang(uiLang) && uiLang !== "en") {
+      setLanguage(uiLang);
+      if (!styleTouched) setStyleFamily(DEFAULT_STYLE[uiLang]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+  }, []);
+
+  function dismissGuide() {
+    setGuideOpen(false);
+    try {
+      window.localStorage.setItem(GUIDE_DISMISSED_KEY, "1");
+    } catch {
+      // best effort
+    }
+  }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -79,18 +109,18 @@ export function PromptTab() {
 
     const trimmed = prompt.trim();
     if (!trimmed) {
-      setError("Please describe your song first.");
+      setError(t("prompt.errEmpty"));
       return;
     }
 
     const supabase = createBrowserSupabase();
     const { data } = await supabase.auth.getUser();
     if (!data?.user) {
-      setError("Session expired. Please sign in again.");
+      setError(t("prompt.errSession"));
       return;
     }
 
-    setStatus("Sending to AI composer...");
+    setStatus(t("prompt.sending"));
     const res = await fetch("/api/songs", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -108,29 +138,25 @@ export function PromptTab() {
         | null;
       const reason = body?.reason ?? "quota";
       setError(
-        reason === "storage_bytes"
-          ? "You're over your storage quota for the month."
-          : "You've hit your monthly song quota. Wait until next month or upgrade.",
+        reason === "storage_bytes" ? t("prompt.errStorage") : t("prompt.errQuota"),
       );
       return;
     }
     if (!res.ok) {
-      const body = await res.text();
-      setError(`Server returned ${res.status}: ${body || "(no body)"}`);
+      setError(t("prompt.errServer"));
       return;
     }
 
-    setStatus("Queued. Redirecting to library...");
+    setStatus(t("prompt.queued"));
     startTransition(() => {
       router.replace("/library");
-      router.refresh();
+      // No router.refresh() here: in Next 15 it cancels the replace above; navigating to a dynamic page refetches anyway.
     });
   }
 
   function useExample() {
-    const pick =
-      EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)]!;
-    setPrompt(pick);
+    const pool = EXAMPLE_IDEAS[isUiLang(language) ? language : "en"];
+    setPrompt(pool[Math.floor(Math.random() * pool.length)]!);
   }
 
   const charsLeft = PROMPT_MAX_CHARS - prompt.length;
@@ -138,20 +164,31 @@ export function PromptTab() {
 
   return (
     <form className="flex flex-col gap-6" onSubmit={onSubmit}>
+      {guideOpen ? (
+        <FirstRunGuide
+          language={isUiLang(language) ? language : "hi"}
+          onPickLanguage={(l) => {
+            setLanguage(l);
+            if (!styleTouched) setStyleFamily(DEFAULT_STYLE[l]);
+          }}
+          onPickIdea={(p) => setPrompt(p)}
+          onSkip={dismissGuide}
+        />
+      ) : null}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <label
             htmlFor="prompt"
             className="text-xs uppercase tracking-widest text-foreground/50"
           >
-            Describe your song
+            {t("prompt.describe")}
           </label>
           <button
             type="button"
             onClick={useExample}
-            className="text-[10px] text-accent/70 hover:text-accent transition"
+            className="min-h-[44px] px-2 text-xs text-accent hover:underline"
           >
-            use an example
+            {t("prompt.useExample")}
           </button>
         </div>
         <textarea
@@ -163,6 +200,7 @@ export function PromptTab() {
           rows={5}
           placeholder="e.g. A melancholic Carnatic raga about the monsoon season and longing for home, with a female vocalist in the Kalyani raga, 90 seconds long"
           className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base leading-relaxed outline-none focus:border-accent resize-none"
+          lang={language}
         />
         <span
           className={
@@ -171,7 +209,7 @@ export function PromptTab() {
               : "text-[10px] text-foreground/40"
           }
         >
-          {charsLeft} characters left
+          {charsLeft} {t("prompt.charsLeft")}
         </span>
       </div>
 
@@ -187,7 +225,7 @@ export function PromptTab() {
             htmlFor="prompt-style"
             className="text-xs uppercase tracking-widest text-foreground/50"
           >
-            Style
+            {t("prompt.style")}
           </label>
           <select
             id="prompt-style"
@@ -208,7 +246,7 @@ export function PromptTab() {
             htmlFor="prompt-language"
             className="text-xs uppercase tracking-widest text-foreground/50"
           >
-            Language
+            {t("prompt.language")}
           </label>
           <select
             id="prompt-language"
@@ -229,7 +267,7 @@ export function PromptTab() {
             htmlFor="prompt-duration"
             className="text-xs uppercase tracking-widest text-foreground/50"
           >
-            Length
+            {t("prompt.length")}
           </label>
           <select
             id="prompt-duration"
@@ -239,7 +277,7 @@ export function PromptTab() {
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s} seconds
+                {s} {t("prompt.seconds")}
               </option>
             ))}
           </select>
@@ -260,9 +298,9 @@ export function PromptTab() {
       <button
         type="submit"
         disabled={pending || overCap || prompt.trim().length === 0}
-        className="self-start rounded-md border border-accent/40 bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
+        className="min-h-[44px] w-full rounded-md border border-accent/40 bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50 sm:w-auto sm:self-start"
       >
-        {pending ? "Queueing..." : "Describe & queue"}
+        {pending ? t("prompt.queueing") : t("prompt.submit")}
       </button>
     </form>
   );

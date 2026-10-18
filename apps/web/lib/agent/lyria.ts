@@ -4,6 +4,8 @@
  * and reserved atomically (public.reserve_spend) *before* the call so the
  * GBP cap holds under concurrency.
  */
+import { isOutage, type CircuitBreaker } from "./circuit-breaker";
+
 export type DurationClass = "clip" | "full";
 
 export const LYRIA_MODEL: Record<DurationClass, string> = {
@@ -51,7 +53,7 @@ export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?:
 
 export async function generateMusic(
   args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number },
-  deps: { guard: SpendGuard; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv; attempts?: number; retryDelayMs?: number },
+  deps: { guard: SpendGuard; breaker?: Pick<CircuitBreaker, "onSuccess" | "onFailure">; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv; attempts?: number; retryDelayMs?: number },
 ): Promise<LyriaResult> {
   const f = deps.fetchImpl ?? fetch;
   const cost = estimatedCostGbp(args.durationClass, deps.env);
@@ -85,6 +87,7 @@ export async function generateMusic(
       };
       const part = body.candidates?.[0]?.content?.parts?.find((p) => p.inlineData);
       if (!part?.inlineData) throw new Error("lyria returned no audio part");
+      deps.breaker?.onSuccess();
       return {
         audio: Uint8Array.from(Buffer.from(part.inlineData.data, "base64")),
         mimeType: part.inlineData.mimeType,
@@ -96,5 +99,6 @@ export async function generateMusic(
     }
   }
   await deps.guard.release(cost);
+  deps.breaker?.onFailure(isOutage(lastErr));
   throw lastErr;
 }

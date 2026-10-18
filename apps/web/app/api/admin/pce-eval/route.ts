@@ -1,6 +1,6 @@
 /**
  * /api/admin/pce-eval -- offline PCE-vs-single-shot lyric evaluation (Bearer CRON_SECRET / AGENT_TICK_SECRET).
- *   POST ?action=start&batch=<name>[&n=10]   queue briefs: single-shot arm is written now, PCE arm runs as a lyrics-only agent session
+ *   POST ?action=start&batch=<name>[&n=10][&set=occasion]   queue briefs: single-shot arm is written now, PCE arm runs as a lyrics-only agent session
  *   GET  ?action=advance&batch=<name>        drive running sessions, fetch lyrics, run blind judges for finished pairs
  *   GET  ?action=report&batch=<name>         win/loss/tie counts + per-brief summary
  * No audio is rendered (no Lyria spend). Costs: one Haiku session + one Haiku call + 2 Sonnet judgements per brief.
@@ -8,11 +8,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { anthropicClient, serviceClient, sessionApi } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
-import { mintEmbedToken } from "../../../../lib/agent/embed-token";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { embedEngine } from "../../../../lib/agent/embed-url";
 import { briefText } from "../../../../lib/agent/runner";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
 import { allEvalBriefs } from "../../../../lib/eval/briefs-gen";
+import { OCCASION_BRIEFS } from "../../../../lib/eval/occasion-briefs";
 
 const PILOT_BRIEFS = allEvalBriefs();
 import { polishLyrics } from "../../../../lib/lyrics/polish";
@@ -35,14 +36,15 @@ async function fetchLyrics(sessionId: string): Promise<string | null> {
 }
 
 export async function POST(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const batch = req.nextUrl.searchParams.get("batch");
   if (!batch) return NextResponse.json({ error: "batch required" }, { status: 400 });
   const offset = Math.max(0, Number(req.nextUrl.searchParams.get("offset") ?? 0));
-  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? 10), PILOT_BRIEFS.length - offset);
+  const source = req.nextUrl.searchParams.get("set") === "occasion" ? OCCASION_BRIEFS : PILOT_BRIEFS; // occasion songs: batch occA feeds self-improve evaluate
+  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? 10), source.length - offset);
   const lang = req.nextUrl.searchParams.get("lang"); // optional language filter, e.g. Telugu
-  const pool = lang ? PILOT_BRIEFS.filter((b) => b.language.toLowerCase() === lang.toLowerCase()) : PILOT_BRIEFS;
+  const pool = lang ? source.filter((b) => b.language.toLowerCase() === lang.toLowerCase()) : source;
   const db = serviceClient(); const client = anthropicClient(); const sessions = sessionApi();
   const envId = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
   const { data: cfg } = await db.from("config_versions").select("id").eq("kind", "pipeline").eq("status", "live").limit(1);
@@ -66,7 +68,7 @@ export async function POST(req: NextRequest) {
       const { data: haveP } = await db.from("eval_runs").select("id").eq("batch", batch).eq("brief_id", b.id).eq("arm", "pce").maybeSingle();
       if (haveP) { out.push(`${b.id}: exists`); return; }
       const s = await sessions.create({ agentId: agentIdFor("free"), environmentId: envId, title: `eval ${batch} ${b.id}` });
-      const engine = process.env.EMBED_URL && process.env.EMBED_TOKEN ? { url: process.env.EMBED_URL.trim(), token: mintEmbedToken(process.env.EMBED_TOKEN.trim(), 3600) } : undefined;
+      const engine = embedEngine("pce-eval", 3600);
       await sessions.sendOutcome(s.id, { description: briefText({ language: b.language, styleFamily: b.style, targetSeconds: 30, prompt: b.text, engine }) + LYRICS_ONLY, rubric: "- lyrics.md exists, in the target language and script, sectioned for singing", maxIterations: 1 });
       await db.from("eval_runs").upsert({ ...base, arm: "pce", status: "running", session_id: s.id }, { onConflict: "batch,brief_id,arm", ignoreDuplicates: true });
       out.push(`${b.id}: queued`);
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const auth = checkBearer(req.headers.get("authorization"));
+  const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const batch = req.nextUrl.searchParams.get("batch");
   const action = req.nextUrl.searchParams.get("action") ?? "report";

@@ -1,3 +1,5 @@
+# Legacy: builds the retired DGX-era images under services/. Production (Vercel + Supabase + Managed Agents) does not use them.
+# Path-scoped so it only runs when services/** changes; see docs/legacy-dgx.
 name: docker-build
 
 on:
