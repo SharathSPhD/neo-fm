@@ -28,6 +28,7 @@ type NavUser = {
 };
 
 const TOP_NAV_LINKS: readonly { href: string; label: UiKey; icon: string }[] = [
+  { href: "/station", label: "nav.station", icon: "◉" },
   { href: "/library", label: "nav.library", icon: "▲" },
   { href: "/discover", label: "nav.discover", icon: "◎" },
   { href: "/collections", label: "nav.collections", icon: "☰" },
@@ -41,6 +42,7 @@ type BottomLink = {
 };
 
 const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
+  { href: "/station", label: "nav.station", icon: "◉" },
   { href: "/library", label: "nav.library", icon: "♪" },
   { href: "/discover", label: "nav.discover", icon: "◎" },
   { href: "/songs/new", label: "nav.create", icon: "+", primary: true },

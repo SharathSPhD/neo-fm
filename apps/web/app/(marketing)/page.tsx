@@ -1,4 +1,5 @@
 import { serverI18n } from "@/lib/i18n/server";
+import { createServerClient } from "@/lib/supabase/server";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { HowVisual } from "@/components/landing/how-visual";
 import { LanguageSamples } from "@/components/landing/language-samples";
@@ -89,6 +90,8 @@ export default async function Page() {
 async function Hero() {
   const { t } = await serverI18n();
   const samples = await loadLanguageSamples();
+  const { data: auth } = await createServerClient().auth.getUser();
+  const signedIn = Boolean(auth?.user);
   return (
     <section className="relative overflow-hidden border-b border-muted/30" aria-labelledby="hero-heading">
       <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(245,158,11,0.15),_transparent_55%)]" />
@@ -104,9 +107,14 @@ async function Hero() {
           {t("landing.subtitle")}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/sign-up?next=/songs/new" className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
-            {t("landing.ctaPrimary")}
+          <Link href={signedIn ? "/station" : "/sign-up?next=/songs/new"} className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+            {signedIn ? t("landing.ctaStation") : t("landing.ctaPrimary")}
           </Link>
+          {signedIn ? (
+            <Link href="/songs/new" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+              {t("landing.ctaMake")}
+            </Link>
+          ) : null}
           <Link href="/discover" className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             {t("landing.ctaSecondary")}
           </Link>
