@@ -13,6 +13,7 @@ import { InstallPrompt } from "@/components/install-prompt";
 import { NetworkBanner } from "@/components/network-banner";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { PlayerProvider } from "@/components/player/player-provider";
+import { safeNext } from "@/lib/auth/safe-next";
 import { fetchShellUser } from "@/lib/supabase/shell-user";
 
 export default async function AppGroupLayout({
@@ -25,7 +26,8 @@ export default async function AppGroupLayout({
     // Preserve the path the user originally requested so the sign-in
     // form can bounce them back after a successful auth.
     const h = await headers();
-    const path = h.get("x-invoke-path") ?? h.get("next-url") ?? "/library";
+    // middleware.ts sets x-pathname on every request; the Next-internal headers were never present on a direct load.
+    const path = safeNext(h.get("x-pathname"));
     redirect(`/sign-in?next=${encodeURIComponent(path)}`);
   }
 

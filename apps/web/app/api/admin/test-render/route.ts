@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/test-render (Bearer ADMIN_SECRET via checkAdminBearer)
- *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
+ *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style?, target_seconds? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
  * Renders each item with the same Lyria path a user job takes (moderation screen, romanized singing script, diction hints,
  * the 60 s full model) so operators can measure render cost and quality. There is no user, job or quota here, so the cap
  * above and the spend estimate in the response are the only guards: the caller owns the budget. `brief_id` loads the stored
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
       const r = await generateMusic(
-        { stylePrompt: [style, dictionHints(it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: TARGET_SECONDS },
+        { stylePrompt: [style, dictionHints(it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS },
         { guard, apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
