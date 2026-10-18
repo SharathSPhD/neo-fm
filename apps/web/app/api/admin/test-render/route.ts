@@ -1,10 +1,10 @@
 /**
  * POST /api/admin/test-render (Bearer ADMIN_SECRET via checkAdminBearer)
- *   { items: [{ label, language, lyrics?, brief_id?, style? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
+ *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
  * Renders each item with the same Lyria path a user job takes (moderation screen, romanized singing script, diction hints,
  * the 60 s full model) so operators can measure render cost and quality. There is no user, job or quota here, so the cap
  * above and the spend estimate in the response are the only guards: the caller owns the budget. `brief_id` loads the stored
- * PCE lyrics of an eval brief (batch occA). Audio goes to `tracks/admin-test/` and comes back as 24 h signed URLs.
+ * PCE lyrics of an eval brief (batch `eval_batch`, default occA) and, without an explicit `style`, a prompt built from that brief's style family. Audio goes to `tracks/admin-test/` and comes back as 24 h signed URLs.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -37,12 +37,14 @@ export async function POST(req: NextRequest) {
     const started = Date.now();
     try {
       let lyrics = it.lyrics ?? "";
+      let family = "";
       if (!lyrics) {
-        const { data } = await db.from("eval_runs").select("lyrics").eq("batch", "occA").eq("brief_id", it.brief_id ?? "").eq("arm", "pce").maybeSingle();
+        const { data } = await db.from("eval_runs").select("lyrics,style_family").eq("batch", it.eval_batch ?? "occA").eq("brief_id", it.brief_id ?? "").eq("arm", "pce").maybeSingle();
         lyrics = (data as { lyrics?: string } | null)?.lyrics ?? "";
+        family = (data as { style_family?: string } | null)?.style_family ?? "";
       }
       if (!lyrics) return { label: it.label, error: "no_lyrics" };
-      const style = it.style ?? DEFAULT_STYLE;
+      const style = it.style ?? (family ? `A ${family.replace(/-/g, " ")} song with idiomatic instruments, a clear lead vocal, suited to the language and occasion.` : DEFAULT_STYLE);
       const verdict = await screenRequest(`${style}\n${lyrics}`, "lyrics");
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
