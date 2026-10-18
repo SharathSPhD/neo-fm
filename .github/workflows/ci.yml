@@ -114,11 +114,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install numpy scipy pytest -r services/embedder/requirements.txt
+      - run: pip install numpy scipy pytest httpx -r services/embedder/requirements.txt
       - name: engine two-round protocol
         run: python -m pytest -q managed-agents/pce-engine/tests
       - name: embedder token auth
         run: python -m pytest -q services/embedder/tests
+      - name: pce cascade service (real engine, offline)
+        run: python -m pytest -q services/pce-cascade/tests
 
   py:
     name: python (uv)
