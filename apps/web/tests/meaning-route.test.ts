@@ -4,7 +4,7 @@ const JOB = "11111111-1111-4111-8111-111111111111";
 const USER = "22222222-2222-4222-8222-222222222222";
 
 type Cache = { status: "ok" | "failed"; lines: unknown; created_at: string } | null;
-const state = { cache: null as Cache, count: 0, reserve: true as boolean, anthropicText: '["Hello","Rain"]', writes: [] as unknown[], sections: [{ id: "s1", type: "verse", target_seconds: 10, lyrics: "ನಮಸ್ಕಾರ\nಮಳೆ" }] };
+const state = { cacheError: false, cache: null as Cache, count: 0, reserve: true as boolean, anthropicText: '["Hello","Rain"]', writes: [] as unknown[], sections: [{ id: "s1", type: "verse", target_seconds: 10, lyrics: "ನಮಸ್ಕಾರ\nಮಳೆ" }] };
 
 vi.mock("@/lib/supabase/auth", () => ({
   requireUser: async () => ({
@@ -20,7 +20,7 @@ vi.mock("@/lib/agent/adapters", () => ({
       select: (_c: string, o?: { head?: boolean }) =>
         o?.head
           ? { eq: () => ({ gte: () => ({ neq: async () => ({ count: state.count }) }) }) }
-          : { eq: () => ({ maybeSingle: async () => ({ data: state.cache }) }) },
+          : { eq: () => ({ maybeSingle: async () => (state.cacheError ? { data: null, error: { message: 'relation "song_lyric_meanings" does not exist' } } : { data: state.cache }) }) },
       update: (v: unknown) => { state.writes.push(["update", v]); return { eq: () => ({ eq: async () => ({}) }) }; },
       upsert: async (v: unknown) => { state.writes.push(["upsert", v]); return {}; },
     }),
@@ -33,7 +33,7 @@ import { MEANING_DAILY_CAP } from "../lib/lyrics/meaning";
 const call = () => GET(new Request("http://x"), { params: Promise.resolve({ id: JOB }) });
 
 beforeEach(() => {
-  state.cache = null; state.count = 0; state.reserve = true; state.anthropicText = '["Hello","Rain"]'; state.writes = [];
+  state.cacheError = false; state.cache = null; state.count = 0; state.reserve = true; state.anthropicText = '["Hello","Rain"]'; state.writes = [];
   state.sections = [{ id: "s1", type: "verse", target_seconds: 10, lyrics: "ನಮಸ್ಕಾರ\nಮಳೆ" }];
 });
 
@@ -54,6 +54,12 @@ describe("GET /api/songs/[id]/meaning", () => {
   it("retries after the failure window", async () => {
     state.cache = { status: "failed", lines: null, created_at: new Date(Date.now() - 11 * 60_000).toISOString() };
     expect((await call()).status).toBe(200);
+  });
+  it("does not generate or spend when the cache table cannot be read", async () => {
+    state.cacheError = true;
+    const res = await call();
+    expect(res.status).toBe(503);
+    expect(state.writes).toEqual([]);
   });
   it("enforces the per-user daily cap", async () => {
     state.count = MEANING_DAILY_CAP;

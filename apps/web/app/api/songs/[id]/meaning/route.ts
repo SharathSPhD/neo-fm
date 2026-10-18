@@ -45,11 +45,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const sections = job.song_documents?.document_json?.sections ?? [];
 
   const db = serviceClient();
-  const { data: cached } = await db
+  const { data: cached, error: cacheErr } = await db
     .from("song_lyric_meanings")
     .select("status, lines, created_at")
     .eq("job_id", job.id)
     .maybeSingle<{ status: "ok" | "failed"; lines: MeaningLine[] | null; created_at: string }>();
+  // No cache means no daily cap and no stored result, so a failed read (e.g. migration 0076 not applied yet) must not
+  // fall through to a paid generation that could never be saved.
+  if (cacheErr) return NextResponse.json({ error: "meaning_unavailable" }, { status: 503 });
   if (cached?.status === "ok" && cached.lines) {
     return NextResponse.json({ lines: cached.lines, machine_translation: true, disclaimer: MEANING_DISCLAIMER, cached: true });
   }
