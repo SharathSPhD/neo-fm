@@ -29,7 +29,7 @@ const HOST_VISIBLE_MS = 12_000;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
 
-function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
+function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
   void fetch("/api/station/signal", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -37,6 +37,9 @@ function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
     body: JSON.stringify({ trackId, kind, positionMs: audio ? Math.round(audio.currentTime * 1000) : undefined }),
   });
 }
+
+/** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
+const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
@@ -55,7 +58,10 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer() {
+export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
+  // Anonymous listeners are not stored: no per-listener signals leave the browser.
+  const sendSignal = anonymous ? () => {} : postSignal;
+  const [played, setPlayed] = useState(0);
   const globalPlayer = usePlayer();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [queue, setQueue] = useState<Track[]>([]);
@@ -120,6 +126,7 @@ export function StationPlayer() {
 
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
+    if (kind !== "error") setPlayed((n) => n + 1);
     if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
@@ -329,6 +336,15 @@ export function StationPlayer() {
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
+          {anonymous && played >= NUDGE_AFTER ? (
+            <div className="flex flex-col gap-2 rounded border border-primary/40 bg-primary/5 p-3 text-sm">
+              <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
+              <div className="flex gap-3">
+                <a href="/sign-up?next=%2Fstation" className="rounded bg-primary px-3 py-1 text-primary-foreground">Sign up free</a>
+                <a href="/sign-in?next=%2Fstation" className="px-1 py-1 underline">Sign in</a>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>

@@ -25,21 +25,8 @@ export const dynamic = "force-dynamic";
 const SIGNAL_WINDOW_MS = 30 * 86_400_000;
 const URL_TTL_SECONDS = 60 * 60;
 
-export async function GET(req: NextRequest) {
-  const authed = await requireUser();
-  if (authed instanceof NextResponse) return authed;
-  const { user } = authed;
-  const admin = createServiceRoleClient();
-
-  const sp = req.nextUrl.searchParams;
-  const lang = sp.get("lang");
-  const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
-  const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), 25);
-
-  const pool = await loadPool();
-  if (pool.length === 0) return NextResponse.json({ tracks: [] });
-
-  let rows: SignalRow[] = [];
+/** The listener's own signals from the last 30 days; empty when the table is missing or the read fails. */
+async function loadSignalRows(admin: ReturnType<typeof createServiceRoleClient>, userId: string): Promise<SignalRow[]> {
   try {
     const since = new Date(Date.now() - SIGNAL_WINDOW_MS).toISOString();
     const { data } = await (
@@ -50,12 +37,30 @@ export async function GET(req: NextRequest) {
       }
     )("station_signals")
       .select("track_id,kind,created_at")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .gte("created_at", since);
-    rows = data ?? [];
-  } catch { /* no signals yet: rules-only ranking */ }
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
 
-  const signals = rowsToSignals(rows);
+export async function GET(req: NextRequest) {
+  // Open to signed-out visitors: the pool is shared, and anonymous listeners get the rules-only queue (no signals are
+  // read or stored for them). The edge rate limit (lib/rate-limit.ts, station:queue) bounds it per IP.
+  const authed = await requireUser();
+  const user = authed instanceof NextResponse ? null : authed.user;
+  const admin = createServiceRoleClient();
+
+  const sp = req.nextUrl.searchParams;
+  const lang = sp.get("lang");
+  const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
+  const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), user ? 25 : 10);
+
+  const pool = await loadPool();
+  if (pool.length === 0) return NextResponse.json({ tracks: [] });
+
+  const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
   const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
