@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
+import { reportClientError } from "@/lib/obs/report-client-error";
+import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -77,6 +79,7 @@ export function StationPlayer() {
       const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
+      if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
       setQueue([]);
     }
@@ -122,6 +125,7 @@ export function StationPlayer() {
   }
 
   function onTrackError() {
+    reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
       setFailed(true);
