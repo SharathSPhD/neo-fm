@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlayer } from "@/components/player/player-provider";
+import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
 interface Track {
   id: string;
@@ -13,6 +14,9 @@ interface Track {
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
+
+/** After this many tracks in a row fail to load, stop skipping and tell the listener instead of looping. */
+const MAX_CONSECUTIVE_ERRORS = 3;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
 
@@ -33,6 +37,9 @@ export function StationPlayer() {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [note, setNote] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const errorsInARow = useRef(0);
   const current = queue[0] ?? null;
 
   const refill = useCallback(async (language: string) => {
@@ -54,19 +61,54 @@ export function StationPlayer() {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
     audioRef.current.src = current.url;
-    void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => {});
+    setBlocked(false);
+    // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
+    void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
 
-  function advance(kind: "skip" | "finish") {
+  function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
-    sendSignal(current.id, kind, audioRef.current);
+    if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
       void refill(lang);
     } else {
       setQueue((q) => q.slice(1));
     }
+  }
+
+  function onTrackError() {
+    errorsInARow.current += 1;
+    if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
+      setFailed(true);
+      return;
+    }
+    advance("error");
+  }
+
+  // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
+  const controls = useRef({ skip: () => {} });
+  controls.current.skip = () => advance("skip");
+  useEffect(() => {
+    if (!current) return;
+    setMediaMetadata({ title: current.title, artist: "neo-fm Station" });
+    setMediaHandlers({
+      play: () => void audioRef.current?.play(),
+      pause: () => audioRef.current?.pause(),
+      stop: () => audioRef.current?.pause(),
+      seekBy: (d) => { if (audioRef.current) audioRef.current.currentTime += d; },
+      seekTo: (t) => { if (audioRef.current) audioRef.current.currentTime = t; },
+      next: () => controls.current.skip(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- metadata follows the head track only
+  }, [current?.id]);
+  useEffect(() => clearMediaSession, []);
+
+  function retry() {
+    errorsInARow.current = 0;
+    setFailed(false);
+    void refill(lang);
   }
 
   function like() {
@@ -121,7 +163,21 @@ export function StationPlayer() {
             controls
             className="w-full"
             onEnded={() => advance("finish")}
+            onPlaying={() => { errorsInARow.current = 0; setBlocked(false); setMediaPlaybackState(true); }}
+            onPause={() => setMediaPlaybackState(false)}
+            onError={onTrackError}
           />
+          {queue[1] ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
+          {blocked ? (
+            <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-primary px-3 py-2 text-primary-foreground">
+              Tap to play
+            </button>
+          ) : null}
+          {failed ? (
+            <p role="alert" className="text-sm">
+              Songs are not loading right now. <button type="button" onClick={retry} className="underline">Try again</button>
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="rounded border px-3 py-2">
               {liked.has(current.id) ? "Liked" : "Like"}
