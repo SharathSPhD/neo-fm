@@ -5,7 +5,17 @@ import { createServerClient } from "@/lib/supabase/server";
 
 import { StationPlayer } from "./station-player";
 
-export const metadata: Metadata = { title: "Station" };
+const TITLE = "Your personal 24/7 FM station";
+const DESCRIPTION = "Music tuned to your taste that never stops. Hindi, Tamil, Telugu, Kannada and Bengali first. All music is AI-generated.";
+
+// The card image comes from opengraph-image.tsx next to this file.
+export const metadata: Metadata = {
+  title: "Station",
+  description: DESCRIPTION,
+  alternates: { canonical: "/station" },
+  openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
+};
 export const dynamic = "force-dynamic";
 
 export default async function StationPage() {

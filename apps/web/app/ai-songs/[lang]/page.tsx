@@ -83,7 +83,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {page.points.map((point) => (
-          <li key={point} className="rounded-xl border border-border/60 p-4 text-sm text-foreground/85">
+          <li key={point} className="rounded-xl border border-muted/50 p-4 text-sm text-foreground/85">
             {point}
           </li>
         ))}
@@ -101,7 +101,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
               <li key={s.publicId}>
                 <Link
                   href={`/s/${s.publicId}`}
-                  className="block rounded-xl border border-border/60 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
                 >
                   <p className="line-clamp-2 font-medium">{s.title}</p>
                   <p className="mt-1 text-xs text-foreground/60">{s.style}</p>
@@ -119,7 +119,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
         </Link>
       </p>
 
-      <nav aria-label="Languages" className="flex flex-wrap gap-x-4 gap-y-2 border-t border-border/40 pt-6 text-sm">
+      <nav aria-label="Languages" className="flex flex-wrap gap-x-4 gap-y-2 border-t border-muted/30 pt-6 text-sm">
         {LANGUAGE_PAGES.map((p) => (
           <Link
             key={p.code}
