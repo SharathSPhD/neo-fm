@@ -64,12 +64,15 @@ declare
 begin
   update public.song_packs
      set songs_used = songs_used + 1
-   where id = (
+   where songs_used < songs_total
+     and id = (
      select id from public.song_packs
       where user_id = p_user_id and songs_used < songs_total
       order by created_at
       limit 1
-      for update skip locked
+      -- Plain FOR UPDATE, not SKIP LOCKED: a concurrent consume waits for the lock instead of seeing no row and
+      -- wrongly reporting "no credit" to a user who still has some.
+      for update
    )
   returning id into v_id;
   return v_id;
