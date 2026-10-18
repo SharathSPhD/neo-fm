@@ -51,3 +51,16 @@ Verified by Claude. Redeployed.
 3. Retire the old production Supabase project once nothing uses it: https://supabase.com/dashboard/projects → old project → Settings → General → Pause or Delete.
 4. Ask a native speaker for each language to review a few songs.
 5. Have counsel review the Terms and Privacy pages.
+
+## 8. Soft-launch operations (S only; Claude changes nothing in prod config)
+Context and verification: [docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md). Tell Claude "done: 8.N" after each.
+
+1. **Delete the prod test accounts.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/users and delete `lat-bot@neo-fm.test`, `e2e-bot@neo-fm.test`, `showcase-a` and `showcase-b` (extends step 7.2).
+2. **Upstash rate limiting.** Create a free Redis database at https://console.upstash.com, copy the REST URL and REST token, then at https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables add `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (Production). Redeploy as in step 3.4.
+3. **ADMIN_SECRET.** Run `openssl rand -hex 32` and add it as `ADMIN_SECRET` (Production) at the same page. Do this only after Claude confirms which PR reads it.
+4. **Leaked-password protection.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/providers, Email provider, enable "Prevent use of leaked passwords" (needs the Pro plan from step 2.4).
+5. **Embedder.** Check the Cloud Run service in https://console.cloud.google.com/run and tell Claude whether the latest revision is healthy or needs a rebuild. The app works without it.
+6. **Vercel Web Analytics.** Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/analytics and click Enable. Claude adds the component in a PR.
+7. **Anthropic admin key for the spend tracker.** Create an Admin API key at https://console.anthropic.com/settings/admin-keys and add it only as the cloud environment variable `ANTHROPIC_ADMIN_KEY`. Never paste it in chat. It is used read-only for `cost_report` and `usage_report`.
+8. **Migrations 0072, 0076, 0078, 0086.** Apply each only after the lead has reviewed and merged its PR, and say go.
+
