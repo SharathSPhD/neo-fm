@@ -81,7 +81,7 @@ export function SignInForm({
       <button
         type="submit"
         disabled={pending || !ready}
-        className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
+        className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-background shadow-[0_0_28px_-8px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
       >
         {pending ? t("auth.signIn.pending") : t("auth.signIn.title")}
       </button>
