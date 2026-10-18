@@ -88,3 +88,6 @@ Not needed; step 6 is enough.
 
 ## 10. Approve the paid test renders: ✅ DONE
 Approved in chat and run; results are in the quality and latency reports.
+
+## 11. Try the share clip on real phones: ⏳ TODO
+Why: the clip export (PR #130) is only verified in desktop Chromium and with ffmpeg; Instagram and WhatsApp acceptance depends on the phone's browser. On one iPhone (Safari) and one Android phone (Chrome), open a finished song, tap Share, then "Make a vertical clip", and post the result to Instagram Reels and WhatsApp Status; tell the lead session which phone, whether the clip came out as MP4, and whether the app accepted it.
