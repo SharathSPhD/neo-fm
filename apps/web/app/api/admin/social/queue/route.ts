@@ -5,6 +5,9 @@
  *       builds the caption from the admitted pool track (pool tracks only) and inserts a `draft` row per platform.
  *  POST {action:"approve", id, approval_note, visibility?, native_read_ok?}
  *       approval_note must quote S's own words; nothing publishes before this. Public needs visibility "public".
+ *  POST {action:"upload_url", video_path}
+ *       signed one-shot upload URL into the private social-videos bucket (PUT the mp4 to it), so clips can be added
+ *       without a storage key on the caller's side.
  *  POST {action:"skip", id}
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -34,6 +37,13 @@ export async function POST(req: NextRequest) {
   const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "bad json" }, { status: 400 });
   const db = serviceClient();
+
+  if (body.action === "upload_url") {
+    const path = String(body.video_path ?? "");
+    if (!SAFE_PATH.test(path) || !path.endsWith(".mp4")) return NextResponse.json({ error: "video_path must be a safe .mp4 path" }, { status: 400 });
+    const { data, error } = await db.storage.from("social-videos").createSignedUploadUrl(path);
+    return error || !data ? NextResponse.json({ error: error?.message ?? "no url" }, { status: 500 }) : NextResponse.json({ signed_url: data.signedUrl });
+  }
 
   if (body.action === "enqueue") {
     const trackId = String(body.pool_track_id ?? "");
