@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlayer } from "@/components/player/player-provider";
+import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
@@ -35,6 +36,10 @@ export function StationPlayer() {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [queue, setQueue] = useState<Track[]>([]);
   const [lang, setLang] = useState<string>("");
+  const [moods, setMoods] = useState<string[]>([]);
+  // "ready" flips once the saved choice has been read; "onboarded" is false on a first visit until Start is pressed.
+  const [ready, setReady] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [note, setNote] = useState<string | null>(null);
@@ -43,10 +48,11 @@ export function StationPlayer() {
   const errorsInARow = useRef(0);
   const current = queue[0] ?? null;
 
-  const refill = useCallback(async (language: string) => {
+  const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/station/queue?limit=10${language ? `&lang=${language}` : ""}`);
+      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
+      const res = await fetch(`/api/station/queue?${qs}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
     } catch {
@@ -55,7 +61,17 @@ export function StationPlayer() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { void refill(lang); }, [lang, refill]);
+  useEffect(() => {
+    const saved = loadPrefs();
+    if (saved) { setLang(saved.lang); setMoods(saved.moods); setOnboarded(true); }
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !onboarded) return;
+    savePrefs({ lang, moods });
+    void refill(lang, moods);
+  }, [ready, onboarded, lang, moods, refill]);
 
   // Start playback when the head of the queue changes; stop the app-wide player so two songs never overlap.
   useEffect(() => {
@@ -73,7 +89,7 @@ export function StationPlayer() {
     if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
-      void refill(lang);
+      void refill(lang, moods);
     } else {
       setQueue((q) => q.slice(1));
     }
@@ -109,7 +125,7 @@ export function StationPlayer() {
   function retry() {
     errorsInARow.current = 0;
     setFailed(false);
-    void refill(lang);
+    void refill(lang, moods);
   }
 
   function like() {
@@ -142,6 +158,50 @@ export function StationPlayer() {
     sendSignal(current.id, "share", audioRef.current);
   }
 
+  const moodChips = (
+    <div className="flex flex-wrap gap-2" role="group" aria-label="Mood (pick up to two)">
+      {STATION_MOODS.map((m) => (
+        <button
+          key={m}
+          type="button"
+          aria-pressed={moods.includes(m)}
+          onClick={() => setMoods((cur) => toggleMood(cur, m))}
+          className={`rounded-full border px-3 py-1 text-sm ${moods.includes(m) ? "bg-primary text-primary-foreground" : ""}`}
+        >
+          {m}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (!ready) return <p>Loading…</p>;
+
+  if (!onboarded) {
+    return (
+      <section aria-label="Set up your station" className="flex flex-col gap-4 rounded-lg border p-4">
+        <h2 className="text-lg font-medium">What do you want to hear?</h2>
+        <p className="text-sm text-muted-foreground">Pick a language and up to two moods. You can change them any time.</p>
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
+          {LANGS.map((l) => (
+            <button
+              key={l || "all"}
+              type="button"
+              aria-pressed={lang === l}
+              onClick={() => setLang(l)}
+              className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-primary text-primary-foreground" : ""}`}
+            >
+              {l || "All"}
+            </button>
+          ))}
+        </div>
+        {moodChips}
+        <button type="button" onClick={() => setOnboarded(true)} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
+          Start my station
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section aria-label="Station player" className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
@@ -157,6 +217,7 @@ export function StationPlayer() {
           </button>
         ))}
       </div>
+      {moodChips}
 
       {loading && !current ? <p>Loading…</p> : null}
       {!loading && !current ? <p>Nothing to play yet. Check back soon.</p> : null}
