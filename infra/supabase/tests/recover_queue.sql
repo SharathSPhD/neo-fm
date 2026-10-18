@@ -19,6 +19,12 @@ create or replace function pg_temp.last_message() returns jsonb language sql sec
 create or replace function pg_temp.old_queue_exists() returns boolean language sql security definer as $$
   select exists (select 1 from pgmq.meta where queue_name = 'q_song_jobs') $$;
 
+create or replace function pg_temp.add_run(j uuid, audio text) returns void language sql security definer as $$
+  insert into public.agent_runs (job_id, session_id, status, lyria_calls, audio_path)
+  values ($1, 'sesn_test', 'failed', 1, $2) $$;
+create or replace function pg_temp.has_run(j uuid) returns boolean language sql security definer as $$
+  select exists (select 1 from public.agent_runs where job_id = $1) $$;
+
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"dddddddd-0000-4000-8000-00000000000d","role":"authenticated"}', true);
 
@@ -46,6 +52,20 @@ begin
     raise exception 'FAIL: recover payload wrong: %', msg;
   end if;
   if pg_temp.old_queue_exists() then raise exception 'FAIL: q_song_jobs should not exist'; end if;
+
+  -- A failed job keeps an agent_runs row (session set, status failed). Recover must clear it when there is no audio,
+  -- otherwise advance() would return "done" and the retry would fail again at once.
+  perform pg_temp.set_status(j, 'failed');
+  perform pg_temp.add_run(j, null);
+  perform public.recover_song_job(j);
+  if pg_temp.has_run(j) then raise exception 'FAIL: audio-less agent_runs row survived recover'; end if;
+
+  -- ...but a run that already has audio is kept.
+  perform pg_temp.set_status(j, 'failed');
+  perform pg_temp.add_run(j, 'tracks/test.mp3');
+  perform public.recover_song_job(j);
+  if not pg_temp.has_run(j) then raise exception 'FAIL: agent_runs row with audio was deleted'; end if;
+
   raise warning 'recover_queue: PASS';
 end $$;
 

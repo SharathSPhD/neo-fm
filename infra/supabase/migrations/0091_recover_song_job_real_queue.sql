@@ -6,6 +6,9 @@
 -- (refunded pack jobs re-spend a credit) with the enqueue changed to public.enqueue_song_generation_job, using
 -- create_song_job's payload; style_family and target_duration_seconds are read from the song document. Checks and
 -- grants are unchanged.
+--
+-- It also clears a failed job's audio-less agent_runs row, because the worker polls jobs and would otherwise skip the
+-- retry (see the comment in the function). That resets lyria_calls: a retried Pro job can spend one more Lyria render.
 
 create or replace function public.recover_song_job(p_job_id uuid)
 returns table (job_id uuid, attempt_id uuid, status public.job_status_enum)
@@ -82,6 +85,15 @@ begin
       raise exception 'quota_exceeded' using errcode = '22023';
     end if;
     update public.song_packs set songs_used = songs_used + 1 where id = v_new_pack_id;
+  end if;
+
+  -- The worker polls jobs, not the queue, and advance() returns "done" straight away for an agent_runs row that has a
+  -- session and status done/failed. A failed job still has that row, so without this the retry would be claimed, skip
+  -- the agent session and fail again with the same error. Delete a failed job's run when it has no audio, so the claim
+  -- inserts a fresh one. A run that has audio_path is kept (finalize inserts the missing track). Deleting resets
+  -- lyria_calls, so a retried Pro job can make one more Lyria render: real spend, and the point of a retry.
+  if v_status = 'failed'::public.job_status_enum then
+    delete from public.agent_runs ar where ar.job_id = p_job_id and ar.audio_path is null;
   end if;
 
   update public.jobs
