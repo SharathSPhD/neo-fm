@@ -8,6 +8,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { buildSharePayload } from "@/lib/share/card";
 import { pickClipWindow } from "@/lib/share/clip-plan";
 import { clipSupported, exportClip, type ExportedClip } from "@/lib/share/clip-export";
 import { buildLyricTimeline, parseLineTimings, type SyncSectionInput } from "@/lib/lyrics/sync";
@@ -26,6 +27,7 @@ export function ClipExportButton({
   message,
   occasion,
   source,
+  shareUrl,
 }: {
   songId: string;
   title: string;
@@ -34,6 +36,8 @@ export function ClipExportButton({
   /** Localised occasion label when the song came from /gift. */
   occasion?: string | null;
   source: ClipSource;
+  /** Public /s/ link of the track; sent with the clip so the preview card (OG) travels with it. Null while the song is private. */
+  shareUrl?: string | null;
 }) {
   const { t } = useUiLang();
   const [busy, setBusy] = useState(false);
@@ -100,7 +104,7 @@ export function ClipExportButton({
     if (!clip) return;
     try {
       if (navigator.canShare?.({ files: [clip.file] })) {
-        await navigator.share({ files: [clip.file], title });
+        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, shareUrl) : { title }) });
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError(t("clip.failed"));

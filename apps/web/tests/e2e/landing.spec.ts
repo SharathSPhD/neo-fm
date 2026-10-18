@@ -18,16 +18,16 @@ import { expect, test } from "@playwright/test";
 
 import { expectNoSeriousA11yViolations } from "./helpers/axe";
 
-test("landing page leads with the phoneme wedge", async ({ page }) => {
+test("landing page leads with the personal station", async ({ page }) => {
   await page.goto("/");
 
   const h1 = page.getByRole("heading", { level: 1 });
   await expect(h1).toBeVisible();
 
-  // Hard-coded substring is intentional: the wedge is the product, so
-  // a quiet edit that loses the word should fail loudly.
-  await expect(h1).toContainText(/phoneme/i, { timeout: 10_000 });
-  await expect(h1).toContainText(/Indian languages/i);
+  // Hard-coded substrings are intentional: the station framing is the
+  // product, so a quiet edit that loses it should fail loudly.
+  await expect(h1).toContainText(/your own FM/i, { timeout: 10_000 });
+  await expect(h1).toContainText(/made for you/i);
 });
 
 test("landing page shows how it works and the supported languages", async ({ page }) => {

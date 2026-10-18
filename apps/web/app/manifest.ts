@@ -14,8 +14,8 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "neo-fm",
     short_name: "neo-fm",
     description:
-      "India-first, composition-aware AI music. Carnatic, Hindustani, " +
-      "Kannada folk, Western — generate songs with raga / tala / script.",
+      "Your personal FM. Songs made for you in Kannada, Tamil, Telugu, Hindi and " +
+      "Bengali, with native lyrics and a pronunciation check.",
     id: "/",
     start_url: "/library",
     scope: "/",
