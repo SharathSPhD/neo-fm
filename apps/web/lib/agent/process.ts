@@ -14,7 +14,7 @@ import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
-import { intentBlock } from "../engine/intent";
+import { extractIntent, intentBlock, lyriaFragment, type IntentSpec } from "../engine/intent";
 import { judgeAndRetry } from "../engine/judge";
 import { voiceChoiceFor, voiceHint } from "../voice";
 import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
@@ -28,6 +28,22 @@ import { hasStationPass, withPassCap } from "../billing/pass";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
+
+type DocForIntent = { language: string; style_family: string; document_json: { metadata?: { prompt?: string; intent?: IntentSpec; [k: string]: unknown } } & Record<string, unknown> };
+
+/** Reuses an intent stored on the song document (retries, re-renders); otherwise one Haiku call, saved best-effort. */
+async function intentFor(db: ReturnType<typeof serviceClient>, docId: string, doc: DocForIntent): Promise<IntentSpec | undefined> {
+  const saved = doc.document_json.metadata?.intent;
+  if (saved && typeof saved.essence === "string") return saved;
+  const client = anthropicClient();
+  const intent = await extractIntent({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }, async (x) => {
+    const res = await client.messages.create({ model: x.model, max_tokens: x.maxTokens, messages: [{ role: "user", content: x.prompt }] });
+    return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
+  });
+  if (!intent.essence) return undefined;
+  try { await db.from("song_documents").update({ document_json: { ...doc.document_json, metadata: { ...doc.document_json.metadata, intent } } }).eq("id", docId); } catch { /* the intent still applies to this render */ }
+  return intent;
+}
 
 export function isTransient(status: number | undefined, msg: string): boolean {
   if (status === 429 || (status !== undefined && status >= 500)) return true;
@@ -135,12 +151,14 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         try { return await fn(); } finally { stages[name] = (stages[name] ?? 0) + (Date.now() - t0); }
       };
       let postRenderFrom = 0;
+      const intent = process.env.PCE_INTENT === "1" ? await timed("intent", () => intentFor(db, job.song_document_id, doc)) : undefined;
       const brief = {
         language: doc.language, styleFamily: doc.style_family,
         targetSeconds: doc.document_json.target_duration_seconds ?? 30,
         prompt: doc.document_json.metadata?.prompt ?? "",
         tasteCard: tasteCard || undefined,
         engine: embedEngine(job.id),
+        intent,
       };
       // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
       const store = runStore(db, plan.agent === "free" ? "free" : "pro");
@@ -153,8 +171,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Last gate before spend: the agent's own output is untrusted too.
         const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
         if (!v.allowed) throw new SafetyRefusal(v.reason);
-        // The structured intent (PCE_INTENT) rides along from the cascade; polish sees it as part of the brief and the judge reads against it.
-        const savedIntent = plan.agent === "host" && (process.env.PCE_INTENT === "1" || process.env.PCE_JUDGE_RETRY === "1") ? (await loadHostSong(db, job.id).catch(() => null))?.intent : undefined;
+        // The structured intent (PCE_INTENT) is extracted once per job; polish sees it as part of the brief and the judge reads against it.
+        const savedIntent = brief.intent;
         const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : doc.document_json.metadata?.prompt ?? "";
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
@@ -185,6 +203,9 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           } catch (e) { if (e instanceof SafetyRefusal) throw e; /* judging is advisory; sing the polished lyrics */ }
         }
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
+        // Managed-agent songs get the routed style/raga/tala fragment here; host songs already carry it (idempotent).
+        const frag = savedIntent ? lyriaFragment(savedIntent) : "";
+        if (frag && !a.stylePrompt.includes(frag)) a = { ...a, stylePrompt: `${a.stylePrompt} ${frag}`.trim() };
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);

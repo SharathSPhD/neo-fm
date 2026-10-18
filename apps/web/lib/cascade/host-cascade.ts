@@ -42,6 +42,8 @@ export interface HostBrief {
   prompt: string;
   tasteCard?: string;
   engine?: { url: string; token: string };
+  /** Already-extracted intent (the worker extracts once per job so every path shares it). */
+  intent?: IntentSpec;
 }
 
 export interface HostSong {
@@ -76,7 +78,7 @@ export function candidateK(env = process.env): number {
 
 export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidateK(), env: Readonly<Record<string, string | undefined>> = process.env): Promise<HostSong> {
   // Intent extraction runs beside the plan call (both Haiku, independent), so it adds no wall-clock.
-  const intentP = env.PCE_INTENT === "1" ? extractIntent({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }, (a) => d.complete({ ...a }) ) : Promise.resolve(undefined);
+  const intentP = b.intent ? Promise.resolve(b.intent) : env.PCE_INTENT === "1" ? extractIntent({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }, (a) => d.complete({ ...a }) ) : Promise.resolve(undefined);
   const lines = Math.max(4, Math.round(b.targetSeconds / 5));
   const userBrief = JSON.stringify(sanitizeBriefPrompt(b.prompt));
 

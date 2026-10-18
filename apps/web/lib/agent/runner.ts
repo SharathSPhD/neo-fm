@@ -6,6 +6,7 @@
  */
 import type { DurationClass, LyriaResult } from "./lyria";
 import { SpendCapError } from "./lyria";
+import { intentBlock, type IntentSpec } from "../engine/intent";
 
 export interface AgentEvent {
   id: string;
@@ -55,6 +56,8 @@ export interface Brief {
   engine?: { url: string; token: string };
   /** Opt-in taste card (see lib/personalization); only present with the listener's consent. */
   tasteCard?: string;
+  /** Structured request (PCE_INTENT); the agent sees it as extra facts to honour. */
+  intent?: IntentSpec;
 }
 
 export const RUBRIC = `# neo-fm song rubric - starter, tune the criteria
@@ -83,6 +86,7 @@ export function briefText(b: Brief): string {
     // A singer delivers ~1 short line per 5 s. Over-long lyrics get cut off or rushed (measured: 12 lines in 30 s -> 51% pronunciation match).
     `Lyric length: about ${Math.max(4, Math.round(b.targetSeconds / 5))} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words. Do not write more than that.`,
     ...(b.tasteCard ? [b.tasteCard] : []),
+    ...(b.intent ? [intentBlock(b.intent)] : []),
     ...(b.engine ? [`Engine mode: yes. EMBED_URL=${b.engine.url}`, `EMBED_TOKEN=${b.engine.token}`] : []),
   ].join("\n");
 }
