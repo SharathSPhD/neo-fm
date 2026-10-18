@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 
+import { headers } from "next/headers";
+
+import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { siteUrl } from "@/lib/seo/site";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
@@ -55,8 +58,10 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const lang = await getUiLang();
+  // The per-language SEO pages are written in that language, whatever the visitor's UI language is.
+  const htmlLang = languageCodeForPath((await headers()).get("x-pathname")) ?? lang;
   return (
-    <html lang={lang}>
+    <html lang={htmlLang}>
       <body>
         <UiLangProvider initial={lang}>
         {/* Applies persisted theme before paint; static file served from
