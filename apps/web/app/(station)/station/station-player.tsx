@@ -113,7 +113,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "" }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string }) {
+export function StationPlayer({ anonymous = false, extraLangs = [], initialStation = "" }: { anonymous?: boolean; extraLangs?: string[]; initialStation?: string }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -420,7 +420,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
               onClick={() => setLang(l)}
               className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
             >
-              {l ? languageName(l) : t("station.lang.all")}{betaLangs.includes(l) ? " (beta)" : ""}
+              {l ? languageName(l) : t("station.lang.all")}
             </button>
           ))}
         </div>
@@ -451,7 +451,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             onClick={() => setLang(l)}
             className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
           >
-            {l ? languageName(l) : t("station.lang.all")}{betaLangs.includes(l) ? " (beta)" : ""}
+            {l ? languageName(l) : t("station.lang.all")}
           </button>
         ))}
       </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { serverI18n } from "@/lib/i18n/server";
-import { betaLanguages, stationChipLanguages } from "@/lib/languages/registry";
+import { stationChipLanguages } from "@/lib/languages/registry";
 import { admittedLanguageCounts } from "@/lib/station/pool";
 import { findStation } from "@/lib/station/named";
 import { createServerClient } from "@/lib/supabase/server";
@@ -54,7 +54,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} />
+      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} initialStation={initialStation} />
     </main>
   );
 }

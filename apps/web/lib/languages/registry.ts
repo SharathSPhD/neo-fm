@@ -55,15 +55,6 @@ export function expansionLanguage(code: string | null | undefined): ExpansionLan
 }
 
 /**
- * Expansion languages still shown with a "beta" label: every chip is beta until a native read passes and its code is
- * listed in `LANG_REVIEWED` (comma separated).
- */
-export function betaLanguages(codes: readonly string[], reviewedRaw: string | undefined | null): string[] {
-  const reviewed = new Set((reviewedRaw ?? "").split(",").map((c) => c.trim()).filter(Boolean));
-  return codes.filter((c) => expansionLanguage(c) && !reviewed.has(c));
-}
-
-/**
  * Expansion languages that get a station chip: wave enabled and at least `min` admitted tracks, so a listener never
  * locks onto a language with nothing to play. Order follows the registry (wave, then listing order).
  */

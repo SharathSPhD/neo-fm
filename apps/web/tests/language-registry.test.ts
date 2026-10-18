@@ -10,7 +10,6 @@ import {
   enabledWave,
   isEnabledLanguage,
   minPool,
-  betaLanguages,
   stationChipLanguages,
 } from "../lib/languages/registry";
 import { normalizeLanguage, POOL_LANGUAGES } from "../lib/pool/tags";
@@ -138,11 +137,5 @@ describe("singing script for expansion scripts", () => {
 
   it("ur: Arabic-script lines are left as they are (no scheme yet)", () => {
     expect(singingScript("تیرے ساتھ چلتے ہیں").romanized).toBe(false);
-  });
-
-  it("beta label: expansion chips stay beta until their code is in LANG_REVIEWED", () => {
-    expect(betaLanguages(["mr", "pa"], undefined)).toEqual(["mr", "pa"]);
-    expect(betaLanguages(["mr", "pa"], "pa, gu")).toEqual(["mr"]);
-    expect(betaLanguages(["hi"], undefined)).toEqual([]);
   });
 });
