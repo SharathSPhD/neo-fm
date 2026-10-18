@@ -16,6 +16,8 @@ export interface PoolTrack {
   /** Migration 0100: instrumentals ('zxx', no vocals) are language-neutral. Absent means vocal. */
   kind?: "vocal" | "instrumental";
   durationSeconds?: number | null;
+  /** Migration 0104: lead voice from the voice judge. Absent or null means untagged; programming then ignores voice. */
+  voice?: "female" | "male" | "mixed" | null;
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";

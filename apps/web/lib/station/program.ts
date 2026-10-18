@@ -32,6 +32,9 @@ const PROFILE: Record<Daypart, Record<string, number>> = {
 /** At peak hours two slow tracks in a row feel like dead air. */
 const PEAK: ReadonlySet<Daypart> = new Set(["morning", "midday", "evening"]);
 
+/** Sized below the rank bonus (max 2) plus a daypart match, so a strong fit still beats rotation. */
+const VOICE_RUN_PENALTY = 1.5;
+
 const WHEEL: readonly Slot[] = ["opener", "familiar", "familiar", "exploration", "occasion", "repeat"];
 
 /** Fit of a tagger-assigned daypart set: a listed part is a strong match, an unlisted one a mild mismatch. */
@@ -95,7 +98,13 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
   const themes = new Set(ctx.themes ?? occasionThemes(ctx.month, ctx.day));
   const n = ranked.length;
   const rankBonus = new Map(ranked.map((t, i) => [t.id, n > 1 ? 2 * (1 - i / (n - 1)) : 2]));
-  const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0);
+  // Voice rotation (migration 0104 tags): after two same-gender leads in a row, nudge the next pick toward another voice.
+  // A nudge, not a rule: untagged tracks and a one-voice pool are unaffected, and rank/daypart can still win.
+  const voiceRun = (out: PoolTrack[]) => {
+    const a = out[out.length - 1]?.voice, b = out[out.length - 2]?.voice;
+    return a && a === b && a !== "mixed" ? a : null;
+  };
+  const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0) - (t.voice && t.voice === voiceRun(out) ? VOICE_RUN_PENALTY : 0);
 
   const remaining = [...ranked];
   const out: PoolTrack[] = [];
