@@ -17,6 +17,8 @@ export function optedOut(headers: { get(name: string): string | null }): boolean
 }
 
 export interface FunnelRow { day: string; event: string; n: number }
+export interface CampaignRow { event: string; source: string; medium: string; campaign: string; content: string; n: number }
+export interface CampaignSummary { source: string; medium: string; campaign: string; events: Partial<Record<FunnelEvent, number>> }
 export interface FunnelSummary {
   window_days: number;
   views: Record<FunnelEvent, number>;
@@ -39,12 +41,14 @@ export interface FunnelSummary {
   by_day: Record<string, Partial<Record<FunnelEvent, number>>>;
   /** Sign-ups per UTC day inside the window, derived from users.created_at. */
   signups_by_day: Record<string, number>;
+  /** Funnel counters per first-touch campaign (migration 0105), busiest first. Empty before it is applied. */
+  by_campaign: CampaignSummary[];
 }
 
 const ratio = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 1000 : null);
 
 export function buildFunnel(
-  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number; gifted: number; paidUsers: number; signupDays?: string[] }, windowDays: number,
+  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number; gifted: number; paidUsers: number; signupDays?: string[] }, windowDays: number, campaignRows: CampaignRow[] = [],
 ): FunnelSummary {
   const views = Object.fromEntries(FUNNEL_EVENTS.map((e) => [e, 0])) as Record<FunnelEvent, number>;
   const signupsByDay: Record<string, number> = {};
@@ -55,6 +59,15 @@ export function buildFunnel(
     views[r.event] += Number(r.n);
     (byDay[r.day] ??= {})[r.event] = Number(r.n);
   }
+  const campaigns = new Map<string, CampaignSummary>();
+  for (const r of campaignRows) {
+    if (!isFunnelEvent(r.event)) continue;
+    const key = [r.source, r.medium, r.campaign].join("\u0000");
+    const c = campaigns.get(key) ?? { source: r.source, medium: r.medium, campaign: r.campaign, events: {} };
+    c.events[r.event] = (c.events[r.event] ?? 0) + Number(r.n);
+    campaigns.set(key, c);
+  }
+  const total = (c: CampaignSummary) => Object.values(c.events).reduce((n, v) => n + (v ?? 0), 0);
   return {
     window_days: windowDays,
     views,
@@ -72,5 +85,6 @@ export function buildFunnel(
     },
     by_day: byDay,
     signups_by_day: signupsByDay,
+    by_campaign: [...campaigns.values()].sort((a, b) => total(b) - total(a) || a.campaign.localeCompare(b.campaign)),
   };
 }

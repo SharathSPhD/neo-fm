@@ -261,17 +261,28 @@ const LAUNCH_COLUMNS: { label: string; event?: keyof FunnelSummary["views"] }[] 
 
 /** Launch funnel: one row per UTC day, newest first. Counters are anonymous per-day counts; sign-ups come from the users table. */
 function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
+  const campaigns = funnel.by_campaign ?? [];
   const days = [...new Set([...Object.keys(funnel.by_day), ...Object.keys(funnel.signups_by_day)])].sort().reverse();
   const cell = (day: string, c: (typeof LAUNCH_COLUMNS)[number]) =>
     String(c.event ? (funnel.by_day[day]?.[c.event] ?? 0) : (funnel.signups_by_day[day] ?? 0));
+  const eventColumns = LAUNCH_COLUMNS.filter((c) => c.event);
   return (
-    <Table
-      title={`Launch funnel by day (${funnel.window_days}d)`}
-      head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
-      rows={[
-        ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
-        ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
-      ]}
-    />
+    <>
+      <Table
+        title={`Launch funnel by day (${funnel.window_days}d)`}
+        head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
+        rows={[
+          ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
+          ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
+        ]}
+      />
+      {campaigns.length > 0 && (
+        <Table
+          title={`Funnel by campaign, first touch (${funnel.window_days}d)`}
+          head={["Campaign", "Source / medium", ...eventColumns.map((c) => c.label)]}
+          rows={campaigns.map((k) => [k.campaign || "(none)", [k.source, k.medium].filter(Boolean).join(" / ") || "-", ...eventColumns.map((c) => String(k.events[c.event!] ?? 0))])}
+        />
+      )}
+    </>
   );
 }
