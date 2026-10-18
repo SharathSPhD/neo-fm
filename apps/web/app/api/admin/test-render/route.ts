@@ -22,6 +22,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 const TARGET_SECONDS = 60;
+// dictionHints is keyed by language name, but items (like song documents) carry codes, so the English arm maps them here.
+const HINT_KEY: Record<string, string> = { hi: "hindi", ta: "tamil", te: "telugu", kn: "kannada", bn: "bengali" };
 const DEFAULT_STYLE = "A warm, melodic song with acoustic instruments and a clear lead vocal, suited to the language and occasion.";
 export async function POST(req: NextRequest) {
   const auth = checkAdminBearer(req.headers.get("authorization"));
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
       const r = await generateMusic(
-        { stylePrompt: [style, native ? "" : dictionHints(it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
+        { stylePrompt: [style, native ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
         { guard, apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
