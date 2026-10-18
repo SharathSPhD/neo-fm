@@ -70,7 +70,7 @@ export function StationPlayer({ initialStation = "" }: { initialStation?: string
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
     setReady(true);
-  }, []);
+  }, [initialStation]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
