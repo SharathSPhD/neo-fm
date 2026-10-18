@@ -31,7 +31,9 @@ interface Track {
   fadeOutMs?: number;
   set?: { id: string; index: number; size: number };
   /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
-  type?: "ad";
+  type?: "ad" | "voice";
+  /** Present on AI host links and idents spliced in by the queue API (lib/station/voice-links.ts). */
+  voice?: { lineId: string; kind: string; text: string; aiMade: boolean; hour: number | null; fadeInMs: number };
   ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
 }
 
@@ -150,6 +152,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   const tracksStarted = useRef(0);
   // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
   const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
+  // Session counters for the spoken links, sent the same way; they reset when the page reloads.
+  const voiceSession = useRef({ since: 0, breaks: 0, seen: [] as string[], lastCheckHour: null as number | null });
   const currentId = useRef<string | null>(null);
   const fadeCancel = useRef<() => void>(() => undefined);
   const fadeOutStarted = useRef(false);
@@ -169,11 +173,19 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     return out;
   }, []);
 
+  const voiceParams = useCallback((): Record<string, string> => {
+    const v = voiceSession.current;
+    const out: Record<string, string> = { vsince: String(v.since), vn: String(v.breaks) };
+    if (v.seen.length) out.vseen = v.seen.slice(-30).join(",");
+    if (v.lastCheckHour !== null) out.vhr = String(v.lastCheckHour);
+    return out;
+  }, []);
+
   const refill = useCallback(async (language: string, wanted: string[], stationSlug: string) => {
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: adParams() }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: { ...adParams(), ...voiceParams() } }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -184,7 +196,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
       setQueueError(true);
     }
     setLoading(false);
-  }, [adParams]);
+  }, [adParams, voiceParams]);
 
   useEffect(() => {
     const saved = loadPrefs();
@@ -230,8 +242,30 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
       }
       return;
     }
+    if (current.type === "voice" && current.voice) {
+      // A spoken link: no card, no taste signal, no host text. It counts toward the next break, not toward played tracks.
+      const v = voiceSession.current;
+      v.since = 0;
+      v.breaks += 1;
+      v.seen.push(current.voice.lineId);
+      if (current.voice.hour !== null) v.lastCheckHour = current.voice.hour;
+      setHostLine(null);
+      setBlocked(false);
+      audioRef.current.src = current.url;
+      fadeCancel.current();
+      fadeOutStarted.current = false;
+      if (current.voice.fadeInMs && canSetVolume(audioRef.current)) {
+        audioRef.current.volume = 0;
+        fadeCancel.current = rampVolume(audioRef.current, 1, current.voice.fadeInMs);
+      } else {
+        try { audioRef.current.volume = 1; } catch { /* read-only on iOS */ }
+      }
+      void audioRef.current.play().catch(() => setBlocked(true));
+      return;
+    }
     adSession.current.played += 1;
     adSession.current.since += 1;
+    voiceSession.current.since += 1;
     audioRef.current.src = current.url;
     // Tracks in a set dip out and in around the join; anything else always starts at full volume.
     fadeCancel.current();
@@ -256,15 +290,17 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   useEffect(() => { if (played === NUDGE_AFTER) sendFunnelEvent("listened_3", { once: true }); }, [played]);
   const nudging = anonymous && played >= NUDGE_AFTER;
   const isAd = current?.type === "ad";
+  const isVoice = current?.type === "voice";
   useEffect(() => { if (nudging) sendFunnelEvent("nudge_shown", { once: true }); }, [nudging]);
 
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
     const isAd = current.type === "ad";
+    // Ads and spoken links are not listening taste: no signal, and skipping one is not a track skip.
+    const notATrack = isAd || current.type === "voice";
     if (isAd && kind === "finish" && current.ad) postAdEvent(current.ad.slotId, "complete");
-    // Ads are not listening taste: no signal, and skipping one is not a track skip.
-    if (kind !== "error" && !isAd) setPlayed((n) => n + 1);
-    if (kind !== "error" && !isAd) sendSignal(current.id, kind, audioRef.current, current.set);
+    if (kind !== "error" && !notATrack) setPlayed((n) => n + 1);
+    if (kind !== "error" && !notATrack) sendSignal(current.id, kind, audioRef.current, current.set);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
       void refill(lang, moods, station);
@@ -274,8 +310,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   }
 
   function onTrackError() {
-    // A spot that will not load is dropped quietly; it is not a station audio failure.
-    if (current?.type === "ad") { advance("skip"); return; }
+    // A spot or spoken link that will not load is dropped quietly; it is not a station audio failure.
+    if (current?.type === "ad" || current?.type === "voice") { advance("skip"); return; }
     reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -320,7 +356,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station, ads: adParams() }));
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station, ads: { ...adParams(), ...voiceParams() } }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -373,7 +409,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     sendFunnelEvent("whatsapp_click");
   }
 
-  useAmbientTint(current && !isAd ? current.id : null);
+  useAmbientTint(current && !isAd && !isVoice ? current.id : null);
 
   const moodChips = (
     <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.mood.label")}>
@@ -506,6 +542,14 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
                 </a>
               ) : null}
             </div>
+          ) : isVoice && current.voice ? (
+            <div className="flex flex-col gap-2" aria-label="Station host">
+              <p className="flex items-center gap-2 text-xs text-foreground/80">
+                <span className="rounded-full border px-2 py-0.5">neo-fm</span>
+                <span className="rounded-full border px-2 py-0.5">AI host</span>
+              </p>
+              <p className="text-base italic text-foreground/90">{current.voice.text}</p>
+            </div>
           ) : (
             <>
               <div className="flex items-center gap-4">
@@ -526,8 +570,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           )}
           <audio
             ref={audioRef}
-            controls={!isAd}
-            className={isAd ? "hidden" : "w-full"}
+            controls={!isAd && !isVoice}
+            className={isAd || isVoice ? "hidden" : "w-full"}
             onEnded={() => advance("finish")}
             onPlaying={() => { errorsInARow.current = 0; setBlocked(false); setMediaPlaybackState(true); }}
             onPause={() => setMediaPlaybackState(false)}
@@ -557,6 +601,10 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             <div className="flex flex-wrap gap-2">
               {current.ad?.skipAfterMs != null ? <AdSkip key={current.id} afterMs={current.ad.skipAfterMs} onSkip={() => advance("skip")} /> : null}
             </div>
+          ) : isVoice ? (
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => advance("skip")} className="chip py-2">{t("station.skip")}</button>
+            </div>
           ) : (
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="chip py-2">
@@ -568,7 +616,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             <button type="button" onClick={shareWhatsApp} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
           )}
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd}>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd || isVoice}>
             <button type="button" onClick={moreLikeThis} className="chip">{t("station.steer.more")}</button>
             <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className="chip">{t("station.steer.calmer")}</button>
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className="chip">{t("station.steer.livelier")}</button>

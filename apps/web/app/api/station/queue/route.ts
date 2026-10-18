@@ -12,6 +12,8 @@
  * crossfade hint (`set`, `fadeInMs`, `fadeOutMs`), instrumentals between blocks within a daypart share cap, ads never inside a set.
  * With ADS_ENABLED=1, free and signed-out listeners may get one `type: "ad"` item spliced in (lib/station/ads.ts caps); the
  * player sends its session counters (`played`, `since`, `adAge`, `adSec`, `seen`). Any ad failure leaves the queue unchanged.
+ * With STATION_VOICE_LINKS=1, one `type: "voice"` item (a pre-rendered AI host link or ident, lib/station/voice-links.ts) may be spliced
+ * between songs; the player sends `vsince`, `vn`, `vseen`, `vhr`. It never sits inside a set or next to an ad, and a failure leaves the queue unchanged.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -25,6 +27,7 @@ import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
+import { parseVoiceState, pickVoice, timeChecksEnabled, voiceItem, voiceLinksEnabled, VOICE_LINES } from "@/lib/station/voice-links";
 import { arrangeSets, crossfadeFor, setsEnabled } from "@/lib/station/sets";
 import { parseSteer, steerQueue } from "@/lib/station/steer";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
@@ -125,11 +128,20 @@ export async function GET(req: NextRequest) {
       }),
     )
   ).filter((t) => t !== null);
+  let out: Array<(typeof tracks)[number] | ReturnType<typeof voiceItem> | NonNullable<Awaited<ReturnType<typeof adForQueue>>>["item"]> = tracks;
   if (adsEnabled() && tracks.length > 1) {
     try {
       const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks: tracks.map((t, i) => ({ tags: t.tags, joinedToPrev: i > 0 && !!t.set && t.set.id === tracks[i - 1]!.set?.id })) });
-      if (ad) return NextResponse.json({ tracks: [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)] });
+      if (ad) out = [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)];
     } catch { /* ads are optional: serve the plain queue */ }
   }
-  return NextResponse.json({ tracks });
+  if (voiceLinksEnabled() && out.length > 1) {
+    try {
+      // Spoken links are static files; they go in after any ad so the two never touch.
+      const slots = out.map((t, i) => ({ language: t.language, type: "type" in t ? t.type : undefined, kind: "kind" in t ? t.kind : undefined, joinedToPrev: i > 0 && "set" in t && !!t.set && "set" in out[i - 1]! && (out[i - 1] as { set?: { id: string } }).set?.id === t.set.id }));
+      const v = pickVoice(VOICE_LINES, slots, { hour: clock.hour, language: lang, state: parseVoiceState(sp), timeChecks: timeChecksEnabled() });
+      if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
+    } catch { /* voice links are optional: serve the queue as it is */ }
+  }
+  return NextResponse.json({ tracks: out });
 }
