@@ -267,19 +267,16 @@ begin
                 'enqueue_cover_art_job','record_cover_art_template','toggle_favorite','save_user_preset','delete_user_preset',
                 'record_preference_pair',
                 -- read-only aggregates over the caller's own songs (auth.uid() filter inside; anon has no execute)
-                'creator_insights_daily','creator_top_languages','creator_best_song_week',
-                -- anonymous-safe by design (validate + insert only)
-                'join_waitlist','submit_feedback'])
+                'creator_insights_daily','creator_top_languages','creator_best_song_week'])
   loop
     bad := bad || format('SECURITY DEFINER function %s is executable by anon/authenticated and not in the audit allowlist', r.sig);
   end loop;
 
-  -- anon may execute only the two anonymous-safe definer functions above
+  -- anon may not execute any SECURITY DEFINER function (join_waitlist / submit_feedback are service-role only, 0101)
   for r in select p.oid::regprocedure::text as sig
              from pg_proc p join pg_namespace n on n.oid = p.pronamespace
             where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
               and has_function_privilege('anon', p.oid, 'execute')
-              and p.proname <> all (array['join_waitlist','submit_feedback'])
   loop
     bad := bad || format('anon can execute SECURITY DEFINER function %s', r.sig);
   end loop;
