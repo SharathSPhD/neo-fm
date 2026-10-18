@@ -16,6 +16,8 @@ export interface LanguageSample {
   code: HeroLang;
   /** Set when a public, playable community song exists for this language. */
   song: { publicId: string; title: string; lines: string[] } | null;
+  /** True when the admitted station pool has a track in this language, so the tab can play one when no community song exists. */
+  pool: boolean;
   /** Starter idea written in the language's own script (always present). */
   idea: string;
 }

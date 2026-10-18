@@ -10,7 +10,7 @@ const DESCRIPTION = "Music tuned to your taste that never stops. Hindi, Tamil, T
 
 // The card image comes from opengraph-image.tsx next to this file.
 export const metadata: Metadata = {
-  title: "Station",
+  title: "neo-fm Station, your 24/7 personal FM",
   description: DESCRIPTION,
   alternates: { canonical: "/station" },
   openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
