@@ -21,3 +21,15 @@ Reproduce: `/api/admin/pce-eval` actions start / advance / polishcopy / gjudge /
 
 ## Guarded self-improvement: first run (2026-10-12)
 `/api/admin/self-improve` — Opus drafted a new polish template from the 8 worst-prosody training pairs (held-out briefs never shown). On the 28 held-out briefs it **lost** to the live template (candidate 11 PCE-wins vs live 20; worse on every dimension), so the verdict was `reject` and nothing changed. Promotion needs both Claude and Gemini to see a gain (>= +3 / +2 wins) with no dimension worse by > 0.15, and a daily monitor rolls a promoted version back if the pronunciation match drops > 10 points. The loop is data-only: it can change one prompt template, never code, safety rules, spend caps or the eval set.
+
+## Running the prompt gate cheaply (2026-10-18)
+Gate a polish template (for example the FIT THE CLIP candidate in `managed-agents/candidates/polish-tail-safe.md`) with stored drafts only: no agent sessions, no audio. Auth is the admin bearer; all calls are POST on `/api/admin/self-improve`.
+
+1. `action=register` with body `{"template": "<file contents>"}` stores it as a `draft` (validated: placeholders, no URLs or safety text). Returns `config_id`.
+2. `action=estimate&config=ID&set=held&n=12` returns the case count and expected Claude USD. It spends nothing. `set` is `held` (fullA held-out briefs, live verdict already stored in fullB), `occasion` (batch occA) or `both`.
+3. `action=evaluate&config=ID&set=held&n=12&max_usd=2` runs the gate. It refuses when the estimate exceeds `max_usd` (default `EVAL_MAX_USD` or 2, cap 8), stops when metered spend reaches it, and a run that skipped or lost pairs cannot recommend. The report carries `estimate` and the metered `spend`; compare them and set `EVAL_RATES_JSON` if the assumed prices are off.
+4. Verdict `recommend` needs Claude >= live + 3 wins, Gemini >= live + 2, no dimension worse than live by > 0.15, on the same briefs. `promote` still needs a human `approved_by`. Do not pass `auto=1` while the eval budget is tight.
+
+Occasion songs (wedding, birthday, festival, farewell; 3 per language, `lib/eval/occasion-briefs.ts`) are seeded once: `POST /api/admin/pce-eval?action=start&batch=occA&set=occasion&baseline=best6`, then `GET ...?action=advance&batch=occA` until done. The seed costs one lyrics-only Haiku session plus one best-of-6 baseline per brief; after that, every candidate evaluation reuses those drafts.
+
+Expected Claude spend (list-price assumption, see `lib/eval/cost.ts`): about USD 0.4 for 12 held-out briefs, about USD 1.2 for 12 held-out plus 15 occasion briefs (live template recomputed for the occasion ones), plus a one-off occasion seed of about USD 1.5. The total eval budget is about USD 16.
