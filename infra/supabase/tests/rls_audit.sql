@@ -104,6 +104,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('ad_events',             'service', 'user_id', null, 'ad start/complete/tap log; service role only'),
   ('social_accounts',       'service', null,      null, 'sealed OAuth tokens for the video publisher; service role only'),
   ('social_posts',          'service', null,      null, 'video publish queue; service role only'),
+  ('user_social_accounts',  'service', 'user_id',     null, 'listener-connected social tokens, sealed; service role only'),
+  ('user_social_apps',      'service', 'user_id',     null, 'listener own-app credentials, sealed; service role only'),
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
@@ -158,6 +160,8 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('ad_events',             'event',        '''start'''),
   ('social_accounts',       'platform',     '''youtube'''),
   ('social_posts',          'platform',     '''youtube'''),
+  ('user_social_accounts',  'platform',     '''youtube'''),
+  ('user_social_apps',      'platform',     '''youtube'''),
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id

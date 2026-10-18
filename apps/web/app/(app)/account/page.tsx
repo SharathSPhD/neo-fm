@@ -26,6 +26,7 @@ import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
+import { SocialPanel } from "./social-panel";
 import { TastePanel } from "./taste-panel";
 import { ManageBillingButton } from "./manage-billing-button";
 import { UsageMeter } from "./usage-meter";
@@ -199,6 +200,7 @@ export default async function AccountPage(props: PageProps) {
       </section>
 
       <TastePanel />
+      <SocialPanel />
       <AccountActions email={auth.user.email ?? ""} />
     </div>
   );

@@ -22,21 +22,32 @@ export function open(sealed: string, env = process.env): string {
 }
 
 /** OAuth `state`: platform + expiry, HMAC-signed so the callback needs no session. */
-export function signState(platform: string, secret: string, now = Date.now(), ttlMs = 10 * 60_000): string {
-  const payload = Buffer.from(JSON.stringify({ p: platform, e: now + ttlMs, n: randomBytes(6).toString("hex") })).toString("base64url");
+export function signState(platform: string, secret: string, now = Date.now(), ttlMs = 10 * 60_000, extra: StateExtra = {}): string {
+  const payload = Buffer.from(JSON.stringify({ ...extra, p: platform, e: now + ttlMs, n: randomBytes(6).toString("hex") })).toString("base64url");
   return `${payload}.${createHmac("sha256", secret).update(payload).digest("base64url")}`;
 }
 
 export function verifyState(state: string, platform: string, secret: string, now = Date.now()): boolean {
+  return readState(state, platform, secret, now) !== null;
+}
+
+/** Listener connects carry the signed-in user (`u`) and credential mode (`m`) so the callback needs no session cookie. */
+export interface StateExtra {
+  u?: string;
+  m?: "neofm_app" | "own_app";
+}
+
+/** Verified payload, or null when the signature, platform or expiry is wrong. */
+export function readState(state: string, platform: string, secret: string, now = Date.now()): StateExtra | null {
   const [payload, sig] = state.split(".");
-  if (!payload || !sig || !secret) return false;
+  if (!payload || !sig || !secret) return null;
   const want = createHmac("sha256", secret).update(payload).digest();
   const got = Buffer.from(sig, "base64url");
-  if (got.length !== want.length || !timingSafeEqual(got, want)) return false;
+  if (got.length !== want.length || !timingSafeEqual(got, want)) return null;
   try {
-    const p = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { p: string; e: number };
-    return p.p === platform && p.e > now;
+    const p = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as StateExtra & { p: string; e: number };
+    return p.p === platform && p.e > now ? { u: p.u, m: p.m } : null;
   } catch {
-    return false;
+    return null;
   }
 }
