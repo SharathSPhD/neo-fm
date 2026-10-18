@@ -10,7 +10,7 @@ vi.mock("../../../lib/supabase/auth", async () => {
 });
 import { requireUser } from "../../../lib/supabase/auth";
 
-const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example", STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_year", STRIPE_PRICE_PACK_SINGLE_ID: "price_pack1", STRIPE_PACK_UPI: "1" };
+const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example", STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_year", STRIPE_PRICE_PACK_SINGLE_ID: "price_pack1", STRIPE_PACK_UPI: "1", STRIPE_SUBSCRIPTION_UPI: "" };
 
 async function load(env: Partial<typeof ENV> | null) {
   vi.resetModules();
@@ -108,5 +108,14 @@ describe("POST /api/billing/checkout", () => {
     await POST(body({ pack: "single" }));
     expect(create.mock.calls[0]![0].payment_method_types).toEqual(["card"]);
     expect((await POST(body({ pack: "three" }))).status).toBe(503);
+  });
+  it("adds UPI AutoPay to subscription checkout only behind STRIPE_SUBSCRIPTION_UPI", async () => {
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/sub" });
+    let POST = await load(ENV); user();
+    await POST(body({ tier: "creator" }));
+    expect(create.mock.calls[0]![0].payment_method_types).toEqual(["card"]);
+    POST = await load({ ...ENV, STRIPE_SUBSCRIPTION_UPI: "1" }); user();
+    await POST(body({ tier: "creator" }));
+    expect(create.mock.calls[1]![0].payment_method_types).toEqual(["card", "upi"]);
   });
 });

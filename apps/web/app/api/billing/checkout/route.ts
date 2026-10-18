@@ -159,7 +159,8 @@ export async function POST(req: Request) {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "subscription",
-        payment_method_types: ["card"],
+        // UPI AutoPay: in subscription mode Stripe derives the mandate from the subscription itself.
+        payment_method_types: (cfg.subscriptionUpi ? ["card", "upi"] : ["card"]) as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
         line_items: [
           { price: planPrice, quantity: 1 },
         ],

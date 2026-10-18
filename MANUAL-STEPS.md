@@ -19,6 +19,7 @@ Status as of 2026-10-12: all manual steps are closed. Nothing further is needed 
 | 8 | Rate limiting store (Upstash) | ✅ done, `/api/health` reports upstash ok |
 | 9 | Re-run agent setup | ➖ dropped by decision; step 6 is enough |
 | 10 | Approve the paid test renders | ✅ approved and run |
+| 11 | Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay | ⏳ open (test mode only) |
 
 ## Do these next, in this order
 1. **2a** Supabase auth URLs for the new domain (2 minutes). Until then sign-in from the new domain may land on the vercel.app address.
@@ -88,3 +89,24 @@ Not needed; step 6 is enough.
 
 ## 10. Approve the paid test renders: ✅ DONE
 Approved in chat and run; results are in the quality and latency reports.
+
+## 11. Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay: ⏳ OPEN (test mode only)
+Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.stripe.com/test/...`). Never do this in live mode. Dashboard labels move around; if one differs, search the dashboard for the word in bold. Never paste keys in chat.
+
+**A. Yearly plans (needs PR #129 merged and deployed)**
+1. Call `POST https://<app>/api/admin/stripe-setup` with header `Authorization: Bearer <CRON_SECRET>` (the response lists price ids, no secrets). It is idempotent and refuses a live key.
+2. In Vercel > neo-fm-web > Settings > Environment Variables, add `STRIPE_PRICE_CREATOR_ANNUAL_ID` and `STRIPE_PRICE_PRO_ANNUAL_ID` from `prices.creator.inr_annual` and `prices.pro.inr_annual`. Redeploy. /pricing now shows the yearly buttons.
+3. Webhook: Developers > Webhooks > your endpoint > **Update details** > add the event `checkout.session.async_payment_succeeded` (the existing events stay).
+
+**B. Check UPI is available on this account**
+4. Settings > Payments > **Payment methods**. Find **UPI**. If it is missing or shows "not available", stop and tell Claude what it says: Stripe's docs conflict on whether Indian accounts can enable it, and nothing below works without it.
+5. If it is there, turn it **on** for test mode.
+
+**C. Gift packs (do NOT do this until the /gift flow #128 spends credits)**
+6. Apply migration 0089 only after #129 merges and you say go.
+7. Only when #128 calls `consume_pack_song`: add `STRIPE_PRICE_PACK_SINGLE_ID` and `STRIPE_PRICE_PACK_THREE_ID` (from `packs.single.inr`, `packs.three.inr`) in Vercel, plus `STRIPE_PACK_UPI=1` if step 5 worked. Redeploy.
+
+**D. UPI AutoPay on subscriptions (flag, test mode only)**
+8. Needs step 5. In Vercel add `STRIPE_SUBSCRIPTION_UPI=1`; it has no effect with a live key. Redeploy. Creator/Pro checkout then lists UPI next to card.
+9. Test it: sign in, upgrade, pick UPI, use Stripe's test VPAs from `docs.stripe.com/payments/upi` (do not use a real UPI app). Confirm the account page shows the plan and the subscription appears in the test dashboard.
+10. Not signed off for live mode: Stripe requires a pre-debit SMS or app notification at least 24 hours before each recurring charge with the exact amount, and a mandate cap (₹15,000 per Chargebee's docs). Claude has not verified Stripe sends the notification for you; check the AutoPay page in the Stripe docs before any live use.

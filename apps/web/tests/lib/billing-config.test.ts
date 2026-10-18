@@ -59,7 +59,20 @@ describe("isBillingEnabled", () => {
       annualPrices: {},
       packPrices: {},
       packUpi: false,
+      subscriptionUpi: false,
     });
+  });
+
+  it("offers subscription UPI only with the flag AND a test-mode key", async () => {
+    try {
+      Object.assign(process.env, FULL_ENV, { STRIPE_SUBSCRIPTION_UPI: "1" });
+      expect((await loadConfig()).getBillingConfigOrNull()?.subscriptionUpi).toBe(true);
+      process.env.STRIPE_SECRET_KEY = "sk_live_full";
+      vi.resetModules();
+      expect((await loadConfig()).getBillingConfigOrNull()?.subscriptionUpi).toBe(false);
+    } finally {
+      delete process.env.STRIPE_SUBSCRIPTION_UPI;
+    }
   });
 
   it("maps annual prices to their tier and pack prices to their sku", async () => {
