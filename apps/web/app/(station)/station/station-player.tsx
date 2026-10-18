@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
@@ -13,12 +14,16 @@ interface Track {
   language: string;
   tags: string[];
   url: string;
+  /** Templated host line from the queue API; shown as text on some track changes. */
+  host?: string;
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
 
 /** After this many tracks in a row fail to load, stop skipping and tell the listener instead of looping. */
 const MAX_CONSECUTIVE_ERRORS = 3;
+const HOST_EVERY = 3;
+const HOST_VISIBLE_MS = 12_000;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
 
@@ -33,6 +38,18 @@ function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
 
 /** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
 const NUDGE_AFTER = 3;
+
+type Energy = "up" | "down";
+
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[] } = {}) {
+  const q = new URLSearchParams({ limit: "10" });
+  if (language) q.set("lang", language);
+  if (energy) q.set("energy", energy);
+  if (extra.like) q.set("like", extra.like);
+  if (extra.exclude) q.set("exclude", extra.exclude);
+  if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  return `/api/station/queue?${q}`;
+}
 
 export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -51,14 +68,19 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [plays, setPlays] = useState(0);
+  const [energy, setEnergy] = useState<Energy | null>(null);
+  // Refills read it through a ref so a chip tap never restarts the language effect.
+  const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
+  const tracksStarted = useRef(0);
+  const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
   const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
     try {
-      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
-      const res = await fetch(`/api/station/queue?${qs}`);
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
     } catch {
@@ -84,9 +106,13 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
     audioRef.current.src = current.url;
+    // A host line on the first track and then every third, so the station has a voice without chattering.
+    const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
+    tracksStarted.current += 1;
+    setHostLine(showHost ? current.host! : null);
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
-    void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => setBlocked(true));
+    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
 
@@ -111,6 +137,12 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     advance("error");
   }
 
+  useEffect(() => {
+    if (!hostLine) return;
+    const id = setTimeout(() => setHostLine(null), HOST_VISIBLE_MS);
+    return () => clearTimeout(id);
+  }, [hostLine]);
+
   // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
   const controls = useRef({ skip: () => {} });
   controls.current.skip = () => advance("skip");
@@ -133,6 +165,31 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     errorsInARow.current = 0;
     setFailed(false);
     void refill(lang, moods);
+  }
+
+  // Re-steer the upcoming tracks without touching the one playing, so a tap shows in what plays next.
+  async function steerTail(next: Energy | null, likeId?: string) {
+    if (!current) return;
+    try {
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods }));
+      const data = (await res.json()) as { tracks?: Track[] };
+      if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
+    } catch { /* keep the current queue */ }
+  }
+
+  function chooseEnergy(dir: Energy) {
+    const next = energy === dir ? null : dir;
+    setEnergy(next);
+    energyRef.current = next;
+    setNote(next ? (next === "up" ? "Livelier tracks coming up" : "Calmer tracks coming up") : "Back to the usual mix");
+    void steerTail(next);
+  }
+
+  function moreLikeThis() {
+    if (!current) return;
+    if (!liked.has(current.id)) like();
+    setNote("More like this coming up");
+    void steerTail(energyRef.current, current.id);
   }
 
   function like() {
@@ -211,6 +268,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
 
   return (
     <section aria-label="Station player" className="flex flex-col gap-4">
+      <InstallPrompt plays={plays} minPlays={2} />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
         {LANGS.map((l) => (
           <button
@@ -231,6 +289,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
+          {hostLine ? <p role="status" className="text-sm italic text-muted-foreground">{hostLine}</p> : null}
           <p className="text-lg font-medium">{current.title}</p>
           <p className="text-xs text-muted-foreground">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
           <audio
@@ -261,6 +320,11 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
             <button type="button" onClick={shareWhatsApp} className="rounded border px-3 py-2">WhatsApp</button>
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
+            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-primary text-primary-foreground" : ""}`}>Calmer</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {anonymous && played >= NUDGE_AFTER ? (

@@ -4,7 +4,6 @@
  * both because the station player pauses the app-wide player before it starts.
  */
 import { AppShell } from "@/components/app-shell";
-import { InstallPrompt } from "@/components/install-prompt";
 import { MarketingNav } from "@/components/marketing-nav";
 import { NetworkBanner } from "@/components/network-banner";
 import { MiniPlayer } from "@/components/player/mini-player";
@@ -25,7 +24,6 @@ export default async function StationGroupLayout({ children }: { children: React
     <PlayerProvider>
       <NetworkBanner />
       <AppShell user={user}>
-        <InstallPrompt />
         {children}
       </AppShell>
       <MiniPlayer />
