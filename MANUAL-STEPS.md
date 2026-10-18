@@ -61,6 +61,6 @@ Context and verification: [docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md). 
 4. **Leaked-password protection.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/providers, Email provider, enable "Prevent use of leaked passwords" (needs the Pro plan from step 2.4).
 5. **Embedder.** Check the Cloud Run service in https://console.cloud.google.com/run and tell Claude whether the latest revision is healthy or needs a rebuild. The app works without it.
 6. **Vercel Web Analytics.** Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/analytics and click Enable. Claude adds the component in a PR.
-7. **Anthropic admin key for the spend tracker.** Create an Admin API key at https://console.anthropic.com/settings/admin-keys and add it only as the cloud environment variable `ANTHROPIC_ADMIN_KEY`. Never paste it in chat. It is used read-only for `cost_report` and `usage_report`.
+7. **Anthropic admin key for the spend tracker.** Create an Admin API key at https://console.anthropic.com/settings/admin-keys and add it only as the cloud environment variable `MA_ADMIN_KEY` (not an ANT* name, those are blocked). Never paste it in chat. It is used read-only for `cost_report` and `usage_report`.
 8. **Migrations 0072, 0076, 0078, 0086.** Apply each only after the lead has reviewed and merged its PR, and say go.
 

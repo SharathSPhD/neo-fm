@@ -33,7 +33,7 @@ Proposal for a follow-up PR (not in this one): one SQL view or `scripts/funnel-r
 
 ## Spend
 
-`node scripts/spend-report.mjs --out <file>` writes the daily summary. With `ANTHROPIC_ADMIN_KEY` set it reads the Admin API `cost_report` and `usage_report/messages` (GET only); without it, it says billed spend is unavailable and reports only the app ledger. Lyria and Gemini bill separately from the USD 88 Claude credit.
+`node scripts/spend-report.mjs --out <file>` writes the daily summary. With `MA_ADMIN_KEY` set it reads the Admin API `cost_report` and `usage_report/messages` (GET only); without it, it says billed spend is unavailable and reports only the app ledger. Lyria and Gemini bill separately from the USD 88 Claude credit.
 
 ## Verify after S completes the manual steps
 

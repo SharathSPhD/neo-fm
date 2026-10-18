@@ -37,7 +37,7 @@ test("with a key it pages cost_report and sends the key only as a header", async
       ? { data: [{ starting_at: "2026-10-18T00:00:00Z", results: [{ amount: page ? "100" : "200", model: "m" }] }], has_more: !page, next_page: "p2" }
       : { data: [], has_more: false } };
   };
-  const r = await collect({ env: { ANTHROPIC_ADMIN_KEY: "k" }, fetchImpl, now, since });
+  const r = await collect({ env: { MA_ADMIN_KEY: "k" }, fetchImpl, now, since });
   assert.equal(r.cost.total, 3);
   assert.match(renderMarkdown(r), /USD 3\.00/);
 });

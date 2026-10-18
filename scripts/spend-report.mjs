@@ -3,7 +3,7 @@
 // Read-only: only GETs the Admin API cost_report / usage_report and the app's spend_ledger.
 // Never touches billing settings. Secrets come from env vars only and are never printed.
 //
-//   ANTHROPIC_ADMIN_KEY            Admin API key (sk-ant-admin...). Absent => ledger-only mode.
+//   MA_ADMIN_KEY                   Admin API key (sk-ant-admin...); ANT* env names are blocked. Absent => ledger-only mode.
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   optional, for the app's spend_ledger (Lyria GBP reservations)
 //   node scripts/spend-report.mjs [--since YYYY-MM-DD] [--out path.md]
 
@@ -117,7 +117,7 @@ export function renderMarkdown({ now, since, cost, tokens, ledger, notes }) {
 export async function collect({ env = process.env, fetchImpl = fetch, now = new Date(), since }) {
   const notes = [];
   let cost, tokens, ledger;
-  const key = env.ANTHROPIC_ADMIN_KEY;
+  const key = env.MA_ADMIN_KEY ?? env.ANTHROPIC_ADMIN_KEY;
   if (key) {
     const headers = { "x-api-key": key, "anthropic-version": "2023-06-01" };
     const range = { starting_at: since.toISOString(), ending_at: now.toISOString() };
