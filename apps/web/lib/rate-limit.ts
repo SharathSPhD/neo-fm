@@ -148,6 +148,10 @@ export function pickRule(
   if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
   }
+  // Anonymous listener counters: write-only, so keep the budget lower than reads.
+  if (/^\/api\/p\/[^/]+\/listen\/?$/.test(pathname)) {
+    return { bucket: "public:listen", limit: 30 };
+  }
   // Public share-surface reads.
   if (pathname.startsWith("/api/p/") || pathname === "/api/oembed") {
     return { bucket: "public:read", limit: 120 };

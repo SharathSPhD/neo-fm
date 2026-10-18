@@ -63,6 +63,22 @@ export function PublicSongAudio({
     }).catch(() => undefined);
   }
 
+  const counted = useRef(false);
+  // Anonymous play counter for the creator's insights: once per page view, skipped when the browser says Do Not Track
+  // or Global Privacy Control. Sends nothing about the listener (the server keeps only the language subtag).
+  function onFirstPlay() {
+    if (counted.current) return;
+    counted.current = true;
+    const nav = navigator as Navigator & { globalPrivacyControl?: boolean };
+    if (nav.doNotTrack === "1" || nav.globalPrivacyControl) return;
+    void fetch(`/api/p/${publicId}/listen`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: "play" }),
+      keepalive: true,
+    }).catch(() => undefined);
+  }
+
   async function onError() {
     if (refreshing) return;
     setRefreshing(true);
@@ -106,6 +122,7 @@ export function PublicSongAudio({
         preload="metadata"
         src={src}
         onError={onError}
+        onPlay={onFirstPlay}
         onPause={reportPlay}
         onEnded={reportPlay}
         onTimeUpdate={onTime ? (e) => onTime(e.currentTarget.currentTime) : undefined}

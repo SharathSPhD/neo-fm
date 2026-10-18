@@ -92,6 +92,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('ui_review_edits',       'service', null,      null, 'reviewer verdicts on UI strings; service role only'),
   ('feedback',              'service', 'user_id', null, 'submitted via submit_feedback(); read by service role only'),
   ('funnel_daily',          'service', null,      null, null),
+  ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
+  ('song_listens_daily',    'service', null,      null, 'daily roll-up of song_listens; service role only'),
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
@@ -133,6 +135,8 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('song_lyric_meanings',   'lines',        '''[]''::jsonb'),
   ('ui_review_tokens',      'language',     '''hi'''),
   ('ui_review_edits',       'action',       '''approve'''),
+  ('song_listens',          'kind',         '''play'''),
+  ('song_listens_daily',    'kind',         '''play'''),
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id
@@ -249,6 +253,8 @@ begin
                 'create_song_job','create_section_regen_job','publish_song','publish_song_batch','recover_song_job',
                 'enqueue_cover_art_job','record_cover_art_template','toggle_favorite','save_user_preset','delete_user_preset',
                 'record_preference_pair',
+                -- read-only aggregates over the caller's own songs (auth.uid() filter inside; anon has no execute)
+                'creator_insights_daily','creator_top_languages','creator_best_song_week',
                 -- anonymous-safe by design (validate + insert only)
                 'join_waitlist','submit_feedback'])
   loop
