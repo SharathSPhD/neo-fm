@@ -9,9 +9,10 @@ describe("voice entitlement by tier", () => {
     expect(voiceEntitlement("free").choices).toEqual(["station"]);
     expect(voiceEntitlement(null).styles).toEqual([]);
   });
-  it("gives creator and Station pass male/female, pro everything", () => {
+  it("gives creator male/female, Station pass and pro duet too, pro the styles", () => {
     expect(voiceEntitlement("creator").choices).toEqual(["station", "female", "male"]);
-    expect(voiceEntitlement("free", true).choices).toContain("male");
+    expect(voiceEntitlement("free", true).choices).toContain("duet");
+    expect(voiceEntitlement("free", true).styles).toEqual([]);
     expect(voiceEntitlement("pro").choices).toContain("duet");
     expect(voiceEntitlement("pro").styles.length).toBeGreaterThan(0);
   });
