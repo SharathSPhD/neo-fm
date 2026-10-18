@@ -19,6 +19,7 @@ import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
+import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { UpgradeButton } from "./upgrade-button";
@@ -221,6 +222,7 @@ export default async function PricingPage() {
           </div>
         </section>
       ) : null}
+      <QualityEvidenceSummary />
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
         {t("pricing.footnote")} <a href="/help" className="underline">{t("pricing.faq")}</a>.
       </footer>

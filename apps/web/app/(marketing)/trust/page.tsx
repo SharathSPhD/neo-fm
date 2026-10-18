@@ -7,6 +7,7 @@ import Link from "next/link";
 
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
+import { QualityEvidence } from "@/components/marketing/quality-evidence";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/trust" },
@@ -40,6 +41,7 @@ export default async function TrustPage() {
           </li>
         ))}
       </ul>
+      <QualityEvidence />
       <section className="mt-12 rounded-lg border border-muted/30 p-5" aria-labelledby="grievance-heading">
         <h2 id="grievance-heading" className="text-lg font-medium">{t("trust.g.title")}</h2>
         <p className="mt-2 text-sm text-foreground/70">
