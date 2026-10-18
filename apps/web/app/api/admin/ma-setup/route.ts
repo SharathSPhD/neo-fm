@@ -11,7 +11,7 @@ import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { safeEmbedUrl } from "../../../../lib/agent/embed-url";
 import { anthropicClient } from "../../../../lib/agent/adapters";
 import {
-  environmentParams, freeProducerParams, poetParams, polisherParams, proProducerParams,
+  environmentParams, freeProducerParams, poetParams, polisherParams, proFastProducerParams, proProducerParams,
 } from "../../../../lib/agent/definitions";
 import { cleanId } from "../../../../lib/agent/tiers";
 import { SKILL_FILES, SKILL_PCE_POEM_MD } from "../../../../lib/agent/skill-pce-poem";
@@ -70,6 +70,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ upgraded: true, skill_version: (v as { version?: string }).version ?? null, files: files.length, allowed_hosts: hosts, pro_agent_updated: Boolean(proId) });
     }
 
+    const wantFast = req.nextUrl.searchParams.get("variant") === "pro_fast";
     const ensureAgent = async (params: { name: string }, make: () => Promise<{ id: string }>) => {
       const existing = await firstByName(client.beta.agents.list(), "name", params.name);
       if (existing) return existing;
@@ -85,8 +86,11 @@ export async function POST(req: NextRequest) {
     const freeId = await ensureAgent(free, () => client.beta.agents.create(free));
     const proId = await ensureAgent(pro, () => client.beta.agents.create(pro));
 
+    const fastId = wantFast ? await ensureAgent(proFastProducerParams(skillId, poetId), () => client.beta.agents.create(proFastProducerParams(skillId, poetId))) : undefined;
+
     return NextResponse.json({
       created,
+      ...(fastId ? { MA_AGENT_ID_PRO_FAST: fastId } : {}),
       MA_ENVIRONMENT_ID: environmentId, MA_AGENT_ID_FREE: freeId, MA_AGENT_ID_PRO: proId,
       skill_id: skillId, poet_id: poetId, polisher_id: polisherId,
       // Booleans only: does each configured env var equal the real ID?
