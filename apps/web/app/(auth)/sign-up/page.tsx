@@ -23,6 +23,12 @@ export default async function SignUpPage() {
           {t("auth.signUp.subtitle")}
         </p>
       </header>
+      <p className="text-xs text-foreground/60">
+        {t("auth.signUp.ageNotice")}{" "}
+        <Link className="underline" href="/terms">
+          {t("footer.terms")}
+        </Link>
+      </p>
       <GoogleButton />
       <SignUpForm />
       <footer className="text-sm text-foreground/60">

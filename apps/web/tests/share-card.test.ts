@@ -40,6 +40,7 @@ describe("share card helpers", () => {
 
   it("builds a share payload", () => {
     expect(buildSharePayload("Raag", "https://x/s/1").url).toBe("https://x/s/1");
+    expect(buildSharePayload("Raag", "https://x/s/1").text).toContain("your personal FM");
   });
 
   it("moves pre-base vowel signs ahead of the consonant for satori", () => {

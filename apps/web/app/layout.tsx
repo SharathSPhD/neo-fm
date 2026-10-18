@@ -11,7 +11,7 @@ import "./globals.css";
 import { ServiceWorkerRegister } from "./service-worker-register";
 
 const DESCRIPTION =
-  "AI songs in Kannada, Tamil, Telugu, Hindi and Bengali. Lyrics written natively, performed by a singer, and checked for pronunciation.";
+  "Your personal FM: songs made for you in Kannada, Tamil, Telugu, Hindi and Bengali. Lyrics written natively, performed by a singer, and checked for pronunciation.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
@@ -21,13 +21,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "neo-fm",
-    title: "neo-fm: AI songs in Indian languages",
+    title: "neo-fm: your personal FM, in your language",
     description: DESCRIPTION,
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "neo-fm: AI songs in Indian languages",
+    title: "neo-fm: your personal FM, in your language",
     description: DESCRIPTION,
   },
   appleWebApp: {

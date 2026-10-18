@@ -133,7 +133,7 @@ export function fontFamilyFor(text: string): string {
 
 /** Payload for navigator.share; text kept short for messaging apps. */
 export function buildSharePayload(title: string, url: string) {
-  return { title, text: `Listen to “${title}” on neo-fm`, url };
+  return { title, text: `Listen to “${title}” on neo-fm, your personal FM`, url };
 }
 
 /**

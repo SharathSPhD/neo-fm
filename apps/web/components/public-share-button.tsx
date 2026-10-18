@@ -33,7 +33,7 @@ export function PublicShareButton({
     const url = window.location.href.split("#")[0]!;
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title, text: `Listen to “${title}” on neo-fm`, url });
+        await navigator.share({ title, text: `Listen to “${title}” on neo-fm, your personal FM`, url });
         record();
         return;
       } catch (e) {

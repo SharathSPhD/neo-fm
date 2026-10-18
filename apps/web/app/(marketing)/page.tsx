@@ -52,7 +52,9 @@ function Accented({ text }: { text: string }) {
 }
 
 export const metadata: Metadata = {
-  title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
+  title: "neo-fm: your personal FM, in Kannada, Tamil, Telugu, Hindi and Bengali",
+  description:
+    "Songs made for you in the language you think in. Native lyrics, a singer, and a pronunciation check on every track. Free to start; share any song in one tap.",
   alternates: { canonical: "/", languages: hreflangPaths() },
 };
 
@@ -60,7 +62,7 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "neo-fm",
-  description: "AI songs in Indian languages with native lyrics and a pronunciation check.",
+  description: "A personal FM: songs made for you in Indian languages, with native lyrics and a pronunciation check.",
   inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
   publisher: { "@type": "Organization", name: "Technektar" },
 };

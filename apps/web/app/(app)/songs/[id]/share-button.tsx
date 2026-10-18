@@ -247,7 +247,7 @@ export function ShareButton({
             </div>
 
             {clipSource ? (
-              <ClipExportButton songId={songId} title={title} to={dedTo} message={dedMsg} occasion={occasion} source={clipSource} />
+              <ClipExportButton songId={songId} title={title} to={dedTo} message={dedMsg} occasion={occasion} source={clipSource} shareUrl={visibility === "private" ? null : publicUrl} />
             ) : null}
 
             {error ? (

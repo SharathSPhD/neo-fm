@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
   title: "Pricing -- neo-fm",
   description:
-    "Free for 3 songs a month. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
+    "Start your own station free with 3 songs a month. One gift song is ₹99. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
 };
 
 interface Tier {
