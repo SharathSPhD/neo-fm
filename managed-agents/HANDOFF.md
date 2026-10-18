@@ -1,5 +1,7 @@
 # Handoff (session restart, 2026-10-12)
 
+> Superseded by [docs/HANDOFF.md](../docs/HANDOFF.md) (2026-10-12). Kept for history.
+
 Branch `claude/sleepy-keller-8eiz4s` (head 807733c+). Prod DB: neo-fm-prod `kgxltxvjlsnbwomklwox` (migrations through 0062). Preview with prod DB: latest deploy of that branch.
 
 ## In flight / resume first (updated: eval DONE, see EVAL-PCE.md; Telugu pronunciation 51% -> 99%; self-improve loop live, first candidate rejected)

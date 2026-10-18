@@ -21,23 +21,34 @@
  */
 import { useState, useTransition } from "react";
 
-interface Props {
-  tier: "creator" | "pro";
-  label: string;
-}
+import { sendFunnelEvent } from "@/components/funnel-beacon";
+import { checkoutErrorView } from "@/lib/billing/checkout-guard";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
-export function UpgradeButton({ tier, label }: Props) {
+type Props = { label: string; variant?: "primary" | "secondary" } & (
+  | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never }
+  | { pack: "single" | "three"; tier?: never; interval?: never }
+);
+
+export function UpgradeButton({ label, variant = "primary", ...target }: Props) {
+  const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [manageUrl, setManageUrl] = useState<string | null>(null);
 
   function start() {
     setError(null);
+    setManageUrl(null);
+    // Anonymous daily count of upgrade clicks; no tier, user or session is sent.
+    sendFunnelEvent("checkout_started");
     startTransition(async () => {
       try {
         const res = await fetch("/api/billing/checkout", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ tier }),
+          body: JSON.stringify(
+            target.pack ? { pack: target.pack } : { tier: target.tier, interval: target.interval ?? "month" },
+          ),
         });
         if (res.status === 401) {
           window.location.assign("/sign-in?next=/pricing");
@@ -49,17 +60,16 @@ export function UpgradeButton({ tier, label }: Props) {
             .catch(() => ({}))) as {
             error?: string;
             details?: string;
+            manage_url?: string;
           };
-          setError(
-            body.details ??
-              body.error ??
-              "Couldn't start checkout. Try again in a minute.",
-          );
+          const view = checkoutErrorView(res.status, body);
+          setError(view.message || t("pub.upgrade.failed"));
+          setManageUrl(view.manageUrl ?? null);
           return;
         }
         const body = (await res.json()) as { url?: string };
         if (!body.url) {
-          setError("Checkout returned no URL. Try again.");
+          setError(t("pub.upgrade.noUrl"));
           return;
         }
         window.location.assign(body.url);
@@ -75,14 +85,21 @@ export function UpgradeButton({ tier, label }: Props) {
         type="button"
         onClick={start}
         disabled={pending}
-        className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60"
+        className={`block w-full rounded-md border border-accent/40 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60 ${
+          variant === "primary" ? "bg-accent/10" : "bg-transparent"
+        }`}
       >
-        {pending ? "Opening checkout…" : label}
+        {pending ? t("pub.upgrade.opening") : label}
       </button>
       {error ? (
         <p role="alert" className="text-xs text-red-300">
           {error}
         </p>
+      ) : null}
+      {manageUrl ? (
+        <a href={manageUrl} className="text-xs font-medium text-accent hover:underline">
+          Manage your plan
+        </a>
       ) : null}
     </div>
   );

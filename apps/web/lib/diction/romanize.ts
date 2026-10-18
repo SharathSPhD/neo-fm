@@ -13,6 +13,12 @@ const tagOf = (l: string): string | null => {
   return /^#|^\*{0,2}\[/.test(l) && m ? m[1]!.trim() : null;
 };
 
+/** Romanization of one lyric line (ITRANS-based); Latin-script lines are returned unchanged. */
+export function romanizeLine(line: string): string {
+  const scheme = SCHEME[detectScript(line)];
+  return scheme ? roman(line, scheme) : line;
+}
+
 /**
  * "Singing script" for the music model: every lyric line is followed by its romanization in parentheses (measured on 6
  * Kannada/Tamil/Telugu/Hindi clips with Gemini transcription: character error rate 4.6% native-only -> 1.1% with

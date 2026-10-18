@@ -2,6 +2,8 @@
 
 import { PRESETS, type StylePreset } from "@neo-fm/style-presets";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 interface PresetGalleryProps {
   onPick(preset: StylePreset): void;
   /** id of the currently-applied preset (cards highlight when active). */
@@ -27,22 +29,21 @@ const STYLE_TONE: Record<string, string> = {
  * "browse the styles" surface (M6).
  */
 export function PresetGallery({ onPick, activeId }: PresetGalleryProps) {
+  const { t } = useUiLang();
   return (
     <fieldset
-      aria-label="Pick a style preset"
+      aria-label={t("create.gallery.aria")}
       className="flex flex-col gap-3 rounded-lg border border-muted/20 bg-muted/10 p-4"
     >
       <legend className="text-xs uppercase tracking-widest text-foreground/50">
-        Start from a preset
+        {t("create.gallery.legend")}
       </legend>
       <p className="text-sm text-foreground/60">
-        Indian classical, Kannada folk, and crossover starters with raga, tala
-        and instrumentation already chosen. Pick one and customise -- or skip
-        and configure the form yourself.
+        {t("create.gallery.desc")}
       </p>
       <ul
         role="radiogroup"
-        aria-label="Style presets"
+        aria-label={t("create.gallery.listAria")}
         className="grid grid-cols-1 gap-2 sm:grid-cols-2"
       >
         {PRESETS.map((p) => (

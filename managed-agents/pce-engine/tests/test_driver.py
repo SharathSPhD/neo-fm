@@ -32,3 +32,61 @@ def test_two_round_protocol(tmp_path: Path) -> None:
     r = json.loads((tmp_path / "result.json").read_text())
     assert r["committed"] in ("draft", "revision") and r["surface"] and abs(sum(r["posterior"]) - 1) < 1e-4
     assert r["audit"]["audit"]["two_pass"] is True
+
+
+# --- embedder best-effort: a refused token (e.g. the Cloud Run embedder predates v2 job-bound tokens) or a dead
+# --- service must degrade to the lexical embedder, never fail the run.
+import threading  # noqa: E402
+from http.server import BaseHTTPRequestHandler, HTTPServer  # noqa: E402
+
+import pytest  # noqa: E402
+
+
+class _Refuse(BaseHTTPRequestHandler):
+    def do_POST(self) -> None:  # noqa: N802
+        self.send_response(401)
+        self.end_headers()
+        self.wfile.write(b'{"detail":"unauthorized"}')
+
+    def log_message(self, *a: object) -> None:  # silence
+        pass
+
+
+def _drive_to_done(wd: Path, env: dict[str, str]) -> dict:
+    import os
+
+    def go() -> int:
+        return subprocess.run([sys.executable, str(ENGINE / "run_cascade.py"), str(wd)], capture_output=True, text=True,
+                              env={**os.environ, **env}).returncode
+
+    (wd / "brief.json").write_text(json.dumps(BRIEF))
+    assert go() == 3
+    (wd / "generations.json").write_text(json.dumps({"draft": [f"draft {i} lighthouse shore line\nline two\nline three\nline four" for i in range(3)], "revision": []}))
+    assert go() == 3
+    g = json.loads((wd / "generations.json").read_text())
+    g["revision"] = [f"revised {i} lighthouse shore line\nline two\nline three\nline four" for i in range(3)]
+    (wd / "generations.json").write_text(json.dumps(g))
+    assert go() == 0
+    return json.loads((wd / "result.json").read_text())
+
+
+def test_embedder_refuses_token_falls_back_to_lexical(tmp_path: Path) -> None:
+    srv = HTTPServer(("127.0.0.1", 0), _Refuse)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    try:
+        r = _drive_to_done(tmp_path, {"EMBED_URL": f"http://127.0.0.1:{srv.server_port}", "EMBED_TOKEN": "v2.9999999999.job.bad"})
+    finally:
+        srv.shutdown()
+    assert r["surface"] and r["committed"] in ("draft", "revision")
+    assert not r["embedder"].endswith("@service")  # lexical, not the service
+    assert "401" in r["embedder_fallback"]
+
+
+def test_embedder_unreachable_falls_back_to_lexical(tmp_path: Path) -> None:
+    r = _drive_to_done(tmp_path, {"EMBED_URL": "http://127.0.0.1:9", "EMBED_TOKEN": "x"})  # nothing listens on port 9
+    assert r["surface"] and r["embedder_fallback"] and not r["embedder"].endswith("@service")
+
+
+def test_no_embedder_configured_has_no_fallback_note(tmp_path: Path) -> None:
+    r = _drive_to_done(tmp_path, {"EMBED_URL": "", "EMBED_TOKEN": ""})
+    assert r["embedder_fallback"] is None

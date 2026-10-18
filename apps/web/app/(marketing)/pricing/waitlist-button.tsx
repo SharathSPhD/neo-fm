@@ -2,12 +2,15 @@
 
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 interface Props {
   tier: "creator" | "pro";
   label: string;
 }
 
 export function WaitlistButton({ tier, label }: Props) {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
@@ -21,7 +24,7 @@ export function WaitlistButton({ tier, label }: Props) {
     setMessage(null);
     const value = email.trim();
     if (!value || !value.includes("@")) {
-      setMessage({ kind: "err", text: "That doesn't look like an email." });
+      setMessage({ kind: "err", text: t("pub.waitlist.badEmail") });
       return;
     }
     startTransition(async () => {
@@ -33,7 +36,7 @@ export function WaitlistButton({ tier, label }: Props) {
       if (!res.ok) {
         setMessage({
           kind: "err",
-          text: "Couldn't join. Try again in a minute?",
+          text: t("pub.waitlist.failed"),
         });
         return;
       }
@@ -44,16 +47,16 @@ export function WaitlistButton({ tier, label }: Props) {
       if (body.joined) {
         setMessage({
           kind: "ok",
-          text: "On the list. We'll write the day we open.",
+          text: t("pub.waitlist.ok"),
         });
         setEmail("");
       } else if (body.already_on_list) {
         setMessage({
           kind: "dup",
-          text: "Already on the list. We'll be in touch.",
+          text: t("pub.waitlist.dup"),
         });
       } else {
-        setMessage({ kind: "err", text: "Unexpected response. Try again." });
+        setMessage({ kind: "err", text: t("pub.waitlist.unexpected") });
       }
     });
   }
@@ -73,7 +76,7 @@ export function WaitlistButton({ tier, label }: Props) {
   return (
     <form onSubmit={submit} className="flex flex-col gap-2">
       <label htmlFor={`waitlist-${tier}`} className="sr-only">
-        Email
+        {t("account.email")}
       </label>
       <input
         id={`waitlist-${tier}`}
@@ -91,7 +94,7 @@ export function WaitlistButton({ tier, label }: Props) {
         disabled={pending}
         className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
       >
-        {pending ? "Joining…" : "Notify me"}
+        {pending ? t("pub.waitlist.joining") : t("pub.waitlist.notify")}
       </button>
       {message ? (
         <p

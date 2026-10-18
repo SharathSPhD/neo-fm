@@ -41,7 +41,7 @@ describe("POST /api/songs/[id]/favorite", () => {
   it("returns 400 for invalid song id", async () => {
     const s = makeFakeSupabase();
     authed(s);
-    const res = await POST(new Request("http://x"), { params: { id: "bad" } });
+    const res = await POST(new Request("http://x"), { params: Promise.resolve({ id: "bad" }) });
     expect(res.status).toBe(400);
   });
 
@@ -50,7 +50,7 @@ describe("POST /api/songs/[id]/favorite", () => {
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(401);
   });
@@ -64,7 +64,7 @@ describe("POST /api/songs/[id]/favorite", () => {
     };
     authed(s);
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -80,7 +80,7 @@ describe("POST /api/songs/[id]/favorite", () => {
     });
     authed(s);
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(403);
   });
@@ -93,7 +93,7 @@ describe("POST /api/songs/[id]/favorite", () => {
     });
     authed(s);
     const res = await POST(new Request("http://x"), {
-      params: { id: SONG_ID },
+      params: Promise.resolve({ id: SONG_ID }),
     });
     expect(res.status).toBe(500);
   });

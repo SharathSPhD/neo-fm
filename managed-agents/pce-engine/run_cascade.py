@@ -36,11 +36,17 @@ def main(workdir: str) -> int:
     wd = Path(workdir)
     brief = json.loads((wd / "brief.json").read_text(encoding="utf-8"))
     gens = _load(wd / "generations.json", {"draft": [], "revision": []})
+    embed_fallback = None
+    embed = None
     if os.environ.get("EMBED_URL") and os.environ.get("EMBED_TOKEN"):
         from pce.substrate.http_embed import Embedder  # multilingual service (preferred)
 
-        embed = Embedder()
-    else:
+        try:
+            embed = Embedder()  # first call fetches the reference set, so a refused token or a dead service fails here
+        except Exception as exc:  # noqa: BLE001 - embedding is best-effort: any failure must degrade, never fail the song
+            embed_fallback = f"{type(exc).__name__}: {exc}"[:200]
+            print(f"EMBEDDER UNAVAILABLE ({embed_fallback}); continuing with the lexical embedder", file=sys.stderr)
+    if embed is None:
         embed = LexicalEmbedder()  # offline fallback: lexical only, flagged in result.json
     constraint = Constraint(
         text=brief["constraint"],
@@ -88,7 +94,7 @@ def main(workdir: str) -> int:
         "surface": state.surface, "committed": state.committed, "vimarsa_event": state.vimarsa_event,
         "vimarsa_novelty": state.vimarsa_novelty, "posterior": [float(p) for p in np.asarray(state.posterior)],
         "surface_draft": state.surface_draft, "surface_revision": state.surface_revision,
-        "embedder": embed.model_id, "audit": audit,
+        "embedder": embed.model_id, "embedder_fallback": embed_fallback, "audit": audit,
     }
     (wd / "result.json").write_text(json.dumps(result, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
     print(f"DONE committed={state.committed} vimarsa_event={state.vimarsa_event}")

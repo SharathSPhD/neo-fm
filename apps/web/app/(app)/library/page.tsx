@@ -10,6 +10,8 @@ import { redirect } from "next/navigation";
 
 import { createServerClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
+import { T } from "@/components/t";
+import { serverI18n } from "@/lib/i18n/server";
 
 import { LibraryToolbar } from "./toolbar";
 import { LibraryOnboardingModal } from "./onboarding-modal";
@@ -84,11 +86,13 @@ const ALLOWED_SORTS = new Set([
   "favorites",
 ]);
 
-export default async function LibraryPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function LibraryPage(
+  props: {
+    searchParams: Promise<SearchParams>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) redirect("/sign-in?next=/library");
@@ -252,13 +256,15 @@ export default async function LibraryPage({
       <LibraryOnboardingModal />
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1.5">
-          <h1 className="text-3xl font-medium tracking-tight">Library</h1>
+          <h1 className="text-3xl font-medium tracking-tight">{t("nav.library")}</h1>
           <p className="text-sm text-foreground/60">
             {libraryTotal === 0
-              ? "No songs yet."
+              ? t("lib.noSongsYet")
               : total === 0
-                ? "No matches."
-                : `Showing ${songs.length} of ${total} song${total === 1 ? "" : "s"}.`}
+                ? t("lib.noMatchesDot")
+                : total === 1
+                  ? t("lib.showing.one", { shown: songs.length, total })
+                  : t("lib.showing.other", { shown: songs.length, total })}
           </p>
         </div>
       </header>
@@ -269,19 +275,19 @@ export default async function LibraryPage({
 
       {error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
-          Couldn&apos;t load songs: {error.message}
+          {t("lib.loadError", { message: error.message })}
         </p>
       ) : songs.length === 0 ? (
         libraryTotal === 0 ? (
           <EmptyState
-            title="No songs yet"
-            body="Pick a style preset, type a verse, hit Generate. Your first song will land here in about a minute."
-            cta={{ href: "/songs/new", label: "Create your first song" }}
+            title={<T k="empty.title" />}
+            body={<T k="empty.body" />}
+            cta={{ href: "/songs/new", label: <T k="empty.cta" /> }}
           />
         ) : (
           <EmptyState
-            title="No matches"
-            body="Try a different style, language, or clear the search box."
+            title={t("lib.noMatches")}
+            body={t("lib.noMatchesBody")}
           />
         )
       ) : (
