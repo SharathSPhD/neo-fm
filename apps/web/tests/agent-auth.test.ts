@@ -95,3 +95,21 @@ describe("cron-invoked admin routes", () => {
     }
   });
 });
+
+describe("pro_fast selection", () => {
+  const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  it("is inert without the agent id, even when flagged", () => {
+    expect(planForTier("pro", null, env({ PRO_AGENT_VARIANT: "fast" })).agent).toBe("pro");
+    expect(planForTier("free", "pro_fast", env({})).agent).toBe("pro");
+  });
+  it("moves paid tiers with the flag and canaries one user via agent_plan", () => {
+    const e = env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast", PRO_AGENT_VARIANT: "fast" });
+    expect(planForTier("creator", null, e)).toMatchObject({ agent: "pro_fast", userLyriaCapGbp: 0.75 });
+    expect(planForTier("free", null, e).agent).toBe("free");
+    expect(planForTier("pro", null, env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro");
+    expect(planForTier("pro", "pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro_fast");
+  });
+  it("resolves its agent id", () => {
+    expect(agentIdFor("pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" }))).toBe("agent_01Fast");
+  });
+});

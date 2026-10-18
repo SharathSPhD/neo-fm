@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { freeProducerParams, proProducerParams } from "../lib/agent/definitions";
+import { freeProducerParams, proFastProducerParams, proProducerParams } from "../lib/agent/definitions";
 import { SKILL_FILES, SKILL_PCE_POEM_MD } from "../lib/agent/skill-pce-poem";
 
 describe("agent definitions", () => {
@@ -32,5 +32,19 @@ describe("agent definitions", () => {
   });
   it("pro coordinator rosters exactly the poet and polisher", () => {
     expect(proProducerParams("s", "a", "b").multiagent.agents).toEqual(["a", "b"]);
+  });
+});
+
+describe("pro fast variant", () => {
+  const fast = proFastProducerParams("s", "a");
+  it("drops the in-agent polisher and lowers K", () => {
+    expect(fast.multiagent.agents).toEqual(["a"]);
+    expect(fast.system).toContain("K=4");
+    expect(fast.system).not.toMatch(/K=6|Polisher|six candidate/);
+    expect(fast.system).toContain("host polishes");
+  });
+  it("keeps the safety rules and the render tool", () => {
+    expect(fast.system).toContain("Safety rules (non-negotiable)");
+    expect(fast.tools.some((t) => (t as { name?: string }).name === "generate_music")).toBe(true);
   });
 });

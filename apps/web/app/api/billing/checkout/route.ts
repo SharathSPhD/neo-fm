@@ -1,7 +1,9 @@
 /**
  * POST /api/billing/checkout
  *
- * Body: `{ tier: "creator" | "pro" }`
+ * Body: `{ tier: "creator" | "pro", interval?: "month" | "year" }` for a subscription, or
+ *       `{ pack: "single" | "three" }` for a one-off gift-song pack (Checkout `payment` mode; UPI is offered
+ *       when STRIPE_PACK_UPI=1). Packs are allowed while subscribed; plans are not.
  *
  * Returns: `{ url: string }` -- a Stripe Checkout Session URL the
  * client redirects to.
@@ -28,11 +30,12 @@
  * don't strand orphan customers on test/staging environments.
  */
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { z } from "zod";
 
 import {
   getBillingConfigOrNull,
-  getPriceIdForTier,
+  getPlanPriceId,
   getPublicAppUrl,
 } from "@/lib/billing/config";
 import { isLiveSubscriptionStatus, MANAGE_PLAN_URL } from "@/lib/billing/checkout-guard";
@@ -42,9 +45,10 @@ import { requireUser } from "@/lib/supabase/auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-const BodySchema = z.object({
-  tier: z.enum(["creator", "pro"]),
-});
+const BodySchema = z.union([
+  z.object({ tier: z.enum(["creator", "pro"]), interval: z.enum(["month", "year"]).default("month") }),
+  z.object({ pack: z.enum(["single", "three"]) }),
+]);
 
 export async function POST(req: Request) {
   const cfg = getBillingConfigOrNull();
@@ -77,6 +81,49 @@ export async function POST(req: Request) {
     );
   }
 
+  const stripe = getStripe();
+  const origin = getPublicAppUrl();
+
+  if ("pack" in parsed) {
+    const priceId = cfg.packPrices[parsed.pack];
+    if (!priceId) {
+      return NextResponse.json({ error: "pack_unavailable", details: "This pack is not on sale yet." }, { status: 503 });
+    }
+    const { data: existing } = await supabase.from("user_billing").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
+    try {
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: "payment",
+          // Cards always; UPI only once the account has it enabled, otherwise session creation would fail.
+          // The pinned SDK's PaymentMethodType union predates "upi", hence the cast.
+          payment_method_types: (cfg.packUpi ? ["card", "upi"] : ["card"]) as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: `${origin}/account?pack=${parsed.pack}`,
+          cancel_url: `${origin}/pricing?canceled=1`,
+          client_reference_id: user.id,
+          ...(existing?.stripe_customer_id
+            ? { customer: existing.stripe_customer_id }
+            : { customer_email: user.email ?? undefined }),
+          payment_intent_data: { metadata: { user_id: user.id, pack: parsed.pack } },
+          metadata: { user_id: user.id, pack: parsed.pack },
+        },
+        { idempotencyKey: `checkout:${user.id}:pack:${parsed.pack}:${Math.floor(Date.now() / 60_000)}` },
+      );
+      if (!session.url) return NextResponse.json({ error: "stripe_session_no_url" }, { status: 502 });
+      return NextResponse.json({ url: session.url });
+    } catch (err) {
+      return NextResponse.json(
+        { error: "stripe_session_failed", details: err instanceof Error ? err.message : String(err) },
+        { status: 502 },
+      );
+    }
+  }
+
+  const planPrice = getPlanPriceId(parsed.tier, parsed.interval);
+  if (!planPrice) {
+    return NextResponse.json({ error: "plan_unavailable", details: "Yearly billing is not on sale yet." }, { status: 503 });
+  }
+
   // Look up an existing Stripe customer id if we have one, so the
   // upgrade page never strands a second customer record.
   const { data: billing } = await supabase
@@ -84,8 +131,6 @@ export async function POST(req: Request) {
     .select("stripe_customer_id, status")
     .eq("user_id", user.id)
     .maybeSingle();
-
-  const stripe = getStripe();
 
   // A second subscription would bill the user twice for one entitlement. Plan changes and cancellation go through
   // the customer portal. past_due/unpaid still hold a live Stripe subscription that recovers when the card is fixed.
@@ -110,15 +155,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const origin = getPublicAppUrl();
-
   try {
     const session = await stripe.checkout.sessions.create(
       {
         mode: "subscription",
         payment_method_types: ["card"],
         line_items: [
-          { price: getPriceIdForTier(parsed.tier), quantity: 1 },
+          { price: planPrice, quantity: 1 },
         ],
         success_url: `${origin}/account?upgraded=${parsed.tier}`,
         cancel_url: `${origin}/pricing?canceled=1`,
@@ -133,7 +176,7 @@ export async function POST(req: Request) {
         metadata: { user_id: user.id, tier: parsed.tier },
       },
       // Double-clicks and retries within the same minute reuse one Checkout session instead of creating two.
-      { idempotencyKey: `checkout:${user.id}:${parsed.tier}:${Math.floor(Date.now() / 60_000)}` },
+      { idempotencyKey: `checkout:${user.id}:${parsed.tier}:${parsed.interval}:${Math.floor(Date.now() / 60_000)}` },
     );
 
 
