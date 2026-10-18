@@ -27,6 +27,19 @@ export type StationTrack = PoolTrack & {
   durationSeconds: number | null;
 };
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", bn: "Bengali", en: "English", sa: "Sanskrit", hinglish: "Hinglish",
+};
+
+/** Most pool rows have no title yet; "Kannada folk" reads better than "Untitled" on the player. */
+function displayTitle(r: PoolRow): string {
+  const t = r.title?.trim();
+  if (t) return t;
+  const lang = LANGUAGE_NAMES[r.language] ?? r.language;
+  const genre = r.genre?.replace(/-/g, " ");
+  return genre ? `${lang} ${genre}` : lang;
+}
+
 export function rowToTrack(r: PoolRow): StationTrack {
   const tags = [...(r.mood ?? []), ...(r.theme ?? []), r.genre, r.raga, r.tempo_band]
     .filter((t): t is string => !!t)
@@ -35,7 +48,7 @@ export function rowToTrack(r: PoolRow): StationTrack {
     id: r.id,
     language: r.language,
     tags: [...new Set(tags)],
-    title: r.title?.trim() || "Untitled",
+    title: displayTitle(r),
     audioPath: r.audio_path,
     durationSeconds: r.duration_seconds,
   };
