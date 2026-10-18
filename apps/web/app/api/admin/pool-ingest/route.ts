@@ -3,7 +3,10 @@
  *
  *  multipart  file=<mp3>, meta=<json>   one render that exists only as a file (eval / quality / test renders).
  *             meta: { id, source, language, title?, genre?, raga?, mood?, theme?, tempo_bpm?, duration_seconds?,
- *                     lyrics? | lyrics_from? {batch, brief_id}, diction_u?, diction_verdict?, judge_overall? }
+ *                     lyrics? | lyrics_from? {batch, brief_id}, diction_u?, diction_verdict?, judge_overall?,
+ *                     kind? "vocal" (default) | "instrumental", daypart?, energy? }
+ *             kind "instrumental" (migration 0100): language is forced to "zxx", there is no diction gate, and admission
+ *             needs a Gemini listen that finds no voice in the audio.
  *             With `lyrics` the track is scored here (Gemini transcript, order-free gate); without it the caller must
  *             pass diction_u + diction_verdict from an earlier scoring run.
  *  json       { mode: "prod_jobs", owner_ids: [uuid, ...], limit? }   finished prod songs not yet in the pool (Indic languages only)
@@ -21,7 +24,8 @@ import { auditDiction } from "../../../../lib/diction/gemini";
 import { dictionVerdict, type DictionVerdict } from "../../../../lib/diction/gate";
 import { scoreTranscriptUnordered } from "../../../../lib/diction";
 import { singableLines } from "../../../../lib/lyrics/singable";
-import { POOL_MOODS, POOL_THEMES, normalizeLanguage, passesAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
+import { checkNoVocals } from "../../../../lib/pool/instrumental";
+import { POOL_MOODS, POOL_THEMES, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -37,15 +41,18 @@ interface FileMeta {
   mood?: string[]; theme?: string[]; tempo_bpm?: number; duration_seconds?: number; lyrics?: string;
   /** Load the sung lyrics from a stored PCE eval row instead of sending them. */
   lyrics_from?: { batch: string; brief_id: string };
+  /** Score with the diction gate and return the result without storing the file or a pool row (A/B runs). */
+  score_only?: boolean;
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
+  kind?: "vocal" | "instrumental";
 }
 
-async function admit(db: Db, row: Record<string, unknown>, qa: { unorderedPct: number | null; verdict: DictionVerdict | null }) {
+async function admit(db: Db, row: Record<string, unknown>, qa: { unorderedPct: number | null; verdict: DictionVerdict | null }, instrumentalOk?: boolean) {
   const { data: ins, error } = await db.from("pool_tracks").upsert({ ...row, diction_u: qa.unorderedPct, diction_verdict: qa.verdict }, { onConflict: "audio_path" }).select("id,status").single();
   if (error || !ins) return { ok: false as const, error: error?.message ?? "insert_failed" };
   const id = (ins as { id: string }).id;
   if ((ins as { status: string }).status === "admitted") return { ok: true as const, id, status: "admitted" };
-  if (!passesAdmission(qa)) {
+  if (!(instrumentalOk ?? passesAdmission(qa))) {
     await db.from("pool_tracks").update({ status: "rejected" }).eq("id", id).eq("status", "candidate");
     return { ok: true as const, id, status: "rejected" };
   }
@@ -60,7 +67,8 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   if (!(file instanceof Blob) || typeof metaRaw !== "string") return NextResponse.json({ error: "file and meta required" }, { status: 400 });
   let meta: FileMeta;
   try { meta = JSON.parse(metaRaw) as FileMeta; } catch { return NextResponse.json({ error: "meta is not JSON" }, { status: 400 }); }
-  const language = normalizeLanguage(meta.language ?? "");
+  const instrumental = meta.kind === "instrumental";
+  const language = instrumental ? "zxx" : normalizeLanguage(meta.language ?? "");
   if (!meta.id || !/^[a-z0-9._-]{1,80}$/i.test(meta.id) || !language || !SOURCES.includes(meta.source)) return NextResponse.json({ error: "bad meta (id, language, source)" }, { status: 400 });
 
   const audio = new Uint8Array(await file.arrayBuffer());
@@ -69,7 +77,11 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
     meta.lyrics = (data as { lyrics?: string } | null)?.lyrics ?? undefined;
   }
   let qa: { unorderedPct: number | null; verdict: DictionVerdict | null } = { unorderedPct: meta.diction_u ?? null, verdict: meta.diction_verdict ?? null };
-  if (meta.lyrics) {
+  let vocalsAbsent: boolean | null = null;
+  if (instrumental) {
+    if (!geminiKey) return NextResponse.json({ error: "no_gemini_key" }, { status: 503 });
+    vocalsAbsent = (await checkNoVocals(audio, file.type || "audio/mpeg", geminiKey)).vocalsAbsent;
+  } else if (meta.lyrics) {
     if (!geminiKey) return NextResponse.json({ error: "no_gemini_key" }, { status: 503 });
     const sung = singableLines(meta.lyrics).join("\n") || meta.lyrics;
     const scored = await auditDiction(sung, audio, file.type || "audio/mpeg", language, geminiKey);
@@ -77,6 +89,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
     qa = { unorderedPct: gate.unorderedPct, verdict: gate.verdict };
   }
 
+  if (meta.score_only) return NextResponse.json({ id: meta.id, ...qa, stored: false });
   const path = `pool/${meta.source}/${meta.id}.mp3`;
   const { error: upErr } = await db.storage.from("tracks").upload(path, audio, { contentType: file.type || "audio/mpeg", upsert: true });
   if (upErr) return NextResponse.json({ error: `upload: ${upErr.message}` }, { status: 502 });
@@ -85,8 +98,9 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
     language, genre: meta.genre ?? null, raga: meta.raga ?? null,
     mood: pickVocab(meta.mood ?? [], POOL_MOODS), theme: pickVocab(meta.theme ?? [], POOL_THEMES), tempo_bpm: meta.tempo_bpm ?? null,
     judge_overall: meta.judge_overall ?? null,
-  }, qa);
-  return NextResponse.json({ id: meta.id, path, ...qa, ...r });
+    ...(instrumental ? { kind: "instrumental", vocals_absent: vocalsAbsent } : {}),
+  }, qa, instrumental ? passesInstrumentalAdmission(vocalsAbsent) : undefined);
+  return NextResponse.json({ id: meta.id, path, ...qa, ...(instrumental ? { vocals_absent: vocalsAbsent } : {}), ...r });
 }
 
 async function ingestProdJobs(db: Db, owners: string[], limit: number, geminiKey: string | undefined) {

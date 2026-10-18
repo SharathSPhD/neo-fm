@@ -65,6 +65,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('subscriptions',      'owner', 'user_id', null, null),
   ('user_billing',       'owner', 'user_id', null, null),
   ('song_packs',         'owner', 'user_id', null, 'owner reads own credits; grant_song_pack/consume_pack_song are service-role only'),
+  ('station_passes',    'owner', 'user_id', null, 'owner reads own pass; apply_station_pass_state is service-role only (Stripe webhook)'),
   ('consents',           'owner', 'user_id', null, null),
   ('taste_profiles',     'owner', 'user_id', null, null),
   ('user_presets',       'owner', 'user_id', null, null),

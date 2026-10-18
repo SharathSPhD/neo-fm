@@ -59,11 +59,17 @@ export const metadata: Metadata = {
   alternates: { canonical: "/", languages: hreflangPaths() },
 };
 
+const WHAT = [
+  { title: "landing.what1.title", body: "landing.what1.body" },
+  { title: "landing.what2.title", body: "landing.what2.body" },
+  { title: "landing.what3.title", body: "landing.what3.body" },
+] as const;
+
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "neo-fm",
-  description: "A personal FM: songs made for you in Indian languages, with native lyrics and a pronunciation check.",
+  description: "Your personal 24/7 FM station: AI-generated music tuned to your taste, Indian languages first.",
   inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
   publisher: { "@type": "Organization", name: "Technektar" },
 };
@@ -74,6 +80,7 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
+      <WhatIs />
       <div className="mx-auto max-w-6xl px-6 pt-12">
         <SongOfTheDay />
       </div>
@@ -119,6 +126,25 @@ async function Hero() {
         </div>
         <p className="text-xs text-foreground/60">{t("landing.notice")}</p>
         <LanguageSamples samples={samples} />
+      </div>
+    </section>
+  );
+}
+
+async function WhatIs() {
+  const { t } = await serverI18n();
+  return (
+    <section className="border-b border-muted/30" aria-labelledby="what-heading">
+      <div className="mx-auto max-w-6xl px-6 py-12">
+        <h2 id="what-heading" className="text-2xl font-semibold tracking-tight">{t("landing.whatTitle")}</h2>
+        <ul className="mt-6 grid gap-5 sm:grid-cols-3">
+          {WHAT.map((w) => (
+            <li key={w.title}>
+              <h3 className="font-medium">{t(w.title)}</h3>
+              <p className="mt-1 text-sm text-foreground/70">{t(w.body)}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
