@@ -36,6 +36,16 @@ export function voiceEntitlement(tier: UserTier | null | undefined, hasPass = fa
   return { choices: ["station"], styles: [] };
 }
 
+/**
+ * Duet is held back for these languages: the 2026-10-18 test judged the clips as two voices but nativeness only 3/5
+ * (lab/voice-pool/duet-test.json). Remove a code after a native listen passes.
+ */
+export const DUET_HOLD_LANGUAGES: readonly string[] = ["ta", "gu"];
+
+export function duetHeld(language: string | null | undefined): boolean {
+  return !!language && DUET_HOLD_LANGUAGES.includes(language);
+}
+
 export function voiceChoiceEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.VOICE_CHOICE === "1";
 }
@@ -78,9 +88,10 @@ export function voiceHint(pref: VoicePref): string {
 }
 
 /** Flag and entitlement in one call for the render path. The station mix whenever the choice is off or not included. */
-export function voiceChoiceFor(raw: unknown, tier: UserTier | null | undefined, hasPass: boolean, env: NodeJS.ProcessEnv = process.env): VoicePref {
+export function voiceChoiceFor(raw: unknown, tier: UserTier | null | undefined, hasPass: boolean, env: NodeJS.ProcessEnv = process.env, language?: string | null): VoicePref {
   if (!voiceChoiceEnabled(env)) return { choice: "station" };
-  return clampVoicePref(parseVoicePref(raw), voiceEntitlement(tier, hasPass));
+  const pref = clampVoicePref(parseVoicePref(raw), voiceEntitlement(tier, hasPass));
+  return pref.choice === "duet" && duetHeld(language) ? { choice: "station" } : pref;
 }
 
 /** Convenience for callers that only need the prompt text. */

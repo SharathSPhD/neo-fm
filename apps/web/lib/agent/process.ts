@@ -187,7 +187,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
-        const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass);
+        const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
         const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey });
         // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
         return timed("lyria", async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result);

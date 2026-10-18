@@ -9,7 +9,7 @@ import { isUiLang, type UiKey } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
-import type { VoiceChoice } from "@/lib/voice";
+import { duetHeld, type VoiceChoice } from "@/lib/voice";
 
 import { FirstRunGuide } from "./first-run-guide";
 
@@ -82,6 +82,8 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
   const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
   const [voice, setVoice] = useState<VoiceChoice>("station");
+  const shownVoices = voiceChoices?.filter((c) => !(c === "duet" && duetHeld(language)));
+  const voiceNow: VoiceChoice = shownVoices?.includes(voice) ? voice : "station";
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -140,7 +142,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
         language,
         style_family: styleFamily,
         target_duration_seconds: duration,
-        ...(voice !== "station" ? { voice: { choice: voice } } : {}),
+        ...(voiceNow !== "station" ? { voice: { choice: voiceNow } } : {}),
       }),
     });
 
@@ -308,12 +310,12 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
           </label>
           <select
             id="prompt-voice"
-            value={voice}
+            value={voiceNow}
             disabled={voiceChoices.length <= 1}
             onChange={(e) => setVoice(e.target.value as VoiceChoice)}
             className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent disabled:opacity-60"
           >
-            {voiceChoices.map((c) => (
+            {(shownVoices ?? voiceChoices).map((c) => (
               <option key={c} value={c}>
                 {t(VOICE_LABEL_KEY[c])}
               </option>

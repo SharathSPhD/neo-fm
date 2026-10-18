@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { clampVoicePref, parseVoicePref, voiceEntitlement, voiceHint, voiceHintFor } from "../lib/voice";
+import { voiceChoiceFor, clampVoicePref, parseVoicePref, voiceEntitlement, voiceHint, voiceHintFor } from "../lib/voice";
 
 const ON = { VOICE_CHOICE: "1" } as unknown as NodeJS.ProcessEnv;
 
@@ -42,5 +42,14 @@ describe("voiceHintFor", () => {
   it("adds the gender cue when entitled", () => {
     expect(voiceHintFor({ choice: "female" }, "creator", false, ON)).toBe("Female lead vocal.");
     expect(voiceHintFor({ choice: "duet", style: "folk" }, "pro", false, ON)).toMatch(/duet.*Earthy folk/);
+  });
+});
+
+describe("duet hold for Tamil and Gujarati", () => {
+  it("falls back to the station mix for held languages and keeps duet elsewhere", () => {
+    expect(voiceChoiceFor({ choice: "duet" }, "pro", false, ON, "ta").choice).toBe("station");
+    expect(voiceChoiceFor({ choice: "duet" }, "pro", false, ON, "gu").choice).toBe("station");
+    expect(voiceChoiceFor({ choice: "duet" }, "pro", false, ON, "hi").choice).toBe("duet");
+    expect(voiceChoiceFor({ choice: "female" }, "creator", false, ON, "ta").choice).toBe("female");
   });
 });
