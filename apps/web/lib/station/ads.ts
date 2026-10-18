@@ -26,18 +26,37 @@ export interface AdSlot {
   reviewedAt: string | null;
 }
 
-/** All tunable in one place (ads-revenue.md section 6). */
-export const AD_CAPS = {
-  /** Tracks of the session heard before the first break. */
-  firstBreakAfterTracks: 2,
+/** Tiers that hear ads. The Station pass hears none, and wins over every other entitlement (ads-revenue.md section 11). */
+export type AdTier = "free" | "creator" | "pro";
+
+export interface TierCaps {
   /** Tracks between two breaks. */
-  tracksBetweenBreaks: 5,
-  minGapMs: 90_000,
-  maxSecondsPer10Min: 6,
-  maxPerDay: 8,
-  maxPerCreativePerDay: 3,
+  minTracks: number;
+  perHour: number;
+  perDay: number;
+  secPer10Min: number;
+  /** A break may not sit before this track number of the session (3 means after two tracks). */
+  firstBreakTrack: number;
+  minGapMs: number;
+  creativePerDay: number;
+  /** Audio spots allowed; Pro gets card-only spots. */
+  audio: boolean;
+  /** House ads can be skipped after this long; sponsor spots cannot be skipped. */
+  houseSkipAfterMs: number;
+}
+
+/** All tunable in one place (ads-revenue.md section 11). Lighter for Creator, lightest for Pro. */
+export const TIER_CAPS: Record<AdTier, TierCaps> = {
+  free: { minTracks: 6, perHour: 3, perDay: 10, secPer10Min: 15, firstBreakTrack: 3, minGapMs: 120_000, creativePerDay: 3, audio: true, houseSkipAfterMs: 3000 },
+  creator: { minTracks: 9, perHour: 2, perDay: 6, secPer10Min: 15, firstBreakTrack: 4, minGapMs: 180_000, creativePerDay: 2, audio: true, houseSkipAfterMs: 3000 },
+  pro: { minTracks: 18, perHour: 1, perDay: 3, secPer10Min: 15, firstBreakTrack: 6, minGapMs: 600_000, creativePerDay: 1, audio: false, houseSkipAfterMs: 3000 },
+};
+
+export const AD_CAPS = {
   /** A card-only spot still holds the screen this long, and counts that much toward the seconds cap. */
   cardOnlySeconds: 6,
+  /** One spot per break, at most this long. */
+  maxSpotSeconds: 15,
 } as const;
 
 /** No ad plays next to a track carrying any of these (ads-revenue.md A2). */
@@ -56,8 +75,8 @@ export function spotSeconds(slot: Pick<AdSlot, "durationSeconds">): number {
 
 export interface AdContext {
   enabled: boolean;
-  /** Paid tiers (Creator, Pro, an active subscription) never hear ads. */
-  paid: boolean;
+  /** The listener's ad tier; null means no ads (Station pass). Signed-out listeners are "free". */
+  tier: AdTier | null;
   /** The language the listener locked to, or null for the open station. */
   language: string | null;
   hour: number;
@@ -69,6 +88,8 @@ export interface AdContext {
   /** Null when no break has played yet. */
   lastBreakAgeMs: number | null;
   adSecondsLast10Min: number;
+  /** Breaks started in the last rolling hour. */
+  adsLastHour: number;
   adsToday: number;
   perCreativeToday: Record<string, number>;
 }
@@ -78,6 +99,7 @@ export function eligibleSlots(slots: AdSlot[], ctx: Pick<AdContext, "language" |
   const part = daypartOf(ctx.hour);
   return slots.filter((s) => {
     if (!s.active || !s.reviewedAt) return false;
+    if (s.durationSeconds !== null && s.durationSeconds > AD_CAPS.maxSpotSeconds) return false;
     if (s.startAt && Date.parse(s.startAt) > ctx.now) return false;
     if (s.endAt && Date.parse(s.endAt) <= ctx.now) return false;
     // A language-locked listener only gets spots in their language (or language-neutral ones).
@@ -90,17 +112,22 @@ export function eligibleSlots(slots: AdSlot[], ctx: Pick<AdContext, "language" |
 
 /** True when a break may be scheduled at all for this listener. */
 export function capsAllow(ctx: AdContext, slot: AdSlot): boolean {
-  if (!ctx.enabled || ctx.paid) return false;
-  if (ctx.lastBreakAgeMs !== null && ctx.lastBreakAgeMs < AD_CAPS.minGapMs) return false;
-  if (ctx.adSecondsLast10Min + spotSeconds(slot) > AD_CAPS.maxSecondsPer10Min) return false;
-  if (ctx.adsToday >= AD_CAPS.maxPerDay) return false;
-  if ((ctx.perCreativeToday[slot.id] ?? 0) >= AD_CAPS.maxPerCreativePerDay) return false;
+  if (!ctx.enabled || !ctx.tier) return false;
+  const caps = TIER_CAPS[ctx.tier];
+  if (slot.audioPath && !caps.audio) return false;
+  if (ctx.lastBreakAgeMs !== null && ctx.lastBreakAgeMs < caps.minGapMs) return false;
+  if (ctx.adSecondsLast10Min + spotSeconds(slot) > caps.secPer10Min) return false;
+  if (ctx.adsLastHour >= caps.perHour) return false;
+  if (ctx.adsToday >= caps.perDay) return false;
+  if ((ctx.perCreativeToday[slot.id] ?? 0) >= caps.creativePerDay) return false;
   return true;
 }
 
-/** How many of the upcoming tracks must play before a break is allowed. */
-export function tracksBeforeBreak(ctx: Pick<AdContext, "played" | "sinceBreak">): number {
-  return Math.max(AD_CAPS.firstBreakAfterTracks - ctx.played, AD_CAPS.tracksBetweenBreaks - ctx.sinceBreak, 0);
+/** How many of the upcoming tracks must play before a break is allowed (Infinity when this listener hears none). */
+export function tracksBeforeBreak(ctx: Pick<AdContext, "played" | "sinceBreak" | "tier">): number {
+  if (!ctx.tier) return Number.POSITIVE_INFINITY;
+  const caps = TIER_CAPS[ctx.tier];
+  return Math.max(caps.firstBreakTrack - 1 - ctx.played, caps.minTracks - ctx.sinceBreak, 0);
 }
 
 const hits = (tags: string[], list: string[]) => tags.some((t) => list.includes(t.toLowerCase()));
@@ -110,7 +137,7 @@ const hits = (tags: string[], list: string[]) => tags.some((t) => list.includes(
  * play before it. Starts at the earliest cap-allowed position and slides later past neighbours that forbid it.
  * Null when the slice is too short: the next refill will carry larger counters and try again.
  */
-export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[] }[], ctx: Pick<AdContext, "played" | "sinceBreak">): number | null {
+export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[] }[], ctx: Pick<AdContext, "played" | "sinceBreak" | "tier">): number | null {
   const blocked = [...NEVER_NEXT_TO, ...slot.excludedTags.map((t) => t.toLowerCase())];
   for (let p = tracksBeforeBreak(ctx); p < tracks.length; p++) {
     const before = tracks[p - 1]?.tags ?? [];
@@ -137,7 +164,7 @@ export interface AdPlacement { slot: AdSlot; index: number }
 
 /** The one break (if any) to put into this slice of the queue. */
 export function pickAd(slots: AdSlot[], tracks: { tags: string[] }[], ctx: AdContext, rand: () => number = Math.random): AdPlacement | null {
-  if (!ctx.enabled || ctx.paid) return null;
+  if (!ctx.enabled || !ctx.tier) return null;
   const candidates = eligibleSlots(slots, ctx).filter((s) => capsAllow(ctx, s));
   // Try slots in weighted order until one fits next to its neighbours.
   const pool = [...candidates];
@@ -165,10 +192,10 @@ export interface AdItem {
   durationSeconds: number;
   /** Signed audio URL, or empty for a card-only spot. */
   url: string;
-  ad: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean };
+  ad: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
 }
 
-export function adItem(slot: AdSlot, url: string, nonce: string): AdItem {
+export function adItem(slot: AdSlot, url: string, nonce: string, tier: AdTier = "free"): AdItem {
   return {
     id: `ad:${slot.id}:${nonce}`,
     type: "ad",
@@ -177,7 +204,7 @@ export function adItem(slot: AdSlot, url: string, nonce: string): AdItem {
     tags: [],
     durationSeconds: spotSeconds(slot),
     url,
-    ad: { slotId: slot.id, label: adLabel(slot), headline: slot.headline, ctaLabel: slot.ctaLabel, ctaUrl: slot.ctaUrl, aiMade: slot.aiMade },
+    ad: { slotId: slot.id, label: adLabel(slot), headline: slot.headline, ctaLabel: slot.ctaLabel, ctaUrl: slot.ctaUrl, aiMade: slot.aiMade, skipAfterMs: slot.kind === "house" ? TIER_CAPS[tier].houseSkipAfterMs : null },
   };
 }
 

@@ -88,16 +88,44 @@ describe("ads in GET /api/station/queue", () => {
     expect((await items()).some((x) => x.type === "ad")).toBe(false);
   });
 
-  it("serves no ads to a paid tier or a live subscription", async () => {
+  it("serves Creator and Pro listeners ads too, with their own spacing (9 and 18 tracks)", async () => {
     vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
     world.tier = "creator";
-    expect((await items()).some((x) => x.type === "ad")).toBe(false);
-    world.tier = "free";
+    expect((await items("&played=0")).findIndex((x) => x.type === "ad")).toBe(3);
+    world.tier = "pro";
+    // Pro: first break after 5 tracks, so inside this 8-track slice.
+    expect((await items("&played=0")).findIndex((x) => x.type === "ad")).toBe(5);
+    // 4 tracks since the last break leaves 14 more to go: nothing in an 8-track slice.
+    expect((await items("&played=30&since=4&adAge=900")).some((x) => x.type === "ad")).toBe(false);
+  });
+
+  it("treats a live subscription on an unknown tier as Creator, not Free", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
     world.billing = "active";
+    expect((await items("&played=0")).findIndex((x) => x.type === "ad")).toBe(3);
+  });
+
+  it("Pro never gets an audio spot", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    world.slots = [slotRow({ audio_path: "ads/a.mp3", duration_seconds: 10 })];
+    world.tier = "pro";
+    expect((await items("&played=0")).some((x) => x.type === "ad")).toBe(false);
+  });
+
+  it("a Station pass beats every other tier: no ads", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    world.tier = "free";
+    world.pass = true;
+    expect((await items()).some((x) => x.type === "ad")).toBe(false);
+    world.tier = "pro";
     expect((await items()).some((x) => x.type === "ad")).toBe(false);
   });
 
-  it("treats a Station pass holder as paid: no ads", async () => {
+  it("serves a signed-out visitor with the Free row", async () => {
+    expect((await items("&played=0")).findIndex((x) => x.type === "ad")).toBe(2);
+  });
+
+  it("treats a Station pass holder as ad-free", async () => {
     vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
     world.pass = true;
     expect((await items()).some((x) => x.type === "ad")).toBe(false);
@@ -119,7 +147,7 @@ describe("ads in GET /api/station/queue", () => {
   it("uses the player's session counters", async () => {
     expect((await items("&played=0&since=0&adAge=30")).some((x) => x.type === "ad")).toBe(false); // 30 s since the last break
     const t = await items("&played=10&since=4");
-    expect(t.findIndex((x) => x.type === "ad")).toBe(1);
+    expect(t.findIndex((x) => x.type === "ad")).toBe(2); // Free spaces breaks 6 tracks apart: 2 more after 4
   });
 
   it("keeps a language-locked listener to their language", async () => {

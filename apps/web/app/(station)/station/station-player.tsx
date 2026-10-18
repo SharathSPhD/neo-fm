@@ -25,7 +25,7 @@ interface Track {
   durationSeconds?: number;
   /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
   type?: "ad";
-  ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean };
+  ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
@@ -75,8 +75,20 @@ function postAdEvent(slotId: string, event: AdEventKind) {
 
 /** A card-only spot (no audio) holds the screen this long, then the station carries on. */
 const AD_CARD_MS = 6_000;
+
+/** House ads can be skipped after a few seconds; sponsor spots render no button at all. */
+function AdSkip({ afterMs, onSkip }: { afterMs: number; onSkip: () => void }) {
+  const [ready, setReady] = useState(afterMs <= 0);
+  useEffect(() => {
+    if (afterMs <= 0) return;
+    const t = setTimeout(() => setReady(true), afterMs);
+    return () => clearTimeout(t);
+  }, [afterMs]);
+  return <button type="button" disabled={!ready} onClick={onSkip} className="rounded border px-3 py-2 disabled:opacity-50">Skip</button>;
+}
 /** Ad seconds are counted over this window for the server's cap. */
 const AD_WINDOW_MS = 600_000;
+const AD_HOUR_MS = 3_600_000;
 
 /** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
 const NUDGE_AFTER = 3;
@@ -140,6 +152,8 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
     if (a.lastAdAt !== null) { out.since = String(a.since); out.adAge = String(Math.round((now - a.lastAdAt) / 1000)); }
     const sec = a.spots.filter((x) => now - x.at < AD_WINDOW_MS).reduce((n, x) => n + x.sec, 0);
     if (sec) out.adSec = String(sec);
+    const hour = a.spots.filter((x) => now - x.at < AD_HOUR_MS).length;
+    if (hour) out.adHr = String(hour);
     if (a.seen.length) out.seen = a.seen.join(",");
     return out;
   }, []);
@@ -498,7 +512,7 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
           ) : null}
           {isAd ? (
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
+              {current.ad?.skipAfterMs != null ? <AdSkip key={current.id} afterMs={current.ad.skipAfterMs} onSkip={() => advance("skip")} /> : null}
             </div>
           ) : (
           <div className="flex flex-wrap gap-2">
