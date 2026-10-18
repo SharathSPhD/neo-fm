@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { renderCap, validateItems } from "../app/api/admin/test-render/route";
+import { renderCap, validateItems } from "../lib/admin/test-render";
 
 const env = (v: Record<string, string>) => v as unknown as NodeJS.ProcessEnv;
 
