@@ -95,7 +95,7 @@ export function renderMarkdown({ now, since, cost, tokens, ledger, notes }) {
     for (const [d, v] of [...cost.byDay].sort().slice(-14)) L.push(`| ${d} | ${v.toFixed(2)} |`);
     L.push(``);
   } else {
-    L.push(`## Billed spend: not available`, ``, `\`ANTHROPIC_ADMIN_KEY\` is not set in this environment, so no billed figures are reported here. Add it as a cloud env var (never in chat) and rerun. Until then, figures below are the app's own ledger only.`, ``);
+    L.push(`## Billed spend: not available`, ``, `\`MA_ADMIN_KEY\` is not set in this environment, so no billed figures are reported here. Add it as a cloud env var (never in chat) and rerun. Until then, figures below are the app's own ledger only.`, ``);
   }
   if (tokens?.size) {
     L.push(`## Tokens (usage_report/messages)`, ``, `| Model | Input | Output |`, `|---|---|---|`);
