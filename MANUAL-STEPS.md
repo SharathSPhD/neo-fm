@@ -122,6 +122,9 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 6. Apply migration 0089 only after #129 merges and you say go.
 7. Only when #128 calls `consume_pack_song`: add `STRIPE_PRICE_PACK_SINGLE_ID` and `STRIPE_PRICE_PACK_THREE_ID` (from `packs.single.inr`, `packs.three.inr`) in Vercel, plus `STRIPE_PACK_UPI=1` if step 5 worked. Redeploy.
 
+**E. Station pass (test mode only, #159)**
+8. Run `POST /api/admin/stripe-setup` (test key). Add `STRIPE_PRICE_STATION_PASS_ID` from `station_pass.inr` in Vercel, redeploy. /pricing then shows the pass at ₹149 a month for signed-in users. The variable is ignored under a live key, and the webhook records nothing for the pass yet (no entitlement or tier change). S sets the final price and the entitlement design before live mode.
+
 **D. UPI AutoPay on subscriptions (flag, test mode only)**
 8. Needs step 5. In Vercel add `STRIPE_SUBSCRIPTION_UPI=1`; it has no effect with a live key. Redeploy. Creator/Pro checkout then lists UPI next to card.
 9. Test it: sign in, upgrade, pick UPI, use Stripe's test VPAs from `docs.stripe.com/payments/upi` (do not use a real UPI app). Confirm the account page shows the plan and the subscription appears in the test dashboard.

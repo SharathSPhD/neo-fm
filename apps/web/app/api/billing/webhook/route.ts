@@ -185,6 +185,11 @@ async function applyEvent(
     (subscription as unknown as { current_period_end?: number })
       .current_period_end ??
     null;
+  // The station pass has no stored entitlement yet. Falling through would make apply_stripe_subscription_state treat
+  // the unknown price as "free" and downgrade a paying Creator/Pro user.
+  if (priceId && priceId === getBillingConfigOrNull()?.stationPassPrice) {
+    return { skipped: "station_pass_not_stored" };
+  }
   const tier = getTierForPriceId(priceId);
   const status = subscription.status;
   const cancelAtPeriodEnd = subscription.cancel_at_period_end;

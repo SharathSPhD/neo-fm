@@ -201,3 +201,17 @@ describe("POST /api/billing/webhook: annual plans and gift packs", () => {
     expect(rpc).not.toHaveBeenCalledWith("grant_song_pack", expect.anything());
   });
 });
+
+describe("POST /api/billing/webhook: station pass", () => {
+  it("never writes tier state for a station pass subscription", async () => {
+    process.env.STRIPE_PRICE_STATION_PASS_ID = "price_pass";
+    const passSub = { ...sub, items: { data: [{ price: { id: "price_pass" }, current_period_end: 1800000000 }] } };
+    constructEvent.mockReturnValue({ id: "evt_pass", type: "customer.subscription.updated", data: { object: passSub } });
+    retrieve.mockResolvedValue(passSub);
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    const res = await post(req());
+    expect(res.status).toBe(200);
+    expect(rpc).not.toHaveBeenCalledWith("apply_stripe_subscription_state", expect.anything());
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+});
