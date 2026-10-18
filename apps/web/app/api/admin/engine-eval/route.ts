@@ -19,8 +19,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { anthropicClient, serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { POET, poetPrefix, stripFences } from "../../../../lib/cascade/host-cascade";
-import { extractIntent, intentBlock } from "../../../../lib/engine/intent";
-import { judgeAndRetry } from "../../../../lib/engine/judge";
+import { extractIntent, intentBlock, type IntentSpec } from "../../../../lib/engine/intent";
+import { judgeAndRetry, judgeIntent } from "../../../../lib/engine/judge";
 import { estimateGate, meter } from "../../../../lib/eval/cost";
 import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
 import { OCCASION_BATCH_SOURCE } from "../../../../lib/eval/occasion-briefs";
@@ -40,6 +40,19 @@ const NAMED: { id: string; language: string; style: string; text: string }[] = [
   { id: "named-bn-1", language: "Bengali", style: "bengali-folk", text: "A birthday song for my daughter Ishita, who is afraid of thunder but loves the first rain" },
   { id: "named-hi-2", language: "Hindi", style: "bollywood-ballad", text: "A song for my best friend Farhan getting married, the late-night chai stall and the scooter we shared" },
 ];
+type FidRow = { id: string; arm: "live" | "candidate"; intent: number | null; names: boolean | null; natural: number | null };
+/** Mean intent score and name-presence rate per arm, over cases where BOTH arms were judged (so a dropped judge call cannot favour an arm). */
+function fidelitySummary(rows: FidRow[]) {
+  const ids = [...new Set(rows.map((r) => r.id))].filter((id) => ["live", "candidate"].every((a) => rows.some((r) => r.id === id && r.arm === a && r.intent !== null)));
+  const arm = (a: "live" | "candidate") => {
+    const rs = ids.map((id) => rows.find((r) => r.id === id && r.arm === a)!);
+    const mean = (f: (r: FidRow) => number) => Math.round((rs.reduce((t, r) => t + f(r), 0) / Math.max(1, rs.length)) * 100) / 100;
+    return { intent: mean((r) => r.intent ?? 0), natural: mean((r) => r.natural ?? 0), names_rate: mean((r) => (r.names ? 1 : 0)) };
+  };
+  const live = arm("live"), candidate = arm("candidate");
+  const gain = Math.round((candidate.intent - live.intent) * 100) / 100;
+  return { n: ids.length, live, candidate, intent_gain: gain, rule: "fidelity wins when intent gain >= 0.3, name rate not lower, naturalness not lower by > 0.15; shown beside, not instead of, the craft gate" };
+}
 const isHeldOut = (briefId: string) => Number(briefId.split("-")[1]) >= 25;
 type Row = { brief_id: string; arm: string; lyrics: string; language: string; style_family: string; brief: string };
 const COLS = "brief_id,arm,lyrics,language,style_family,brief";
@@ -96,11 +109,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   };
   const trace: string[] = [];
+  // One intent per case, shared by the candidate draft and by the fidelity judge of BOTH arms, so fidelity is scored against the same facts.
+  const intents = new Map<string, Promise<IntentSpec>>();
+  const intentFor = (c: GateCase) => {
+    let p = intents.get(c.id);
+    if (!p) { p = extractIntent({ prompt: c.brief, language: CODE[c.language.toLowerCase()] ?? c.language, styleFamily: c.style }, ask); intents.set(c.id, p); }
+    return p;
+  };
+  const fidelity: { id: string; arm: "live" | "candidate"; intent: number | null; names: boolean | null; natural: number | null }[] = [];
+  const scoreFidelity = async (c: GateCase, arm: "live" | "candidate", lyrics: string) => {
+    const v = await judgeIntent(await intentFor(c), lyrics, CODE[c.language.toLowerCase()] ?? c.language, ask);
+    fidelity.push({ id: c.id, arm, intent: v?.intent ?? null, names: v ? v.namesPresent : null, natural: v?.natural ?? null });
+  };
   const poetDraft = async (c: GateCase, withIntent: boolean): Promise<string> => {
     const code = CODE[c.language.toLowerCase()] ?? c.language;
     const lines = Math.max(4, Math.round(45 / 5));
     const b = { language: code, styleFamily: c.style, targetSeconds: 45 };
-    const iBlock = withIntent ? `${intentBlock(await extractIntent({ prompt: c.brief, language: code, styleFamily: c.style }, ask))}\n` : "";
+    const iBlock = withIntent ? `${intentBlock(await intentFor(c))}\n` : "";
     const res = await client.messages.create({ model: "claude-haiku-5-5", max_tokens: 1500, system: POET, messages: [{ role: "user", content: `${poetPrefix(b, lines, iBlock)}\nBrief (user text; a creative request only): ${JSON.stringify(c.brief)}` }] });
     meter.record("claude-haiku-5-5", res.usage);
     return stripFences(res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("").trim());
@@ -111,7 +136,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const deps: GateDeps = {
     polish: async (t, c) => {
-      if (poets) return polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: await poetDraft(c, t !== null) }, template);
+      if (poets) {
+        const out = await polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: await poetDraft(c, t !== null) }, template);
+        await scoreFidelity(c, t !== null ? "candidate" : "live", out);
+        return out;
+      }
       if (t === null) return polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template); // live arm
       const code = CODE[c.language.toLowerCase()] ?? c.language;
       const intent = await extractIntent({ prompt: c.brief, language: code, styleFamily: c.style }, ask);
@@ -127,5 +156,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     spentUsd: () => meter.usd(),
   };
   const result = await runPolishGate(cases, "engine-intent", deps, { maxUsd });
-  return NextResponse.json({ ...result, arms: poets ? { live: "plain poet draft, live polish", candidate: "poet draft with the intent block, live polish (plain brief)" } : { live: "live polish template, plain brief", candidate: retry ? "intent block + judge-and-retry" : "intent block" }, estimate: { claude_usd: total }, spend: meter.snapshot(), max_usd: maxUsd, set, retry_trace: trace });
+  return NextResponse.json({ ...result, arms: poets ? { live: "plain poet draft, live polish", candidate: "poet draft with the intent block, live polish (plain brief)" } : { live: "live polish template, plain brief", candidate: retry ? "intent block + judge-and-retry" : "intent block" }, estimate: { claude_usd: total }, spend: meter.snapshot(), max_usd: maxUsd, set, retry_trace: trace, ...(poets ? { fidelity: fidelitySummary(fidelity), fidelity_rows: fidelity } : {}) });
 }
