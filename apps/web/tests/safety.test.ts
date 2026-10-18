@@ -16,6 +16,12 @@ describe("screenText", () => {
     blocked("in the voice of Taylor Swift", "artist_impersonation");
     blocked("voice clone of my favourite singer", "artist_impersonation");
   });
+  it("allows traditional forms and genres but blocks capitalised person names", () => {
+    ok("A calm devotional song in the style of Dasa padas with a tambura drone");
+    ok("in the style of old Carnatic keerthanas, qawwali energy, a lavani rhythm");
+    ok("in the style of Hindustani Classical at dawn");
+    blocked("in the style of Kishore Kumar", "artist_impersonation");
+  });
   it("blocks copyrighted lyric reproduction", () => {
     blocked("give me the exact lyrics of Kun Faya Kun", "copyrighted_lyrics");
   });
