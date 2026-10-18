@@ -6,8 +6,9 @@
  *                     lyrics?, diction_u?, diction_verdict?, judge_overall? }
  *             With `lyrics` the track is scored here (Gemini transcript, order-free gate); without it the caller must
  *             pass diction_u + diction_verdict from an earlier scoring run.
- *  json       { mode: "prod_jobs", limit? }   finished prod songs not yet in the pool (Indic languages only).
- *             Scores the ones that have no diction verdict yet (one Gemini call each, `limit` per call, default 8).
+ *  json       { mode: "prod_jobs", owner_ids: [uuid, ...], limit? }   finished prod songs not yet in the pool (Indic languages only)
+ *             that belong to the listed owners. owner_ids is required: real listeners' songs never enter the shared pool without
+ *             their opt-in, so the caller must name the internal / test accounts explicitly. Scores the ones that have no diction verdict yet (one Gemini call each, `limit` per call, default 8).
  *
  * Admission is the diction gate: pool_tracks only accepts status=admitted at U >= 80 and verdict pass, and
  * admit_pool_track() is the only path in. Tracks that fail stay as `rejected` rows so they are not re-scored.
@@ -27,6 +28,7 @@ export const fetchCache = "force-no-store";
 export const maxDuration = 300;
 
 const SOURCES = ["prod_job", "eval_render", "new_render"] as const;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const INDIC = ["hi", "ta", "te", "kn", "bn"];
 type Db = ReturnType<typeof serviceClient>;
 
@@ -81,7 +83,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   return NextResponse.json({ id: meta.id, path, ...qa, ...r });
 }
 
-async function ingestProdJobs(db: Db, limit: number, geminiKey: string | undefined) {
+async function ingestProdJobs(db: Db, owners: string[], limit: number, geminiKey: string | undefined) {
   const { data: runs } = await db.from("agent_runs").select("job_id,audio_path,lyrics,diction_qa").not("audio_path", "is", null).limit(500);
   const { data: have } = await db.from("pool_tracks").select("audio_path");
   const taken = new Set(((have ?? []) as Array<{ audio_path: string }>).map((r) => r.audio_path));
@@ -89,9 +91,9 @@ async function ingestProdJobs(db: Db, limit: number, geminiKey: string | undefin
   const out: Array<Record<string, unknown>> = [];
   let scoredCount = 0;
   for (const r of todo) {
-    const { data: jobs } = await db.from("jobs").select("status,moderation_status,taken_down_at,song_documents(title,document_json)").eq("id", r.job_id).limit(1);
-    const j = (jobs ?? [])[0] as unknown as { status: string; moderation_status: string | null; taken_down_at: string | null; song_documents: { title: string | null; document_json: Parameters<typeof tagsFromDocument>[0] } | null } | undefined;
-    if (!j || j.status !== "completed" || j.moderation_status !== "ok" || j.taken_down_at || !j.song_documents) continue;
+    const { data: jobs } = await db.from("jobs").select("user_id,status,moderation_status,taken_down_at,song_documents(title,document_json)").eq("id", r.job_id).limit(1);
+    const j = (jobs ?? [])[0] as unknown as { user_id: string; status: string; moderation_status: string | null; taken_down_at: string | null; song_documents: { title: string | null; document_json: Parameters<typeof tagsFromDocument>[0] } | null } | undefined;
+    if (!j || !owners.includes(j.user_id) || j.status !== "completed" || j.moderation_status !== "ok" || j.taken_down_at || !j.song_documents) continue;
     const tags = tagsFromDocument(j.song_documents.document_json);
     if (!tags || !INDIC.includes(tags.language)) continue;
     let qa = { unorderedPct: r.diction_qa?.unorderedPct ?? null, verdict: r.diction_qa?.verdict ?? null } as { unorderedPct: number | null; verdict: DictionVerdict | null };
@@ -121,7 +123,11 @@ export async function POST(req: NextRequest) {
   const geminiKey = process.env.GEMINI_API_KEY;
   const ct = req.headers.get("content-type") ?? "";
   if (ct.startsWith("multipart/form-data")) return ingestFile(db, await req.formData(), geminiKey);
-  const body = (await req.json().catch(() => ({}))) as { mode?: string; limit?: number };
-  if (body.mode === "prod_jobs") return ingestProdJobs(db, Math.min(Math.max(body.limit ?? 8, 1), 20), geminiKey);
+  const body = (await req.json().catch(() => ({}))) as { mode?: string; limit?: number; owner_ids?: unknown };
+  if (body.mode === "prod_jobs") {
+    const owners = Array.isArray(body.owner_ids) ? body.owner_ids.filter((x): x is string => typeof x === "string" && UUID.test(x)) : [];
+    if (owners.length === 0) return NextResponse.json({ error: "owner_ids required: name the internal/test accounts whose songs may enter the shared pool" }, { status: 400 });
+    return ingestProdJobs(db, owners, Math.min(Math.max(body.limit ?? 8, 1), 20), geminiKey);
+  }
   return NextResponse.json({ error: "send multipart (file, meta) or { mode: 'prod_jobs' }" }, { status: 400 });
 }
