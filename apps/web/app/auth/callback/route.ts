@@ -29,22 +29,17 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { safeNext } from "@/lib/auth/safe-next";
+
 import { createServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
-
-function sanitizeNext(raw: string | null): string {
-  if (!raw) return "/library";
-  if (!raw.startsWith("/")) return "/library";
-  if (raw.startsWith("//")) return "/library";
-  return raw;
-}
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const errorDescription = url.searchParams.get("error_description");
-  const next = sanitizeNext(url.searchParams.get("next"));
+  const next = safeNext(url.searchParams.get("next"));
 
   // Build the absolute destination off the request's actual host so
   // the redirect lands on the same deployment that handled the
