@@ -46,3 +46,6 @@ Cue followed 5 of 6 times; the Tamil male ask came back as a female duet-like mi
 2. Run the eval gate on the changed Lyria prompt (diction U and nativeness against the unhinted baseline).
 3. Station side: rank for gender rotation so a listener's mix is not one voice for an hour; needs a `voice_gender` pool tag (new migration, not included here).
 4. Native-speaker listen for ta and gu accent before any "native" claim (AGENTS.md rule 4).
+
+## Duet hold (2026-10-18)
+Duet test (4 clips): all heard as two voices; nativeness ta 3, gu 3, hi 4, kn 4. Duet is held back for ta and gu (`DUET_HOLD_LANGUAGES` in `lib/voice/index.ts`) until a native listen passes. Server clamps to the station mix; the picker hides the option.
