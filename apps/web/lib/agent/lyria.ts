@@ -79,7 +79,7 @@ export async function generateMusic(
         },
       );
       if (!res.ok) {
-        const e = new Error(`lyria ${res.status}: ${(await res.text()).slice(0, 300)}`);
+        const e = new Error(`lyria ${res.status}: ${(await res.text()).slice(0, 1200)}`);
         // 4xx other than rate limiting will not change on retry.
         if (res.status >= 400 && res.status < 500 && res.status !== 429) { lastErr = e; break; }
         throw e;
