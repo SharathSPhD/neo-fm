@@ -11,7 +11,9 @@ describe("rowToTrack", () => {
     expect(t.tags.sort()).toEqual(["birthday", "bollywood", "fast", "upbeat"]);
     expect(t.title).toBe("Janmadin");
   });
-  it("falls back to Untitled", () => {
-    expect(rowToTrack({ id: "x", title: null, audio_path: "a", duration_seconds: null, language: "ta", genre: null, raga: null, mood: null, theme: null, tempo_band: null }).title).toBe("Untitled");
+  it("names untitled tracks by language and genre", () => {
+    const base = { id: "x", title: null, audio_path: "a", duration_seconds: null, raga: null, mood: null, theme: null, tempo_band: null };
+    expect(rowToTrack({ ...base, language: "kn", genre: "light-classical" }).title).toBe("Kannada light classical");
+    expect(rowToTrack({ ...base, language: "ta", genre: null }).title).toBe("Tamil");
   });
 });
