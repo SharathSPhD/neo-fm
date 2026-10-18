@@ -1,5 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+import { meter } from "./cost";
+
 export const JUDGE_MODEL = "claude-sonnet-5-5";
 export const BASELINE_MODEL = "claude-haiku-5-5";
 
@@ -19,6 +21,7 @@ Reply with ONLY JSON: {"reason":"<=50 words","A":{"prosody":n,"diction":n,"image
 
 async function gen(client: Anthropic, model: string, prompt: string, max = 700): Promise<string> {
   const res = await client.messages.create({ model, max_tokens: max, ...(model === BASELINE_MODEL ? { thinking: { type: "disabled" as const } } : {}), messages: [{ role: "user", content: prompt }] });
+  meter.record(model, res.usage);
   const out = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   if (out.length < 20) throw new Error(`empty generation from ${model} (stop=${res.stop_reason})`);
   return out;
@@ -42,6 +45,7 @@ async function once(client: Anthropic, language: string, brief: string, a: strin
     model: JUDGE_MODEL, max_tokens: 500, system: RUBRIC,
     messages: [{ role: "user", content: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}` }],
   });
+  meter.record(JUDGE_MODEL, res.usage);
   const text = res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("");
   try {
     const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { A: Scores; B: Scores };
