@@ -210,3 +210,17 @@ export function scoreTranscriptUnordered(intended: string, transcript: string, t
 export function scoreBoth(intended: string, transcript: string): { ordered: number; unordered: number } {
   return { ordered: scoreTranscript(intended, transcript).matchPct, unordered: scoreTranscriptUnordered(intended, transcript).matchPct };
 }
+
+const LAUNCH_CODE_NAME: Record<string, string> = { hi: "hindi", ta: "tamil", te: "telugu", kn: "kannada", bn: "bengali", sa: "sanskrit" };
+
+/**
+ * Production passes language CODES, so the five launch languages resolved to "" (the keys above are names). With
+ * DICTION_HINTS_LAUNCH=1 the same hints reach Lyria for them too. Off by default until a with/without render probe
+ * shows the Gemini diction score does not drop (see strategy/pce-cma-engine.md).
+ */
+export function dictionHintsFor(language: string, env: Readonly<Record<string, string | undefined>> = process.env): string {
+  const code = language.trim().toLowerCase();
+  const hit = dictionHints(code);
+  if (hit || env.DICTION_HINTS_LAUNCH !== "1") return hit;
+  return dictionHints(LAUNCH_CODE_NAME[code] ?? "");
+}

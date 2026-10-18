@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { safeEmbedUrl } from "../agent/embed-url";
 import { mergeLyrics } from "../agent/lyrics-merge";
+import type { IntentSpec } from "../engine/intent";
 import type { CascadeReply, CascadeRequest, HostCascadeDeps, HostSong } from "./host-cascade";
 
 const CASCADE_TIMEOUT_MS = 30_000;
@@ -31,14 +32,14 @@ export function hostCascadeDeps(client: Anthropic, log?: (m: string) => void, en
   };
 }
 
-type RunOutputs = { lyrics: string | null; polished_lyrics: string | null; agent_song_document: { title?: string; style_prompt?: string; cascade?: Record<string, unknown> } | null };
+type RunOutputs = { lyrics: string | null; polished_lyrics: string | null; agent_song_document: { title?: string; style_prompt?: string; cascade?: Record<string, unknown>; intent?: IntentSpec } | null };
 
 export async function loadHostSong(db: SupabaseClient, jobId: string): Promise<HostSong | null> {
   const { data } = await db.from("agent_runs").select("lyrics,agent_song_document").eq("job_id", jobId).limit(1);
   const r = ((data ?? [])[0] ?? null) as Pick<RunOutputs, "lyrics" | "agent_song_document"> | null;
   const d = r?.agent_song_document;
   if (!r?.lyrics || !d?.style_prompt) return null;
-  return { lyrics: r.lyrics, title: d.title ?? "", stylePrompt: d.style_prompt, cascade: d.cascade ?? {} };
+  return { lyrics: r.lyrics, title: d.title ?? "", stylePrompt: d.style_prompt, cascade: d.cascade ?? {}, ...(d.intent ? { intent: d.intent } : {}) };
 }
 
 async function writeSongDocument(db: SupabaseClient, docId: string, title: string | null, lyrics: string) {
@@ -52,7 +53,7 @@ async function writeSongDocument(db: SupabaseClient, docId: string, title: strin
 
 /** Persist the committed song before the paid render, so the lyrics show while Lyria works and survive a retry. */
 export async function saveHostSong(db: SupabaseClient, jobId: string, docId: string, song: HostSong): Promise<void> {
-  const { error } = await db.from("agent_runs").update({ lyrics: song.lyrics, agent_song_document: { title: song.title, style_prompt: song.stylePrompt, cascade: song.cascade, source: "host-cascade" } }).eq("job_id", jobId);
+  const { error } = await db.from("agent_runs").update({ lyrics: song.lyrics, agent_song_document: { title: song.title, style_prompt: song.stylePrompt, cascade: song.cascade, ...(song.intent ? { intent: song.intent } : {}), source: "host-cascade" } }).eq("job_id", jobId);
   if (error) throw new Error(`agent_runs save failed: ${error.message}`);
   await writeSongDocument(db, docId, song.title, song.lyrics);
 }
