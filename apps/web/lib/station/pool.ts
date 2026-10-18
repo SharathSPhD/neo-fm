@@ -49,6 +49,7 @@ export function rowToTrack(r: PoolRow): StationTrack {
     id: r.id,
     language: r.language,
     tags: [...new Set(tags)],
+    family: `${r.language}:${r.genre ?? "any"}`,
     title: displayTitle(r),
     audioPath: r.audio_path,
     durationSeconds: r.duration_seconds,

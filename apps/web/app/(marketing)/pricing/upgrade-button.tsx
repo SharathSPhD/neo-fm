@@ -26,8 +26,9 @@ import { checkoutErrorView } from "@/lib/billing/checkout-guard";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 type Props = { label: string; variant?: "primary" | "secondary" } & (
-  | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never }
-  | { pack: "single" | "three"; tier?: never; interval?: never }
+  | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never; pass?: never }
+  | { pack: "single" | "three"; tier?: never; interval?: never; pass?: never }
+  | { pass: "station"; tier?: never; interval?: never; pack?: never }
 );
 
 export function UpgradeButton({ label, variant = "primary", ...target }: Props) {
@@ -47,7 +48,11 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify(
-            target.pack ? { pack: target.pack } : { tier: target.tier, interval: target.interval ?? "month" },
+            target.pass
+              ? { pass: target.pass }
+              : target.pack
+                ? { pack: target.pack }
+                : { tier: target.tier, interval: target.interval ?? "month" },
           ),
         });
         if (res.status === 401) {
