@@ -9,7 +9,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
-import { checkBearer } from "../../../../lib/agent/auth";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
 import {
   clampDays, hashToken, isReviewLanguage, newToken, SONGS_PER_LANGUAGE, summarize, type RatingRow,
 } from "../../../../lib/native-review/kit";
@@ -20,7 +20,7 @@ export const fetchCache = "force-no-store";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(req: NextRequest) {
-  if (!checkBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!checkAdminBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const p = req.nextUrl.searchParams;
   const action = p.get("action");
   const lang = p.get("lang") ?? "";
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  if (!checkBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  if (!checkAdminBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const db = serviceClient();
   const { data, error } = await db
     .from("review_ratings")
