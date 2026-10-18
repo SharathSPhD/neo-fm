@@ -16,7 +16,7 @@
 import type { Metadata } from "next";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
-import { isBillingEnabled } from "@/lib/billing/config";
+import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { createServerClient } from "@/lib/supabase/server";
@@ -37,6 +37,8 @@ interface Tier {
   price: string;
   pitch: UiKey;
   features: readonly UiKey[];
+  /** Yearly price (10 x monthly); the button shows only when the yearly Stripe price is configured. */
+  annualPrice?: string;
   cta:
     | { kind: "primary"; href: string; label: UiKey }
     | { kind: "waitlist"; tier: "creator" | "pro"; label: UiKey };
@@ -70,6 +72,7 @@ const TIERS: readonly Tier[] = [
       "pricing.creator.f4",
       "pricing.creator.f5",
     ],
+    annualPrice: "₹2,990",
     cta: { kind: "waitlist", tier: "creator", label: "pricing.creator.cta" },
   },
   {
@@ -84,9 +87,15 @@ const TIERS: readonly Tier[] = [
       "pricing.pro.f4",
       "pricing.pro.f5",
     ],
+    annualPrice: "₹7,990",
     cta: { kind: "waitlist", tier: "pro", label: "pricing.pro.cta" },
   },
 ];
+
+const PACKS = [
+  { sku: "single", price: "₹99", name: "pricing.packs.single.name", desc: "pricing.packs.single.desc" },
+  { sku: "three", price: "₹249", name: "pricing.packs.three.name", desc: "pricing.packs.three.desc" },
+] as const satisfies readonly { sku: "single" | "three"; price: string; name: UiKey; desc: UiKey }[];
 
 export default async function PricingPage() {
   const { t } = await serverI18n();
@@ -94,6 +103,7 @@ export default async function PricingPage() {
   // is off. `isBillingEnabled()` is also called inside /api/billing/*
   // so dummy mode always returns 503, never an undefined-key crash.
   const billingEnabled = isBillingEnabled();
+  const billing = getBillingConfigOrNull();
   let signedIn = false;
   if (billingEnabled) {
     const supabase = createServerClient();
@@ -159,10 +169,23 @@ export default async function PricingPage() {
                   {t(tier.cta.label)}
                 </a>
               ) : billingEnabled && signedIn ? (
-                <UpgradeButton
-                  tier={tier.cta.tier}
-                  label={t("pricing.upgradeTo", { tier: tier.label })}
-                />
+                <div className="flex flex-col gap-2">
+                  <UpgradeButton
+                    tier={tier.cta.tier}
+                    label={t("pricing.upgradeTo", { tier: tier.label })}
+                  />
+                  {tier.annualPrice && billing?.annualPrices[tier.cta.tier] ? (
+                    <>
+                      <UpgradeButton
+                        tier={tier.cta.tier}
+                        interval="year"
+                        variant="secondary"
+                        label={t("pricing.annual.cta", { price: tier.annualPrice })}
+                      />
+                      <p className="text-center text-xs text-foreground/50">{t("pricing.annual.note")}</p>
+                    </>
+                  ) : null}
+                </div>
               ) : billingEnabled ? (
                 <a
                   href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
@@ -177,6 +200,27 @@ export default async function PricingPage() {
           </article>
         ))}
       </section>
+      {billingEnabled && signedIn && PACKS.some((p) => billing?.packPrices[p.sku]) ? (
+        <section className="flex flex-col gap-6">
+          <header className="flex flex-col gap-2 text-center">
+            <h2 className="text-2xl font-medium tracking-tight">{t("pricing.packs.title")}</h2>
+            <p className="mx-auto max-w-2xl text-sm text-foreground/60">{t("pricing.packs.intro")}</p>
+          </header>
+          <div className="mx-auto grid w-full max-w-3xl gap-6 sm:grid-cols-2">
+            {PACKS.filter((p) => billing?.packPrices[p.sku]).map((p) => (
+              <article key={p.sku} className="flex flex-col gap-4 rounded-xl border border-muted/30 bg-muted/5 p-7">
+                <h3 className="text-lg font-medium">{t(p.name)}</h3>
+                <span className="text-3xl font-medium">{p.price}</span>
+                <p className="text-sm text-foreground/70">{t(p.desc)}</p>
+                <div className="mt-auto flex flex-col gap-2 pt-2">
+                  <UpgradeButton pack={p.sku} label={t("pricing.packs.buy")} />
+                  <p className="text-center text-xs text-foreground/50">{t("pricing.packs.payNote")}{billing?.packUpi ? ` ${t("pricing.packs.upiNote")}` : ""}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
         {t("pricing.footnote")} <a href="/help" className="underline">{t("pricing.faq")}</a>.
       </footer>

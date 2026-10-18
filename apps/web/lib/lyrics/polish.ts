@@ -1,5 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+import { meter } from "../eval/cost";
+
 export const POLISH_MODEL = "claude-sonnet-5-5";
 
 /** Placeholders every polish template must contain (validated before a candidate is stored). */
@@ -36,6 +38,7 @@ export async function polishLyrics(
   template: string = DEFAULT_POLISH_TEMPLATE,
 ): Promise<string> {
   const res = await client.messages.create({ model: POLISH_MODEL, max_tokens: 8000, messages: [{ role: "user", content: fill(template, a) }] });
+  meter.record(POLISH_MODEL, res.usage);
   const out = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   if (out.length < 20) throw new Error(`empty polish output (stop=${res.stop_reason})`);
   return out;

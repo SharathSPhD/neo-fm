@@ -19,7 +19,7 @@ Status as of 2026-10-12: all manual steps are closed. Nothing further is needed 
 | 8 | Rate limiting store (Upstash) | ✅ done, `/api/health` reports upstash ok |
 | 9 | Re-run agent setup | ➖ dropped by decision; step 6 is enough |
 | 10 | Approve the paid test renders | ✅ approved and run |
-| 11 | Soft-launch operations (test accounts, ADMIN_SECRET, leaked passwords, embedder, analytics, admin key) | ⏳ open |
+| 12 | Soft-launch operations (test accounts, ADMIN_SECRET, leaked passwords, embedder, analytics, admin key) | ⏳ open |
 
 ## Do these next, in this order
 1. **2a** Supabase auth URLs for the new domain (2 minutes). Until then sign-in from the new domain may land on the vercel.app address.
@@ -90,8 +90,11 @@ Not needed; step 6 is enough.
 ## 10. Approve the paid test renders: ✅ DONE
 Approved in chat and run; results are in the quality and latency reports.
 
-## 11. Soft-launch operations (S only; Claude changes nothing in prod config)
-Upstash is already done (step 8). Context and verification: [docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md). Tell Claude "done: 11.N" after each.
+## 11. Try the share clip on real phones: ⏳ TODO
+Why: the clip export (PR #130) is only verified in desktop Chromium and with ffmpeg; Instagram and WhatsApp acceptance depends on the phone's browser. On one iPhone (Safari) and one Android phone (Chrome), open a finished song, tap Share, then "Make a vertical clip", and post the result to Instagram Reels and WhatsApp Status; tell the lead session which phone, whether the clip came out as MP4, and whether the app accepted it.
+
+## 12. Soft-launch operations (S only; Claude changes nothing in prod config)
+Upstash is already done (step 8). Context and verification: [docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md). Tell Claude "done: 12.N" after each.
 
 1. **Delete the prod test accounts.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/users and delete `lat-bot@neo-fm.test`, `e2e-bot@neo-fm.test`, `showcase-a` and `showcase-b` (extends step 7.2).
 2. **ADMIN_SECRET.** Run `openssl rand -hex 32` and add it as `ADMIN_SECRET` (Production) at https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables, then redeploy. Do this only after Claude confirms which PR reads it.

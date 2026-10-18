@@ -1,6 +1,6 @@
 /**
  * /api/admin/pce-eval -- offline PCE-vs-single-shot lyric evaluation (Bearer CRON_SECRET / AGENT_TICK_SECRET).
- *   POST ?action=start&batch=<name>[&n=10]   queue briefs: single-shot arm is written now, PCE arm runs as a lyrics-only agent session
+ *   POST ?action=start&batch=<name>[&n=10][&set=occasion]   queue briefs: single-shot arm is written now, PCE arm runs as a lyrics-only agent session
  *   GET  ?action=advance&batch=<name>        drive running sessions, fetch lyrics, run blind judges for finished pairs
  *   GET  ?action=report&batch=<name>         win/loss/tie counts + per-brief summary
  * No audio is rendered (no Lyria spend). Costs: one Haiku session + one Haiku call + 2 Sonnet judgements per brief.
@@ -13,6 +13,7 @@ import { embedEngine } from "../../../../lib/agent/embed-url";
 import { briefText } from "../../../../lib/agent/runner";
 import { agentIdFor, requireId } from "../../../../lib/agent/tiers";
 import { allEvalBriefs } from "../../../../lib/eval/briefs-gen";
+import { OCCASION_BRIEFS } from "../../../../lib/eval/occasion-briefs";
 
 const PILOT_BRIEFS = allEvalBriefs();
 import { polishLyrics } from "../../../../lib/lyrics/polish";
@@ -40,9 +41,10 @@ export async function POST(req: NextRequest) {
   const batch = req.nextUrl.searchParams.get("batch");
   if (!batch) return NextResponse.json({ error: "batch required" }, { status: 400 });
   const offset = Math.max(0, Number(req.nextUrl.searchParams.get("offset") ?? 0));
-  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? 10), PILOT_BRIEFS.length - offset);
+  const source = req.nextUrl.searchParams.get("set") === "occasion" ? OCCASION_BRIEFS : PILOT_BRIEFS; // occasion songs: batch occA feeds self-improve evaluate
+  const n = Math.min(Number(req.nextUrl.searchParams.get("n") ?? 10), source.length - offset);
   const lang = req.nextUrl.searchParams.get("lang"); // optional language filter, e.g. Telugu
-  const pool = lang ? PILOT_BRIEFS.filter((b) => b.language.toLowerCase() === lang.toLowerCase()) : PILOT_BRIEFS;
+  const pool = lang ? source.filter((b) => b.language.toLowerCase() === lang.toLowerCase()) : source;
   const db = serviceClient(); const client = anthropicClient(); const sessions = sessionApi();
   const envId = requireId("MA_ENVIRONMENT_ID", process.env.MA_ENVIRONMENT_ID, "env_");
   const { data: cfg } = await db.from("config_versions").select("id").eq("kind", "pipeline").eq("status", "live").limit(1);

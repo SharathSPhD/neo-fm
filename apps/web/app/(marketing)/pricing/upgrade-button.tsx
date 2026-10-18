@@ -25,12 +25,12 @@ import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { checkoutErrorView } from "@/lib/billing/checkout-guard";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
-interface Props {
-  tier: "creator" | "pro";
-  label: string;
-}
+type Props = { label: string; variant?: "primary" | "secondary" } & (
+  | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never }
+  | { pack: "single" | "three"; tier?: never; interval?: never }
+);
 
-export function UpgradeButton({ tier, label }: Props) {
+export function UpgradeButton({ label, variant = "primary", ...target }: Props) {
   const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +46,9 @@ export function UpgradeButton({ tier, label }: Props) {
         const res = await fetch("/api/billing/checkout", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ tier }),
+          body: JSON.stringify(
+            target.pack ? { pack: target.pack } : { tier: target.tier, interval: target.interval ?? "month" },
+          ),
         });
         if (res.status === 401) {
           window.location.assign("/sign-in?next=/pricing");
@@ -83,7 +85,9 @@ export function UpgradeButton({ tier, label }: Props) {
         type="button"
         onClick={start}
         disabled={pending}
-        className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60"
+        className={`block w-full rounded-md border border-accent/40 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20 disabled:cursor-progress disabled:opacity-60 ${
+          variant === "primary" ? "bg-accent/10" : "bg-transparent"
+        }`}
       >
         {pending ? t("pub.upgrade.opening") : label}
       </button>

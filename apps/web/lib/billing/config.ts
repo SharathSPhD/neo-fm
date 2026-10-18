@@ -17,12 +17,22 @@
 import "server-only";
 
 export type BillableTier = "creator" | "pro";
+export type BillingInterval = "month" | "year";
+export type PackSku = "single" | "three";
+
+/** Songs a pack grants. Server-side truth: the webhook derives this from the purchased price id, never from metadata. */
+export const PACK_SONGS: Record<PackSku, number> = { single: 1, three: 3 };
 
 export interface BillingConfig {
   secretKey: string;
   webhookSecret: string;
   publishableKey: string;
   prices: Record<BillableTier, string>;
+  /** Optional: unset means that plan/pack is simply not offered. */
+  annualPrices: Partial<Record<BillableTier, string>>;
+  packPrices: Partial<Record<PackSku, string>>;
+  /** Offer UPI on one-time packs. Only set once UPI is enabled for the Stripe account (Dashboard > Payment methods). */
+  packUpi: boolean;
 }
 
 /**
@@ -50,6 +60,15 @@ function readEnv(): BillingConfig | null {
     webhookSecret,
     publishableKey,
     prices: { creator: creatorPrice, pro: proPrice },
+    annualPrices: {
+      creator: process.env.STRIPE_PRICE_CREATOR_ANNUAL_ID || undefined,
+      pro: process.env.STRIPE_PRICE_PRO_ANNUAL_ID || undefined,
+    },
+    packPrices: {
+      single: process.env.STRIPE_PRICE_PACK_SINGLE_ID || undefined,
+      three: process.env.STRIPE_PRICE_PACK_THREE_ID || undefined,
+    },
+    packUpi: process.env.STRIPE_PACK_UPI === "1",
   };
 }
 
@@ -82,14 +101,26 @@ export function getPriceIdForTier(tier: BillableTier): string {
   return getBillingConfigOrThrow().prices[tier];
 }
 
+/** Price id for a plan at the given interval; null when the annual price is not configured. */
+export function getPlanPriceId(tier: BillableTier, interval: BillingInterval): string | null {
+  const cfg = getBillingConfigOrThrow();
+  return interval === "year" ? cfg.annualPrices[tier] ?? null : cfg.prices[tier];
+}
+
+export function getPackForPriceId(priceId: string | null | undefined): PackSku | null {
+  if (!priceId) return null;
+  const packs = getBillingConfigOrNull()?.packPrices ?? {};
+  return (Object.keys(packs) as PackSku[]).find((sku) => packs[sku] === priceId) ?? null;
+}
+
 export function getTierForPriceId(
   priceId: string | null | undefined,
 ): BillableTier | null {
   if (!priceId) return null;
   const cfg = getBillingConfigOrNull();
   if (!cfg) return null;
-  if (priceId === cfg.prices.creator) return "creator";
-  if (priceId === cfg.prices.pro) return "pro";
+  if (priceId === cfg.prices.creator || priceId === cfg.annualPrices.creator) return "creator";
+  if (priceId === cfg.prices.pro || priceId === cfg.annualPrices.pro) return "pro";
   return null;
 }
 
