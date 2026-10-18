@@ -158,4 +158,22 @@ describe("alexa skill package", () => {
     expect(m.publishingInformation.distributionCountries).toEqual(["IN"]);
     expect(m.privacyAndCompliance).toMatchObject({ allowsPurchases: false, containsAds: false });
   });
+
+  it("store copy stays inside Alexa's limits and names the AI label", () => {
+    const locales = load("skill.json").manifest.publishingInformation.locales as Record<string, { name: string; summary: string; description: string; examplePhrases: string[] }>;
+    for (const [locale, l] of Object.entries(locales)) {
+      expect(l.summary.length, `${locale} summary`).toBeLessThanOrEqual(160);
+      expect(l.description.length, `${locale} description`).toBeLessThanOrEqual(4000);
+      expect(l.examplePhrases.length, locale).toBeGreaterThanOrEqual(2);
+      expect(l.description, locale).toMatch(/AI|एआई/);
+    }
+  });
+
+  it("invocation names are lowercase words or Devanagari with no launch phrases", () => {
+    for (const locale of ["en-IN", "hi-IN"]) {
+      const name = load(`interactionModels/custom/${locale}.json`).interactionModel.languageModel.invocationName as string;
+      expect(name).not.toMatch(/\b(alexa|skill|app|open|launch|play)\b/i);
+      expect(name).not.toMatch(/[A-Z]/);
+    }
+  });
 });

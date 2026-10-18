@@ -7,4 +7,4 @@ A custom Alexa skill using the AudioPlayer interface that plays the station: "Al
 - Skill logic is in `apps/web/lib/alexa/skill.ts` (pure, tested in `apps/web/tests/alexa-skill.test.ts`); the tracks come from the same pool, ranking and clock wheel as `/api/station/queue` (`lib/alexa/tracks.ts`). Listeners are anonymous; account linking is a later step.
 - Not yet tested on a device or in the ASK simulator: that needs an Amazon developer account (S-owned). Then `ask deploy` this folder, set `ALEXA_SKILL_ID` and `ALEXA_SKILL_ENABLED=1` in Vercel.
 
-Plan, certification notes and the partnership research: `strategy/alexa-partnerships.md` in the project files.
+Certification checklist: `CERTIFICATION.md`. Plan and partnership research: `strategy/alexa-partnerships.md` in the project files.
