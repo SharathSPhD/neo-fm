@@ -102,6 +102,14 @@ export function pickRule(
   if (/^\/native-review\/[^/]+\/?$/.test(pathname)) {
     return { bucket: "review:page", limit: 30 };
   }
+  // UI-translation review links are token-gated like native-review. A reviewer saves one verdict per string
+  // (hundreds per session), so writes get a higher cap than the page itself.
+  if (/^\/api\/ui-review\/[^/]+\/items\/?$/.test(pathname)) {
+    return { bucket: "uireview:write", limit: 120 };
+  }
+  if (/^\/ui-review\/[^/]+(\/open)?\/?$/.test(pathname)) {
+    return { bucket: "uireview:page", limit: 30 };
+  }
   // Browser CSP violation reports: anonymous and unbounded in a hostile page, so cap hard.
   if (/^\/api\/csp-report\/?$/.test(pathname)) {
     return { bucket: "anon:csp", limit: 30 };
@@ -139,6 +147,10 @@ export function pickRule(
   // round-trip "remix-from-public" to amplify their effective limit.
   if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
+  }
+  // Anonymous listener counters: write-only, so keep the budget lower than reads.
+  if (/^\/api\/p\/[^/]+\/listen\/?$/.test(pathname)) {
+    return { bucket: "public:listen", limit: 30 };
   }
   // Public share-surface reads.
   if (pathname.startsWith("/api/p/") || pathname === "/api/oembed") {
