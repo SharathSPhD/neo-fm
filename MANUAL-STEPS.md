@@ -134,5 +134,5 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 1. Say which migration to apply: `0099_ad_slots` (creates `ad_slots` and `ad_events`, service role only, plus 12 inactive card-only house ads). Nothing is served before this, and the queue works without it.
 2. Have a native speaker read the Indic headlines in the seed rows. Then set `reviewed_by`, `reviewed_at` and `active = true` on the ones to run. Keep the two Station pass ads off until the pass is on sale (it is test mode only and has no entitlement yet).
 3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Paid tiers never hear ads; Station pass holders are not recognised yet because the webhook stores no pass.
-4. Phone test: a card-only spot leaves about 6 seconds without audio, so check on a locked phone that the next track starts by itself.
+4. Phone test: a card-only spot leaves about 6 seconds without audio. The player drops it when the page is hidden (or ends it if the phone locks mid-card), but check on a locked phone that the next track starts by itself.
 

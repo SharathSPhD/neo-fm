@@ -152,6 +152,8 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     globalPlayer.close();
     currentId.current = current.id;
     if (current.type === "ad" && current.ad) {
+      // A card-only spot leaves ~6 s of silence, which can stall background audio on a locked phone: drop it when hidden.
+      if (!current.url && typeof document !== "undefined" && document.hidden) { controls.current.skip(); return; }
       // A break: labelled, skippable, no taste signal, no host line. Card-only spots just hold the card for a few seconds.
       const a = adSession.current;
       a.since = 0;
@@ -167,7 +169,10 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       } else {
         const id = current.id;
         const t = setTimeout(() => { if (currentId.current === id) controls.current.finish(); }, AD_CARD_MS);
-        return () => clearTimeout(t);
+        // Locking the phone mid-card: end the spot now so the next track starts while the page can still play.
+        const onHide = () => { if (document.hidden && currentId.current === id) controls.current.finish(); };
+        document.addEventListener("visibilitychange", onHide);
+        return () => { clearTimeout(t); document.removeEventListener("visibilitychange", onHide); };
       }
       return;
     }
