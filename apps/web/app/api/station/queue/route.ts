@@ -1,11 +1,13 @@
 /**
  * GET /api/station/queue?lang=hi&tags=birthday,upbeat&limit=10 -- the next tracks for this listener.
- * Ranking v0 (lib/station/rank.ts): requested language/tags plus this listener's own signals from the last 30 days.
+ * Ranking (lib/station/rank.ts) scores the pool from the requested language/tags and this listener's signals from the last 30 days;
+ * the clock wheel (lib/station/program.ts) then orders the queue for the listener-local hour (`hour=0-23`, India time if absent).
  * Each track carries a short-lived signed URL. Empty list when the pool or signal table is unavailable.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
 import { loadPool } from "@/lib/station/pool";
+import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
@@ -15,6 +17,15 @@ export const dynamic = "force-dynamic";
 
 const SIGNAL_WINDOW_MS = 30 * 86_400_000;
 const URL_TTL_SECONDS = 60 * 60;
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+
+/** Listener-local clock: the client sends its hour; without it we assume India time, the launch market. */
+function localClock(hourParam: string | null, now = Date.now()) {
+  const ist = new Date(now + IST_OFFSET_MS);
+  const h = hourParam === null || hourParam === "" ? NaN : Number(hourParam);
+  const hour = Number.isInteger(h) && h >= 0 && h <= 23 ? h : ist.getUTCHours();
+  return { hour, month: ist.getUTCMonth() + 1, day: ist.getUTCDate() };
+}
 
 export async function GET(req: NextRequest) {
   const authed = await requireUser();
@@ -46,7 +57,10 @@ export async function GET(req: NextRequest) {
     rows = data ?? [];
   } catch { /* no signals yet: rules-only ranking */ }
 
-  const ranked = rankTracks(pool, rowsToSignals(rows), { language: lang, wantTags, limit });
+  const signals = rowsToSignals(rows);
+  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
+  const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
+  const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit });
   const byId = new Map(pool.map((t) => [t.id, t]));
   const tracks = (
     await Promise.all(
