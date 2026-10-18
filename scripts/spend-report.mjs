@@ -6,6 +6,8 @@
 //   MA_ADMIN_KEY                   Admin API key (sk-ant-admin...); ANT* env names are blocked. Absent => ledger-only mode.
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   optional, for the app's spend_ledger (Lyria GBP reservations)
 //   node scripts/spend-report.mjs [--since YYYY-MM-DD] [--budget USD] [--out path.md]
+//     [--tracks N] [--listener-hours H] [--gbp-usd 1.30] [--bucket prod=USD --bucket "test/eval gate"=USD ...]
+//   --tracks / --listener-hours are the window's counts (from the app or station analytics); they turn spend into unit costs.
 // Baseline: USD 88 was left as of 2026-10-18, so --since defaults to that date and earlier spend is not counted.
 
 import { writeFileSync } from "node:fs";
@@ -80,9 +82,25 @@ export function projection(spentUsd, since, now) {
   return { daily, projected: spentUsd + daily * left, daysLeft: left };
 }
 
+// Caps are the allocation spread evenly over the weeks left in the window, so an overspent week shows up before the total does.
+export function weeklyCaps(split = SPLIT_USD, since, end = new Date(BUDGET_END)) {
+  const weeks = Math.max(1, (end - since) / (7 * 864e5));
+  return { weeks, caps: Object.fromEntries(Object.entries(split).map(([k, v]) => [k, v / weeks])) };
+}
+
+// Lyria is billed in GBP outside the Claude credit, so unit cost is reported as Claude USD plus Lyria converted at gbpUsd.
+export function unitCosts({ claudeUsd, lyriaGbp = 0, gbpUsd = 1.3, tracks, listenerHours }) {
+  const total = claudeUsd + lyriaGbp * gbpUsd;
+  return {
+    total,
+    perTrack: tracks > 0 ? total / tracks : null,
+    perListenerHour: listenerHours > 0 ? total / listenerHours : null,
+  };
+}
+
 const usd = (n) => `USD ${n.toFixed(2)}`;
 
-export function renderMarkdown({ now, since, cost, tokens, ledger, notes, budget = BUDGET_USD }) {
+export function renderMarkdown({ now, since, cost, tokens, ledger, notes, budget = BUDGET_USD, tracks, listenerHours, gbpUsd = 1.3, bucketSpend = {} }) {
   const L = [`# Claude platform spend`, ``, `Generated ${now.toISOString()} by \`scripts/spend-report.mjs\` (read-only).`, ``];
   L.push(`Budget: ${usd(budget)} until ${BUDGET_END}. Window reported: ${since.toISOString().slice(0, 10)} onwards.`, ``);
   if (cost) {
@@ -95,8 +113,21 @@ export function renderMarkdown({ now, since, cost, tokens, ledger, notes, budget
     const last7 = [...cost.byDay].filter(([d]) => new Date(d).getTime() + 864e5 > cut).reduce((a, [, v]) => a + v, 0);
     L.push(`- Last 7 days: **${usd(last7)}** (${usd(last7 / 7)}/day)`);
     L.push(`- Burn: ${usd(p.daily)}/day, projected total at end date ${usd(p.projected)}${p.projected > budget ? " **(over budget)**" : ""}`, ``);
-    L.push(`| Bucket | Allocation | Note |`, `|---|---|---|`);
-    for (const [k, v] of Object.entries(SPLIT_USD)) L.push(`| ${k} | ${usd(v)} | per-bucket spend is not separable without separate workspaces or keys |`);
+    const { weeks, caps } = weeklyCaps(SPLIT_USD, since);
+    L.push(`| Bucket | Allocation | Weekly cap (${weeks.toFixed(1)} wks) | Spent | Note |`, `|---|---|---|---|---|`);
+    for (const [k, v] of Object.entries(SPLIT_USD)) {
+      const s = bucketSpend[k];
+      const note = s === undefined ? "per-bucket spend is not separable from the Admin API; pass --bucket" : s > v ? "**over allocation**" : "";
+      L.push(`| ${k} | ${usd(v)} | ${usd(caps[k])} | ${s === undefined ? "n/a" : usd(s)} | ${note} |`);
+    }
+    const spendable = Object.entries(caps).filter(([k]) => k !== "reserve").reduce((a, [, v]) => a + v, 0);
+    const weekFlag = last7 > spendable ? " **(over the weekly cap for prod + eval + dev; reserve is not for routine spend)**" : "";
+    L.push(``, `Last 7 days ${usd(last7)} against a weekly cap of ${usd(spendable)} (prod + eval + dev)${weekFlag}.`);
+    const lyriaGbp = (ledger ?? []).filter((r) => /lyria/i.test(r.provider)).reduce((a, r) => a + Number(r.reserved_gbp), 0);
+    const u = unitCosts({ claudeUsd: cost.total, lyriaGbp, gbpUsd, tracks, listenerHours });
+    L.push(``, `### Unit cost`, ``, `Claude billed ${usd(cost.total)} + Lyria reserved GBP ${lyriaGbp.toFixed(2)} (at ${gbpUsd} USD/GBP) = ${usd(u.total)} over the window.`, ``);
+    L.push(`- Per track: ${u.perTrack === null ? "n/a (pass --tracks)" : usd(u.perTrack) + ` over ${tracks} tracks`}`);
+    L.push(`- Per listener-hour: ${u.perListenerHour === null ? "n/a (pass --listener-hours)" : usd(u.perListenerHour) + ` over ${listenerHours} h`}`, ``);
     L.push(``, `### By model`, ``, `| Model | USD |`, `|---|---|`);
     for (const [m, v] of [...cost.byModel].sort((a, b) => b[1] - a[1])) L.push(`| ${m} | ${v.toFixed(2)} |`);
     L.push(``, `### By day (last 14)`, ``, `| Day | USD |`, `|---|---|`);
@@ -162,7 +193,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const now = new Date();
   const since = new Date(arg("--since") ?? BASELINE_SINCE);
   const budget = Number(arg("--budget") ?? BUDGET_USD);
-  const md = renderMarkdown({ ...(await collect({ since, now })), budget });
+  const num = (n) => (arg(n) === undefined ? undefined : Number(arg(n)));
+  const bucketSpend = {};
+  process.argv.forEach((a, i) => {
+    if (a !== "--bucket") return;
+    const [k, v] = process.argv[i + 1].split("=");
+    bucketSpend[k] = Number(v);
+  });
+  const md = renderMarkdown({ ...(await collect({ since, now })), budget, tracks: num("--tracks"), listenerHours: num("--listener-hours"), gbpUsd: num("--gbp-usd"), bucketSpend });
   const out = arg("--out");
   if (out) writeFileSync(out, md);
   else console.log(md);
