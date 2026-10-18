@@ -50,6 +50,7 @@ weights/
 *.mp3
 *.flac
 *.opus
+!apps/web/public/voice/**/*.mp3
 !demos/**/*.wav
 !demos/**/*.mp3
 

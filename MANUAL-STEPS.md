@@ -137,3 +137,8 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Paid tiers never hear ads; Station pass holders are not recognised yet because the webhook stores no pass.
 4. Phone test: a card-only spot leaves about 6 seconds without audio. The player drops it when the page is hidden (or ends it if the phone locks mid-card), but check on a locked phone that the next track starts by itself.
 
+**G. Spoken station links (off by default)**
+1. Nothing to apply: the lines are static files under `apps/web/public/voice` and an index in `lib/station/voice-lines.json`, built by `node scripts/voice-lines-build.mjs` from the media lab TTS run. No migration, no spend.
+2. Have a native speaker listen to the Hindi and Tamil lines (all are AI-voiced and marked pending native review) before turning it on.
+3. In Vercel set `STATION_VOICE_LINKS=1` and redeploy. Unset it to turn all spoken links off at once. Leave `STATION_VOICE_TIMECHECK` unset: those lines say the exact hour and a queue is built up to about 25 minutes ahead of its last song.
+4. Phone test: on a locked phone, check the next song starts by itself after a spoken link, and that skip on a link goes straight to the song.
