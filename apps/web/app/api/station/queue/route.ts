@@ -17,6 +17,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { adsEnabled } from "@/lib/station/ads";
 import { adForQueue, parseAdState } from "@/lib/station/ads-server";
+import { poolCdnUrl } from "@/lib/station/cdn";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
@@ -107,12 +108,14 @@ export async function GET(req: NextRequest) {
     await Promise.all(
       ranked.map(async (r) => {
         const t = byId.get(r.id)!;
-        const { data } = await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
-        if (!data?.signedUrl) return null;
+        const cdnUrl = poolCdnUrl(t.audioPath);
+        const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
+        const url = cdnUrl ?? signed;
+        if (!url) return null;
         const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
         const info = setInfo.get(t.id);
         const fade = crossfadeFor(info);
-        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url: data.signedUrl, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
+        return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
       }),
     )
   ).filter((t) => t !== null);
