@@ -25,6 +25,9 @@ export interface ClipFrameInput {
   /** Used to pick a deterministic gradient when there is no cover art. */
   seed: string;
   fontFamily: string;
+  /** Loudness 0..1 and beat pulse 0..1 at `t`; both 0 when the audio could not be analysed. */
+  energy?: number;
+  pulse?: number;
 }
 
 function hueOf(seed: string): number {
@@ -47,6 +50,21 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
+  // Two slow-drifting glows that swell with the music; motion is what makes it a video, not a slideshow.
+  const energy = f.energy ?? 0;
+  const pulse = f.pulse ?? 0;
+  for (let i = 0; i < 2; i++) {
+    const ang = f.t * (0.35 + 0.2 * i) + i * 2.4;
+    const gx = W / 2 + Math.cos(ang) * 320;
+    const gy = H * (0.35 + 0.3 * i) + Math.sin(ang * 1.3) * 200;
+    const gr = 460 + 260 * energy + 120 * pulse;
+    const glow = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+    glow.addColorStop(0, `hsla(${(hue + 30 + 50 * i) % 360} 85% 55% / ${0.16 + 0.22 * energy})`);
+    glow.addColorStop(1, `hsla(${(hue + 30 + 50 * i) % 360} 85% 55% / 0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+  }
+
   // Cover art, square, with a soft shadow; the gradient stands in when it is missing.
   const side = 560;
   const cx = (W - side) / 2;
@@ -54,6 +72,10 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
   ctx.shadowColor = "rgba(0,0,0,0.5)";
   ctx.shadowBlur = 50;
   ctx.shadowOffsetY = 20;
+  ctx.save();
+  ctx.translate(W / 2, cy + side / 2);
+  ctx.scale(1 + 0.035 * pulse, 1 + 0.035 * pulse);
+  ctx.translate(-W / 2, -(cy + side / 2));
   ctx.fillStyle = `hsl(${(hue + 20) % 360} 50% 30%)`;
   roundRect(ctx, cx, cy, side, side, 36);
   ctx.fill();
@@ -65,6 +87,7 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
     ctx.drawImage(f.cover, cx, cy, side, side);
     ctx.restore();
   }
+  ctx.restore();
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
@@ -100,9 +123,31 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
     if (!row.line) { y += row.size * 1.7; continue; }
     ctx.font = `${row === rows[1] ? 700 : 400} ${row.size}px ${f.fontFamily}`;
     const wrapped = wrapText((s) => ctx.measureText(s).width, row.line.text, W - 140).slice(0, 3);
-    ctx.fillStyle = row === rows[1] ? `hsl(${(hue + 25) % 360} 90% ${70 + 10 * (1 - st.progress)}%)` : `rgba(255,255,255,${row.alpha})`;
+    const isActive = row === rows[1];
+    const accent = `hsl(${(hue + 25) % 360} 90% 72%)`;
+    // Karaoke fill: the sung share of the line's characters is painted in the accent, left to right.
+    const totalChars = wrapped.reduce((n, p) => n + p.length, 0) || 1;
+    let before = 0;
     for (const part of wrapped) {
-      ctx.fillText(part, W / 2, y);
+      if (!isActive) {
+        ctx.fillStyle = `rgba(255,255,255,${row.alpha})`;
+        ctx.fillText(part, W / 2, y);
+      } else {
+        const frac = Math.min(1, Math.max(0, (st.progress * totalChars - before) / Math.max(1, part.length)));
+        const w = ctx.measureText(part).width;
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.fillText(part, W / 2, y);
+        if (frac > 0) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(W / 2 - w / 2, y - row.size * 1.1, w * frac, row.size * 1.5);
+          ctx.clip();
+          ctx.fillStyle = accent;
+          ctx.fillText(part, W / 2, y);
+          ctx.restore();
+        }
+        before += part.length;
+      }
       y += row.size * 1.3;
     }
     y += row.size * 0.4;
