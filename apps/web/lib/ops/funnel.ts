@@ -20,11 +20,17 @@ export interface FunnelSummary {
   signups: number;
   first_song_users: number;
   songs_shared: number;
+  /** Songs created in the window that carry a dedication (the gift step). */
+  songs_gifted: number;
+  /** Window sign-ups whose subscription is active or trialing now. */
+  paid_users: number;
   /** Each step as a share of the previous one; null when the previous step is zero. */
   conversion: {
     landing_to_signup_view: number | null; signup_view_to_signup: number | null; signup_to_first_song: number | null;
     /** Upgrade clicks as a share of pricing views. */
     pricing_view_to_checkout: number | null;
+    /** Paying users as a share of sign-ups in the window. */
+    signup_to_paid: number | null;
   };
   by_day: Record<string, Partial<Record<FunnelEvent, number>>>;
 }
@@ -32,7 +38,7 @@ export interface FunnelSummary {
 const ratio = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 1000 : null);
 
 export function buildFunnel(
-  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number }, windowDays: number,
+  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number; gifted: number; paidUsers: number }, windowDays: number,
 ): FunnelSummary {
   const views = { landing_view: 0, pricing_view: 0, signup_view: 0, share_view: 0, checkout_started: 0 } as Record<FunnelEvent, number>;
   const byDay: FunnelSummary["by_day"] = {};
@@ -47,11 +53,14 @@ export function buildFunnel(
     signups: derived.signups,
     first_song_users: derived.firstSongUsers,
     songs_shared: derived.shared,
+    songs_gifted: derived.gifted,
+    paid_users: derived.paidUsers,
     conversion: {
       landing_to_signup_view: ratio(views.signup_view, views.landing_view),
       signup_view_to_signup: ratio(derived.signups, views.signup_view),
       signup_to_first_song: ratio(derived.firstSongUsers, derived.signups),
       pricing_view_to_checkout: ratio(views.checkout_started, views.pricing_view),
+      signup_to_paid: ratio(derived.paidUsers, derived.signups),
     },
     by_day: byDay,
   };

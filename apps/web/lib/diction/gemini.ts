@@ -1,3 +1,4 @@
+import { summariseGeminiUsage, type TokenUsage } from "../cost/usage";
 import { scoreTranscript, type DictionScore } from "./index";
 
 const MODEL = () => process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash";
@@ -5,6 +6,7 @@ const MODEL = () => process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash";
 /** Gemini audio understanding: transcribe the sung audio in its original script. Cheap (~1.2k tokens per clip). */
 export async function transcribeSung(
   audio: Uint8Array, mimeType: string, language: string, apiKey: string, fetchImpl: typeof fetch = fetch,
+  onUsage?: (u: TokenUsage) => void,
 ): Promise<string> {
   const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL()}:generateContent`, {
     method: "POST",
@@ -20,14 +22,16 @@ export async function transcribeSung(
     }),
   });
   if (!res.ok) throw new Error(`gemini qa ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[]; usageMetadata?: unknown };
+  onUsage?.(summariseGeminiUsage(MODEL(), body.usageMetadata));
   const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
   try { return String((JSON.parse(text) as { transcript?: unknown }).transcript ?? ""); } catch { return text; }
 }
 
 export async function auditDiction(
   lyrics: string, audio: Uint8Array, mimeType: string, language: string, apiKey: string, fetchImpl: typeof fetch = fetch,
+  onUsage?: (u: TokenUsage) => void,
 ): Promise<DictionScore & { transcript: string }> {
-  const transcript = await transcribeSung(audio, mimeType, language, apiKey, fetchImpl);
+  const transcript = await transcribeSung(audio, mimeType, language, apiKey, fetchImpl, onUsage);
   return { ...scoreTranscript(lyrics, transcript), transcript };
 }

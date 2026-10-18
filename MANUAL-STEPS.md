@@ -20,7 +20,8 @@ Status as of 2026-10-12: all manual steps are closed. Nothing further is needed 
 | 9 | Re-run agent setup | ➖ dropped by decision; step 6 is enough |
 | 10 | Approve the paid test renders | ✅ approved and run |
 | 11 | Try the share clip on real phones | ⏳ TODO |
-| 12 | Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay | ⏳ open (test mode only) |
+| 12 | Soft-launch operations (test accounts, ADMIN_SECRET, leaked passwords, embedder, analytics, admin key) | ⏳ open |
+| 13 | Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay | ⏳ open (test mode only) |
 
 ## Do these next, in this order
 1. **2a** Supabase auth URLs for the new domain (2 minutes). Until then sign-in from the new domain may land on the vercel.app address.
@@ -94,7 +95,18 @@ Approved in chat and run; results are in the quality and latency reports.
 ## 11. Try the share clip on real phones: ⏳ TODO
 Why: the clip export (PR #130) is only verified in desktop Chromium and with ffmpeg; Instagram and WhatsApp acceptance depends on the phone's browser. On one iPhone (Safari) and one Android phone (Chrome), open a finished song, tap Share, then "Make a vertical clip", and post the result to Instagram Reels and WhatsApp Status; tell the lead session which phone, whether the clip came out as MP4, and whether the app accepted it.
 
-## 12. Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay: ⏳ OPEN (test mode only)
+## 12. Soft-launch operations (S only; Claude changes nothing in prod config)
+Upstash is already done (step 8). Context and verification: [docs/LAUNCH-CHECKLIST.md](docs/LAUNCH-CHECKLIST.md). Tell Claude "done: 12.N" after each.
+
+1. **Delete the prod test accounts.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/users and delete `lat-bot@neo-fm.test`, `e2e-bot@neo-fm.test`, `showcase-a` and `showcase-b` (extends step 7.2).
+2. **ADMIN_SECRET.** Run `openssl rand -hex 32` and add it as `ADMIN_SECRET` (Production) at https://vercel.com/ss-projects-f08e52ab/neo-fm-web/settings/environment-variables, then redeploy. Do this only after Claude confirms which PR reads it.
+3. **Leaked-password protection.** Open https://supabase.com/dashboard/project/kgxltxvjlsnbwomklwox/auth/providers, Email provider, enable "Prevent use of leaked passwords" (needs the Pro plan from step 2.4).
+4. **Embedder.** Check the Cloud Run service in https://console.cloud.google.com/run and tell Claude whether the latest revision is healthy or needs a rebuild. The app works without it.
+5. **Vercel Web Analytics.** Open https://vercel.com/ss-projects-f08e52ab/neo-fm-web/analytics and click Enable. Claude adds the component in a PR.
+6. **Anthropic admin key for the spend tracker.** Create an Admin API key at https://console.anthropic.com/settings/admin-keys and add it only as the cloud environment variable `MA_ADMIN_KEY` (not an ANT* name, those are blocked). Never paste it in chat. It is used read-only for `cost_report` and `usage_report`.
+7. **Migrations 0072, 0076, 0078, 0086.** Apply each only after the lead has reviewed and merged its PR, and say go.
+
+## 13. Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay: ⏳ OPEN (test mode only)
 Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.stripe.com/test/...`). Never do this in live mode. Dashboard labels move around; if one differs, search the dashboard for the word in bold. Never paste keys in chat.
 
 **A. Yearly plans (needs PR #129 merged and deployed)**
