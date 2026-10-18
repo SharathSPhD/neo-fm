@@ -1,6 +1,10 @@
 /** Funnel definitions shared by the beacon route, the admin read route and the dashboard. */
 
-export const FUNNEL_EVENTS = ["landing_view", "pricing_view", "signup_view", "share_view", "checkout_started"] as const;
+export const FUNNEL_EVENTS = [
+  "landing_view", "pricing_view", "signup_view", "share_view", "checkout_started",
+  // Launch funnel (migration 0097): the station, from first play to share.
+  "station_play_anon", "station_play_user", "nudge_shown", "nudge_clicked", "onboarding_done", "listened_3", "station_share", "whatsapp_click",
+] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
 
 export function isFunnelEvent(v: unknown): v is FunnelEvent {
@@ -33,14 +37,18 @@ export interface FunnelSummary {
     signup_to_paid: number | null;
   };
   by_day: Record<string, Partial<Record<FunnelEvent, number>>>;
+  /** Sign-ups per UTC day inside the window, derived from users.created_at. */
+  signups_by_day: Record<string, number>;
 }
 
 const ratio = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 1000 : null);
 
 export function buildFunnel(
-  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number; gifted: number; paidUsers: number }, windowDays: number,
+  rows: FunnelRow[], derived: { signups: number; firstSongUsers: number; shared: number; gifted: number; paidUsers: number; signupDays?: string[] }, windowDays: number,
 ): FunnelSummary {
-  const views = { landing_view: 0, pricing_view: 0, signup_view: 0, share_view: 0, checkout_started: 0 } as Record<FunnelEvent, number>;
+  const views = Object.fromEntries(FUNNEL_EVENTS.map((e) => [e, 0])) as Record<FunnelEvent, number>;
+  const signupsByDay: Record<string, number> = {};
+  for (const d of derived.signupDays ?? []) signupsByDay[d] = (signupsByDay[d] ?? 0) + 1;
   const byDay: FunnelSummary["by_day"] = {};
   for (const r of rows) {
     if (!isFunnelEvent(r.event)) continue;
@@ -63,5 +71,6 @@ export function buildFunnel(
       signup_to_paid: ratio(derived.paidUsers, derived.signups),
     },
     by_day: byDay,
+    signups_by_day: signupsByDay,
   };
 }
