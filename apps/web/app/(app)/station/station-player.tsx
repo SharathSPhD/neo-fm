@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { usePlayer } from "@/components/player/player-provider";
+import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
 interface Track {
@@ -127,12 +128,18 @@ export function StationPlayer() {
   async function share() {
     if (!current) return;
     const text = `${current.title} on neo-fm Station`;
-    const url = `${location.origin}/station`;
+    const url = trackShareUrl(current.id, location.origin);
     try {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Link copied"); }
       sendSignal(current.id, "share", audioRef.current);
     } catch { /* share sheet dismissed */ }
+  }
+
+  function shareWhatsApp() {
+    if (!current) return;
+    window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin)), "_blank", "noopener,noreferrer");
+    sendSignal(current.id, "share", audioRef.current);
   }
 
   return (
@@ -185,6 +192,7 @@ export function StationPlayer() {
             <button type="button" onClick={replay} className="rounded border px-3 py-2">Replay</button>
             <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
+            <button type="button" onClick={shareWhatsApp} className="rounded border px-3 py-2">WhatsApp</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
         </div>
