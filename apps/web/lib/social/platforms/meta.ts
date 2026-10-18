@@ -29,15 +29,23 @@ async function exchange(code: string, redirectUri: string, env: NodeJS.ProcessEn
   );
   const want = (env.META_PAGE_ID ?? "").trim();
   let page = pages.data.find((p) => (want ? p.id === want : true));
+  let directNote = "";
   if (!page && want) {
     // Business-portfolio Pages are not always listed by /me/accounts; ask for the configured Page directly.
     const direct = await f(`${GRAPH}/${encodeURIComponent(want)}?${q({ fields: "id,name,access_token,instagram_business_account", access_token: long.access_token })}`);
-    if (direct.ok) {
-      const d = (await direct.json()) as { id?: string; name?: string; access_token?: string; instagram_business_account?: { id: string } };
-      if (d.id && d.access_token) page = { id: d.id, name: d.name ?? "Page", access_token: d.access_token, instagram_business_account: d.instagram_business_account };
-    }
+    const d = (await direct.json().catch(() => ({}))) as { id?: string; name?: string; access_token?: string; instagram_business_account?: { id: string }; error?: { code?: number; message?: string } };
+    if (direct.ok && d.id && d.access_token) page = { id: d.id, name: d.name ?? "Page", access_token: d.access_token, instagram_business_account: d.instagram_business_account };
+    else directNote = `; direct Page fetch HTTP ${direct.status} code ${d.error?.code ?? "none"}: ${(d.error?.message ?? "no access_token returned").slice(0, 160)}`;
   }
-  if (!page) throw new PlatformError("meta: no Facebook Page found for this login (create the Page and make this user an admin)", true);
+  if (!page) {
+    // Diagnosis only: granted permission names, never tokens.
+    const perms = await f(`${GRAPH}/me/permissions?${q({ access_token: long.access_token })}`)
+      .then((r) => r.json() as Promise<{ data?: { permission: string; status: string }[] }>)
+      .catch(() => ({ data: [] as { permission: string; status: string }[] }));
+    const granted = (perms.data ?? []).filter((x) => x.status === "granted").map((x) => x.permission).join(",") || "none";
+    console.error(`meta connect: /me/accounts returned ${pages.data.length} Pages; granted=${granted}${directNote}`);
+    throw new PlatformError(`meta: no Page. accounts=${pages.data.length}${directNote}; granted=${granted}`.slice(0, 190), true);
+  }
   return {
     label: `${page.name}${page.instagram_business_account ? " + Instagram" : ""}`,
     secret: page.access_token,
