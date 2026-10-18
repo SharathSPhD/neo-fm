@@ -1,16 +1,16 @@
 /**
- * GET /api/admin/social/callback/{platform}: the platform redirects S here after consent. No bearer is possible on a
+ * GET /api/social/callback/{platform}: the platform redirects S here after consent. No bearer is possible on a
  * browser redirect, so the HMAC-signed, 10-minute `state` made by the connect route is the credential.
  * Stores the sealed token in public.social_accounts and shows a plain page; no token is ever echoed.
  */
 import { NextRequest, NextResponse } from "next/server";
 
-import { serviceClient } from "../../../../../../lib/agent/adapters";
-import { cleanSecret } from "../../../../../../lib/agent/auth";
-import { isPlatform } from "../../../../../../lib/social/config";
-import { seal, verifyState } from "../../../../../../lib/social/crypto";
-import { ADAPTERS } from "../../../../../../lib/social/platforms";
-import { siteBase } from "../../../../../../lib/social/site";
+import { serviceClient } from "../../../../../lib/agent/adapters";
+import { cleanSecret } from "../../../../../lib/agent/auth";
+import { isPlatform } from "../../../../../lib/social/config";
+import { seal, verifyState } from "../../../../../lib/social/crypto";
+import { ADAPTERS } from "../../../../../lib/social/platforms";
+import { siteBase } from "../../../../../lib/social/site";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest, { params }: { params: { platform: st
   const code = q.get("code");
   if (!code) return page("The platform did not return a code (you may have cancelled).", 400);
   try {
-    const seed = await ADAPTERS[params.platform].exchange(code, `${siteBase()}/api/admin/social/callback/${params.platform}`, process.env, fetch);
+    const seed = await ADAPTERS[params.platform].exchange(code, `${siteBase()}/api/social/callback/${params.platform}`, process.env, fetch);
     const { error } = await serviceClient()
       .from("social_accounts")
       .upsert({ platform: params.platform, label: seed.label, secret_sealed: seal(seed.secret), extra: seed.extra, connected_at: new Date().toISOString() });

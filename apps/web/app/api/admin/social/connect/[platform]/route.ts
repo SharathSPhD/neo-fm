@@ -17,5 +17,5 @@ export async function POST(req: NextRequest, { params }: { params: { platform: s
   if (missing.length) return NextResponse.json({ error: "platform app not configured", missing_env: missing }, { status: 409 });
   const secret = cleanSecret(process.env.ADMIN_SECRET) || cleanSecret(process.env.CRON_SECRET);
   const state = signState(params.platform, secret);
-  return NextResponse.json({ url: adapter.authUrl(state, `${siteBase()}/api/admin/social/callback/${params.platform}`, process.env) });
+  return NextResponse.json({ url: adapter.authUrl(state, `${siteBase()}/api/social/callback/${params.platform}`, process.env) });
 }
