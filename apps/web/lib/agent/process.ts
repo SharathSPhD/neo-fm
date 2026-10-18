@@ -122,7 +122,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       };
       let postRenderFrom = 0;
       const runAdvance = () => advance(job.id, {
-        sessions, store: runStore(db, plan.agent), environmentId,
+        sessions, // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
+        store: runStore(db, plan.agent === "free" ? "free" : "pro"), environmentId,
         agentId: agentIdFor(plan.agent),
         log: (m) => trace.push(m.slice(0, 600)),
         maxLyriaCalls: plan.maxLyriaCalls, maxOutcomeIterations: plan.maxOutcomeIterations,
