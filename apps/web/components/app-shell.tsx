@@ -10,6 +10,7 @@
  * `globals.css` and respect the `data-theme` attribute toggled via
  * `<ThemeToggle>`.
  */
+import { NotificationBell } from "@/components/notifications/bell";
 import Link from "next/link";
 
 import { serverI18n } from "@/lib/i18n/server";
@@ -18,6 +19,7 @@ import type { UiKey } from "@/lib/i18n/ui-strings";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
 import { UserMenu } from "./user-menu";
+import { WhatsNewLink } from "./whats-new-link";
 
 type NavUser = {
   email: string;
@@ -58,7 +60,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <TopNav user={user} active={active} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
         {children}
       </div>
       <MobileBottomNav active={active} />
@@ -99,10 +101,28 @@ async function TopNav({ user, active }: { user: NavUser; active?: string }) {
                 </Link>
               );
             })}
+            <Link
+              href="/insights"
+              aria-current={active === "/insights" ? "page" : undefined}
+              className={[
+                "rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                active === "/insights" ? "bg-muted/20 text-foreground" : "",
+              ].join(" ")}
+            >
+              Insights
+            </Link>
+            <WhatsNewLink
+              active={active === "/whats-new"}
+              className={[
+                "rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+                active === "/whats-new" ? "bg-muted/20 text-foreground" : "",
+              ].join(" ")}
+            />
           </nav>
         </div>
         <div className="flex items-center gap-2">
           <CommandPaletteTrigger />
+          <NotificationBell />
           <Link
             href="/songs/new"
             className="hidden h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
@@ -125,7 +145,7 @@ async function MobileBottomNav({ active }: { active?: string }) {
   return (
     <nav
       aria-label="Primary mobile"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 backdrop-blur-md sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden"
     >
       <ul className="mx-auto flex max-w-6xl items-stretch justify-around">
         {BOTTOM_NAV_LINKS.map((l) => {

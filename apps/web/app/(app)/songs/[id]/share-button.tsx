@@ -24,6 +24,7 @@ import {
   whatsappShareUrl,
 } from "@/lib/share/dedication";
 
+import { ClipExportButton, type ClipSource } from "./clip-export-button";
 import { EmbedBuilder } from "./embed-builder";
 
 interface ShareButtonProps {
@@ -33,6 +34,10 @@ interface ShareButtonProps {
   title?: string;
   initialDedication?: { to: string; message: string };
   canShare: boolean; // false for non-completed songs
+  /** Audio + lyric timing for the in-browser vertical clip; omitted when the song has no playable track. */
+  clipSource?: ClipSource;
+  /** Localised occasion label when the song was made through /gift. */
+  occasion?: string | null;
 }
 
 interface PublishResponse {
@@ -49,6 +54,8 @@ export function ShareButton({
   title = "this song",
   initialDedication = { to: "", message: "" },
   canShare,
+  clipSource,
+  occasion,
 }: ShareButtonProps) {
   const { t } = useUiLang();
   const [open, setOpen] = useState(false);
@@ -238,6 +245,10 @@ export function ShareButton({
                 disabled={submitting}
               />
             </div>
+
+            {clipSource ? (
+              <ClipExportButton songId={songId} title={title} to={dedTo} message={dedMsg} occasion={occasion} source={clipSource} />
+            ) : null}
 
             {error ? (
               <p className="rounded-md border border-red-400/30 bg-red-400/10 px-3 py-2 text-xs text-red-300">

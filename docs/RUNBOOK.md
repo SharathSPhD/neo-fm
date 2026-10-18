@@ -89,3 +89,9 @@ Facts from the code (`apps/web/lib/agent/auth.ts`): every admin and tick route a
 7. Rotate on: suspected leak, team change, or every 6 months. Record the date, never the value.
 
 If ticks start 401-ing after step 4: the deployment is on an old env. Redeploy and re-check; fall back by setting `CRON_SECRET` to the previous value (known good) and redeploying.
+
+## 6. Gift-song packs and annual plans (billing, test mode)
+
+- Packs are sellable only while `STRIPE_PRICE_PACK_SINGLE_ID` / `STRIPE_PRICE_PACK_THREE_ID` are set. Keep them **unset in every environment** until migration 0090 is applied to prod: /gift (#128) now spends a credit inside `create_song_job(..., p_use_pack := true)` once the monthly quota is used up, and without 0090 a buyer would pay for credit nothing spends. A pack credit is returned automatically (once per job) when the job it paid for ends `failed` with no audio; retrying that job via recover spends a credit again, or fails with quota_exceeded when none is left.
+- Before live mode: handle `charge.refunded` (and disputes) by revoking unused pack credit (`song_packs.songs_used = songs_total`) and decide what happens to songs already made. Not implemented; test mode only until then.
+- Migration 0089 goes to `neo-fm-prod` only after the PR merges and S says go.

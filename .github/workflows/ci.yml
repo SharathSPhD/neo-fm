@@ -61,6 +61,36 @@ jobs:
       - run: node scripts/check-migrations-security.mjs
       - run: node --test scripts/tests/check-migrations-security.test.mjs
 
+  rls-audit:
+    name: rls audit (anon + authenticated vs other users' rows)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust   # throwaway CI database, no password
+          POSTGRES_DB: rls_audit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rls_audit"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      RLS_AUDIT_DB_URL: postgresql://postgres@localhost:5432/rls_audit
+    steps:
+      - uses: actions/checkout@v4
+      # Applies every migration to a throwaway Postgres (Supabase roles/auth/storage stand-in in
+      # infra/supabase/ci/bootstrap.sql), seeds one private row per table for user A, then proves
+      # anon and signed-in user B cannot read or write it, on every table, view and storage bucket.
+      # A new table or view that is not classified in infra/supabase/tests/rls_audit.sql fails here.
+      - run: psql --version
+      - run: scripts/rls-audit.sh
+      # Behaviour of the gift-pack credit inside create_song_job (migration 0090), on the migrated database.
+      - run: psql "$RLS_AUDIT_DB_URL" -X -q -v ON_ERROR_STOP=1 -f infra/supabase/tests/pack_credit.sql
+      - run: psql "$RLS_AUDIT_DB_URL" -X -q -v ON_ERROR_STOP=1 -f infra/supabase/tests/recover_queue.sql
+
   agents:
     name: managed agents (web unit + skill drift)
     runs-on: ubuntu-latest
@@ -87,11 +117,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install numpy scipy pytest -r services/embedder/requirements.txt
+      - run: pip install numpy scipy pytest httpx -r services/embedder/requirements.txt
       - name: engine two-round protocol
         run: python -m pytest -q managed-agents/pce-engine/tests
       - name: embedder token auth
         run: python -m pytest -q services/embedder/tests
+      - name: pce cascade service (real engine, offline)
+        run: python -m pytest -q services/pce-cascade/tests
 
   py:
     name: python (uv)

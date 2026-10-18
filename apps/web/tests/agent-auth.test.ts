@@ -82,7 +82,7 @@ describe("cron-invoked admin routes", () => {
   });
   it("the routes Vercel Cron calls use the cron-or-admin check, the rest are ADMIN_SECRET-only", () => {
     const dir = join(__dirname, "../app/api/admin");
-    const cron = new Set(["health-snapshot", "self-improve", "spend-monitor"]);
+    const cron = new Set(["health-snapshot", "self-improve", "spend-monitor", "purge-listens"]);
     const crons = (JSON.parse(readFileSync(join(__dirname, "../vercel.json"), "utf8")).crons as { path: string }[])
       .map((c) => c.path).filter((p) => p.startsWith("/api/admin/")).map((p) => p.slice("/api/admin/".length));
     expect(new Set(crons)).toEqual(cron);
@@ -93,5 +93,23 @@ describe("cron-invoked admin routes", () => {
       if (cron.has(name)) expect(src, f).toContain("checkCronOrAdminBearer(");
       else { expect(src, f).toContain("checkAdminBearer("); expect(src, f).not.toContain("checkCronOrAdminBearer("); }
     }
+  });
+});
+
+describe("pro_fast selection", () => {
+  const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
+  it("is inert without the agent id, even when flagged", () => {
+    expect(planForTier("pro", null, env({ PRO_AGENT_VARIANT: "fast" })).agent).toBe("pro");
+    expect(planForTier("free", "pro_fast", env({})).agent).toBe("pro");
+  });
+  it("moves paid tiers with the flag and canaries one user via agent_plan", () => {
+    const e = env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast", PRO_AGENT_VARIANT: "fast" });
+    expect(planForTier("creator", null, e)).toMatchObject({ agent: "pro_fast", userLyriaCapGbp: 0.75 });
+    expect(planForTier("free", null, e).agent).toBe("free");
+    expect(planForTier("pro", null, env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro");
+    expect(planForTier("pro", "pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" })).agent).toBe("pro_fast");
+  });
+  it("resolves its agent id", () => {
+    expect(agentIdFor("pro_fast", env({ MA_AGENT_ID_PRO_FAST: "agent_01Fast" }))).toBe("agent_01Fast");
   });
 });

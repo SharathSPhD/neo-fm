@@ -8,6 +8,8 @@
  * scaled to fit, so the last line ends when the track does.
  */
 
+import { charErrorRate } from "../diction";
+
 export interface SyncSectionInput {
   id: string;
   type: string;
@@ -72,17 +74,76 @@ export function buildLyricTimeline(
 ): SyncLine[] {
   const paced = paceEvenly(sections, audioSeconds);
   if (!timings) return paced;
-  // Heard timings win, but only when they describe these same lyrics: if
-  // the line count differs (lyrics edited since the audit) fall back to
-  // even pacing rather than highlight the wrong lines.
   const heard = [...timings.lines].sort((a, b) => a.start_s - b.start_s);
-  if (heard.length !== paced.length) return paced;
-  return paced.map((line, idx) => ({
-    ...line,
-    start: heard[idx]!.start_s,
-    end: heard[idx]!.end_s,
-    sung: heard[idx]!.sung,
-  }));
+  // The timings were measured on the lyrics the renderer sang (agent_runs.lyrics), which can differ from the
+  // page's section lyrics (a closing hook repeat, a polish edit). So match line by line on text, in order,
+  // rather than demanding equal counts; unmatched lines are interpolated between their heard neighbours.
+  const matched = matchHeard(paced, heard);
+  const hits = matched.filter((m) => m !== null).length;
+  if (heard.length === paced.length && hits < paced.length / 2) {
+    // Same shape but different words (e.g. a transliterated page): trust position, as before.
+    return paced.map((line, idx) => ({ ...line, start: heard[idx]!.start_s, end: heard[idx]!.end_s, sung: heard[idx]!.sung }));
+  }
+  // Too few anchors to trust: even pacing is honest, a confidently wrong highlight is not.
+  if (hits < Math.max(2, paced.length / 2)) return paced;
+  return interpolate(paced, matched);
+}
+
+type HeardLine = LineTimings["lines"][number];
+
+function norm(text: string): string {
+  return text.normalize("NFC").toLowerCase().replace(/[\p{P}\p{S}\s]+/gu, "");
+}
+
+function close(a: string, b: string): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (short.length >= 6 && long.includes(short)) return true;
+  return charErrorRate(a, b) <= 0.3;
+}
+
+/** For each page line, the heard line sung for it (in order, each heard line used once), or null. */
+function matchHeard(paced: readonly SyncLine[], heard: readonly HeardLine[]): (HeardLine | null)[] {
+  const hn = heard.map((h) => norm(h.text));
+  const out: (HeardLine | null)[] = [];
+  let j = 0;
+  for (const line of paced) {
+    const n = norm(line.text);
+    let hit = -1;
+    for (let k = j; k < heard.length; k++) {
+      if (close(n, hn[k]!)) { hit = k; break; }
+    }
+    if (hit >= 0) { out.push(heard[hit]!); j = hit + 1; } else out.push(null);
+  }
+  return out;
+}
+
+/** Heard lines keep their times; runs of unmatched lines share the gap between their heard neighbours by length. */
+function interpolate(paced: readonly SyncLine[], matched: readonly (HeardLine | null)[]): SyncLine[] {
+  const res: SyncLine[] = paced.map((l, i) => {
+    const m = matched[i];
+    return m ? { ...l, start: m.start_s, end: m.end_s, sung: m.sung } : { ...l, sung: false };
+  });
+  let i = 0;
+  while (i < res.length) {
+    if (matched[i]) { i++; continue; }
+    let k = i;
+    while (k < res.length && !matched[k]) k++;
+    const from = i > 0 ? res[i - 1]!.end : 0;
+    const to = k < res.length ? res[k]!.start : Math.max(from, paced[paced.length - 1]!.end);
+    const span = Math.max(0, to - from);
+    const w = res.slice(i, k).map((l) => weight(l.text));
+    const total = w.reduce((a, b) => a + b, 0);
+    let t = from;
+    for (let n = i; n < k; n++) {
+      const d = (span * w[n - i]!) / total;
+      res[n] = { ...res[n]!, start: t, end: t + d, sung: false };
+      t += d;
+    }
+    i = k;
+  }
+  return res;
 }
 
 function paceEvenly(

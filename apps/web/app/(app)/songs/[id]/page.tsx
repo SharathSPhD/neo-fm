@@ -16,6 +16,7 @@
  */
 import { notFound, redirect } from "next/navigation";
 
+import { occasionById } from "@/lib/gift/occasions";
 import { serverI18n } from "@/lib/i18n/server";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -26,12 +27,16 @@ import { createServerClient } from "@/lib/supabase/server";
 import { RecoverButton } from "../../library/recover-button";
 import { RegenerateButton } from "./regenerate-button";
 import { RemixButton } from "./remix-button";
+import { LanguageSwitcher } from "@/components/language-versions/language-switcher";
+import { MakeInLanguageButton } from "@/components/language-versions/make-in-language";
+import { loadVersionSiblings } from "@/lib/song/language-versions-load";
 import { AddToCollectionButton } from "@/components/collections/add-to-collection";
 import { ShareButton } from "./share-button";
 import { SongAudio } from "./song-audio";
 import { DictionCheck } from "./diction-check";
 import { StemsPanel } from "./stems-panel";
 import { KaraokeTicker } from "./karaoke-ticker";
+import { LyricsMeaning } from "./lyrics-meaning";
 import { VariationButton } from "./variation-button";
 import { CoverArtPanel } from "./cover-art-panel";
 import Link from "next/link";
@@ -93,10 +98,12 @@ interface RegenChildView {
 export default async function SongDetailPage(
   props: {
     params: Promise<{ id: string }>;
+    searchParams?: Promise<{ occasion?: string }>;
   }
 ) {
   const params = await props.params;
-  const { t } = await serverI18n();
+  const searchParams = await props.searchParams;
+  const { t, lang } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
@@ -248,6 +255,11 @@ export default async function SongDetailPage(
     } catch { /* optional */ }
   }
 
+  const versionSiblings = await loadVersionSiblings(supabase, data.id, {
+    viewerId: userData.user.id,
+  });
+  const originalBrief =
+    typeof doc?.metadata?.prompt === "string" ? doc.metadata.prompt : null;
   // Heard per-line lyric times (separate query: the column may not exist yet
   // on older databases, and that must not take the diction audit down too).
   let lineTimings: unknown = null;
@@ -303,7 +315,29 @@ export default async function SongDetailPage(
               message: dedicationRow?.dedication_message ?? "",
             }}
             canShare={data.status === "completed"}
+            occasion={occasionById(searchParams?.occasion)?.label[lang] ?? null}
+            clipSource={
+              signedUrl && (doc as SongDocumentView | null | undefined)?.sections?.length
+                ? {
+                    audioUrl: signedUrl,
+                    sections: (doc as SongDocumentView).sections,
+                    durationSeconds: latestTrack?.duration_seconds ?? null,
+                    lineTimings,
+                  }
+                : undefined
+            }
           />
+          {data.status === "completed" && doc && data.song_documents ? (
+            <MakeInLanguageButton
+              songId={data.id}
+              title={title}
+              sourceLanguage={data.song_documents.language}
+              sourceStyle={data.song_documents.style_family}
+              durationSeconds={doc.target_duration_seconds as 30 | 60 | 90 | 180}
+              originalBrief={originalBrief}
+              existingLanguages={versionSiblings.map((v) => v.language)}
+            />
+          ) : null}
           {data.status === "completed" ? <AddToCollectionButton jobId={data.id} /> : null}
           {data.status === "completed" ? (
             <div className="flex flex-col items-end gap-2">
@@ -351,6 +385,7 @@ export default async function SongDetailPage(
           ) : null}
         </div>
       </header>
+      <LanguageSwitcher currentId={data.id} siblings={versionSiblings} />
 
       {data.error ? (
         <p className="rounded-md border border-red-400/30 bg-red-400/10 px-4 py-3 text-sm text-red-300">
@@ -381,6 +416,11 @@ export default async function SongDetailPage(
               durationSeconds={latestTrack?.duration_seconds ?? null}
               lineTimings={lineTimings}
             />
+          ) : null}
+          {data.song_documents?.document_json &&
+          (data.song_documents.document_json as SongDocumentView)?.sections
+            ?.length ? (
+            <LyricsMeaning songId={data.id} />
           ) : null}
           <StemsPanel songId={data.id} />
         </section>

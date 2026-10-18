@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -34,6 +35,9 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
         <p className="text-sm text-foreground/60">
           {t("create.intro")}
         </p>
+        <Link href="/gift" className="text-sm text-accent underline">
+          {t("gift.cta")}
+        </Link>
       </header>
       <CreationCanvas firstRun={firstRun} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>

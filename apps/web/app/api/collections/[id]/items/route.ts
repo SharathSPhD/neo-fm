@@ -11,6 +11,8 @@ import {
   canAddSong,
   MAX_ITEMS_PER_COLLECTION,
 } from "../../../../../lib/collections/schema";
+import { notificationsDb } from "../../../../../lib/notifications/db";
+import { notifyUser } from "../../../../../lib/notifications/notify";
 import { requireUser } from "../../../../../lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
@@ -37,17 +39,17 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
   const sb = collectionsDb();
   const { data: col } = await sb
     .from("collections")
-    .select("id")
+    .select("id, visibility")
     .eq("id", params.id)
     .eq("user_id", user.id)
-    .maybeSingle();
+    .maybeSingle<{ id: string; visibility: string }>();
   if (!col) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const { data: song } = await sb
     .from("jobs")
-    .select("user_id, published_visibility")
+    .select("user_id, published_visibility, song_document_id")
     .eq("id", jobId)
-    .maybeSingle<{ user_id: string; published_visibility: string | null }>();
+    .maybeSingle<{ user_id: string; published_visibility: string | null; song_document_id: string | null }>();
   // Same answer for "missing" and "someone else's private song": don't reveal existence.
   if (!song || !canAddSong(song, user.id)) {
     return NextResponse.json({ error: "song_not_found" }, { status: 404 });
@@ -73,5 +75,19 @@ export async function POST(request: NextRequest, props: { params: Promise<{ id: 
     return NextResponse.json({ error: "internal" }, { status: 500 });
   }
   await sb.from("collections").update({ updated_at: new Date().toISOString() }).eq("id", params.id);
+  // Tell the author when someone else puts their song in a shared playlist.
+  // Private playlists stay private; repeats fold into one notification.
+  if (song.user_id !== user.id && col.visibility !== "private") {
+    let title: string | null = null;
+    if (song.song_document_id) {
+      const { data: doc } = await sb
+        .from("song_documents")
+        .select("title")
+        .eq("id", song.song_document_id)
+        .maybeSingle<{ title: string | null }>();
+      title = doc?.title ?? null;
+    }
+    await notifyUser(notificationsDb(), song.user_id, "collection_add", { job_id: jobId, title }, `collection_add:${jobId}`);
+  }
   return NextResponse.json({ ok: true }, { status: 201 });
 }
