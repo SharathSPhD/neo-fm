@@ -25,6 +25,8 @@ export interface PoolRow {
   daypart?: string[] | null;
   /** Migration 0100. Absent when the column is not applied yet. */
   kind?: string | null;
+  /** Migration 0104. Absent when the column is not applied yet. */
+  voice_gender?: string | null;
 }
 
 export type StationTrack = PoolTrack & {
@@ -62,13 +64,15 @@ export function rowToTrack(r: PoolRow): StationTrack {
     energy: r.energy === "low" || r.energy === "mid" || r.energy === "high" ? r.energy : null,
     daypart: r.daypart ?? [],
     kind: r.kind === "instrumental" ? "instrumental" : "vocal",
+    voice: r.voice_gender === "female" || r.voice_gender === "male" || r.voice_gender === "mixed" ? r.voice_gender : null,
   };
 }
 
 const BASE_COLUMNS = "id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band";
 /** Tried first; if the columns are not applied in this database the read is repeated with BASE_COLUMNS. */
 const TAGGED_COLUMNS = `${BASE_COLUMNS},energy,daypart`;
-const COLUMNS = `${TAGGED_COLUMNS},kind`;
+const KIND_COLUMNS = `${TAGGED_COLUMNS},kind`;
+const COLUMNS = `${KIND_COLUMNS},voice_gender`;
 
 type PoolQuery = (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
 
@@ -78,7 +82,8 @@ async function readPool(): Promise<StationTrack[]> {
     const client = createServiceRoleClient() as unknown as { from: (t: string) => { select: PoolQuery } };
     const read = (cols: string) => client.from("pool_tracks").select(cols).eq("status", "admitted");
     let res = await read(COLUMNS);
-    // Migration 0100 (kind) or 0096 (energy, daypart) not applied here: fall back one step at a time.
+    // Migration 0104 (voice_gender), 0100 (kind) or 0096 (energy, daypart) not applied here: fall back one step at a time.
+    if (res.error) res = await read(KIND_COLUMNS);
     if (res.error) res = await read(TAGGED_COLUMNS);
     if (res.error) res = await read(BASE_COLUMNS);
     if (res.error || !res.data) return [];
