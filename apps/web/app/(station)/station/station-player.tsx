@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { InstallPrompt } from "@/components/install-prompt";
+import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
 import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
@@ -61,13 +62,14 @@ const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[] } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; station?: string } = {}) {
   const q = new URLSearchParams({ limit: "10" });
   if (language) q.set("lang", language);
   if (energy) q.set("energy", energy);
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  if (extra.station) q.set("station", extra.station);
   // The server programs by the listener's own clock; fall back silently if the browser will not say.
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -76,7 +78,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
+export function StationPlayer({ anonymous = false, initialStation = "" }: { anonymous?: boolean; initialStation?: string }) {
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
   const { t } = useUiLang();
   const sendSignal = anonymous ? () => {} : postSignal;
@@ -86,6 +88,8 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [queue, setQueue] = useState<Track[]>([]);
   const [lang, setLang] = useState<string>("");
   const [moods, setMoods] = useState<string[]>([]);
+  // A named station ("Subah", "Raat", "Diwali Radio"); empty means the listener's own station.
+  const [station, setStation] = useState<string>(initialStation);
   // "ready" flips once the saved choice has been read; "onboarded" is false on a first visit until Start is pressed.
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -94,6 +98,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [queueError, setQueueError] = useState(false);
   const [plays, setPlays] = useState(0);
   const [energy, setEnergy] = useState<Energy | null>(null);
   // Refills read it through a ref so a chip tap never restarts the language effect.
@@ -103,15 +108,19 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
-  const refill = useCallback(async (language: string, wanted: string[]) => {
+  const refill = useCallback(async (language: string, wanted: string[], stationSlug: string) => {
     setLoading(true);
+    setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug }));
+      if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
       if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
+      // Offline or a server error: say so and offer a retry instead of the "nothing to play" message.
       setQueue([]);
+      setQueueError(true);
     }
     setLoading(false);
   }, []);
@@ -119,14 +128,16 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   useEffect(() => {
     const saved = loadPrefs();
     if (saved) { setLang(saved.lang); setMoods(saved.moods); setOnboarded(true); }
+    // A station link is a choice in itself: skip the first-visit picker.
+    if (initialStation) setOnboarded(true);
     setReady(true);
-  }, []);
+  }, [initialStation]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
     savePrefs({ lang, moods });
-    void refill(lang, moods);
-  }, [ready, onboarded, lang, moods, refill]);
+    void refill(lang, moods, station);
+  }, [ready, onboarded, lang, moods, station, refill]);
 
   // Start playback when the head of the queue changes; stop the app-wide player so two songs never overlap.
   useEffect(() => {
@@ -154,7 +165,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
-      void refill(lang, moods);
+      void refill(lang, moods, station);
     } else {
       setQueue((q) => q.slice(1));
     }
@@ -197,14 +208,14 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   function retry() {
     errorsInARow.current = 0;
     setFailed(false);
-    void refill(lang, moods);
+    void refill(lang, moods, station);
   }
 
   // Re-steer the upcoming tracks without touching the one playing, so a tap shows in what plays next.
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods }));
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -273,12 +284,44 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     </div>
   );
 
+  const stationRow = (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Stations">
+      <button type="button" aria-pressed={station === ""} onClick={() => setStation("")} className={`rounded-full border px-3 py-1 text-sm ${station === "" ? "bg-accent text-background" : ""}`}>
+        My station
+      </button>
+      {NAMED_STATIONS.map((n) => (
+        <button
+          key={n.slug}
+          type="button"
+          title={n.tagline}
+          aria-pressed={station === n.slug}
+          onClick={() => { setOnboarded(true); setStation(n.slug); }}
+          className={`rounded-full border px-3 py-1 text-sm ${station === n.slug ? "bg-accent text-background" : ""}`}
+        >
+          {n.name}
+        </button>
+      ))}
+    </div>
+  );
+
+  async function shareStation() {
+    const named = NAMED_STATIONS.find((n) => n.slug === station);
+    if (!named) return;
+    const url = `${location.origin}/station?s=${named.slug}`;
+    const text = `${named.name} on neo-fm Station: ${named.tagline}`;
+    try {
+      if (navigator.share) await navigator.share({ title: named.name, text, url });
+      else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }
+    } catch { /* share sheet dismissed */ }
+  }
+
   if (!ready) return <p>{t("station.loading")}</p>;
 
   if (!onboarded) {
     return (
       <section aria-label={t("station.setup.label")} className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">{t("station.setup.title")}</h2>
+        {stationRow}
         <p className="text-sm text-foreground/70">{t("station.setup.hint")}</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
           {LANGS.map((l) => (
@@ -304,6 +347,13 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   return (
     <section aria-label={t("station.player.label")} className="flex flex-col gap-4">
       <InstallPrompt plays={plays} minPlays={2} />
+      {stationRow}
+      {station ? (
+        <p className="text-sm text-foreground/70">
+          {NAMED_STATIONS.find((n) => n.slug === station)?.tagline}{" "}
+          <button type="button" onClick={shareStation} className="underline">Share this station</button>
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
         {LANGS.map((l) => (
           <button
@@ -320,7 +370,12 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       {moodChips}
 
       {loading && !current ? <p>{t("station.loading")}</p> : null}
-      {!loading && !current ? <p>{t("station.empty")}</p> : null}
+      {!loading && !current && queueError ? (
+        <p role="alert" className="text-sm">
+          {t("station.queueError")} <button type="button" onClick={retry} className="underline">{t("station.retry")}</button>
+        </p>
+      ) : null}
+      {!loading && !current && !queueError ? <p>{t("station.empty")}</p> : null}
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">

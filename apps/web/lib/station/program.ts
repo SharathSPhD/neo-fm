@@ -72,6 +72,8 @@ export interface ProgramContext {
   limit?: number;
   /** Rotation rules (lib/station/rotation.ts); omit for none. */
   rotation?: RotationState;
+  /** Occasion themes to favour regardless of the calendar (named stations, e.g. Diwali Radio). */
+  themes?: readonly string[];
 }
 
 function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState, out: PoolTrack[]): PoolTrack[] {
@@ -90,7 +92,7 @@ const isSlow = (t: PoolTrack) => (t.energy ? t.energy === "low" : t.tags.include
 /** `ranked` is best-first from rankTracks; its order is the tie-breaker for everything here. */
 export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrack[] {
   const part = daypartOf(ctx.hour);
-  const themes = new Set(occasionThemes(ctx.month, ctx.day));
+  const themes = new Set(ctx.themes ?? occasionThemes(ctx.month, ctx.day));
   const n = ranked.length;
   const rankBonus = new Map(ranked.map((t, i) => [t.id, n > 1 ? 2 * (1 - i / (n - 1)) : 2]));
   const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0);

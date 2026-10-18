@@ -899,6 +899,7 @@ export const en = {
   "station.mood.devotional": "Devotional",
   "station.mood.energetic": "Energetic",
   "station.mood.nostalgic": "Nostalgic",
+  "station.queueError": "We can't reach the station right now. Check your connection and try again.",
   "station.empty": "Nothing to play yet. Check back soon.",
   "station.tapToPlay": "Tap to play",
   "station.failed": "Songs are not loading right now.",
