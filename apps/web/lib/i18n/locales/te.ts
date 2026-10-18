@@ -901,6 +901,7 @@ export const te: Dict = {
   "station.mood.devotional": "భక్తి",
   "station.mood.energetic": "ఉత్సాహం",
   "station.mood.nostalgic": "పాత జ్ఞాపకాలు",
+  "station.queueError": "ప్రస్తుతం స్టేషన్‌ను చేరుకోలేకపోతున్నాం. ఇంటర్నెట్ చూసి మళ్ళీ ప్రయత్నించండి.",
   "station.empty": "ప్రస్తుతం వినడానికి ఏమీ లేదు. కాసేపటి తర్వాత చూడండి.",
   "station.tapToPlay": "ప్లే చేయడానికి నొక్కండి",
   "station.failed": "ప్రస్తుతం పాటలు లోడ్ అవ్వడం లేదు.",

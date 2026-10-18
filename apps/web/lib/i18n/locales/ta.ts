@@ -901,6 +901,7 @@ export const ta: Dict = {
   "station.mood.devotional": "பக்தி",
   "station.mood.energetic": "உற்சாகம்",
   "station.mood.nostalgic": "பழைய நினைவுகள்",
+  "station.queueError": "இப்போது ஸ்டேஷனை அடைய முடியவில்லை. இணைய இணைப்பைப் பார்த்து மீண்டும் முயலுங்கள்.",
   "station.empty": "இப்போது ஒலிக்க எதுவும் இல்லை. சிறிது நேரம் கழித்துப் பாருங்கள்.",
   "station.tapToPlay": "ஒலிக்கத் தொடுங்கள்",
   "station.failed": "இப்போது பாடல்கள் வரவில்லை.",
