@@ -2,6 +2,7 @@
  * POST /api/billing/checkout
  *
  * Body: `{ tier: "creator" | "pro", interval?: "month" | "year" }` for a subscription, or
+ *       `{ pass: "station" }` for the test-mode station pass (subscription Checkout; no tier change), or
  *       `{ pack: "single" | "three" }` for a one-off gift-song pack (Checkout `payment` mode; UPI is offered
  *       when STRIPE_PACK_UPI=1). Packs are allowed while subscribed; plans are not.
  *
@@ -48,6 +49,7 @@ export const runtime = "nodejs";
 const BodySchema = z.union([
   z.object({ tier: z.enum(["creator", "pro"]), interval: z.enum(["month", "year"]).default("month") }),
   z.object({ pack: z.enum(["single", "three"]) }),
+  z.object({ pass: z.literal("station") }),
 ]);
 
 export async function POST(req: Request) {
@@ -83,6 +85,39 @@ export async function POST(req: Request) {
 
   const stripe = getStripe();
   const origin = getPublicAppUrl();
+
+  if ("pass" in parsed) {
+    // Test mode only (see BillingConfig.stationPassPrice): a live key never gets a pass price.
+    if (!cfg.stationPassPrice) {
+      return NextResponse.json({ error: "pass_unavailable", details: "The station pass is not on sale yet." }, { status: 503 });
+    }
+    const { data: existing } = await supabase.from("user_billing").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
+    try {
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: "subscription",
+          payment_method_types: (cfg.subscriptionUpi ? ["card", "upi"] : ["card"]) as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+          line_items: [{ price: cfg.stationPassPrice, quantity: 1 }],
+          success_url: `${origin}/account?pass=station`,
+          cancel_url: `${origin}/pricing?canceled=1`,
+          client_reference_id: user.id,
+          ...(existing?.stripe_customer_id
+            ? { customer: existing.stripe_customer_id }
+            : { customer_email: user.email ?? undefined }),
+          subscription_data: { metadata: { user_id: user.id, pass: "station" } },
+          metadata: { user_id: user.id, pass: "station" },
+        },
+        { idempotencyKey: `checkout:${user.id}:pass:station:${Math.floor(Date.now() / 60_000)}` },
+      );
+      if (!session.url) return NextResponse.json({ error: "stripe_session_no_url" }, { status: 502 });
+      return NextResponse.json({ url: session.url });
+    } catch (err) {
+      return NextResponse.json(
+        { error: "stripe_session_failed", details: err instanceof Error ? err.message : String(err) },
+        { status: 502 },
+      );
+    }
+  }
 
   if ("pack" in parsed) {
     const priceId = cfg.packPrices[parsed.pack];
