@@ -139,6 +139,8 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('eval_runs',              'status',       '''pending'''),
   ('feedback_events',        'kind',         '''like'''),
   ('funnel_daily',           'event',        '''landing_view'''),
+  ('provider_daily_usage',   'bucket',       '''user'''),
+  ('provider_daily_usage',   'provider',     '''lyria'''),
   ('pool_tracks',           'source',       '''new_render'''),
   ('pool_tracks',           'language',     '''hi'''),
   ('song_packs',             'sku',          '''single'''),
