@@ -1,6 +1,6 @@
 /**
  * First-touch campaign labels for the anonymous funnel. Only the four utm_* marketing labels are kept, lower-cased and
- * limited to a short slug; they name a campaign, never a person. Counted in funnel_campaign_daily (migration 0104).
+ * limited to a short slug; they name a campaign, never a person. Counted in funnel_campaign_daily (migration 0105).
  */
 export interface Utm { source: string; medium: string; campaign: string; content: string }
 

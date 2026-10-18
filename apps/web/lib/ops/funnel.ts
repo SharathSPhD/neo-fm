@@ -41,7 +41,7 @@ export interface FunnelSummary {
   by_day: Record<string, Partial<Record<FunnelEvent, number>>>;
   /** Sign-ups per UTC day inside the window, derived from users.created_at. */
   signups_by_day: Record<string, number>;
-  /** Funnel counters per first-touch campaign (migration 0104), busiest first. Empty before it is applied. */
+  /** Funnel counters per first-touch campaign (migration 0105), busiest first. Empty before it is applied. */
   by_campaign: CampaignSummary[];
 }
 

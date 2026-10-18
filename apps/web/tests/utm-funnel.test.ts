@@ -41,7 +41,7 @@ describe("campaign breakdown", () => {
     expect(f.by_campaign[0]!.events).toEqual({ landing_view: 50, signup_view: 10 });
   });
 
-  it("is empty when there are no campaign rows (migration 0104 not applied)", () => {
+  it("is empty when there are no campaign rows (migration 0105 not applied)", () => {
     expect(buildFunnel([], { signups: 0, firstSongUsers: 0, shared: 0, gifted: 0, paidUsers: 0 }, 7).by_campaign).toEqual([]);
   });
 });

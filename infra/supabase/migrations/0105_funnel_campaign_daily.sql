@@ -1,4 +1,4 @@
--- 0104_funnel_campaign_daily.sql
+-- 0105_funnel_campaign_daily.sql
 -- DRAFT, NOT APPLIED. Per-campaign funnel counters: one row per (day, event, source, medium, campaign, content) holding a
 -- count. Same privacy rules as funnel_daily (0071): the only labels stored are the four utm_* marketing labels (cleaned
 -- to short slugs by the app), never a user id, IP, user agent, cookie or referrer. Service role only.

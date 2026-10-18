@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (!isFunnelEvent(event)) return NextResponse.json({ error: "unknown_event" }, { status: 400 });
   const db = serviceClient();
   try { await db.rpc("bump_funnel", { p_event: event }); } catch { /* counters are best effort */ }
-  // Campaign counter (migration 0104). Missing function or table: the plain count above already happened.
+  // Campaign counter (migration 0105). Missing function or table: the plain count above already happened.
   if (utm) {
     try {
       await (db as unknown as { rpc: (fn: string, a: Record<string, string>) => Promise<unknown> }).rpc("bump_funnel_campaign", {

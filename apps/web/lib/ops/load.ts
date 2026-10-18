@@ -50,7 +50,7 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
     db.from("users").select("id,created_at").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
     db.from("jobs").select("id", { count: "exact", head: true }).in("published_visibility", ["public", "unlisted"]).gte("published_at", sinceTs.toISOString()),
     db.from("jobs").select("id", { count: "exact", head: true }).not("dedication_to", "is", null).gte("created_at", sinceTs.toISOString()),
-    // Migration 0104; a missing table just means no campaign rows.
+    // Migration 0105; a missing table just means no campaign rows.
     (db as unknown as { from: (t: string) => { select: (c: string) => { gte: (k: string, v: string) => Promise<{ data: unknown[] | null; error: unknown }> } } })
       .from("funnel_campaign_daily").select("event,source,medium,campaign,content,n").gte("day", sinceTs.toISOString().slice(0, 10)),
   ]);
