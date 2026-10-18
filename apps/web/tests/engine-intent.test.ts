@@ -161,3 +161,11 @@ describe("hostCascade with PCE_INTENT", () => {
     expect(s.stylePrompt).toContain("female lead vocal");
   });
 });
+
+describe("test-render hints toggle", () => {
+  it("validates the new item flags", async () => {
+    const { validateItems } = await import("../lib/admin/test-render");
+    expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: false, score: true }] }, 3).ok).toBe(true);
+    expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: "no" }] }, 3).ok).toBe(false);
+  });
+});
