@@ -14,7 +14,7 @@ export async function generateMetadata({ searchParams }: { searchParams?: Promis
   const station = findStation((await searchParams)?.s);
   if (!station) {
     return {
-      title: "Station",
+      title: "neo-fm Station, your 24/7 personal FM",
       description: DESCRIPTION,
       alternates: { canonical: "/station" },
       openGraph: { title: TITLE, description: DESCRIPTION, type: "website", url: "/station" },
