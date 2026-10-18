@@ -1,9 +1,10 @@
 /**
- * Reads the admitted station pool (pool_tracks, migration 0092, owned by the pool thread). Only status = 'admitted'
+ * Reads the admitted station pool (pool_tracks, migration 0092, owned by the pool thread; service-role only, so callers
+ * must authenticate the listener first). Only status = 'admitted'
  * rows are ever returned. A missing table or any read failure yields an empty pool, never an error, so the station
  * degrades to "nothing to play yet" if the migration is not applied.
  */
-import type { SupabaseServerClient } from "@/lib/supabase/auth";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 import type { PoolTrack } from "./rank";
 
@@ -40,10 +41,10 @@ export function rowToTrack(r: PoolRow): StationTrack {
   };
 }
 
-export async function loadPool(supabase: SupabaseServerClient): Promise<StationTrack[]> {
+export async function loadPool(): Promise<StationTrack[]> {
   try {
     const { data, error } = await (
-      supabase.from as unknown as (t: string) => {
+      createServiceRoleClient().from as unknown as (t: string) => {
         select: (c: string) => { eq: (k: string, v: string) => Promise<{ data: PoolRow[] | null; error: unknown }> };
       }
     )("pool_tracks")

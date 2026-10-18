@@ -19,21 +19,22 @@ const URL_TTL_SECONDS = 60 * 60;
 export async function GET(req: NextRequest) {
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
-  const { supabase, user } = authed;
+  const { user } = authed;
+  const admin = createServiceRoleClient();
 
   const sp = req.nextUrl.searchParams;
   const lang = sp.get("lang");
   const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), 25);
 
-  const pool = await loadPool(supabase);
+  const pool = await loadPool();
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   let rows: SignalRow[] = [];
   try {
     const since = new Date(Date.now() - SIGNAL_WINDOW_MS).toISOString();
     const { data } = await (
-      createServiceRoleClient().from as unknown as (t: string) => {
+      admin.from as unknown as (t: string) => {
         select: (c: string) => {
           eq: (k: string, v: string) => { gte: (k: string, v: string) => Promise<{ data: SignalRow[] | null }> };
         };
@@ -51,7 +52,7 @@ export async function GET(req: NextRequest) {
     await Promise.all(
       ranked.map(async (r) => {
         const t = byId.get(r.id)!;
-        const { data } = await supabase.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
+        const { data } = await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS);
         if (!data?.signedUrl) return null;
         return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, url: data.signedUrl };
       }),
