@@ -9,6 +9,9 @@
  *       signed one-shot upload URL into the private social-videos bucket (PUT the mp4 to it), so clips can be added
  *       without a storage key on the caller's side.
  *  POST {action:"skip", id}
+ *  POST {action:"promote", id, approval_note}
+ *       YouTube only: a row that is already published (private) goes public and into YOUTUBE_PLAYLIST_ID. Needs
+ *       SOCIAL_ALLOW_PUBLIC=1 and an approval_note quoting S's own words naming this video.
  */
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,6 +19,9 @@ import { serviceClient } from "../../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../../lib/agent/auth";
 import { buildPost } from "../../../../../lib/social/caption";
 import { isPlatform, type Platform } from "../../../../../lib/social/config";
+import { open } from "../../../../../lib/social/crypto";
+import { promoteYoutube } from "../../../../../lib/social/platforms/youtube";
+import { socialFlags } from "../../../../../lib/social/config";
 import { siteBase } from "../../../../../lib/social/site";
 
 export const dynamic = "force-dynamic";
@@ -74,6 +80,22 @@ export async function POST(req: NextRequest) {
     if (body.native_read_ok === true) patch.native_read_ok = true;
     const { error } = await db.from("social_posts").update(patch).eq("id", id).eq("status", "draft");
     return error ? NextResponse.json({ error: error.message }, { status: 500 }) : NextResponse.json({ ok: true });
+  }
+  if (body.action === "promote") {
+    const note = String(body.approval_note ?? "").trim();
+    if (note.length < 8) return NextResponse.json({ error: "approval_note must quote S's own words" }, { status: 400 });
+    if (!socialFlags(process.env).allowPublic) return NextResponse.json({ error: "SOCIAL_ALLOW_PUBLIC is not 1" }, { status: 409 });
+    const { data: row } = await db.from("social_posts").select("platform,status,external_id").eq("id", id).maybeSingle();
+    if (!row || row.platform !== "youtube" || row.status !== "published" || !row.external_id) return NextResponse.json({ error: "not a published youtube row" }, { status: 409 });
+    const { data: acct } = await db.from("social_accounts").select("secret_sealed,extra").eq("platform", "youtube").maybeSingle();
+    if (!acct) return NextResponse.json({ error: "youtube not connected" }, { status: 409 });
+    try {
+      const res = await promoteYoutube(String(row.external_id), { secret: open(String(acct.secret_sealed), process.env), extra: (acct.extra ?? {}) as Record<string, string> }, process.env, fetch);
+      await db.from("social_posts").update({ visibility: "public", approval_note: note.slice(0, 500) }).eq("id", id);
+      return NextResponse.json({ ok: true, ...res });
+    } catch (e) {
+      return NextResponse.json({ error: (e instanceof Error ? e.message : String(e)).slice(0, 300) }, { status: 502 });
+    }
   }
   return NextResponse.json({ error: "unknown action" }, { status: 400 });
 }

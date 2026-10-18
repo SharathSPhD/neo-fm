@@ -1,4 +1,4 @@
-import { json, PlatformError, type Adapter } from "./types";
+import { json, PlatformError, type Account, type Adapter } from "./types";
 
 const SCOPES = ["https://www.googleapis.com/auth/youtube.upload", "https://www.googleapis.com/auth/youtube"];
 
@@ -69,3 +69,36 @@ export const youtube: Adapter = {
     return { externalId: up.id, url: `https://www.youtube.com/watch?v=${up.id}` };
   },
 };
+
+/**
+ * Make an already-uploaded video public and make sure it sits in the configured playlist.
+ * Used by the queue's `promote` action after S approves going public; costs about 51 quota units.
+ */
+export async function promoteYoutube(videoId: string, acct: Account, env: NodeJS.ProcessEnv, f: typeof fetch): Promise<{ playlist: "added" | "already" | "none" }> {
+  const token = await accessToken(acct.secret, env, f);
+  const auth = { authorization: `Bearer ${token}`, "content-type": "application/json" };
+  await json(
+    await f("https://www.googleapis.com/youtube/v3/videos?part=status", {
+      method: "PUT",
+      headers: auth,
+      body: JSON.stringify({ id: videoId, status: { privacyStatus: "public", selfDeclaredMadeForKids: false, containsSyntheticMedia: true } }),
+    }),
+    "youtube promote",
+  );
+  const playlist = (env.YOUTUBE_PLAYLIST_ID ?? "").trim();
+  if (!playlist) return { playlist: "none" };
+  const have = await json<{ items?: unknown[] }>(
+    await f(`https://www.googleapis.com/youtube/v3/playlistItems?part=id&playlistId=${encodeURIComponent(playlist)}&videoId=${encodeURIComponent(videoId)}`, { headers: auth }),
+    "youtube playlist check",
+  );
+  if ((have.items?.length ?? 0) > 0) return { playlist: "already" };
+  await json(
+    await f("https://www.googleapis.com/youtube/v3/playlistItems?part=snippet", {
+      method: "POST",
+      headers: auth,
+      body: JSON.stringify({ snippet: { playlistId: playlist, resourceId: { kind: "youtube#video", videoId } } }),
+    }),
+    "youtube playlist add",
+  );
+  return { playlist: "added" };
+}
