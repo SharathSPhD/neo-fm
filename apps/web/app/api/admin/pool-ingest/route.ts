@@ -3,7 +3,7 @@
  *
  *  multipart  file=<mp3>, meta=<json>   one render that exists only as a file (eval / quality / test renders).
  *             meta: { id, source, language, title?, genre?, raga?, mood?, theme?, tempo_bpm?, duration_seconds?,
- *                     lyrics?, diction_u?, diction_verdict?, judge_overall? }
+ *                     lyrics? | lyrics_from? {batch, brief_id}, diction_u?, diction_verdict?, judge_overall? }
  *             With `lyrics` the track is scored here (Gemini transcript, order-free gate); without it the caller must
  *             pass diction_u + diction_verdict from an earlier scoring run.
  *  json       { mode: "prod_jobs", owner_ids: [uuid, ...], limit? }   finished prod songs not yet in the pool (Indic languages only)
@@ -35,6 +35,8 @@ type Db = ReturnType<typeof serviceClient>;
 interface FileMeta {
   id: string; source: (typeof SOURCES)[number]; language: string; title?: string; genre?: string; raga?: string;
   mood?: string[]; theme?: string[]; tempo_bpm?: number; duration_seconds?: number; lyrics?: string;
+  /** Load the sung lyrics from a stored PCE eval row instead of sending them. */
+  lyrics_from?: { batch: string; brief_id: string };
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
 }
 
@@ -62,6 +64,10 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   if (!meta.id || !/^[a-z0-9._-]{1,80}$/i.test(meta.id) || !language || !SOURCES.includes(meta.source)) return NextResponse.json({ error: "bad meta (id, language, source)" }, { status: 400 });
 
   const audio = new Uint8Array(await file.arrayBuffer());
+  if (!meta.lyrics && meta.lyrics_from && /^[A-Za-z0-9]{1,12}$/.test(meta.lyrics_from.batch) && /^[a-z0-9-]{1,20}$/i.test(meta.lyrics_from.brief_id)) {
+    const { data } = await db.from("eval_runs").select("lyrics").eq("batch", meta.lyrics_from.batch).eq("brief_id", meta.lyrics_from.brief_id).eq("arm", "pce").maybeSingle();
+    meta.lyrics = (data as { lyrics?: string } | null)?.lyrics ?? undefined;
+  }
   let qa: { unorderedPct: number | null; verdict: DictionVerdict | null } = { unorderedPct: meta.diction_u ?? null, verdict: meta.diction_verdict ?? null };
   if (meta.lyrics) {
     if (!geminiKey) return NextResponse.json({ error: "no_gemini_key" }, { status: 503 });
