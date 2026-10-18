@@ -272,7 +272,7 @@ export default async function DiscoverPage(
               <li key={row.id} className="group flex flex-col gap-2">
                 <Link
                   href={`/s/${row.public_id}`}
-                  className="relative block aspect-square overflow-hidden rounded-lg border border-muted/20 bg-muted/5 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="relative block aspect-square overflow-hidden glass glass-hover rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   aria-label={t("discover.openPublic", { title })}
                 >
                   <CoverArt

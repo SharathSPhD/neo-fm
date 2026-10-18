@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { canSetVolume, rampVolume } from "@/lib/station/fade";
+import { useAmbientTint } from "@/components/use-ambient-tint";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
@@ -371,6 +372,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     sendFunnelEvent("whatsapp_click");
   }
 
+  useAmbientTint(current && !isAd ? current.id : null);
+
   const moodChips = (
     <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.mood.label")}>
       {STATION_MOODS.map((m) => (
@@ -379,7 +382,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           type="button"
           aria-pressed={moods.includes(m)}
           onClick={() => setMoods((cur) => toggleMood(cur, m))}
-          className={`rounded-full border px-3 py-1 text-sm ${moods.includes(m) ? "bg-accent text-background" : ""}`}
+          className="chip"
         >
           {t(MOOD_LABEL[m])}
         </button>
@@ -389,7 +392,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   const stationRow = (
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Stations">
-      <button type="button" aria-pressed={station === ""} onClick={() => setStation("")} className={`rounded-full border px-3 py-1 text-sm ${station === "" ? "bg-accent text-background" : ""}`}>
+      <button type="button" aria-pressed={station === ""} onClick={() => setStation("")} className="chip">
         My station
       </button>
       {NAMED_STATIONS.map((n) => (
@@ -399,7 +402,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           title={n.tagline}
           aria-pressed={station === n.slug}
           onClick={() => { setOnboarded(true); setStation(n.slug); }}
-          className={`rounded-full border px-3 py-1 text-sm ${station === n.slug ? "bg-accent text-background" : ""}`}
+          className="chip"
         >
           {n.name}
         </button>
@@ -422,7 +425,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   if (!onboarded) {
     return (
-      <section aria-label={t("station.setup.label")} className="flex flex-col gap-4 rounded-lg border p-4">
+      <section aria-label={t("station.setup.label")} className="glass flex flex-col gap-4 rounded-2xl p-5">
         <h2 className="text-lg font-medium">{t("station.setup.title")}</h2>
         {stationRow}
         <p className="text-sm text-foreground/70">{t("station.setup.hint")}</p>
@@ -433,14 +436,14 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
               type="button"
               aria-pressed={lang === l}
               onClick={() => setLang(l)}
-              className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
+              className="chip"
             >
               {l ? languageName(l) : t("station.lang.all")}{betaLangs.includes(l) ? " (beta)" : ""}
             </button>
           ))}
         </div>
         {moodChips}
-        <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded bg-accent px-4 py-2 text-background">
+        <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-background">
           {t("station.setup.start")}
         </button>
       </section>
@@ -464,7 +467,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             type="button"
             aria-pressed={lang === l}
             onClick={() => setLang(l)}
-            className={`rounded-full border px-3 py-1 text-sm ${lang === l ? "bg-accent text-background" : ""}`}
+            className="chip"
           >
             {l ? languageName(l) : t("station.lang.all")}{betaLangs.includes(l) ? " (beta)" : ""}
           </button>
@@ -481,7 +484,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
       {!loading && !current && !queueError ? <p>{t("station.empty")}</p> : null}
 
       {current ? (
-        <div className="flex flex-col gap-3 rounded-lg border p-4">
+        <div className="glass flex flex-col gap-4 rounded-3xl p-5 sm:p-6">
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
           {isAd && current.ad ? (
             <div className="flex flex-col gap-2" aria-label="Ad">
@@ -496,7 +499,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
                   target={current.ad.ctaUrl.startsWith("/") ? undefined : "_blank"}
                   rel="noopener noreferrer sponsored"
                   onClick={() => postAdEvent(current.ad!.slotId, "tap")}
-                  className="self-start rounded bg-accent px-3 py-2 text-background"
+                  className="self-start rounded-full bg-accent px-4 py-2 font-medium text-background"
                 >
                   {current.ad.ctaLabel}
                 </a>
@@ -504,7 +507,16 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             </div>
           ) : (
             <>
-              <p className="text-lg font-medium">{current.title}</p>
+              <div className="flex items-center gap-4">
+                <div className="orb" data-paused={blocked ? "true" : "false"} aria-hidden />
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-accent">
+                    <span className="eq" aria-hidden><i /><i /><i /><i /></span>
+                    {t("station.title")}
+                  </p>
+                  <p className="mt-1 truncate text-xl font-semibold sm:text-2xl">{current.title}</p>
+                </div>
+              </div>
               <p className="text-xs text-foreground/70">
                 <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}
@@ -531,7 +543,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           />
           {queue[1]?.url ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
-            <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-accent px-3 py-2 text-background">
+            <button type="button" onClick={() => void audioRef.current?.play()} className="rounded-full bg-accent px-4 py-2 font-medium text-background">
               {t("station.tapToPlay")}
             </button>
           ) : null}
@@ -546,19 +558,19 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             </div>
           ) : (
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="rounded border px-3 py-2">
+            <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="chip py-2">
               {liked.has(current.id) ? t("station.liked") : t("station.like")}
             </button>
-            <button type="button" onClick={replay} className="rounded border px-3 py-2">{t("station.replay")}</button>
-            <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">{t("station.skip")}</button>
-            <button type="button" onClick={share} className="rounded border px-3 py-2">{t("station.share")}</button>
-            <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
+            <button type="button" onClick={replay} className="chip py-2">{t("station.replay")}</button>
+            <button type="button" onClick={() => advance("skip")} className="chip py-2">{t("station.skip")}</button>
+            <button type="button" onClick={share} className="chip py-2">{t("station.share")}</button>
+            <button type="button" onClick={shareWhatsApp} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
           )}
           <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd}>
-            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">{t("station.steer.more")}</button>
-            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>{t("station.steer.calmer")}</button>
-            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>{t("station.steer.livelier")}</button>
+            <button type="button" onClick={moreLikeThis} className="chip">{t("station.steer.more")}</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className="chip">{t("station.steer.calmer")}</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className="chip">{t("station.steer.livelier")}</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {nudging ? (

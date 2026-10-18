@@ -318,7 +318,7 @@ export default async function ProfilePage(props: Props) {
                     <li key={song.id}>
                       <Link
                         href={`/s/${song.public_id}`}
-                        className="group flex gap-3 rounded-lg border border-muted/20 bg-muted/5 p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="group flex gap-3 glass rounded-2xl p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
                       >
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md">
                           <CoverArt url={null} seed={song.id} styleFamily={song.style_family} alt="" showGlyph />

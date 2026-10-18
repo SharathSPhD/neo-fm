@@ -16,7 +16,6 @@ import Link from "next/link";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 
-import { AmbientBackground } from "./ambient-background";
 import { BrandMark } from "./brand-mark";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
@@ -66,7 +65,6 @@ export function AppShell({
 }) {
   return (
     <div className="relative min-h-screen text-foreground">
-      <AmbientBackground />
       <TopNav user={user} />
       <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
         {children}

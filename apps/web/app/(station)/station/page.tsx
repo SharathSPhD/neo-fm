@@ -48,7 +48,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
     : [];
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
-      <h1 className="text-2xl font-semibold">{t("station.title")}</h1>
+      <h1 className="text-3xl font-semibold tracking-tight">{t("station.title")}</h1>
       <p className="text-sm text-foreground/70">
         {anonymous
           ? t("station.intro.anon")

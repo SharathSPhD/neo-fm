@@ -18,7 +18,7 @@ export function EmptyState({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-xl border border-dashed border-muted/40 bg-muted/10 p-8 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-3 glass rounded-2xl border-dashed p-8 text-center">
       <div
         aria-hidden
         className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-muted/30 text-2xl"

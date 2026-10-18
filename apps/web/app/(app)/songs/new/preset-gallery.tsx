@@ -33,7 +33,7 @@ export function PresetGallery({ onPick, activeId }: PresetGalleryProps) {
   return (
     <fieldset
       aria-label={t("create.gallery.aria")}
-      className="flex flex-col gap-3 rounded-lg border border-muted/20 bg-muted/10 p-4"
+      className="flex flex-col gap-3 glass rounded-2xl p-4"
     >
       <legend className="text-xs uppercase tracking-widest text-foreground/50">
         {t("create.gallery.legend")}

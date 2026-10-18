@@ -180,7 +180,7 @@ export function SongGrid({
         <li key={s.id} className="group flex flex-col gap-2">
           <Link
             href={`/songs/${s.id}`}
-            className="relative block aspect-square overflow-hidden rounded-lg border border-muted/30 bg-muted/10 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="relative block aspect-square overflow-hidden glass rounded-2xl transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label={t("lib.openDetail", { title: s.title ?? t("song.song") })}
           >
             <CoverArt

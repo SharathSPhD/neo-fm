@@ -10,7 +10,6 @@ import type { Metadata } from "next";
 import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
-import { AmbientBackground } from "@/components/ambient-background";
 
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
 import { jsonLdString } from "@/lib/seo/jsonld";
@@ -79,7 +78,6 @@ const JSON_LD = {
 export default async function Page() {
   return (
     <main className="relative min-h-screen">
-      <AmbientBackground />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
