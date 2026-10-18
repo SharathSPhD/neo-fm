@@ -35,6 +35,8 @@ export const dynamic = "force-dynamic";
 
 const SIGNAL_WINDOW_MS = 30 * 86_400_000;
 const URL_TTL_SECONDS = 60 * 60;
+/** Plays older than this no longer count toward the instrumental share of a new queue. */
+const RECENT_PLAY_MS = 2 * 3_600_000;
 
 /** The listener's own signals from the last 30 days; empty when the table is missing or the read fails. */
 async function loadSignalRows(admin: ReturnType<typeof createServiceRoleClient>, userId: string): Promise<SignalRow[]> {
@@ -100,7 +102,11 @@ export async function GET(req: NextRequest) {
   let ranked = steeredList.slice(0, limit);
   if (sets) {
     const instrSlate = rankTracks(instrumentals, signals, { language: null, wantTags: [], limit: 20 });
-    const arranged = arrangeSets(steeredList, programQueue(instrSlate, { ...programOpts, limit: 6 }), { hour: programOpts.hour, limit });
+    const arranged = arrangeSets(steeredList, programQueue(instrSlate, { ...programOpts, limit: 6 }), {
+      hour: programOpts.hour,
+      limit,
+      recent: plays.filter((x) => x.ageMs < RECENT_PLAY_MS).slice(-10).flatMap((x) => byId.get(x.trackId) ?? []),
+    });
     ranked = arranged.tracks;
     setInfo = arranged.sets;
   }

@@ -33,3 +33,19 @@ describe("insertSignal", () => {
     expect(await insertSignal(c, "u1", sig)).toEqual({ ok: false, reason: "network" });
   });
 });
+
+describe("insertSignal with a set", () => {
+  const withSet = { ...sig, setId: "set2", setIndex: 1 };
+  it("stores the set id and place when the columns exist", async () => {
+    const { c, rows } = client(async () => ({ error: null }));
+    await insertSignal(c, "u1", withSet);
+    expect(rows).toEqual([{ user_id: "u1", track_id: sig.trackId, kind: "skip", position_ms: 1200, set_id: "set2", set_index: 1 }]);
+  });
+  it("falls back to the plain row when migration 0107 is not applied", async () => {
+    let n = 0;
+    const { c, rows } = client(async () => (n++ === 0 ? { error: { message: "no column", code: "42703" } } : { error: null }));
+    expect(await insertSignal(c, "u1", withSet)).toEqual({ ok: true });
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toEqual({ user_id: "u1", track_id: sig.trackId, kind: "skip", position_ms: 1200 });
+  });
+});

@@ -159,3 +159,20 @@ describe("volume ramps", () => {
     vi.useRealTimers();
   });
 });
+
+describe("arrangeSets with listening history", () => {
+  // A queue is about 10 tracks of 30 s; on its own it can never hold a 150 s instrumental under the cap.
+  const short = (n: number) => Array.from({ length: n }, (_, i) => vocal(`s${i}`, "gu", [], 30));
+  it("places no instrumental in one short queue without history", () => {
+    expect(arrangeSets(short(10), instruments(3), { hour: 21, limit: 10 }).tracks.some((t) => t.kind === "instrumental")).toBe(false);
+  });
+  it("places one once the listener has played enough vocals, even with a single language locked", () => {
+    const recent = Array.from({ length: 10 }, (_, i) => vocal(`h${i}`, "gu", [], 30));
+    const { tracks } = arrangeSets(short(12), instruments(3), { hour: 21, limit: 10, recent });
+    expect(tracks.some((t) => t.kind === "instrumental")).toBe(true);
+  });
+  it("does not add another while recent history already holds an instrumental share", () => {
+    const recent = [...Array.from({ length: 6 }, (_, i) => vocal(`h${i}`, "gu", [], 30)), instr("hi0", [], 150)];
+    expect(arrangeSets(short(12), instruments(3), { hour: 21, limit: 10, recent }).tracks.some((t) => t.kind === "instrumental")).toBe(false);
+  });
+});

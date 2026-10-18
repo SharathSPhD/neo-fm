@@ -29,6 +29,7 @@ interface Track {
   /** Sets (lib/station/sets.ts, STATION_SETS=1): crossfade hints for tracks inside a block of same-language tracks. */
   fadeInMs?: number;
   fadeOutMs?: number;
+  set?: { id: string; index: number; size: number };
   /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
   type?: "ad";
   ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
@@ -58,12 +59,12 @@ function languageName(code: string): string {
   return isUiLang(code) ? UI_LANG_ENDONYM[code] : (expansionLanguage(code)?.endonym ?? code);
 }
 
-function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
+function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null, set?: { id: string; index: number }) {
   void fetch("/api/station/signal", {
     method: "POST",
     headers: { "content-type": "application/json" },
     keepalive: true,
-    body: JSON.stringify({ trackId, kind, positionMs: audio ? Math.round(audio.currentTime * 1000) : undefined }),
+    body: JSON.stringify({ trackId, kind, positionMs: audio ? Math.round(audio.currentTime * 1000) : undefined, setId: set?.id, setIndex: set?.index }),
   });
 }
 
@@ -247,7 +248,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     setHostLine(showHost ? current.host! : null);
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
-    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); sendFunnelEvent(anonymous ? "station_play_anon" : "station_play_user"); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
+    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null, current.set); sendFunnelEvent(anonymous ? "station_play_anon" : "station_play_user"); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
 
@@ -263,7 +264,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     if (isAd && kind === "finish" && current.ad) postAdEvent(current.ad.slotId, "complete");
     // Ads are not listening taste: no signal, and skipping one is not a track skip.
     if (kind !== "error" && !isAd) setPlayed((n) => n + 1);
-    if (kind !== "error" && !isAd) sendSignal(current.id, kind, audioRef.current);
+    if (kind !== "error" && !isAd) sendSignal(current.id, kind, audioRef.current, current.set);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
       void refill(lang, moods, station);
