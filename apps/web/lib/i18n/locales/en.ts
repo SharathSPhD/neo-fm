@@ -143,6 +143,7 @@ export const en = {
   "pricing.pass.desc": "Your own 24/7 station, tuned to your taste. Test mode: no real charge yet.",
   "pricing.pass.cta": "Start the pass",
   "pricing.pass.note": "Billed monthly. Cancel anytime.",
+  "pricing.pass.perks": "No ad breaks, and up to {n} personal songs a month.",
   "discover.title": "Songs from the community",
   "discover.intro": "Fresh public releases across Carnatic, Hindustani, Kannada folk, and Western. Click through to play the full track.",
   "discover.styleFilter": "Style filter",

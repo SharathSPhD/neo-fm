@@ -3,6 +3,7 @@
  * failed read as "no ads": the queue must keep working before migration 0099 is applied.
  */
 import { isLiveSubscriptionStatus } from "@/lib/billing/checkout-guard";
+import { hasStationPass } from "@/lib/billing/pass";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 import { AD_CAPS, adItem, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot } from "./ads";
@@ -79,14 +80,16 @@ async function loadHistory(admin: Admin, userId: string, slots: AdSlot[], now: n
   return out;
 }
 
-/** Creator, Pro and any live subscription are ad-free. Reads fail open to "free" only for signed-out listeners. */
+/** Creator, Pro, any live subscription and the Station pass are ad-free. Reads fail open to "free" only for signed-out listeners. */
 async function isPaid(admin: Admin, userId: string): Promise<boolean> {
   try {
     const [u, b] = await Promise.all([
       (admin.from("users").select("tier").eq("id", userId).maybeSingle()) as unknown as Promise<{ data: { tier?: string } | null }>,
       (admin.from("user_billing").select("status").eq("user_id", userId).maybeSingle()) as unknown as Promise<{ data: { status?: string } | null }>,
     ]);
-    return (u.data?.tier ?? "free") !== "free" || isLiveSubscriptionStatus(b.data?.status);
+    if ((u.data?.tier ?? "free") !== "free" || isLiveSubscriptionStatus(b.data?.status)) return true;
+    // The Station pass is ad-free too. hasStationPass is false when migration 0098 is not applied.
+    return await hasStationPass(admin, userId);
   } catch {
     // Cannot tell: do not serve an ad to someone who might be paying.
     return true;

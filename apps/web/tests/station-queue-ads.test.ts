@@ -8,6 +8,7 @@ const world = {
   billing: null as string | null,
   events: [] as Record<string, unknown>[],
   inserted: [] as Record<string, unknown>[],
+  pass: false as boolean | "missing",
 };
 
 vi.mock("@/lib/supabase/auth", () => ({ requireUser: vi.fn() }));
@@ -27,6 +28,10 @@ vi.mock("@/lib/supabase/server", () => ({
       if (t === "user_billing") return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: world.billing ? { status: world.billing } : null }) }) }) };
       return { select: () => ({ eq: () => ({ gte: async () => ({ data: [] }) }) }) };
     },
+    rpc: async (fn: string) =>
+      fn === "has_station_pass"
+        ? world.pass === "missing" ? { data: null, error: { code: "PGRST202", message: "Could not find the function" } } : { data: world.pass, error: null }
+        : { data: null, error: null },
     storage: { from: () => ({ createSignedUrl: async (p: string) => ({ data: { signedUrl: `https://signed/${p}` } }) }) },
   }),
 }));
@@ -51,7 +56,7 @@ const signedOut = () => vi.mocked(requireUser).mockResolvedValue(NextResponse.js
 beforeEach(() => {
   vi.mocked(requireUser).mockReset();
   signedOut();
-  Object.assign(world, { slots: [slotRow()], tier: "free", billing: null, events: [], inserted: [] });
+  Object.assign(world, { slots: [slotRow()], tier: "free", billing: null, events: [], inserted: [], pass: false });
   vi.stubEnv("ADS_ENABLED", "1");
 });
 afterEach(() => vi.unstubAllEnvs());
@@ -90,6 +95,18 @@ describe("ads in GET /api/station/queue", () => {
     world.tier = "free";
     world.billing = "active";
     expect((await items()).some((x) => x.type === "ad")).toBe(false);
+  });
+
+  it("treats a Station pass holder as paid: no ads", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    world.pass = true;
+    expect((await items()).some((x) => x.type === "ad")).toBe(false);
+  });
+
+  it("serves ads as before while the pass function is missing (migration 0098 not applied)", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    world.pass = "missing";
+    expect((await items()).some((x) => x.type === "ad")).toBe(true);
   });
 
   it("serves a free signed-in listener, and honours their ad history", async () => {

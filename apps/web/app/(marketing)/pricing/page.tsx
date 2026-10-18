@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
+import { passMonthlyTracks } from "@/lib/billing/pass";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
@@ -230,6 +231,7 @@ export default async function PricingPage() {
           <h2 className="text-2xl font-medium tracking-tight">{t("pricing.pass.title")}</h2>
           <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
           <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
           <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
           <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
         </section>
