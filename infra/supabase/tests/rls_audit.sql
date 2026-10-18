@@ -95,6 +95,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('funnel_daily',          'service', null,      null, null),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
   ('song_listens_daily',    'service', null,      null, 'daily roll-up of song_listens; service role only'),
+  ('station_signals',       'service', 'user_id', null, 'per-listener station log; API routes with the service role only'),
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
@@ -140,6 +141,7 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('ui_review_edits',       'action',       '''approve'''),
   ('song_listens',          'kind',         '''play'''),
   ('song_listens_daily',    'kind',         '''play'''),
+  ('station_signals',       'kind',         '''play'''),
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id
