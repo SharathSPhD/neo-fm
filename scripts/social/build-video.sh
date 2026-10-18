@@ -11,6 +11,6 @@ ffmpeg -v error -y -stream_loop -1 -i "$video" -i "$audio" -map 0:v:0 -map 1:a:0
   -af "afade=t=out:st=${fade}:d=3" -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p \
   -c:a aac -b:a 160k -movflags +faststart "$out"
 # Guard against shipping a silent video again.
-mean=$(ffmpeg -v error -i "$out" -af volumedetect -vn -f null - 2>&1 | sed -n 's/.*mean_volume: \(-\?[0-9.]*\) dB.*/\1/p')
+mean=$(ffmpeg -hide_banner -nostats -i "$out" -af volumedetect -vn -f null - 2>&1 | sed -n 's/.*mean_volume: \(-\?[0-9.]*\) dB.*/\1/p')
 awk -v m="${mean:--99}" 'BEGIN { if (m < -50) { print "output is silent (mean " m " dB)"; exit 1 } }'
 echo "ok: $out (mean volume ${mean} dB)"
