@@ -4,7 +4,8 @@
  */
 import type { DictionVerdict } from "../diction/gate";
 
-export const POOL_LANGUAGES = ["hi", "ta", "te", "kn", "bn", "en", "sa", "hinglish"] as const;
+/** "zxx" (ISO 639-2, no linguistic content) marks an instrumental: one render serves every listener. */
+export const POOL_LANGUAGES = ["hi", "ta", "te", "kn", "bn", "en", "sa", "hinglish", "zxx"] as const;
 export type PoolLanguage = (typeof POOL_LANGUAGES)[number];
 
 /** Closed vocabularies keep station ranking joins cheap; anything outside is dropped, not stored. */
@@ -103,4 +104,9 @@ export interface PoolQa { unorderedPct: number | null; verdict: DictionVerdict |
 /** The admission rule, mirrored by the CHECK constraint in 0092: order-free U >= 80 and verdict pass. */
 export function passesAdmission(qa: PoolQa): boolean {
   return qa.verdict === "pass" && qa.unorderedPct !== null && qa.unorderedPct >= 80;
+}
+
+/** The instrumental admission rule, mirrored by the CHECK constraint in 0100: the audio check found no voice. */
+export function passesInstrumentalAdmission(vocalsAbsent: boolean | null): boolean {
+  return vocalsAbsent === true;
 }

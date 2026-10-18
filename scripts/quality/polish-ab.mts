@@ -10,6 +10,7 @@ import { dirname } from "node:path";
 import Anthropic from "@anthropic-ai/sdk";
 
 import { aksharas, charErrorRate } from "../../apps/web/lib/diction";
+import { geminiInteract, geminiQaModel } from "../../apps/web/lib/gemini/interactions";
 import { DEFAULT_POLISH_TEMPLATE, polishLyrics, validatePolishTemplate } from "../../apps/web/lib/lyrics/polish";
 import { singableLines } from "../../apps/web/lib/lyrics/singable";
 
@@ -49,10 +50,10 @@ async function judgeClaude(lang: string, a: string, b: string) {
 }
 async function judgeGemini(lang: string, a: string, b: string) {
   if (!gkey) return null;
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash"}:generateContent`, { method: "POST", headers: { "content-type": "application/json", "x-goog-api-key": gkey }, body: JSON.stringify({ contents: [{ parts: [{ text: JUDGE(lang, a, b) }] }], generationConfig: { responseMimeType: "application/json" } }) });
-  if (!res.ok) return null;
-  const j = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  return parse(j.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "");
+  try {
+    const r = await geminiInteract({ apiKey: gkey, model: geminiQaModel(), json: true, text: JUDGE(lang, a, b) });
+    return parse(r.text);
+  } catch { return null; }
 }
 function parse(t: string): { overall: string; prosody: string } | null {
   const m = t.match(/\{[\s\S]*\}/); if (!m) return null;
