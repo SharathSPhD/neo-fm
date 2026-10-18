@@ -892,6 +892,7 @@ export const hi: Dict = {
   "gift.openSong": "गीत खोलें",
   "gift.copied": "कॉपी हो गया",
   "gift.preview": "उपहार पेज देखें",
+  "gift.makeClip": "Reels क्लिप बनाएँ",
   "gift.shareNote": "लिंक वाला कोई भी इसे सुन सकता है। गीत पेज से आप कभी भी साझा करना बंद कर सकते हैं।",
   "gift.preparing": "उपहार पेज तैयार हो रहा है",
   "gift.cta": "गीत उपहार में दें",

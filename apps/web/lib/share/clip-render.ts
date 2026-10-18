@@ -17,7 +17,9 @@ export interface ClipFrameInput {
   title: string;
   /** Ready-to-draw recipient line, already localised (e.g. "For Amma"). */
   to: string | null;
-  /** Occasion / dedication message, kept to one or two short lines. */
+  /** Localised occasion label from /gift (e.g. "Diwali"); drawn as a small eyebrow above the title. */
+  occasion: string | null;
+  /** Dedication message, kept to one or two short lines. */
   message: string | null;
   cover: CanvasImageSource | null;
   /** Used to pick a deterministic gradient when there is no cover art. */
@@ -66,6 +68,11 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
 
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
+  if (f.occasion) {
+    ctx.fillStyle = `hsl(${(hue + 25) % 360} 90% 75%)`;
+    ctx.font = `600 32px ${f.fontFamily}`;
+    fitLine(ctx, f.occasion.toLocaleUpperCase(), W / 2, cy + side + 52, W - 160);
+  }
   ctx.fillStyle = "#fff";
   ctx.font = `600 54px ${f.fontFamily}`;
   fitLine(ctx, f.title, W / 2, cy + side + 90, W - 160);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { clipFrameState, pickClipWindow, wrapText } from "@/lib/share/clip-plan";
+import { drawClipFrame } from "@/lib/share/clip-render";
 import { pickRecorderMime } from "@/lib/share/clip-export";
 import type { SyncLine } from "@/lib/lyrics/sync";
 
@@ -78,5 +79,35 @@ describe("pickRecorderMime", () => {
     expect(pickRecorderMime(() => true)).toMatch(/^video\/mp4/);
     expect(pickRecorderMime((m) => m === "video/webm")).toBe("video/webm");
     expect(pickRecorderMime(() => false)).toBeNull();
+  });
+});
+
+describe("drawClipFrame occasion", () => {
+  function drawn(occasion: string | null): string[] {
+    const texts: string[] = [];
+    const grad = { addColorStop: () => undefined };
+    const ctx = new Proxy({ canvas: { width: 720, height: 1280 } } as Record<string, unknown>, {
+      get: (t, k: string) => {
+        if (k in t) return t[k];
+        if (k === "fillText") return (s: string) => texts.push(s);
+        if (k === "measureText") return (s: string) => ({ width: s.length * 10 });
+        if (k === "createLinearGradient") return () => grad;
+        return () => undefined;
+      },
+      set: () => true,
+    }) as unknown as CanvasRenderingContext2D;
+    drawClipFrame(ctx, {
+      lines: [line(0, 0, 5)], window: { start: 0, end: 15 }, t: 1, title: "Geet", to: "For Amma", occasion,
+      message: null, cover: null, seed: "s", fontFamily: "sans-serif",
+    });
+    return texts;
+  }
+  it("draws the occasion as an eyebrow when the song came from /gift", () => {
+    expect(drawn("Diwali")).toContain("DIWALI");
+  });
+  it("leaves it out otherwise", () => {
+    const t = drawn(null);
+    expect(t).toContain("Geet");
+    expect(t.some((s) => s === s.toUpperCase() && /[A-Z]{4,}/.test(s))).toBe(false);
   });
 });

@@ -38,6 +38,7 @@ export interface ExportClipOptions {
   window: ClipWindow;
   title: string;
   to: string | null;
+  occasion: string | null;
   message: string | null;
   seed: string;
   /**
@@ -138,7 +139,7 @@ async function exportViaRecorder(o: ExportClipOptions): Promise<ExportedClip> {
     const stopped = new Promise<void>((res) => { rec.onstop = () => res(); });
 
     const frame = (t: number) =>
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, message: o.message, cover, seed: o.seed, fontFamily });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily });
     frame(o.window.start);
     rec.start(250);
     src.start(now, o.window.start, duration);
@@ -244,7 +245,7 @@ async function exportViaWebCodecs(o: ExportClipOptions): Promise<ExportedClip> {
     for (let i = 0; i < frames; i++) {
       if (o.signal?.aborted) throw new DOMException("aborted", "AbortError");
       if (failure) throw failure;
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, message: o.message, cover, seed: o.seed, fontFamily });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily });
       const frame = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
       venc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
       frame.close();

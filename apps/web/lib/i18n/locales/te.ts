@@ -892,6 +892,7 @@ export const te: Dict = {
   "gift.openSong": "పాట తెరవండి",
   "gift.copied": "కాపీ అయింది",
   "gift.preview": "బహుమతి పేజీని చూడండి",
+  "gift.makeClip": "Reels క్లిప్ చేయండి",
   "gift.shareNote": "లింక్ ఉన్న ఎవరైనా వినవచ్చు. పాట పేజీ నుండి ఎప్పుడైనా షేరింగ్ ఆపవచ్చు.",
   "gift.preparing": "బహుమతి పేజీ సిద్ధమవుతోంది",
   "gift.cta": "పాటను బహుమతిగా ఇవ్వండి",
