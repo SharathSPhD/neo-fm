@@ -1,5 +1,7 @@
 "use client";
 
+import type { VoiceLanguage } from "@neo-fm/co-composer";
+import type { Language } from "@neo-fm/song-doc";
 import type { Section, SongDocument } from "@neo-fm/song-doc";
 import { SONG_TITLE_MAX_CHARS } from "@neo-fm/song-doc";
 import type { StylePreset } from "@neo-fm/style-presets";
@@ -37,7 +39,6 @@ type StyleFamily =
   | "sanskrit-shloka"
   | "bengali-rabindrasangeet"
   | "telugu-keerthana";
-type Language = "en" | "hi" | "kn" | "ta" | "bn" | "te" | "sa";
 
 const STYLE_OPTIONS: { value: StyleFamily; label: UiKey }[] = [
   { value: "carnatic", label: "create.style.carnatic" },
@@ -51,6 +52,11 @@ const STYLE_OPTIONS: { value: StyleFamily; label: UiKey }[] = [
   { value: "sanskrit-shloka", label: "create.style.shloka" },
   { value: "western", label: "create.style.western" },
 ];
+
+const VOICE_LANGUAGES: readonly Language[] = ["en", "hi", "kn", "ta", "te", "bn", "sa"];
+function isVoiceLanguage(l: Language): l is VoiceLanguage {
+  return VOICE_LANGUAGES.includes(l);
+}
 
 const LANGUAGE_OPTIONS: { value: Language; label: UiKey }[] = [
   { value: "hi", label: "create.lang.hi" },
@@ -99,7 +105,7 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
 
 type CreationMode = "compose" | "describe";
 
-export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: boolean; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
+export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages = [] }: { firstRun?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
   const router = useRouter();
   const { t } = useUiLang();
   const [creationMode, setCreationMode] = useState<CreationMode>("describe");
@@ -144,6 +150,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
   }
   function setLanguage(language: Language) {
     setForm({ ...form, language });
+    if (!isVoiceLanguage(language)) setVoiceId("");
     if (activePreset && activePreset.song_document.language !== language) {
       setActivePreset(null);
     }
@@ -372,7 +379,7 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
       </div>
 
       {creationMode === "describe" ? (
-        <PromptTab showGuide={firstRun} initialIdea={initialIdea} />
+        <PromptTab showGuide={firstRun} initialIdea={initialIdea} extraLanguages={extraLanguages} />
       ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
@@ -424,6 +431,11 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
                   {t(o.label)}
                 </option>
               ))}
+              {extraLanguages.map((o) => (
+                <option key={o.code} value={o.code}>
+                  {o.name}
+                </option>
+              ))}
             </select>
           </Field>
         </div>
@@ -443,12 +455,15 @@ export function CreationCanvas({ firstRun = false, initialIdea }: { firstRun?: b
           </select>
         </Field>
 
-        <VoicePicker
-          value={voiceId}
-          onChange={setVoiceId}
-          language={form.language}
-          previewBaseUrl={getVoicePreviewBaseUrl()}
-        />
+        {/* Voice personas exist only for the launch languages; an expansion language sings in the model's default voice. */}
+        {isVoiceLanguage(form.language) ? (
+          <VoicePicker
+            value={voiceId}
+            onChange={setVoiceId}
+            language={form.language}
+            previewBaseUrl={getVoicePreviewBaseUrl()}
+          />
+        ) : null}
 
         <AdvancedDisclosure
           styleFamily={form.style_family}

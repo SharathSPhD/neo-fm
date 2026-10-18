@@ -32,8 +32,8 @@ export interface BillingConfig {
   annualPrices: Partial<Record<BillableTier, string>>;
   packPrices: Partial<Record<PackSku, string>>;
   /**
-   * Station pass price id. Test-mode only: unset, or ignored under a live key, until the pass has a stored
-   * entitlement (the webhook records nothing for it yet and must never touch the user's tier).
+   * Station pass price id. Test-mode only: unset, or ignored under a live key, until S sets the live price. The webhook
+   * stores it as its own entitlement (station_passes, migration 0098) and never touches the user's tier.
    */
   stationPassPrice?: string;
   /** Offer UPI on one-time packs. Only set once UPI is enabled for the Stripe account (Dashboard > Payment methods). */

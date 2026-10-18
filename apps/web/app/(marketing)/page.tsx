@@ -260,6 +260,12 @@ async function Footer() {
             {t("footer.terms")}
           </Link>
           <Link
+            href="/ai-disclosure"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            {t("footer.ai")}
+          </Link>
+          <Link
             href="/help"
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >

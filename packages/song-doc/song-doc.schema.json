@@ -26,7 +26,15 @@
             "ta",
             "bn",
             "te",
-            "sa"
+            "sa",
+            "mr",
+            "pa",
+            "gu",
+            "ml",
+            "bho",
+            "or",
+            "ur",
+            "as"
           ]
         },
         "style_family": {
@@ -109,7 +117,12 @@
                   "tamil",
                   "kannada",
                   "telugu",
-                  "bengali"
+                  "bengali",
+                  "gurmukhi",
+                  "gujarati",
+                  "malayalam",
+                  "odia",
+                  "arabic"
                 ]
               },
               "transliteration": {

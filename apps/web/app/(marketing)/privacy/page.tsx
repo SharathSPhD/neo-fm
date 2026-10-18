@@ -21,9 +21,11 @@ const SECTIONS: { h: string; body: string[] }[] = [
   { h: "Who processes it", body: [
     "Anthropic (Claude) writes and reviews lyrics from your brief. Google (Gemini and Lyria) renders and checks the audio. Supabase stores data. Vercel hosts the app. Stripe processes payments. Each receives only what it needs to do its job.",
     "Your brief and lyrics are sent to these processors to produce your song; audio you share publicly is visible to anyone with its link." ] },
+  { h: "Your requests and dedications", body: ["Briefs often name people (\"for Amma\"). We treat names and personal details in a brief as personal data, use them only to make your song, and send them to the processors above. Do not include other people's sensitive details (health, finances, government IDs). We keep briefs and generated songs while your account is active, and remove them when you delete a song or your account, subject to short backup retention."] },
+  { h: "Where data goes", body: ["Our processors may handle data outside India. We use vendors that provide contractual data-protection terms, and for users in the EU or UK we rely on the vendors' standard contractual clauses or equivalent safeguards. If you are in the EU or UK, our lawful bases are performing our contract with you (making your songs), consent (optional analytics and marketing) and our legitimate interest in safety and fraud prevention, and you may also complain to your local data-protection authority."] },
   { h: "Public songs", body: ["Songs you publish are public (or unlisted) and may appear on Discover. Unpublish any time from the song page. Private songs are only visible to you."] },
   { h: "Listener counts on public songs", body: ["When someone plays a public or unlisted song, we add one to that song's play count and note the language their browser prefers (for example \"hi\" for Hindi). We do not record who they are, their IP address or their device, and we do not record anything if their browser sends Do Not Track or Global Privacy Control. Creators see only totals for their own songs, and a language breakdown only once your songs have at least five plays in total. Each individual play is kept for 90 days, then replaced by a plain daily count for the song that holds no language and no listener detail."] },
-  { h: "Your choices", body: ["You can access, correct, export or delete your data, withdraw consent, and nominate someone to exercise these rights, by writing to us through the Contact page. Deleting your account removes your songs and audio, subject to short backup retention and legal obligations."] },
+  { h: "Your choices", body: ["You can access, correct, export or delete your data, withdraw consent, and nominate someone to exercise these rights, by writing to our Grievance Officer (see Complaints and takedowns) or through the Contact page. Deleting your account removes your songs and audio, subject to short backup retention and legal obligations."] },
   { h: "Children", body: ["neo-fm is not for people under 18. We do not knowingly collect data from children; if you believe a child has signed up, tell us and we will remove the account."] },
   { h: "Security and retention", body: ["Data is encrypted in transit and at rest with our providers, access is limited by row-level security, and secrets never reach the browser. We keep data while your account is active and delete it within a reasonable period after you ask."] },
   { h: "Changes", body: ["We will post material changes here and, for paying users, notify you by email."] },
@@ -47,7 +49,7 @@ export default async function PrivacyPage() {
         ))}
       </div>
       <p className="mt-12 text-sm text-foreground/60">
-        Questions or requests? <Link href="/feedback" className="underline">Contact us</Link>. See also our <Link href="/terms" className="underline">Terms</Link> and <Link href="/trust" className="underline">Trust &amp; safety</Link>.
+        Questions or requests? <Link href="/feedback" className="underline">Contact us</Link>. See also our <Link href="/terms" className="underline">Terms</Link>, <Link href="/grievance" className="underline">Complaints &amp; takedowns</Link> and <Link href="/trust" className="underline">Trust &amp; safety</Link>.
       </p>
     </main>
   );

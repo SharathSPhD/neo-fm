@@ -1,0 +1,33 @@
+/** GET /api/admin/ads[?days=7] -- house-ad starts, completes and taps per slot (Bearer admin). Read-only; empty before migration 0099. */
+import { NextResponse, type NextRequest } from "next/server";
+
+import { serviceClient } from "../../../../lib/agent/adapters";
+import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { summarizeAds } from "../../../../lib/ops/ads-report";
+
+export const dynamic = "force-dynamic";
+export const fetchCache = "force-no-store";
+
+type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
+
+export async function GET(req: NextRequest) {
+  const auth = checkAdminBearer(req.headers.get("authorization"));
+  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const days = Math.min(90, Math.max(1, Number(req.nextUrl.searchParams.get("days") ?? 7) || 7));
+  const since = new Date(Date.now() - days * 86_400_000).toISOString();
+  const db = serviceClient() as unknown as { from: (t: string) => { select: (c: string) => { gte: (k: string, v: string) => { limit: (n: number) => Promise<Rows> }; limit: (n: number) => Promise<Rows> } } };
+  try {
+    const [slots, events] = await Promise.all([
+      db.from("ad_slots").select("id,headline,kind,languages,active").limit(200),
+      db.from("ad_events").select("slot_id,event").gte("created_at", since).limit(20_000),
+    ]);
+    // A missing table reads as an empty report, so the panel can ship before the migration.
+    if (slots.error || events.error) return NextResponse.json({ window_days: days, slots: [] });
+    return NextResponse.json({
+      window_days: days,
+      slots: summarizeAds((slots.data ?? []) as never, (events.data ?? []) as never),
+    });
+  } catch {
+    return NextResponse.json({ window_days: days, slots: [] });
+  }
+}

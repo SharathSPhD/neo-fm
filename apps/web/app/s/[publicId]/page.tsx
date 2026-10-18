@@ -333,6 +333,7 @@ export default async function PublicSongPage(
           {displayTitle}
         </h1>
         <p className="text-sm text-foreground/60">
+          <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
           {doc
             ? `${prettyStyle(doc.style_family, t)} · ${prettyLanguage(doc.language, t)} · ${doc.target_duration_seconds}s`
             : ""}

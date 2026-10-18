@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { InstallPrompt } from "@/components/install-prompt";
+import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
+import { expansionLanguage } from "@/lib/languages/registry";
 import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
@@ -21,6 +23,10 @@ interface Track {
   url: string;
   /** Templated host line from the queue API; shown as text on some track changes. */
   host?: string;
+  durationSeconds?: number;
+  /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
+  type?: "ad";
+  ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
@@ -30,7 +36,7 @@ const MAX_CONSECUTIVE_ERRORS = 3;
 const HOST_EVERY = 3;
 const HOST_VISIBLE_MS = 12_000;
 
-const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
+const BASE_LANGS = ["", "hi", "ta", "te", "kn", "bn"];
 
 /** Mood values are the tags sent to the server; these keys are only their labels. */
 const MOOD_LABEL: Record<(typeof STATION_MOODS)[number], UiKey> = {
@@ -44,7 +50,7 @@ const MOOD_LABEL: Record<(typeof STATION_MOODS)[number], UiKey> = {
 
 /** A pool language written in its own script when we have the name (hi, ta, ...), else as stored. */
 function languageName(code: string): string {
-  return isUiLang(code) ? UI_LANG_ENDONYM[code] : code;
+  return isUiLang(code) ? UI_LANG_ENDONYM[code] : (expansionLanguage(code)?.endonym ?? code);
 }
 
 function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
@@ -56,18 +62,49 @@ function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
   });
 }
 
+type AdEventKind = "start" | "complete" | "tap";
+
+/** House-ad log. Never a taste signal; the server ignores it entirely unless ADS_ENABLED=1. */
+function postAdEvent(slotId: string, event: AdEventKind) {
+  void fetch("/api/station/ad-event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({ slotId, event }),
+  }).catch(() => undefined);
+}
+
+/** A card-only spot (no audio) holds the screen this long, then the station carries on. */
+const AD_CARD_MS = 6_000;
+
+/** House ads can be skipped after a few seconds; sponsor spots render no button at all. */
+function AdSkip({ afterMs, onSkip }: { afterMs: number; onSkip: () => void }) {
+  const [ready, setReady] = useState(afterMs <= 0);
+  useEffect(() => {
+    if (afterMs <= 0) return;
+    const t = setTimeout(() => setReady(true), afterMs);
+    return () => clearTimeout(t);
+  }, [afterMs]);
+  return <button type="button" disabled={!ready} onClick={onSkip} className="rounded border px-3 py-2 disabled:opacity-50">Skip</button>;
+}
+/** Ad seconds are counted over this window for the server's cap. */
+const AD_WINDOW_MS = 600_000;
+const AD_HOUR_MS = 3_600_000;
+
 /** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
 const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[] } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string } = {}) {
   const q = new URLSearchParams({ limit: "10" });
   if (language) q.set("lang", language);
   if (energy) q.set("energy", energy);
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  for (const [k, v] of Object.entries(extra.ads ?? {})) q.set(k, v);
+  if (extra.station) q.set("station", extra.station);
   // The server programs by the listener's own clock; fall back silently if the browser will not say.
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -76,7 +113,9 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
+export function StationPlayer({ anonymous = false, extraLangs = [], initialStation = "" }: { anonymous?: boolean; extraLangs?: string[]; initialStation?: string }) {
+  const extraKey = extraLangs.join(",");
+  const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
   const { t } = useUiLang();
   const sendSignal = anonymous ? () => {} : postSignal;
@@ -86,6 +125,8 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const [queue, setQueue] = useState<Track[]>([]);
   const [lang, setLang] = useState<string>("");
   const [moods, setMoods] = useState<string[]>([]);
+  // A named station ("Subah", "Raat", "Diwali Radio"); empty means the listener's own station.
+  const [station, setStation] = useState<string>(initialStation);
   // "ready" flips once the saved choice has been read; "onboarded" is false on a first visit until Start is pressed.
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
@@ -101,14 +142,30 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
   const tracksStarted = useRef(0);
+  // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
+  const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
+  const currentId = useRef<string | null>(null);
   const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
-  const refill = useCallback(async (language: string, wanted: string[]) => {
+  const adParams = useCallback((): Record<string, string> => {
+    const a = adSession.current;
+    const now = Date.now();
+    const out: Record<string, string> = { played: String(a.played) };
+    if (a.lastAdAt !== null) { out.since = String(a.since); out.adAge = String(Math.round((now - a.lastAdAt) / 1000)); }
+    const sec = a.spots.filter((x) => now - x.at < AD_WINDOW_MS).reduce((n, x) => n + x.sec, 0);
+    if (sec) out.adSec = String(sec);
+    const hour = a.spots.filter((x) => now - x.at < AD_HOUR_MS).length;
+    if (hour) out.adHr = String(hour);
+    if (a.seen.length) out.seen = a.seen.join(",");
+    return out;
+  }, []);
+
+  const refill = useCallback(async (language: string, wanted: string[], stationSlug: string) => {
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: adParams() }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -119,24 +176,54 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       setQueueError(true);
     }
     setLoading(false);
-  }, []);
+  }, [adParams]);
 
   useEffect(() => {
     const saved = loadPrefs();
-    if (saved) { setLang(saved.lang); setMoods(saved.moods); setOnboarded(true); }
+    if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); setOnboarded(true); }
+    // A station link is a choice in itself: skip the first-visit picker.
+    if (initialStation) setOnboarded(true);
     setReady(true);
-  }, []);
+  }, [LANGS, initialStation]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
     savePrefs({ lang, moods });
-    void refill(lang, moods);
-  }, [ready, onboarded, lang, moods, refill]);
+    void refill(lang, moods, station);
+  }, [ready, onboarded, lang, moods, station, refill]);
 
   // Start playback when the head of the queue changes; stop the app-wide player so two songs never overlap.
   useEffect(() => {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
+    currentId.current = current.id;
+    if (current.type === "ad" && current.ad) {
+      // A card-only spot leaves ~6 s of silence, which can stall background audio on a locked phone: drop it when hidden.
+      if (!current.url && typeof document !== "undefined" && document.hidden) { controls.current.skip(); return; }
+      // A break: labelled, skippable, no taste signal, no host line. Card-only spots just hold the card for a few seconds.
+      const a = adSession.current;
+      a.since = 0;
+      a.lastAdAt = Date.now();
+      a.seen.push(current.ad.slotId);
+      a.spots.push({ at: a.lastAdAt, sec: current.durationSeconds ?? AD_CARD_MS / 1000 });
+      setHostLine(null);
+      setBlocked(false);
+      postAdEvent(current.ad.slotId, "start");
+      if (current.url) {
+        audioRef.current.src = current.url;
+        void audioRef.current.play().catch(() => setBlocked(true));
+      } else {
+        const id = current.id;
+        const t = setTimeout(() => { if (currentId.current === id) controls.current.finish(); }, AD_CARD_MS);
+        // Locking the phone mid-card: end the spot now so the next track starts while the page can still play.
+        const onHide = () => { if (document.hidden && currentId.current === id) controls.current.finish(); };
+        document.addEventListener("visibilitychange", onHide);
+        return () => { clearTimeout(t); document.removeEventListener("visibilitychange", onHide); };
+      }
+      return;
+    }
+    adSession.current.played += 1;
+    adSession.current.since += 1;
     audioRef.current.src = current.url;
     // A host line on the first track and then every third, so the station has a voice without chattering.
     const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
@@ -151,21 +238,27 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   // Anonymous counters only (see /api/events): the third finished or skipped track, and the nudge appearing.
   useEffect(() => { if (played === NUDGE_AFTER) sendFunnelEvent("listened_3", { once: true }); }, [played]);
   const nudging = anonymous && played >= NUDGE_AFTER;
+  const isAd = current?.type === "ad";
   useEffect(() => { if (nudging) sendFunnelEvent("nudge_shown", { once: true }); }, [nudging]);
 
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
-    if (kind !== "error") setPlayed((n) => n + 1);
-    if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
+    const isAd = current.type === "ad";
+    if (isAd && kind === "finish" && current.ad) postAdEvent(current.ad.slotId, "complete");
+    // Ads are not listening taste: no signal, and skipping one is not a track skip.
+    if (kind !== "error" && !isAd) setPlayed((n) => n + 1);
+    if (kind !== "error" && !isAd) sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
-      void refill(lang, moods);
+      void refill(lang, moods, station);
     } else {
       setQueue((q) => q.slice(1));
     }
   }
 
   function onTrackError() {
+    // A spot that will not load is dropped quietly; it is not a station audio failure.
+    if (current?.type === "ad") { advance("skip"); return; }
     reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -182,8 +275,9 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   }, [hostLine]);
 
   // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
-  const controls = useRef({ skip: () => {} });
+  const controls = useRef({ skip: () => {}, finish: () => {} });
   controls.current.skip = () => advance("skip");
+  controls.current.finish = () => advance("finish");
   useEffect(() => {
     if (!current) return;
     setMediaMetadata({ title: current.title, artist: "neo-fm Station" });
@@ -202,14 +296,14 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   function retry() {
     errorsInARow.current = 0;
     setFailed(false);
-    void refill(lang, moods);
+    void refill(lang, moods, station);
   }
 
   // Re-steer the upcoming tracks without touching the one playing, so a tap shows in what plays next.
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods }));
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station, ads: adParams() }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -278,12 +372,44 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
     </div>
   );
 
+  const stationRow = (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Stations">
+      <button type="button" aria-pressed={station === ""} onClick={() => setStation("")} className={`rounded-full border px-3 py-1 text-sm ${station === "" ? "bg-accent text-background" : ""}`}>
+        My station
+      </button>
+      {NAMED_STATIONS.map((n) => (
+        <button
+          key={n.slug}
+          type="button"
+          title={n.tagline}
+          aria-pressed={station === n.slug}
+          onClick={() => { setOnboarded(true); setStation(n.slug); }}
+          className={`rounded-full border px-3 py-1 text-sm ${station === n.slug ? "bg-accent text-background" : ""}`}
+        >
+          {n.name}
+        </button>
+      ))}
+    </div>
+  );
+
+  async function shareStation() {
+    const named = NAMED_STATIONS.find((n) => n.slug === station);
+    if (!named) return;
+    const url = `${location.origin}/station?s=${named.slug}`;
+    const text = `${named.name} on neo-fm Station: ${named.tagline}`;
+    try {
+      if (navigator.share) await navigator.share({ title: named.name, text, url });
+      else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }
+    } catch { /* share sheet dismissed */ }
+  }
+
   if (!ready) return <p>{t("station.loading")}</p>;
 
   if (!onboarded) {
     return (
       <section aria-label={t("station.setup.label")} className="flex flex-col gap-4 rounded-lg border p-4">
         <h2 className="text-lg font-medium">{t("station.setup.title")}</h2>
+        {stationRow}
         <p className="text-sm text-foreground/70">{t("station.setup.hint")}</p>
         <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
           {LANGS.map((l) => (
@@ -309,6 +435,13 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
   return (
     <section aria-label={t("station.player.label")} className="flex flex-col gap-4">
       <InstallPrompt plays={plays} minPlays={2} />
+      {stationRow}
+      {station ? (
+        <p className="text-sm text-foreground/70">
+          {NAMED_STATIONS.find((n) => n.slug === station)?.tagline}{" "}
+          <button type="button" onClick={shareStation} className="underline">Share this station</button>
+        </p>
+      ) : null}
       <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.lang.label")}>
         {LANGS.map((l) => (
           <button
@@ -335,18 +468,44 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
-          <p className="text-lg font-medium">{current.title}</p>
-          <p className="text-xs text-foreground/70">{languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}</p>
+          {isAd && current.ad ? (
+            <div className="flex flex-col gap-2" aria-label="Ad">
+              <p className="flex items-center gap-2 text-xs text-foreground/70">
+                <span className="rounded-full border px-2 py-0.5">{current.ad.label}</span>
+                {current.ad.aiMade ? <span className="rounded-full border px-2 py-0.5">AI-made</span> : null}
+              </p>
+              <p className="text-lg font-medium">{current.ad.headline}</p>
+              {current.ad.ctaUrl && current.ad.ctaLabel ? (
+                <a
+                  href={current.ad.ctaUrl}
+                  target={current.ad.ctaUrl.startsWith("/") ? undefined : "_blank"}
+                  rel="noopener noreferrer sponsored"
+                  onClick={() => postAdEvent(current.ad!.slotId, "tap")}
+                  className="self-start rounded bg-accent px-3 py-2 text-background"
+                >
+                  {current.ad.ctaLabel}
+                </a>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <p className="text-lg font-medium">{current.title}</p>
+              <p className="text-xs text-foreground/70">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+                {languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}
+              </p>
+            </>
+          )}
           <audio
             ref={audioRef}
-            controls
-            className="w-full"
+            controls={!isAd}
+            className={isAd ? "hidden" : "w-full"}
             onEnded={() => advance("finish")}
             onPlaying={() => { errorsInARow.current = 0; setBlocked(false); setMediaPlaybackState(true); }}
             onPause={() => setMediaPlaybackState(false)}
             onError={onTrackError}
           />
-          {queue[1] ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
+          {queue[1]?.url ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
             <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-accent px-3 py-2 text-background">
               {t("station.tapToPlay")}
@@ -357,6 +516,11 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
               {t("station.failed")} <button type="button" onClick={retry} className="underline">{t("station.retry")}</button>
             </p>
           ) : null}
+          {isAd ? (
+            <div className="flex flex-wrap gap-2">
+              {current.ad?.skipAfterMs != null ? <AdSkip key={current.id} afterMs={current.ad.skipAfterMs} onSkip={() => advance("skip")} /> : null}
+            </div>
+          ) : (
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="rounded border px-3 py-2">
               {liked.has(current.id) ? t("station.liked") : t("station.like")}
@@ -366,7 +530,8 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             <button type="button" onClick={share} className="rounded border px-3 py-2">{t("station.share")}</button>
             <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")}>
+          )}
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd}>
             <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">{t("station.steer.more")}</button>
             <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>{t("station.steer.calmer")}</button>
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>{t("station.steer.livelier")}</button>
