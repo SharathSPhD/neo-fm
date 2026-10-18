@@ -54,17 +54,13 @@ create index if not exists pool_tracks_mood_gin on public.pool_tracks using gin 
 create index if not exists pool_tracks_theme_gin on public.pool_tracks using gin (theme) where status = 'admitted';
 
 comment on table public.pool_tracks is
-  'Station pool: service-owned renders with tags (language, mood, genre, raga, tempo, theme). status=admitted only when the diction gate passes (U>=80, verdict pass). Written under service-role only.';
+  'Station pool: service-owned renders with tags (language, mood, genre, raga, tempo, theme). status=admitted only when the diction gate passes (U>=80, verdict pass). Service-role only.';
 
 alter table public.pool_tracks enable row level security;
 
--- Supabase grants ALL on new public tables to anon/authenticated; listeners only read admitted rows.
+-- Service-role only, like song_lyric_meanings: the station route reads admitted rows with the service role and
+-- signs the audio itself, so no client policy or grant is needed.
 revoke all on public.pool_tracks from public, anon, authenticated;
-grant select on public.pool_tracks to authenticated;
-
-create policy pool_tracks_select_admitted on public.pool_tracks
-  for select to authenticated
-  using (status = 'admitted');
 
 -- Admission goes through one function so the gate check and the timestamp cannot be skipped.
 create or replace function public.admit_pool_track(p_id uuid)
