@@ -5,8 +5,11 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 const SCOPES = ["pages_show_list", "pages_read_engagement", "pages_manage_posts", "instagram_basic", "instagram_content_publish", "business_management"];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Facebook Login for Business apps take a `config_id` (set META_CONFIG_ID) in place of `scope`. */
 function authUrl(state: string, redirectUri: string, env: NodeJS.ProcessEnv): string {
-  return "https://www.facebook.com/v21.0/dialog/oauth?" + new URLSearchParams({ client_id: env.META_APP_ID ?? "", redirect_uri: redirectUri, state, scope: SCOPES.join(","), response_type: "code" });
+  const configId = (env.META_CONFIG_ID ?? "").trim();
+  const base = { client_id: env.META_APP_ID ?? "", redirect_uri: redirectUri, state, response_type: "code" };
+  return "https://www.facebook.com/v21.0/dialog/oauth?" + new URLSearchParams(configId ? { ...base, config_id: configId } : { ...base, scope: SCOPES.join(",") });
 }
 
 /** Code -> long-lived user token -> never-expiring page token, plus the linked Instagram professional account. */
