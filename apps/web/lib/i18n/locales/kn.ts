@@ -901,6 +901,7 @@ export const kn: Dict = {
   "station.mood.devotional": "ಭಕ್ತಿ",
   "station.mood.energetic": "ಉತ್ಸಾಹ",
   "station.mood.nostalgic": "ಹಳೆಯ ನೆನಪುಗಳು",
+  "station.queueError": "ಈಗ ಸ್ಟೇಷನ್ ತಲುಪಲು ಆಗುತ್ತಿಲ್ಲ. ಇಂಟರ್ನೆಟ್ ನೋಡಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "station.empty": "ಈಗ ಕೇಳಲು ಏನೂ ಇಲ್ಲ. ಸ್ವಲ್ಪ ಹೊತ್ತಿನ ನಂತರ ನೋಡಿ.",
   "station.tapToPlay": "ಪ್ಲೇ ಮಾಡಲು ಒತ್ತಿ",
   "station.failed": "ಈಗ ಹಾಡುಗಳು ಲೋಡ್ ಆಗುತ್ತಿಲ್ಲ.",
