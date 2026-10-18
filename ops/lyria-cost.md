@@ -11,6 +11,8 @@ Refused renders (moderation, Lyria 400, no audio part) are not counted. Long tra
 | 2026-10-18 | P5 gap tracks, first four | 4 | 1.00 | 4 | 2 Hinglish, 1 film, 1 Diwali |
 | 2026-10-18 | P5 gap tracks | 11 | 2.75 | 9 | Diwali, Hinglish, energy, film |
 | 2026-10-18 | P3 long tracks (150 s) | 6 | 1.50 | 6 | 2 refused by moderation |
+| 2026-10-18 | gap tracks in ta/te/kn/bn (stored PCE lyrics) | 15 | 3.75 | 14 | Diwali, wedding, harvest, joyful |
+| 2026-10-18 | English tracks | 4 | 1.00 | 4 | 4 more refused by moderation, 2 redo-long refused |
 
-Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 5.25 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 131 admitted, 24 retired duplicates, 23 rejected by the diction gate.
+Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 10.00 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 149 admitted, 24 retired duplicates, 23 rejected by the diction gate.
 Approvals: GBP 26 (pool), then GBP 15 more for gap and long tracks (S, 2026-10-18 13:35 UTC).
