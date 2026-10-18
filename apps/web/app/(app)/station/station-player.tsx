@@ -47,6 +47,11 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  // The server programs by the listener's own clock; fall back silently if the browser will not say.
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) q.set("tz", tz);
+  } catch { /* no Intl: server falls back to India time */ }
   return `/api/station/queue?${q}`;
 }
 
