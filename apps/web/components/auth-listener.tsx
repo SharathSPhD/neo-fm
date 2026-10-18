@@ -8,19 +8,23 @@
  * hit refresh.
  *
  * The listener is mounted by the root layout so it covers every route
- * group. It does not render anything.
+ * group. It does not render anything. The Supabase client is imported
+ * lazily after the page is idle so it stays out of the critical path (it
+ * was the largest chunk on the landing page's main thread).
  */
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { createBrowserSupabase } from "@/lib/supabase/client";
-
 export function AuthListener() {
   const router = useRouter();
   useEffect(() => {
-    const supabase = createBrowserSupabase();
-    const { data: sub } = supabase.auth.onAuthStateChange(
-      (event, _session) => {
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+    const start = async () => {
+      const { createBrowserSupabase } = await import("@/lib/supabase/client");
+      if (cancelled) return;
+      const supabase = createBrowserSupabase();
+      const { data: sub } = supabase.auth.onAuthStateChange((event, _session) => {
         if (
           event === "SIGNED_IN" ||
           event === "SIGNED_OUT" ||
@@ -30,9 +34,17 @@ export function AuthListener() {
           // refresh re-runs server components with the new cookie state
           router.refresh();
         }
-      },
-    );
-    return () => sub.subscription.unsubscribe();
+      });
+      unsubscribe = () => sub.subscription.unsubscribe();
+    };
+    const idle = (window as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    const handle = idle ? idle(() => void start(), { timeout: 4000 }) : window.setTimeout(() => void start(), 2000);
+    return () => {
+      cancelled = true;
+      if (idle) (window as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback?.(handle);
+      else window.clearTimeout(handle);
+      unsubscribe?.();
+    };
   }, [router]);
   return null;
 }

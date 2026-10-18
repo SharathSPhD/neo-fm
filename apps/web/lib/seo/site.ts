@@ -12,6 +12,7 @@ export function siteUrl(): string {
 /** Public, indexable marketing routes. Keep in sync with the (marketing) route group. */
 export const PUBLIC_PATHS = [
   { path: "/", changeFrequency: "weekly", priority: 1 },
+  { path: "/station", changeFrequency: "daily", priority: 0.9 },
   { path: "/pricing", changeFrequency: "monthly", priority: 0.9 },
   { path: "/discover", changeFrequency: "daily", priority: 0.8 },
   { path: "/templates", changeFrequency: "monthly", priority: 0.6 },

@@ -45,6 +45,8 @@ export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: numb
     if (isStandalone() || snoozed()) return;
     const onPrompt = (e: Event) => {
       e.preventDefault();
+      // Chromium can re-fire this after "Not now"; the snooze must win.
+      if (snoozed()) return;
       setDeferred(e as InstallEvent);
       setHidden(false);
     };
@@ -67,6 +69,8 @@ export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: numb
     } catch {
       // best effort
     }
+    setDeferred(null);
+    setIos(false);
     setHidden(true);
   }
 

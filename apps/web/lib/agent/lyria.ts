@@ -5,6 +5,7 @@
  * GBP cap holds under concurrency.
  */
 import { isOutage, type CircuitBreaker } from "./circuit-breaker";
+import type { PromptLabels } from "./lyria-native";
 
 export type DurationClass = "clip" | "full";
 
@@ -44,15 +45,16 @@ export class SpendCapError extends Error {
  * Lyria 3.5 honours an explicit length instruction (measured: "exactly 60 seconds total" -> 62.7 s; without it a
  * 60 s request produced ~170 s). The clip model is fixed at ~30 s, so no instruction is added for it.
  */
-export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?: number, cls: DurationClass = "full"): string {
-  const len = cls === "full" && targetSeconds && targetSeconds > 0
-    ? `Duration: exactly ${Math.round(targetSeconds)} seconds total, do not exceed ${Math.round(targetSeconds)} seconds. `
+export function buildPrompt(stylePrompt: string, lyrics: string, targetSeconds?: number, cls: DurationClass = "full", labels?: PromptLabels): string {
+  const secs = Math.round(targetSeconds ?? 0);
+  const len = cls === "full" && secs > 0
+    ? (labels ? labels.duration(secs) : `Duration: exactly ${secs} seconds total, do not exceed ${secs} seconds. `)
     : "";
-  return `${len}${stylePrompt.trim()}\n\nLyrics:\n${lyrics.trim()}`;
+  return `${len}${stylePrompt.trim()}\n\n${labels?.lyrics ?? "Lyrics:"}\n${lyrics.trim()}`;
 }
 
 export async function generateMusic(
-  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number },
+  args: { stylePrompt: string; lyrics: string; durationClass: DurationClass; targetSeconds?: number; labels?: PromptLabels },
   deps: { guard: SpendGuard; breaker?: Pick<CircuitBreaker, "onSuccess" | "onFailure">; apiKey: string; fetchImpl?: typeof fetch; env?: NodeJS.ProcessEnv; attempts?: number; retryDelayMs?: number },
 ): Promise<LyriaResult> {
   const f = deps.fetchImpl ?? fetch;
@@ -71,7 +73,7 @@ export async function generateMusic(
           method: "POST",
           headers: { "content-type": "application/json", "x-goog-api-key": deps.apiKey },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics, args.targetSeconds, args.durationClass) }] }],
+            contents: [{ parts: [{ text: buildPrompt(args.stylePrompt, args.lyrics, args.targetSeconds, args.durationClass, args.labels) }] }],
             generationConfig: { responseModalities: ["AUDIO", "TEXT"] },
           }),
         },

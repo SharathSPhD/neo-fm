@@ -17,3 +17,16 @@ describe("rowToTrack", () => {
     expect(rowToTrack({ ...base, language: "ta", genre: null }).title).toBe("Tamil");
   });
 });
+
+describe("rowToTrack tagger columns", () => {
+  const base = { id: "x", title: "t", audio_path: "a", duration_seconds: 60, language: "hi", genre: null, raga: null, mood: null, theme: null, tempo_band: null };
+  it("carries energy and daypart when present", () => {
+    const t = rowToTrack({ ...base, energy: "low", daypart: ["night", "dusk"] });
+    expect(t.energy).toBe("low");
+    expect(t.daypart).toEqual(["night", "dusk"]);
+  });
+  it("defaults to null and empty when the columns are absent or odd", () => {
+    expect(rowToTrack(base)).toMatchObject({ energy: null, daypart: [] });
+    expect(rowToTrack({ ...base, energy: "extreme", daypart: null })).toMatchObject({ energy: null, daypart: [] });
+  });
+});
