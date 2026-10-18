@@ -5,6 +5,7 @@ import {
   GIFT_NOTE_MAX,
   OCCASIONS,
   RELATIONSHIPS,
+  giftPublicUrl,
   giftShareUrl,
   occasionById,
   planGift,
@@ -89,5 +90,13 @@ describe("giftShareUrl", () => {
     expect(text).toContain("Diwali");
     expect(text).toContain("Amma");
     expect(text).toContain("https://x.app/s/abc");
+  });
+});
+
+describe("giftPublicUrl", () => {
+  it("is absolute, or null until the origin and id are known", () => {
+    expect(giftPublicUrl("https://neo.fm/", "abc")).toBe("https://neo.fm/s/abc");
+    expect(giftPublicUrl(null, "abc")).toBeNull();
+    expect(giftPublicUrl("https://neo.fm", null)).toBeNull();
   });
 });

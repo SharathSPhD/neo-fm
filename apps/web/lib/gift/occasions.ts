@@ -133,3 +133,9 @@ export function giftShareUrl(opts: { name: string; occasion: string; url: string
   const text = `🎁 ${opts.occasion}: a song made just for ${opts.name}\n${opts.url}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
+
+/** Absolute public link for a gift. Empty until the origin is known, so a relative path never reaches WhatsApp. */
+export function giftPublicUrl(origin: string | null | undefined, publicId: string | null | undefined): string | null {
+  if (!origin || !publicId) return null;
+  return `${origin.replace(/\/+$/, "")}/s/${encodeURIComponent(publicId)}`;
+}

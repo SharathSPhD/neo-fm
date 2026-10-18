@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { giftShareUrl } from "@/lib/gift/occasions";
+import { giftPublicUrl, giftShareUrl } from "@/lib/gift/occasions";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 interface PublishResponse {
   public_id: string | null;
-  public_url: string | null;
   error?: string;
 }
 
@@ -31,12 +30,16 @@ export function GiftShare({
 }) {
   const { t } = useUiLang();
   const [publicId, setPublicId] = useState(initialPublicId);
-  const [publicUrl, setPublicUrl] = useState<string | null>(
-    initialPublicId ? `${typeof window !== "undefined" ? window.location.origin : ""}/s/${initialPublicId}` : null,
-  );
+  // Origin is read after mount: on a server render it is unknown and a relative link would be baked into the HTML.
+  const [origin, setOrigin] = useState<string | null>(null);
+  const publicUrl = giftPublicUrl(origin, publicId);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const started = useRef(false);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (publicId || started.current) return;
@@ -54,7 +57,6 @@ export function GiftShare({
           return;
         }
         setPublicId(body.public_id);
-        setPublicUrl(body.public_url ?? `${window.location.origin}/s/${body.public_id}`);
       } catch {
         setError(t("gift.errGeneric"));
       }
