@@ -7,8 +7,9 @@ import { resolveToken } from "../../../../../lib/native-review/load";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
-  const reviewer = await resolveToken(params.token);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reviewer = await resolveToken(token);
   if (!reviewer) return NextResponse.json({ error: "not_found" }, { status: 404 });
   const parsed = RatingSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid_rating" }, { status: 400 });

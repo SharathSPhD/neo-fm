@@ -13,8 +13,9 @@ import { RatingForm } from "./rating-form";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Review songs -- neo-fm", robots: { index: false, follow: false } };
 
-export default async function ReviewPage({ params }: { params: { token: string } }) {
-  const reviewer = await resolveToken(params.token);
+export default async function ReviewPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reviewer = await resolveToken(token);
   if (!reviewer) notFound();
   const songs = await loadSongs(reviewer);
   const language = LANGUAGE_NAMES[reviewer.language];
@@ -46,7 +47,7 @@ export default async function ReviewPage({ params }: { params: { token: string }
                   </div>
                 ))}
               </div>
-              <RatingForm token={params.token} itemId={s.itemId} initial={s.mine} />
+              <RatingForm token={token} itemId={s.itemId} initial={s.mine} />
             </li>
           ))}
         </ol>

@@ -30,7 +30,7 @@ vi.mock("@/lib/agent/adapters", () => ({
 import { GET } from "../app/api/songs/[id]/meaning/route";
 import { MEANING_DAILY_CAP } from "../lib/lyrics/meaning";
 
-const call = () => GET(new Request("http://x"), { params: { id: JOB } });
+const call = () => GET(new Request("http://x"), { params: Promise.resolve({ id: JOB }) });
 
 beforeEach(() => {
   state.cache = null; state.count = 0; state.reserve = true; state.anthropicText = '["Hello","Rain"]'; state.writes = [];

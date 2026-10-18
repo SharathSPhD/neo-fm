@@ -21,8 +21,9 @@ export const metadata: Metadata = {
 
 const LANGUAGE_NAMES = { hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", bn: "Bengali" } as const;
 
-export default async function UiReviewPage({ params }: { params: { token: string } }) {
-  const reviewer = await resolveReviewer(params.token);
+export default async function UiReviewPage({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reviewer = await resolveReviewer(token);
   if (!reviewer) notFound();
   const sections = buildSections(reviewer.language);
   const mine = await loadMyEdits(reviewer);
@@ -47,7 +48,7 @@ export default async function UiReviewPage({ params }: { params: { token: string
         verdicts and optional comments, never your name or contact details.
       </p>
       <ReviewClient
-        token={params.token}
+        token={token}
         lang={reviewer.language}
         sections={sections}
         initial={verdicts}

@@ -7,8 +7,9 @@ import { resolveReviewer } from "../../../../lib/ui-review/load";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest, { params }: { params: { token: string } }) {
-  const reviewer = await resolveReviewer(params.token);
+export async function GET(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reviewer = await resolveReviewer(token);
   if (!reviewer) return new NextResponse("Not found", { status: 404 });
   const path = req.nextUrl.searchParams.get("path") ?? "/";
   if (!OPENABLE_PATHS.includes(path)) return new NextResponse("Bad path", { status: 400 });

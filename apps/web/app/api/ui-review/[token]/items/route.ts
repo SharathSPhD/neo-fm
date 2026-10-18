@@ -18,8 +18,9 @@ const Body = z.object({
 
 const noStore = { "cache-control": "no-store" };
 
-export async function POST(req: NextRequest, { params }: { params: { token: string } }) {
-  const reviewer = await resolveReviewer(params.token);
+export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params;
+  const reviewer = await resolveReviewer(token);
   if (!reviewer) return NextResponse.json({ error: "not_found" }, { status: 404, headers: noStore });
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "invalid" }, { status: 400, headers: noStore });

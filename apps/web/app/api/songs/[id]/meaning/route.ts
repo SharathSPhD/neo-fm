@@ -30,15 +30,16 @@ const budgetCapGbp = () => Number(process.env.MEANING_BUDGET_GBP ?? 5);
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  if (!UUID_RE.test(params.id)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!UUID_RE.test(id)) return NextResponse.json({ error: "invalid_id" }, { status: 400 });
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
 
   const { data: job } = await authed.supabase
     .from("jobs")
     .select("id, user_id, song_documents ( language, document_json )")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle<{ id: string; user_id: string; song_documents: { language: string; document_json: { sections?: SyncSectionInput[] } } | null }>();
   if (!job || job.user_id !== authed.user.id) return NextResponse.json({ error: "not_found" }, { status: 404 });
   const sections = job.song_documents?.document_json?.sections ?? [];
