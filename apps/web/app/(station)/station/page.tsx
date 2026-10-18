@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { serverI18n } from "@/lib/i18n/server";
+import { findStation } from "@/lib/station/named";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { StationPlayer } from "./station-player";
@@ -18,7 +19,9 @@ export const metadata: Metadata = {
 };
 export const dynamic = "force-dynamic";
 
-export default async function StationPage() {
+export default async function StationPage({ searchParams }: { searchParams?: Promise<{ s?: string }> }) {
+  // `/station?s=subah` opens a named station; anything unknown opens the listener's own station.
+  const initialStation = findStation((await searchParams)?.s)?.slug ?? "";
   const { data } = await createServerClient().auth.getUser();
   const anonymous = !data?.user;
   const { t } = await serverI18n();
@@ -30,7 +33,7 @@ export default async function StationPage() {
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer anonymous={anonymous} />
+      <StationPlayer anonymous={anonymous} initialStation={initialStation} />
     </main>
   );
 }
