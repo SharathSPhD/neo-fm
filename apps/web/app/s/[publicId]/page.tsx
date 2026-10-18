@@ -21,6 +21,7 @@ import { translate } from "@/lib/i18n/ui-strings";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
+import { whatsappShareUrl } from "@/lib/station/share";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 import { prettyStyle as styleLabel } from "@/lib/song/labels";
@@ -370,6 +371,18 @@ export default async function PublicSongPage(
             format={latestTrack.format}
             feedbackSongId={currentUserId ? data.id : undefined}
           />
+          {/* Sharing is the growth loop, so the WhatsApp send is a full-width primary action, not a small icon. */}
+          <a
+            href={whatsappShareUrl(
+              dedication ? `A song for ${dedication.to}` : displayTitle,
+              `${siteUrl()}/s/${data.public_id}`,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-black hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Send on WhatsApp
+          </a>
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton
               songId={data.id}

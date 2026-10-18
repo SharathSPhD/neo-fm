@@ -336,7 +336,7 @@ export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
             <button type="button" onClick={replay} className="rounded border px-3 py-2">Replay</button>
             <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
-            <button type="button" onClick={shareWhatsApp} className="rounded border px-3 py-2">WhatsApp</button>
+            <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
           <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
             <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
