@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import robots from "@/app/robots";
+import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { PUBLIC_PATHS, siteUrl } from "@/lib/seo/site";
 
 describe("seo", () => {
@@ -24,5 +25,15 @@ describe("seo", () => {
     const paths = PUBLIC_PATHS.map((p) => p.path);
     expect(new Set(paths).size).toBe(paths.length);
     expect(paths.every((p) => p.startsWith("/"))).toBe(true);
+  });
+});
+
+describe("languageCodeForPath", () => {
+  it("maps /ai-songs/<slug> and its subpages to the language code, else undefined", () => {
+    expect(languageCodeForPath("/ai-songs/kannada")).toBe("kn");
+    expect(languageCodeForPath("/ai-songs/bengali/how-it-works")).toBe("bn");
+    expect(languageCodeForPath("/ai-songs/klingon")).toBeUndefined();
+    expect(languageCodeForPath("/pricing")).toBeUndefined();
+    expect(languageCodeForPath(null)).toBeUndefined();
   });
 });

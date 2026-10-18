@@ -2,14 +2,21 @@
  * GET /api/station/queue?lang=hi&tags=birthday,upbeat&limit=10 -- the next tracks for this listener.
  * Ranking (lib/station/rank.ts) scores the pool from the requested language/tags and this listener's signals from the last 30 days;
  * the clock wheel (lib/station/program.ts) then orders the queue for the listener-local hour (`tz` IANA name, else `hour=0-23`, else India time).
+ * `station=<slug>` (lib/station/named.ts) narrows to a named station: its tags lean the ranking, and it can pin the daypart
+ * or force an occasion theme.
  * Optional steering (lib/station/steer.ts): `energy=up|down`, `like=<track id>` ("more like this") and `exclude=<track id>`
  * re-order the programmed list so the listener's tap shows in the very next tracks.
  * Each track carries a templated `host` line (lib/station/host.ts: daypart greeting, edge city if any, AI-made label; no model call)
  * and a short-lived signed URL. Empty list when the pool or signal table is unavailable.
+ * With ADS_ENABLED=1, free and signed-out listeners may get one `type: "ad"` item spliced in (lib/station/ads.ts caps); the
+ * player sends its session counters (`played`, `since`, `adAge`, `adSec`, `seen`). Any ad failure leaves the queue unchanged.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { adsEnabled } from "@/lib/station/ads";
+import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
+import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
@@ -54,15 +61,17 @@ export async function GET(req: NextRequest) {
 
   const sp = req.nextUrl.searchParams;
   const lang = sp.get("lang");
+  const station = findStation(sp.get("station"));
   const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), user ? 25 : 10);
 
-  const pool = await loadPool();
+  const fullPool = await loadPool();
+  const pool = station ? stationPool(fullPool, station) : fullPool;
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
-  const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
+  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) });
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
   const city = cityFromHeader(req.headers.get("x-vercel-ip-city"));
   const { exclude, ...steer } = parseSteer(sp);
@@ -76,7 +85,7 @@ export async function GET(req: NextRequest) {
     languageLocked: !!lang,
   };
   // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
-  const programmed = programQueue(slate, { ...clock, familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
+  const programmed = programQueue(slate, { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
   const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
   const tracks = (
     await Promise.all(
@@ -89,5 +98,11 @@ export async function GET(req: NextRequest) {
       }),
     )
   ).filter((t) => t !== null);
+  if (adsEnabled() && tracks.length > 1) {
+    try {
+      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks });
+      if (ad) return NextResponse.json({ tracks: [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)] });
+    } catch { /* ads are optional: serve the plain queue */ }
+  }
   return NextResponse.json({ tracks });
 }

@@ -34,7 +34,13 @@ const PEAK: ReadonlySet<Daypart> = new Set(["morning", "midday", "evening"]);
 
 const WHEEL: readonly Slot[] = ["opener", "familiar", "familiar", "exploration", "occasion", "repeat"];
 
+/** Fit of a tagger-assigned daypart set: a listed part is a strong match, an unlisted one a mild mismatch. */
+const TAGGED_MATCH = 4;
+const TAGGED_MISS = -1;
+
 export function daypartFit(track: PoolTrack, part: Daypart): number {
+  // Tagger output (migration 0096) wins; rows it has not reached keep the tag-derived profile.
+  if (track.daypart && track.daypart.length > 0) return track.daypart.includes(part) ? TAGGED_MATCH : TAGGED_MISS;
   const profile = PROFILE[part];
   let fit = 0;
   for (const tag of track.tags) fit += profile[tag] ?? 0;
@@ -66,6 +72,8 @@ export interface ProgramContext {
   limit?: number;
   /** Rotation rules (lib/station/rotation.ts); omit for none. */
   rotation?: RotationState;
+  /** Occasion themes to favour regardless of the calendar (named stations, e.g. Diwali Radio). */
+  themes?: readonly string[];
 }
 
 function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState, out: PoolTrack[]): PoolTrack[] {
@@ -78,12 +86,13 @@ function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState
   return all;
 }
 
-const isSlow = (t: PoolTrack) => t.tags.includes("slow");
+/** Tagger energy when present, else the "slow" tempo tag. */
+const isSlow = (t: PoolTrack) => (t.energy ? t.energy === "low" : t.tags.includes("slow"));
 
 /** `ranked` is best-first from rankTracks; its order is the tie-breaker for everything here. */
 export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrack[] {
   const part = daypartOf(ctx.hour);
-  const themes = new Set(occasionThemes(ctx.month, ctx.day));
+  const themes = new Set(ctx.themes ?? occasionThemes(ctx.month, ctx.day));
   const n = ranked.length;
   const rankBonus = new Map(ranked.map((t, i) => [t.id, n > 1 ? 2 * (1 - i / (n - 1)) : 2]));
   const score = (t: PoolTrack) => daypartFit(t, part) + (rankBonus.get(t.id) ?? 0);

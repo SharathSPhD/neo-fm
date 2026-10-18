@@ -44,6 +44,8 @@ interface FileMeta {
   mood?: string[]; theme?: string[]; tempo_bpm?: number; duration_seconds?: number; lyrics?: string;
   /** Load the sung lyrics from a stored PCE eval row instead of sending them. */
   lyrics_from?: { batch: string; brief_id: string };
+  /** Score with the diction gate and return the result without storing the file or a pool row (A/B runs). */
+  score_only?: boolean;
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
   kind?: "vocal" | "instrumental";
 }
@@ -90,6 +92,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
     qa = { unorderedPct: gate.unorderedPct, verdict: gate.verdict };
   }
 
+  if (meta.score_only) return NextResponse.json({ id: meta.id, ...qa, stored: false });
   const path = `pool/${meta.source}/${meta.id}.mp3`;
   const { error: upErr } = await db.storage.from("tracks").upload(path, audio, { contentType: file.type || "audio/mpeg", upsert: true });
   if (upErr) return NextResponse.json({ error: `upload: ${upErr.message}` }, { status: 502 });

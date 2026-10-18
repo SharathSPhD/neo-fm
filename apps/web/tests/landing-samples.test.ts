@@ -47,3 +47,15 @@ describe("shouldShowStats", () => {
     expect(shouldShowStats({ songs: MIN_SONGS_TO_SHOW, languages: 3 })).toBe(true);
   });
 });
+
+describe("pickSamples pool fallback flag", () => {
+  it("marks languages that have an admitted station track, independent of community songs", () => {
+    const s = pickSamples([row("a", "hi", "नया")], new Set(["kn", "hi"]));
+    expect(s.find((x) => x.code === "kn")).toMatchObject({ song: null, pool: true });
+    expect(s.find((x) => x.code === "hi")).toMatchObject({ pool: true });
+    expect(s.find((x) => x.code === "ta")).toMatchObject({ song: null, pool: false });
+  });
+  it("defaults to no pool", () => {
+    expect(pickSamples([]).every((x) => x.pool === false)).toBe(true);
+  });
+});
