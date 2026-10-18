@@ -311,6 +311,16 @@ export default async function SongDetailPage(
               message: dedicationRow?.dedication_message ?? "",
             }}
             canShare={data.status === "completed"}
+            clipSource={
+              signedUrl && (doc as SongDocumentView | null | undefined)?.sections?.length
+                ? {
+                    audioUrl: signedUrl,
+                    sections: (doc as SongDocumentView).sections,
+                    durationSeconds: latestTrack?.duration_seconds ?? null,
+                    lineTimings,
+                  }
+                : undefined
+            }
           />
           {data.status === "completed" && doc && data.song_documents ? (
             <MakeInLanguageButton

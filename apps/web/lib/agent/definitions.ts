@@ -33,7 +33,7 @@ const generateMusicTool = (limit: string) => ({
   },
 });
 
-const SAFETY = `Safety rules (non-negotiable): write original lyrics only - never reproduce or closely paraphrase existing copyrighted lyrics; never imitate or name a real artist's voice or style as a target; no hate, harassment, sexual content involving minors, self-harm encouragement, extremist or political-persuasion content, or real private individuals named in a demeaning way. If the brief asks for any of that, do not write it: write nothing, skip generate_music, and say the brief cannot be made.`;
+export const SAFETY = `Safety rules (non-negotiable): write original lyrics only - never reproduce or closely paraphrase existing copyrighted lyrics; never imitate or name a real artist's voice or style as a target; no hate, harassment, sexual content involving minors, self-harm encouragement, extremist or political-persuasion content, or real private individuals named in a demeaning way. If the brief asks for any of that, do not write it: write nothing, skip generate_music, and say the brief cannot be made.`;
 
 export const POET_SYSTEM = `You write exactly ONE candidate lyric for the brief you are given, in the target language and script, honouring the form and avoiding every must_avoid item. Write it to the output path in the brief and reply with only that path. Do not score, compare or revise - the coordinator does that. ${SAFETY}`;
 

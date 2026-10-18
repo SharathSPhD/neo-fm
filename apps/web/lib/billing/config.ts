@@ -71,7 +71,7 @@ function readEnv(): BillingConfig | null {
       three: process.env.STRIPE_PRICE_PACK_THREE_ID || undefined,
     },
     packUpi: process.env.STRIPE_PACK_UPI === "1",
-    // A live key never offers mandates until the UPI AutoPay compliance items (MANUAL-STEPS step 11) are signed off.
+    // A live key never offers mandates until the UPI AutoPay compliance items (MANUAL-STEPS step 12) are signed off.
     subscriptionUpi: process.env.STRIPE_SUBSCRIPTION_UPI === "1" && secretKey.startsWith("sk_test_"),
   };
 }

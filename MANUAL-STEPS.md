@@ -19,7 +19,8 @@ Status as of 2026-10-12: all manual steps are closed. Nothing further is needed 
 | 8 | Rate limiting store (Upstash) | ✅ done, `/api/health` reports upstash ok |
 | 9 | Re-run agent setup | ➖ dropped by decision; step 6 is enough |
 | 10 | Approve the paid test renders | ✅ approved and run |
-| 11 | Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay | ⏳ open (test mode only) |
+| 11 | Try the share clip on real phones | ⏳ TODO |
+| 12 | Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay | ⏳ open (test mode only) |
 
 ## Do these next, in this order
 1. **2a** Supabase auth URLs for the new domain (2 minutes). Until then sign-in from the new domain may land on the vercel.app address.
@@ -90,7 +91,10 @@ Not needed; step 6 is enough.
 ## 10. Approve the paid test renders: ✅ DONE
 Approved in chat and run; results are in the quality and latency reports.
 
-## 11. Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay: ⏳ OPEN (test mode only)
+## 11. Try the share clip on real phones: ⏳ TODO
+Why: the clip export (PR #130) is only verified in desktop Chromium and with ffmpeg; Instagram and WhatsApp acceptance depends on the phone's browser. On one iPhone (Safari) and one Android phone (Chrome), open a finished song, tap Share, then "Make a vertical clip", and post the result to Instagram Reels and WhatsApp Status; tell the lead session which phone, whether the clip came out as MP4, and whether the app accepted it.
+
+## 12. Stripe test dashboard: yearly plans, UPI, gift packs, UPI AutoPay: ⏳ OPEN (test mode only)
 Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.stripe.com/test/...`). Never do this in live mode. Dashboard labels move around; if one differs, search the dashboard for the word in bold. Never paste keys in chat.
 
 **A. Yearly plans (needs PR #129 merged and deployed)**
