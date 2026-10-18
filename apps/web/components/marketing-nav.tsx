@@ -1,7 +1,7 @@
 /**
  * Marketing nav. Auth-aware: when the visitor already has a session,
- * the right side swaps "Sign in / Get started" for a single "Library"
- * link that takes them back into the authed app shell.
+ * the right side swaps "Sign in / Get started" for a "Library" link and a
+ * "Station" button that take them back into the authed app shell.
  *
  * The auth status is read on the server (in `(marketing)/layout.tsx`)
  * and passed in as a boolean prop so this stays a small server-component.
@@ -24,12 +24,12 @@ export async function MarketingNav({
     <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
         <BrandMark label={t("nav.home")} />
-        <nav aria-label="Primary" className="flex items-center gap-1 text-sm sm:gap-3">
+        <nav aria-label="Primary" className="flex items-center gap-1 whitespace-nowrap text-sm sm:gap-3">
           {showSubLinks && (
             <>
               <Link
                 href="/discover"
-                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.discover")}
               </Link>
@@ -41,7 +41,7 @@ export async function MarketingNav({
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.pricing")}
               </Link>
@@ -55,23 +55,31 @@ export async function MarketingNav({
           )}
           <LanguageSwitcher />
           {isSignedIn ? (
-            <Link
-              href="/library"
-              className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              {t("nav.library")}
-            </Link>
+            <>
+              <Link
+                href="/library"
+                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+              >
+                {t("nav.library")}
+              </Link>
+              <Link
+                href="/station"
+                className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                {t("nav.station")}
+              </Link>
+            </>
           ) : (
             <>
               <Link
                 href="/sign-in"
-                className="whitespace-nowrap rounded-full border border-muted/40 px-3.5 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-foreground/80 sm:border sm:border-muted/40 sm:px-3.5 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
-                className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t("nav.getStarted")}
               </Link>
@@ -79,6 +87,14 @@ export async function MarketingNav({
           )}
         </nav>
       </div>
+      {showSubLinks && (
+        // Phones have no room for these beside the sign-up button, so they get their own row.
+        <nav aria-label="Secondary" className="mx-auto flex max-w-6xl gap-4 px-4 pb-3 text-sm text-foreground/70 sm:hidden">
+          <Link href="/discover" className="rounded-md py-1 hover:text-foreground">{t("nav.discover")}</Link>
+          <Link href="/pricing" className="rounded-md py-1 hover:text-foreground">{t("nav.pricing")}</Link>
+          <Link href="/help" className="rounded-md py-1 hover:text-foreground">{t("nav.help")}</Link>
+        </nav>
+      )}
     </header>
   );
 }

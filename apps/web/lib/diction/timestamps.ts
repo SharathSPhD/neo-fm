@@ -1,6 +1,5 @@
 import { charErrorRate } from "./index";
-
-const MODEL = () => process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash";
+import { geminiInteract, geminiQaModel } from "../gemini/interactions";
 
 /** One lyric line placed on the audio timeline. `startS`/`endS` are seconds from the start of the file. */
 export interface LineTiming { i: number; text: string; startS: number; endS: number; cer: number; sung: boolean }
@@ -18,22 +17,11 @@ export function parseTime(v: unknown): number {
 export async function transcribeTimed(
   audio: Uint8Array, mimeType: string, language: string, apiKey: string, fetchImpl: typeof fetch = fetch,
 ): Promise<Segment[]> {
-  const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL()}:generateContent`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: `This is a sung ${language} song. List every sung line in order with the time in seconds at which the singer begins that line. Reply as JSON {"segments":[{"start":number,"text":string}]}.` },
-          { inline_data: { mime_type: mimeType || "audio/mpeg", data: Buffer.from(audio).toString("base64") } },
-        ],
-      }],
-      generationConfig: { responseMimeType: "application/json" },
-    }),
+  const { text } = await geminiInteract({
+    apiKey, model: geminiQaModel(), fetchImpl, json: true,
+    text: `This is a sung ${language} song. List every sung line in order with the time in seconds at which the singer begins that line. Reply as JSON {"segments":[{"start":number,"text":string}]}.`,
+    audio: { data: audio, mimeType },
   });
-  if (!res.ok) throw new Error(`gemini timed qa ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
   let parsed: { segments?: { start?: unknown; text?: unknown }[] };
   try { parsed = JSON.parse(text); } catch { return []; }
   return (parsed.segments ?? [])
@@ -102,5 +90,5 @@ export interface LineTimingsPayload {
 
 export function toPayload(lines: LineTiming[], durationS: number): LineTimingsPayload {
   const r = (n: number) => Math.round(n * 10) / 10;
-  return { version: 1, duration_s: r(durationS), source: MODEL(), lines: lines.map((l) => ({ i: l.i, text: l.text, start_s: r(l.startS), end_s: r(l.endS), sung: l.sung })) };
+  return { version: 1, duration_s: r(durationS), source: geminiQaModel(), lines: lines.map((l) => ({ i: l.i, text: l.text, start_s: r(l.startS), end_s: r(l.endS), sung: l.sung })) };
 }

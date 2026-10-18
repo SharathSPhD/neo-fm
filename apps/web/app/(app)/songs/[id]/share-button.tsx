@@ -36,6 +36,8 @@ interface ShareButtonProps {
   canShare: boolean; // false for non-completed songs
   /** Audio + lyric timing for the in-browser vertical clip; omitted when the song has no playable track. */
   clipSource?: ClipSource;
+  /** Localised occasion label when the song was made through /gift. */
+  occasion?: string | null;
 }
 
 interface PublishResponse {
@@ -53,6 +55,7 @@ export function ShareButton({
   initialDedication = { to: "", message: "" },
   canShare,
   clipSource,
+  occasion,
 }: ShareButtonProps) {
   const { t } = useUiLang();
   const [open, setOpen] = useState(false);
@@ -244,7 +247,7 @@ export function ShareButton({
             </div>
 
             {clipSource ? (
-              <ClipExportButton songId={songId} title={title} to={dedTo} message={dedMsg} source={clipSource} />
+              <ClipExportButton songId={songId} title={title} to={dedTo} message={dedMsg} occasion={occasion} source={clipSource} shareUrl={visibility === "private" ? null : publicUrl} />
             ) : null}
 
             {error ? (

@@ -5,7 +5,7 @@
  */
 import { drawClipFrame, CLIP_H, CLIP_W } from "./clip-render";
 import { muxMp4, type Mp4Sample } from "./mp4-mux";
-import type { ClipWindow } from "./clip-plan";
+import { beatPulse, energyEnvelope, type ClipWindow } from "./clip-plan";
 import type { SyncLine } from "@/lib/lyrics/sync";
 
 /** MP4 first (what Instagram and WhatsApp take without re-encoding), WebM where that is all the browser has. */
@@ -38,6 +38,7 @@ export interface ExportClipOptions {
   window: ClipWindow;
   title: string;
   to: string | null;
+  occasion: string | null;
   message: string | null;
   seed: string;
   /**
@@ -62,6 +63,18 @@ const FPS = 30;
 const SAMPLE_RATE = 48000;
 const VIDEO_CODEC = "avc1.420020"; // baseline L3.2: 720x1280 at 30 fps, no B-frames (the muxer relies on that)
 const AUDIO_CODEC = "mp4a.40.2";
+
+/** Loudness and beat pulse per frame for the excerpt, from the decoded song. */
+function motionFor(decoded: AudioBuffer, window: ClipWindow): (t: number) => { energy: number; pulse: number } {
+  const rate = decoded.sampleRate;
+  const first = Math.floor(window.start * rate);
+  const last = Math.min(decoded.length, Math.floor(window.end * rate));
+  const env = energyEnvelope(decoded.getChannelData(0).subarray(first, last), rate, FPS);
+  return (t) => {
+    const frame = (t - window.start) * FPS;
+    return { energy: env[Math.min(env.length - 1, Math.max(0, Math.round(frame)))] ?? 0, pulse: beatPulse(env, frame, FPS) };
+  };
+}
 
 const toBytes = (d: AllowSharedBufferSource): Uint8Array =>
   ArrayBuffer.isView(d) ? new Uint8Array(d.buffer.slice(d.byteOffset, d.byteOffset + d.byteLength)) : new Uint8Array(d.slice(0));
@@ -137,8 +150,9 @@ async function exportViaRecorder(o: ExportClipOptions): Promise<ExportedClip> {
     rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
     const stopped = new Promise<void>((res) => { rec.onstop = () => res(); });
 
+    const motion = motionFor(decoded, o.window);
     const frame = (t: number) =>
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, message: o.message, cover, seed: o.seed, fontFamily });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily, ...motion(t) });
     frame(o.window.start);
     rec.start(250);
     src.start(now, o.window.start, duration);
@@ -185,6 +199,7 @@ async function exportViaWebCodecs(o: ExportClipOptions): Promise<ExportedClip> {
   if (!ctx) throw new Error("canvas_unavailable");
   const fontFamily = getComputedStyle(document.body).fontFamily || "system-ui, sans-serif";
 
+  const motion = motionFor(decoded, o.window);
   const videoSamples: Mp4Sample[] = [];
   const audioSamples: Mp4Sample[] = [];
   let avcC: Uint8Array | null = null;
@@ -244,7 +259,7 @@ async function exportViaWebCodecs(o: ExportClipOptions): Promise<ExportedClip> {
     for (let i = 0; i < frames; i++) {
       if (o.signal?.aborted) throw new DOMException("aborted", "AbortError");
       if (failure) throw failure;
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, message: o.message, cover, seed: o.seed, fontFamily });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily, ...motion(o.window.start + i / FPS) });
       const frame = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
       venc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
       frame.close();

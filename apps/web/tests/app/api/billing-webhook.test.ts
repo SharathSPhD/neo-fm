@@ -201,3 +201,64 @@ describe("POST /api/billing/webhook: annual plans and gift packs", () => {
     expect(rpc).not.toHaveBeenCalledWith("grant_song_pack", expect.anything());
   });
 });
+
+describe("POST /api/billing/webhook: station pass", () => {
+  const passSub = { ...sub, items: { data: [{ price: { id: "price_pass" }, current_period_end: 1800000000 }] } };
+  const send = async (object: unknown, id = "evt_pass", type = "customer.subscription.updated") => {
+    process.env.STRIPE_PRICE_STATION_PASS_ID = "price_pass";
+    constructEvent.mockReturnValue({ id, type, data: { object } });
+    retrieve.mockResolvedValue(object);
+    const { POST: post } = await import("../../../app/api/billing/webhook/route");
+    return post(req());
+  };
+
+  it("stores the pass as its own entitlement and never writes tier state", async () => {
+    const res = await send(passSub);
+    expect(res.status).toBe(200);
+    expect(rpc).toHaveBeenCalledWith("apply_station_pass_state", {
+      p_user_id: "u1", p_stripe_customer_id: "cus_1", p_subscription_id: "sub_1", p_price_id: "price_pass",
+      p_status: "active", p_current_period_end: new Date(1800000000 * 1000).toISOString(), p_cancel_at_period_end: false,
+    });
+    expect(rpc).not.toHaveBeenCalledWith("apply_stripe_subscription_state", expect.anything());
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+
+  it("records a cancellation so the entitlement ends", async () => {
+    await send({ ...passSub, status: "canceled" }, "evt_pass_del", "customer.subscription.deleted");
+    expect(rpc).toHaveBeenCalledWith("apply_station_pass_state", expect.objectContaining({ p_status: "canceled" }));
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+
+  it("acknowledges (no retry storm) while migration 0098 is not applied", async () => {
+    rpc.mockImplementation(async (fn: string) => {
+      if (fn === "claim_stripe_event") return { data: "claimed", error: null };
+      if (fn === "apply_station_pass_state") return { error: { code: "PGRST202", message: "Could not find the function public.apply_station_pass_state" } };
+      return { error: null };
+    });
+    const res = await send(passSub);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ skipped: "station_pass_unavailable" });
+    expect(rpc).toHaveBeenCalledWith("complete_stripe_event", { p_event_id: "evt_pass" });
+    expect(rpc).not.toHaveBeenCalledWith("apply_stripe_subscription_state", expect.anything());
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+
+  it("still returns 500 for a real database failure so Stripe retries", async () => {
+    rpc.mockImplementation(async (fn: string) => {
+      if (fn === "claim_stripe_event") return { data: "claimed", error: null };
+      if (fn === "apply_station_pass_state") return { error: { code: "XX000", message: "db down" } };
+      return { error: null };
+    });
+    expect((await send(passSub)).status).toBe(500);
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+
+  it("does not treat the pass price as a pass under a live key", async () => {
+    process.env.STRIPE_SECRET_KEY = "sk_live_x";
+    const res = await send(passSub, "evt_live");
+    expect(rpc).not.toHaveBeenCalledWith("apply_station_pass_state", expect.anything());
+    expect(res.status).toBe(200);
+    process.env.STRIPE_SECRET_KEY = "sk_test_x";
+    delete process.env.STRIPE_PRICE_STATION_PASS_ID;
+  });
+});

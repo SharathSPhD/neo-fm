@@ -16,6 +16,7 @@
  */
 import { notFound, redirect } from "next/navigation";
 
+import { occasionById } from "@/lib/gift/occasions";
 import { serverI18n } from "@/lib/i18n/server";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -97,10 +98,12 @@ interface RegenChildView {
 export default async function SongDetailPage(
   props: {
     params: Promise<{ id: string }>;
+    searchParams?: Promise<{ occasion?: string }>;
   }
 ) {
   const params = await props.params;
-  const { t } = await serverI18n();
+  const searchParams = await props.searchParams;
+  const { t, lang } = await serverI18n();
   const supabase = createServerClient();
   const { data: userData } = await supabase.auth.getUser();
   if (!userData?.user) {
@@ -279,6 +282,7 @@ export default async function SongDetailPage(
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
           <p className="text-sm text-foreground/60">
+            <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
             {doc
               ? `${prettyStyle(doc.style_family)} · ${prettyLanguage(doc.language)} · ${doc.target_duration_seconds}s · ${data.status}`
               : data.status}
@@ -312,6 +316,7 @@ export default async function SongDetailPage(
               message: dedicationRow?.dedication_message ?? "",
             }}
             canShare={data.status === "completed"}
+            occasion={occasionById(searchParams?.occasion)?.label[lang] ?? null}
             clipSource={
               signedUrl && (doc as SongDocumentView | null | undefined)?.sections?.length
                 ? {

@@ -43,3 +43,11 @@ export function IconAccount() {
     </svg>
   );
 }
+export function IconStation() {
+  return (
+    <svg {...base}>
+      <circle cx="12" cy="12" r="2.2" />
+      <path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2" />
+    </svg>
+  );
+}

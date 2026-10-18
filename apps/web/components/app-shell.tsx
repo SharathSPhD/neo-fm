@@ -21,7 +21,7 @@ import { BrandMark } from "./brand-mark";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
 import { NavLink } from "./nav-link";
-import { IconAccount, IconDiscover, IconLibrary, IconPlus } from "./nav-icons";
+import { IconAccount, IconDiscover, IconLibrary, IconPlus, IconStation } from "./nav-icons";
 import { UserMenu } from "./user-menu";
 import { WhatsNewLink } from "./whats-new-link";
 
@@ -32,6 +32,7 @@ type NavUser = {
 };
 
 const TOP_NAV_LINKS: readonly { href: string; label: UiKey }[] = [
+  { href: "/station", label: "nav.station" },
   { href: "/library", label: "nav.library" },
   { href: "/discover", label: "nav.discover" },
   { href: "/collections", label: "nav.collections" },
@@ -45,6 +46,7 @@ type BottomLink = {
 };
 
 const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
+  { href: "/station", label: "nav.station", icon: <IconStation /> },
   { href: "/library", label: "nav.library", icon: <IconLibrary /> },
   { href: "/discover", label: "nav.discover", icon: <IconDiscover /> },
   { href: "/songs/new", label: "nav.create", icon: <IconPlus />, primary: true },

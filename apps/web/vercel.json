@@ -21,6 +21,10 @@
       "schedule": "41 3 * * *"
     },
     {
+      "path": "/api/admin/social-publish",
+      "schedule": "*/15 * * * *"
+    },
+    {
       "path": "/api/notifications/push-drain",
       "schedule": "* * * * *"
     }

@@ -148,6 +148,8 @@ export async function POST(req: Request, props: { params: Promise<{ id: string }
     p_priority: 0,
     p_attempt_id: attempt_id,
     p_trace_id: trace_id,
+    // Always the full signature: prod has the 7- and 8-argument create_song_job side by side, and a 7-key call matches both.
+    p_use_pack: false,
   } as never);
 
   if (error) {

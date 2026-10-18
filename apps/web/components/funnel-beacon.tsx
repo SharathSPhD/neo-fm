@@ -3,6 +3,22 @@
 import { useEffect } from "react";
 
 import type { FunnelEvent } from "../lib/ops/funnel";
+import { cleanUtm, utmFromSearch, type Utm } from "../lib/ops/utm";
+
+const UTM_KEY = "fb:utm";
+
+/** The campaign that first brought this browser here. Kept in this browser only; the first one seen wins. */
+export function firstTouchUtm(): Utm | null {
+  try {
+    const saved = cleanUtm(JSON.parse(localStorage.getItem(UTM_KEY) ?? "null"));
+    if (saved) return saved;
+    const fresh = utmFromSearch(location.search);
+    if (fresh) localStorage.setItem(UTM_KEY, JSON.stringify(fresh));
+    return fresh;
+  } catch {
+    return utmFromSearch(location.search);
+  }
+}
 
 /**
  * Counts one anonymous event (see /api/events). No cookies or identifiers; honours DNT and GPC client-side too.
@@ -19,7 +35,7 @@ export function sendFunnelEvent(event: FunnelEvent, opts: { once?: boolean } = {
     } catch { /* storage blocked: count it anyway */ }
   }
   void fetch("/api/events", {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event }), keepalive: true,
+    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ event, utm: firstTouchUtm() ?? undefined }), keepalive: true,
   }).catch(() => undefined);
 }
 

@@ -17,8 +17,10 @@ import type { Metadata } from "next";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
+import { passMonthlyTracks } from "@/lib/billing/pass";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
+import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { UpgradeButton } from "./upgrade-button";
@@ -28,7 +30,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/pricing" },
   title: "Pricing -- neo-fm",
   description:
-    "Free for 3 songs a month. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
+    "Start your own station free with 3 songs a month. One gift song is ₹99. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
 };
 
 interface Tier {
@@ -96,6 +98,9 @@ const PACKS = [
   { sku: "single", price: "₹99", name: "pricing.packs.single.name", desc: "pricing.packs.single.desc" },
   { sku: "three", price: "₹249", name: "pricing.packs.three.name", desc: "pricing.packs.three.desc" },
 ] as const satisfies readonly { sku: "single" | "three"; price: string; name: UiKey; desc: UiKey }[];
+
+/** Must match the Stripe price created by /api/admin/stripe-setup (14900 paise). */
+const STATION_PASS_PRICE = "₹149";
 
 export default async function PricingPage() {
   const { t } = await serverI18n();
@@ -221,6 +226,17 @@ export default async function PricingPage() {
           </div>
         </section>
       ) : null}
+      {billingEnabled && signedIn && billing?.stationPassPrice ? (
+        <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-accent/30 bg-accent/5 p-7">
+          <h2 className="text-2xl font-medium tracking-tight">{t("pricing.pass.title")}</h2>
+          <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
+          <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
+          <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
+        </section>
+      ) : null}
+      <QualityEvidenceSummary />
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
         {t("pricing.footnote")} <a href="/help" className="underline">{t("pricing.faq")}</a>.
       </footer>

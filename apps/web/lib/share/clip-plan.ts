@@ -104,3 +104,35 @@ export function wrapText(measure: (s: string) => number, text: string, maxWidth:
   if (cur) out.push(cur);
   return out;
 }
+
+/**
+ * Loudness envelope of a mono signal, one value per video frame, scaled so the
+ * 95th percentile is 1. Drives the beat-reactive background of the lyric video.
+ */
+export function energyEnvelope(samples: ArrayLike<number>, sampleRate: number, fps: number): Float32Array {
+  const hop = Math.max(1, Math.floor(sampleRate / fps));
+  const n = Math.floor(samples.length / hop);
+  const rms = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    let sum = 0;
+    for (let k = i * hop; k < (i + 1) * hop; k++) sum += samples[k]! * samples[k]!;
+    rms[i] = Math.sqrt(sum / hop);
+  }
+  if (n === 0) return rms;
+  const p95 = Array.from(rms).sort((a, b) => a - b)[Math.min(n - 1, Math.floor(n * 0.95))]!;
+  const scale = p95 > 1e-6 ? 1 / p95 : 0;
+  for (let i = 0; i < n; i++) rms[i] = Math.min(1, rms[i]! * scale);
+  return rms;
+}
+
+/** Beat pulse for a frame: how far its energy sits above the trailing ~0.5 s average, 0..1. */
+export function beatPulse(env: Float32Array, frame: number, fps: number): number {
+  if (env.length === 0) return 0;
+  const i = Math.min(env.length - 1, Math.max(0, Math.round(frame)));
+  const back = Math.max(1, Math.round(fps / 2));
+  let sum = 0;
+  let count = 0;
+  for (let k = Math.max(0, i - back); k < i; k++) { sum += env[k]!; count++; }
+  const mean = count ? sum / count : env[i]!;
+  return Math.min(1, Math.max(0, (env[i]! - mean) * 3));
+}

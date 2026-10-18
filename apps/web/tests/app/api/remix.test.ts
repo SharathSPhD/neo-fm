@@ -192,6 +192,8 @@ describe("happy path", () => {
       p_target_duration_seconds: number;
     };
 
+    // Prod has two create_song_job overloads (7 and 8 args); a call without p_use_pack is ambiguous between them.
+    expect((args as unknown as Record<string, unknown>).p_use_pack).toBe(false);
     expect(args.p_language).toBe("en");
     expect(args.p_style_family).toBe("western");
     expect(args.p_target_duration_seconds).toBe(180);

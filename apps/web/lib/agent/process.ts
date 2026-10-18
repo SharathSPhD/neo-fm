@@ -13,13 +13,18 @@ import { mergeLyrics } from "./lyrics-merge";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
-import { dictionHints, scoreTranscriptUnordered } from "../diction";
+import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
+import { intentBlock } from "../engine/intent";
+import { judgeAndRetry } from "../engine/judge";
+import { voiceChoiceFor, voiceHint } from "../voice";
+import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
 import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
+import { hasStationPass, withPassCap } from "../billing/pass";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
 
 class SafetyRefusal extends Error {}
@@ -113,8 +118,13 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         db.from("users").select("*").eq("id", job.user_id).single(),
       ]);
       if (docErr || !docRow) throw new Error(`song_document lookup failed: ${docErr?.message ?? "missing"}`);
-      const plan = planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan);
-      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string }; target_duration_seconds?: number } };
+      // A Station pass raises the monthly personal-track envelope; without migration 0098 this is just the tier plan.
+      const hasPass = await hasStationPass(db, job.user_id);
+      const plan = withPassCap(
+        planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan),
+        hasPass,
+      );
+      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string; voice?: unknown }; target_duration_seconds?: number } };
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
@@ -143,19 +153,44 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Last gate before spend: the agent's own output is untrusted too.
         const v = await screenRequest(`${a.stylePrompt}\n${a.lyrics}`, "lyrics");
         if (!v.allowed) throw new SafetyRefusal(v.reason);
+        // The structured intent (PCE_INTENT) rides along from the cascade; polish sees it as part of the brief and the judge reads against it.
+        const savedIntent = plan.agent === "host" && (process.env.PCE_INTENT === "1" || process.env.PCE_JUDGE_RETRY === "1") ? (await loadHostSong(db, job.id).catch(() => null))?.intent : undefined;
+        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : doc.document_json.metadata?.prompt ?? "";
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
-            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: doc.document_json.metadata?.prompt ?? "", lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
+            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: polishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
             const v2 = await screenRequest(a.lyrics, "lyrics");
             if (!v2.allowed) throw new SafetyRefusal(v2.reason);
             await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
           } catch (e) { if (e instanceof SafetyRefusal) throw e; /* polish is best-effort; sing the engine's own lyrics */ }
         }
+        // Judge-and-retry (PCE_JUDGE_RETRY): one cheap read of the final text against the intent, at most one targeted revision, kept only if not judged worse.
+        if (savedIntent && process.env.PCE_JUDGE_RETRY === "1") {
+          try {
+            const client = anthropicClient();
+            const ask = async (x: { model: string; prompt: string; maxTokens: number }) => {
+              const res = await client.messages.create({ model: x.model, max_tokens: x.maxTokens, messages: [{ role: "user", content: x.prompt }] });
+              return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
+            };
+            const jr = await timed("judge_retry", () => judgeAndRetry(
+              { intent: savedIntent, lyrics: a.lyrics, language: doc.language, targetSeconds: doc.document_json.target_duration_seconds ?? 30 },
+              { complete: ask, revise: ask, check: async (t) => (await screenRequest(t, "lyrics")).allowed, log },
+            ));
+            if (jr.kept === "revision") {
+              a = { ...a, lyrics: jr.lyrics };
+              await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
+            }
+            log(`judge-retry retried=${jr.retried} kept=${jr.kept} intent=${jr.before?.intent ?? "?"}->${jr.after?.intent ?? "?"} script=${jr.deterministic.scriptOk}`);
+          } catch (e) { if (e instanceof SafetyRefusal) throw e; /* judging is advisory; sing the polished lyrics */ }
+        }
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
-        return timed("lyria", () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, dictionHints(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey }));
+        const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass);
+        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey });
+        // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
+        return timed("lyria", async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result);
       };
       const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
         // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).

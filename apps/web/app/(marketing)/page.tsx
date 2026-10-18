@@ -1,4 +1,5 @@
 import { serverI18n } from "@/lib/i18n/server";
+import { createServerClient } from "@/lib/supabase/server";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { HowVisual } from "@/components/landing/how-visual";
 import { LanguageSamples } from "@/components/landing/language-samples";
@@ -54,15 +55,23 @@ function Accented({ text }: { text: string }) {
 }
 
 export const metadata: Metadata = {
-  title: "neo-fm: AI songs in Kannada, Tamil, Telugu, Hindi and Bengali",
+  title: "neo-fm: your personal FM, in Kannada, Tamil, Telugu, Hindi and Bengali",
+  description:
+    "Songs made for you in the language you think in. Native lyrics, a singer, and a pronunciation check on every track. Free to start; share any song in one tap.",
   alternates: { canonical: "/", languages: hreflangPaths() },
 };
+
+const WHAT = [
+  { title: "landing.what1.title", body: "landing.what1.body" },
+  { title: "landing.what2.title", body: "landing.what2.body" },
+  { title: "landing.what3.title", body: "landing.what3.body" },
+] as const;
 
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "neo-fm",
-  description: "AI songs in Indian languages with native lyrics and a pronunciation check.",
+  description: "Your personal 24/7 FM station: AI-generated music tuned to your taste, Indian languages first.",
   inLanguage: ["kn", "ta", "te", "hi", "bn", "en"],
   publisher: { "@type": "Organization", name: "Technektar" },
 };
@@ -74,6 +83,7 @@ export default async function Page() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(JSON_LD) }} />
       <FunnelBeacon event="landing_view" />
       <Hero />
+      <WhatIs />
       <div className="mx-auto max-w-6xl px-6 pt-12">
         <SongOfTheDay />
       </div>
@@ -90,6 +100,8 @@ export default async function Page() {
 async function Hero() {
   const { t } = await serverI18n();
   const samples = await loadLanguageSamples();
+  const { data: auth } = await createServerClient().auth.getUser();
+  const signedIn = Boolean(auth?.user);
   return (
     <section className="relative overflow-hidden" aria-labelledby="hero-heading">
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-8 px-6 py-20 sm:py-28">
@@ -104,14 +116,37 @@ async function Hero() {
           {t("landing.subtitle")}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/sign-up?next=/songs/new" className="rounded-full bg-accent px-6 py-3 font-medium text-background shadow-[0_0_36px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 hover:shadow-[0_0_44px_-4px_hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
-            {t("landing.ctaPrimary")}
+          <Link href="/station" className="rounded-full bg-accent px-6 py-3 font-medium text-background shadow-[0_0_36px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 hover:shadow-[0_0_44px_-4px_hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+            {t("landing.ctaListen")}
+          </Link>
+          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+            {signedIn ? t("landing.ctaMake") : t("landing.ctaPrimary")}
           </Link>
           <Link href="/discover" className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
             {t("landing.ctaSecondary")}
           </Link>
         </div>
+        <p className="text-xs text-foreground/60">{t("landing.notice")}</p>
         <LanguageSamples samples={samples} />
+      </div>
+    </section>
+  );
+}
+
+async function WhatIs() {
+  const { t } = await serverI18n();
+  return (
+    <section className="border-b border-muted/30" aria-labelledby="what-heading">
+      <div className="mx-auto max-w-6xl px-6 py-12">
+        <h2 id="what-heading" className="text-2xl font-semibold tracking-tight">{t("landing.whatTitle")}</h2>
+        <ul className="mt-6 grid gap-5 sm:grid-cols-3">
+          {WHAT.map((w) => (
+            <li key={w.title}>
+              <h3 className="font-medium">{t(w.title)}</h3>
+              <p className="mt-1 text-sm text-foreground/70">{t(w.body)}</p>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -225,6 +260,12 @@ async function Footer() {
             className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.terms")}
+          </Link>
+          <Link
+            href="/ai-disclosure"
+            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          >
+            {t("footer.ai")}
           </Link>
           <Link
             href="/help"

@@ -19,12 +19,14 @@ export function GiftShare({
   songId,
   to,
   occasionLabel,
+  occasionId,
   initialPublicId,
   dedicationFailed,
 }: {
   songId: string;
   to: string;
   occasionLabel: string;
+  occasionId: string | null;
   initialPublicId: string | null;
   dedicationFailed: boolean;
 }) {
@@ -106,6 +108,12 @@ export function GiftShare({
             <a href={`/s/${publicId}/story`} className="inline-flex min-h-[44px] items-center rounded-md border border-muted/30 px-4 text-sm hover:border-accent/60">
               {t("ded.story")}
             </a>
+            <Link
+              href={`/songs/${songId}${occasionId ? `?occasion=${encodeURIComponent(occasionId)}` : ""}`}
+              className="inline-flex min-h-[44px] items-center rounded-md border border-muted/30 px-4 text-sm hover:border-accent/60"
+            >
+              {t("gift.makeClip")}
+            </Link>
             <Link href={`/s/${publicId}`} className="inline-flex min-h-[44px] items-center rounded-md border border-muted/30 px-4 text-sm hover:border-accent/60">
               {t("gift.preview")}
             </Link>

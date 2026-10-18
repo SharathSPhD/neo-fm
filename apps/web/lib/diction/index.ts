@@ -4,6 +4,8 @@
  * the Lyria style prompt. No network; the Gemini transcription call lives in ./gemini.ts.
  */
 
+import { expansionLanguage } from "../languages/registry";
+
 export type Script =
   | "devanagari" | "bengali" | "gurmukhi" | "gujarati" | "odia" | "tamil" | "telugu" | "kannada" | "malayalam" | "latin" | "other";
 
@@ -146,12 +148,19 @@ const HINTS: Record<string, string> = {
   bengali: "Sing Bengali with the characteristic o-vowel (অ as /ɔ/ or /o/), palato-alveolar শ ষ স as /ʃ/, and inherent vowel handling that is not Hindi-style.",
   sanskrit: "Sing Sanskrit with exact vowel lengths (short/long), visarga as a light h-echo, anusvara as a nasal, and clean conjunct clusters; follow classical (not colloquial Hindi) pronunciation.",
   punjabi: "Sing Punjabi with its tonal contrast (high/low tone on the aspirate series), retained final vowels in folk idiom, and retroflex ਟ ਡ ਣ ਲ਼ clearly articulated.",
+  urdu: "Sing Urdu with its Perso-Arabic sounds kept distinct (ق خ غ ز ف), nasalised nun ghunna (ں) soft, long and short vowels held to length, and ghazal-style clear word endings; no Hindi-style schwa deletion shortcuts that change the word.",
+  bhojpuri: "Sing Bhojpuri in its own dialect, not standard Hindi: keep forms such as 'रउरा', 'हमार', 'बा', and the open final vowels, with crisp retroflex ट ड ण and aspirated stops; do not substitute Hindi words.",
+  odia: "Sing Odia with its retroflex ଟ ଡ ଣ ଳ distinct, the inherent vowel pronounced /ɔ/, aspirates audible, and nasal endings kept soft.",
+  assamese: "Sing Assamese with ৰ and ৱ kept distinct, স শ ষ as the soft /x/ or /s/ of Assamese (not the Bengali /ʃ/), the open /ɔ/ vowel, and no Bengali-style palatal shift.",
   gujarati: "Sing Gujarati with open vowels, the ળ retroflex lateral, and nasalised endings kept soft.",
 };
 
 /** Pronunciation guidance appended to the Lyria style prompt. Empty string for unknown languages. */
 export function dictionHints(language: string): string {
-  return HINTS[language.trim().toLowerCase()] ?? "";
+  const key = language.trim().toLowerCase();
+  // Production passes the language code. Only the expansion languages are resolved from their code here; the five
+  // launch languages keep today's prompt until the eval gate approves the same change for them (see strategy/language-expansion.md).
+  return HINTS[key] ?? HINTS[expansionLanguage(key)?.name.toLowerCase() ?? ""] ?? "";
 }
 
 /**
@@ -200,4 +209,18 @@ export function scoreTranscriptUnordered(intended: string, transcript: string, t
 /** Both scores, for reporting: `ordered` is what production stores today; `unordered` ignores section order. */
 export function scoreBoth(intended: string, transcript: string): { ordered: number; unordered: number } {
   return { ordered: scoreTranscript(intended, transcript).matchPct, unordered: scoreTranscriptUnordered(intended, transcript).matchPct };
+}
+
+const LAUNCH_CODE_NAME: Record<string, string> = { hi: "hindi", ta: "tamil", te: "telugu", kn: "kannada", bn: "bengali", sa: "sanskrit" };
+
+/**
+ * Production passes language CODES, so the five launch languages resolved to "" (the keys above are names). With
+ * DICTION_HINTS_LAUNCH=1 the same hints reach Lyria for them too. Off by default until a with/without render probe
+ * shows the Gemini diction score does not drop (see strategy/pce-cma-engine.md).
+ */
+export function dictionHintsFor(language: string, env: Readonly<Record<string, string | undefined>> = process.env): string {
+  const code = language.trim().toLowerCase();
+  const hit = dictionHints(code);
+  if (hit || env.DICTION_HINTS_LAUNCH !== "1") return hit;
+  return dictionHints(LAUNCH_CODE_NAME[code] ?? "");
 }

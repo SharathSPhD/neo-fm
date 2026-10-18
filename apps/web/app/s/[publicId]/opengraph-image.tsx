@@ -24,7 +24,7 @@ export default async function OgImage(props: {
   if (!song) {
     return renderShareCard({
       title: "neo-fm",
-      subtitle: "AI music, India-first",
+      subtitle: "Your personal FM",
       excerpt: [],
       seed: params.publicId,
     });

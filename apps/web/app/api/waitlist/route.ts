@@ -6,13 +6,13 @@
  * 200 with `{ joined: boolean, already_on_list: boolean }`.
  *
  * Open to both anon and authenticated. The IP rate limiter applied
- * by `middleware.ts` (Sprint I) covers abuse; this endpoint itself
- * is intentionally simple.
+ * by `middleware.ts` (Sprint I) covers abuse. The RPC runs as the service role because
+ * migration 0101 revokes EXECUTE from anon/authenticated (no direct /rest/v1/rpc bypass of that limiter).
  */
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { createServerClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
   const { email, tier, source } = parsed.data;
 
-  const supabase = createServerClient();
+  const supabase = createServiceRoleClient();
   const { data, error } = await supabase.rpc("join_waitlist", {
     p_email: email,
     p_tier: tier,

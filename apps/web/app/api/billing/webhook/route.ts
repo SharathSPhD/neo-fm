@@ -14,6 +14,7 @@
  *
  * All of these resolve to one DB call: `apply_stripe_subscription_state()`
  * with the latest subscription state we observe. The RPC is idempotent.
+ * The Station pass price (test mode only) goes to `apply_station_pass_state()` instead and never touches the tier.
  *
  * Idempotency: Stripe delivers at-least-once, so each event id is claimed in
  * `stripe_webhook_events` (migration 0065) before it is applied. A duplicate
@@ -32,6 +33,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { getBillingConfigOrNull, getPackForPriceId, getTierForPriceId, PACK_SONGS } from "@/lib/billing/config";
+import { isMissingFunction } from "@/lib/billing/pass";
 import { getStripe } from "@/lib/billing/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -185,6 +187,9 @@ async function applyEvent(
     (subscription as unknown as { current_period_end?: number })
       .current_period_end ??
     null;
+  // The station pass is its own entitlement. Falling through to apply_stripe_subscription_state would treat the unknown
+  // price as "free" and downgrade a paying Creator/Pro user, so it is routed to apply_station_pass_state below.
+  const isPass = Boolean(priceId) && priceId === getBillingConfigOrNull()?.stationPassPrice;
   const tier = getTierForPriceId(priceId);
   const status = subscription.status;
   const cancelAtPeriodEnd = subscription.cancel_at_period_end;
@@ -206,6 +211,26 @@ async function applyEvent(
   }
 
   const admin = createServiceRoleClient();
+  if (isPass) {
+    // Not in the generated types until migration 0098 lands, hence the cast.
+    const { error: passError } = await (admin as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { code?: string; message: string } | null }> }).rpc("apply_station_pass_state", {
+      p_user_id: resolvedUserId,
+      p_stripe_customer_id: resolvedCustomerId,
+      p_subscription_id: subscriptionId,
+      p_price_id: priceId ?? "",
+      p_status: status,
+      p_current_period_end: periodEndUnix != null ? new Date(periodEndUnix * 1000).toISOString() : new Date(0).toISOString(),
+      p_cancel_at_period_end: cancelAtPeriodEnd,
+    });
+    if (passError) {
+      if ((passError as { code?: string }).code === "23503") return { skipped: "user_deleted" };
+      // Migration 0098 not applied yet: acknowledge so Stripe does not retry for days. After applying it, resend the
+      // customer.subscription.* events from the Stripe dashboard (test mode) to store the pass.
+      if (isMissingFunction(passError)) return { skipped: "station_pass_unavailable" };
+      throw new Error(`apply_station_pass_state: ${passError.message}`);
+    }
+    return { user_id: resolvedUserId, status };
+  }
   const { error } = await admin.rpc("apply_stripe_subscription_state", {
     p_user_id: resolvedUserId,
     p_stripe_customer_id: resolvedCustomerId,

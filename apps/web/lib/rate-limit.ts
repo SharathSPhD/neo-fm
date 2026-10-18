@@ -27,6 +27,9 @@
  *   - /api/songs/.../publish    : 30
  *   - /api/songs/.../regenerate : 6
  *   - /api/lyrics               : 60
+ *   - /api/station/queue        : 30 (open to signed-out visitors)
+ *   - /api/station/ad-event     : 60
+ *   - /api/station/signal       : 90
  *   - /api/p/*  (public reads)  : 120
  *   - everything else under /api: 120
  */
@@ -94,6 +97,10 @@ export function pickRule(
   if (/^\/api\/events\/?$/.test(pathname)) {
     return { bucket: "anon:events", limit: 20 };
   }
+  // House-ad log: small writes, open to signed-out listeners.
+  if (/^\/api\/station\/ad-event\/?$/.test(pathname)) {
+    return { bucket: "station:ad-event", limit: 60 };
+  }
   // Native-review links are token-gated, not login-gated, so cap both the
   // rating writes and the page itself to blunt token guessing.
   if (/^\/api\/native-review\/[^/]+\/ratings\/?$/.test(pathname)) {
@@ -147,6 +154,17 @@ export function pickRule(
   // round-trip "remix-from-public" to amplify their effective limit.
   if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
+  }
+  // The station queue is open to signed-out visitors and signs a URL per track, so cap it per IP. A listener refills
+  // about once per ten tracks, plus a few steering taps, so 30 a minute leaves a shared NAT plenty of room.
+  if (/^\/api\/station\/queue\/?$/.test(pathname)) {
+    return { bucket: "station:queue", limit: 30 };
+  }
+  // Listener signals are an authenticated write into station_signals. A listener sends a handful a minute even
+  // when skipping fast; the own bucket keeps them off the shared api:default budget, and 90 leaves room for a
+  // shared NAT while still capping a looping or hostile client.
+  if (/^\/api\/station\/signal\/?$/.test(pathname)) {
+    return { bucket: "station:signal", limit: 90 };
   }
   // Anonymous listener counters: write-only, so keep the budget lower than reads.
   if (/^\/api\/p\/[^/]+\/listen\/?$/.test(pathname)) {

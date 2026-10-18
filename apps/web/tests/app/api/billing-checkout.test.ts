@@ -10,7 +10,7 @@ vi.mock("../../../lib/supabase/auth", async () => {
 });
 import { requireUser } from "../../../lib/supabase/auth";
 
-const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example", STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_year", STRIPE_PRICE_PACK_SINGLE_ID: "price_pack1", STRIPE_PACK_UPI: "1", STRIPE_SUBSCRIPTION_UPI: "" };
+const ENV = { STRIPE_SECRET_KEY: "sk_test_x", STRIPE_WEBHOOK_SECRET: "whsec_x", NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_x", STRIPE_PRICE_CREATOR_ID: "price_creator", STRIPE_PRICE_PRO_ID: "price_pro", NEXT_PUBLIC_APP_URL: "https://app.example", STRIPE_PRICE_PRO_ANNUAL_ID: "price_pro_year", STRIPE_PRICE_PACK_SINGLE_ID: "price_pack1", STRIPE_PACK_UPI: "1", STRIPE_SUBSCRIPTION_UPI: "", STRIPE_PRICE_STATION_PASS_ID: "price_pass" };
 
 async function load(env: Partial<typeof ENV> | null) {
   vi.resetModules();
@@ -117,5 +117,28 @@ describe("POST /api/billing/checkout", () => {
     POST = await load({ ...ENV, STRIPE_SUBSCRIPTION_UPI: "1" }); user();
     await POST(body({ tier: "creator" }));
     expect(create.mock.calls[1]![0].payment_method_types).toEqual(["card", "upi"]);
+  });
+  it("opens a station pass subscription session without a tier", async () => {
+    const POST = await load(ENV); user();
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/pass" });
+    const res = await POST(body({ pass: "station" }));
+    expect(await res.json()).toEqual({ url: "https://checkout.stripe.test/pass" });
+    expect(create.mock.calls[0]![0]).toMatchObject({
+      mode: "subscription", line_items: [{ price: "price_pass", quantity: 1 }],
+      success_url: "https://app.example/account?pass=station", metadata: { user_id: "u1", pass: "station" },
+    });
+    expect(create.mock.calls[0]![0].metadata).not.toHaveProperty("tier");
+  });
+  it("503s the station pass when the price id is unset", async () => {
+    const POST = await load({ ...ENV, STRIPE_PRICE_STATION_PASS_ID: "" }); user();
+    const res = await POST(body({ pass: "station" }));
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toBe("pass_unavailable");
+    expect(create).not.toHaveBeenCalled();
+  });
+  it("never sells the station pass under a live key", async () => {
+    const POST = await load({ ...ENV, STRIPE_SECRET_KEY: "sk_live_x" }); user();
+    expect((await POST(body({ pass: "station" }))).status).toBe(503);
+    expect(create).not.toHaveBeenCalled();
   });
 });
