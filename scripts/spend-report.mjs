@@ -5,12 +5,14 @@
 //
 //   MA_ADMIN_KEY                   Admin API key (sk-ant-admin...); ANT* env names are blocked. Absent => ledger-only mode.
 //   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   optional, for the app's spend_ledger (Lyria GBP reservations)
-//   node scripts/spend-report.mjs [--since YYYY-MM-DD] [--out path.md]
+//   node scripts/spend-report.mjs [--since YYYY-MM-DD] [--budget USD] [--out path.md]
+// Baseline: USD 88 was left as of 2026-10-18, so --since defaults to that date and earlier spend is not counted.
 
 import { writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 
 export const BUDGET_USD = 88;
+export const BASELINE_SINCE = "2026-10-18";
 export const BUDGET_END = "2026-11-05";
 const API = "https://api.anthropic.com/v1/organizations";
 
@@ -19,7 +21,10 @@ export const SPLIT_USD = { prod: 32, "test/eval gate": 16, dev: 10, reserve: 30 
 
 async function getJson(url, headers, fetchImpl) {
   const res = await fetchImpl(url, { headers });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText} for ${new URL(url).pathname}`);
+  if (!res.ok) {
+    const detail = (await res.json().catch(() => null))?.error?.message;
+    throw new Error(`${res.status} ${res.statusText} for ${new URL(url).pathname}${detail ? `: ${detail}` : ""}`);
+  }
   return res.json();
 }
 
@@ -77,19 +82,19 @@ export function projection(spentUsd, since, now) {
 
 const usd = (n) => `USD ${n.toFixed(2)}`;
 
-export function renderMarkdown({ now, since, cost, tokens, ledger, notes }) {
+export function renderMarkdown({ now, since, cost, tokens, ledger, notes, budget = BUDGET_USD }) {
   const L = [`# Claude platform spend`, ``, `Generated ${now.toISOString()} by \`scripts/spend-report.mjs\` (read-only).`, ``];
-  L.push(`Budget: ${usd(BUDGET_USD)} until ${BUDGET_END}. Window reported: ${since.toISOString().slice(0, 10)} onwards.`, ``);
+  L.push(`Budget: ${usd(budget)} until ${BUDGET_END}. Window reported: ${since.toISOString().slice(0, 10)} onwards.`, ``);
   if (cost) {
-    const left = BUDGET_USD - cost.total;
+    const left = budget - cost.total;
     const p = projection(cost.total, since, now);
     L.push(`## Billed (Admin API cost_report)`, ``);
-    L.push(`- Spent: **${usd(cost.total)}** (${((cost.total / BUDGET_USD) * 100).toFixed(1)}% of budget)`);
+    L.push(`- Spent: **${usd(cost.total)}** (${((cost.total / budget) * 100).toFixed(1)}% of budget)`);
     L.push(`- Remaining: **${usd(left)}** with ${p.daysLeft.toFixed(0)} days to go`);
     const cut = now.getTime() - 7 * 864e5;
     const last7 = [...cost.byDay].filter(([d]) => new Date(d).getTime() + 864e5 > cut).reduce((a, [, v]) => a + v, 0);
     L.push(`- Last 7 days: **${usd(last7)}** (${usd(last7 / 7)}/day)`);
-    L.push(`- Burn: ${usd(p.daily)}/day, projected total at end date ${usd(p.projected)}${p.projected > BUDGET_USD ? " **(over budget)**" : ""}`, ``);
+    L.push(`- Burn: ${usd(p.daily)}/day, projected total at end date ${usd(p.projected)}${p.projected > budget ? " **(over budget)**" : ""}`, ``);
     L.push(`| Bucket | Allocation | Note |`, `|---|---|---|`);
     for (const [k, v] of Object.entries(SPLIT_USD)) L.push(`| ${k} | ${usd(v)} | per-bucket spend is not separable without separate workspaces or keys |`);
     L.push(``, `### By model`, ``, `| Model | USD |`, `|---|---|`);
@@ -127,7 +132,11 @@ export async function collect({ env = process.env, fetchImpl = fetch, now = new 
     try {
       cost = sumCostUsd(await paged("cost_report", { ...range, bucket_width: "1d", limit: "31", "group_by[]": "description" }, headers, fetchImpl));
     } catch (e) {
-      notes.push(`cost_report failed: ${e.message}`);
+      // The API has no completed daily data yet when the baseline day is still in progress.
+      if (/ending date must be after starting date/.test(e.message)) {
+        cost = sumCostUsd([]);
+        notes.push("cost_report has no completed day since the baseline yet; billed spend counts as 0 until it does.");
+      } else notes.push(`cost_report failed: ${e.message}`);
     }
     try {
       tokens = sumTokens(await paged("usage_report/messages", { ...range, bucket_width: "1d", limit: "31", "group_by[]": "model" }, headers, fetchImpl));
@@ -151,8 +160,9 @@ export async function collect({ env = process.env, fetchImpl = fetch, now = new 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const arg = (n) => { const i = process.argv.indexOf(n); return i > 0 ? process.argv[i + 1] : undefined; };
   const now = new Date();
-  const since = new Date(arg("--since") ?? now.getTime() - 30 * 864e5);
-  const md = renderMarkdown(await collect({ since, now }));
+  const since = new Date(arg("--since") ?? BASELINE_SINCE);
+  const budget = Number(arg("--budget") ?? BUDGET_USD);
+  const md = renderMarkdown({ ...(await collect({ since, now })), budget });
   const out = arg("--out");
   if (out) writeFileSync(out, md);
   else console.log(md);
