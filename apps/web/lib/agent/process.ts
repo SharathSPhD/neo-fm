@@ -5,6 +5,7 @@
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
 import { lyriaBreaker } from "./circuit-breaker";
 import { generateMusic } from "./lyria";
+import { dailyCap } from "../ops/provider-cap";
 import { advance, type AdvanceDeps } from "./runner";
 import { hostAdvance } from "../cascade/host-run";
 import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from "../cascade/host-io";
@@ -209,7 +210,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
-        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), breaker: lyriaBreaker, apiKey: geminiKey });
+        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
         // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
         return timed("lyria", async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result);
       };
@@ -328,6 +329,7 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
 
 /** Machine-readable failure code shown to users as friendly copy (components/job-progress.tsx); the raw reason stays in agent_runs.render_error. */
 export function failureCode(renderError?: string | null): string {
+  if (renderError && /daily cap/i.test(renderError)) return "provider_busy";
   if (renderError && /spend cap/i.test(renderError)) return "allowance_reached";
   if (renderError && /content policy|safety/i.test(renderError)) return "content_policy";
   return renderError ? "render_failed" : "agent finished without audio";

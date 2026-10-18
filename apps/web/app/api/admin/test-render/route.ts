@@ -16,6 +16,7 @@ import { dictionHints, scoreTranscriptUnordered } from "../../../../lib/diction"
 import { transcribeSung } from "../../../../lib/diction/gemini";
 import { ROMAN_HINT, singingScript } from "../../../../lib/diction/romanize";
 import { renderCap, validateItems } from "../../../../lib/admin/test-render";
+import { dailyCap } from "../../../../lib/ops/provider-cap";
 import { getLogger } from "../../../../lib/obs/log";
 import { screenRequest } from "../../../../lib/safety";
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       const ss = singingScript(lyrics);
       const r = await generateMusic(
         { stylePrompt: [style, native || it.hints === false ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
-        { guard, apiKey: key },
+        { guard, dailyCap: dailyCap(db, "lyria", "batch"), apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
       const up = await db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true });

@@ -95,6 +95,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('feedback',              'service', 'user_id', null, 'submitted via submit_feedback(); read by service role only'),
   ('funnel_daily',          'service', null,      null, null),
   ('funnel_campaign_daily', 'service', null,      null, null),
+  ('provider_daily_usage',  'service', null,      null, null),
   ('pool_tracks',           'service', null,      null, 'station pool; the station route reads admitted rows with the service role'),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
   ('song_listens_daily',    'service', null,      null, 'daily roll-up of song_listens; service role only'),
