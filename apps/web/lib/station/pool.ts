@@ -6,6 +6,7 @@
  */
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+import { ttlCache } from "./cache";
 import type { PoolTrack } from "./rank";
 
 export interface PoolRow {
@@ -48,13 +49,14 @@ export function rowToTrack(r: PoolRow): StationTrack {
     id: r.id,
     language: r.language,
     tags: [...new Set(tags)],
+    family: `${r.language}:${r.genre ?? "any"}`,
     title: displayTitle(r),
     audioPath: r.audio_path,
     durationSeconds: r.duration_seconds,
   };
 }
 
-export async function loadPool(): Promise<StationTrack[]> {
+async function readPool(): Promise<StationTrack[]> {
   try {
     const { data, error } = await (
       createServiceRoleClient().from as unknown as (t: string) => {
@@ -67,5 +69,31 @@ export async function loadPool(): Promise<StationTrack[]> {
     return data.map(rowToTrack);
   } catch {
     return [];
+  }
+}
+
+/** The pool changes only when admin ingest runs, so a minute of staleness per instance is harmless and saves a read per queue call. */
+export const loadPool = ttlCache(readPool, 60_000);
+
+/** One admitted track by id for the public share page; null when missing, not admitted, or on any read failure. */
+export async function loadPoolTrack(id: string): Promise<StationTrack | null> {
+  try {
+    const { data, error } = await (
+      createServiceRoleClient().from as unknown as (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: string) => {
+            eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: PoolRow | null; error: unknown }> };
+          };
+        };
+      }
+    )("pool_tracks")
+      .select("id,title,audio_path,duration_seconds,language,genre,raga,mood,theme,tempo_band")
+      .eq("id", id)
+      .eq("status", "admitted")
+      .maybeSingle();
+    if (error || !data) return null;
+    return rowToTrack(data);
+  } catch {
+    return null;
   }
 }

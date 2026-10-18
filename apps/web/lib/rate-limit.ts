@@ -27,6 +27,7 @@
  *   - /api/songs/.../publish    : 30
  *   - /api/songs/.../regenerate : 6
  *   - /api/lyrics               : 60
+ *   - /api/station/signal       : 90
  *   - /api/p/*  (public reads)  : 120
  *   - everything else under /api: 120
  */
@@ -147,6 +148,12 @@ export function pickRule(
   // round-trip "remix-from-public" to amplify their effective limit.
   if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
+  }
+  // Listener signals are an authenticated write into station_signals. A listener sends a handful a minute even
+  // when skipping fast; the own bucket keeps them off the shared api:default budget, and 90 leaves room for a
+  // shared NAT while still capping a looping or hostile client.
+  if (/^\/api\/station\/signal\/?$/.test(pathname)) {
+    return { bucket: "station:signal", limit: 90 };
   }
   // Anonymous listener counters: write-only, so keep the budget lower than reads.
   if (/^\/api\/p\/[^/]+\/listen\/?$/.test(pathname)) {

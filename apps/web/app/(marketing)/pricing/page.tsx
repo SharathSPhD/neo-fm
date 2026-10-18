@@ -98,6 +98,9 @@ const PACKS = [
   { sku: "three", price: "₹249", name: "pricing.packs.three.name", desc: "pricing.packs.three.desc" },
 ] as const satisfies readonly { sku: "single" | "three"; price: string; name: UiKey; desc: UiKey }[];
 
+/** Must match the Stripe price created by /api/admin/stripe-setup (14900 paise). */
+const STATION_PASS_PRICE = "₹149";
+
 export default async function PricingPage() {
   const { t } = await serverI18n();
   // Server-side check so we don't bundle the Stripe client when billing
@@ -220,6 +223,15 @@ export default async function PricingPage() {
               </article>
             ))}
           </div>
+        </section>
+      ) : null}
+      {billingEnabled && signedIn && billing?.stationPassPrice ? (
+        <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 rounded-xl border border-accent/30 bg-accent/5 p-7">
+          <h2 className="text-2xl font-medium tracking-tight">{t("pricing.pass.title")}</h2>
+          <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
+          <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
+          <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
         </section>
       ) : null}
       <QualityEvidenceSummary />
