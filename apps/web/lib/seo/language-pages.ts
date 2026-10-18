@@ -151,3 +151,9 @@ export function hreflangPaths(): Record<string, string> {
   for (const p of LANGUAGE_PAGES) map[p.code] = languagePagePath(p);
   return map;
 }
+
+/** Language code for a request path under /ai-songs/<slug> (the explainer included), else undefined. Drives <html lang>. */
+export function languageCodeForPath(path: string | null | undefined): LanguagePage["code"] | undefined {
+  const slug = /^\/ai-songs\/([^/?#]+)/.exec(path ?? "")?.[1];
+  return slug ? languagePageBySlug(slug)?.code : undefined;
+}

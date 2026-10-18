@@ -8,9 +8,13 @@
  * re-order the programmed list so the listener's tap shows in the very next tracks.
  * Each track carries a templated `host` line (lib/station/host.ts: daypart greeting, edge city if any, AI-made label; no model call)
  * and a short-lived signed URL. Empty list when the pool or signal table is unavailable.
+ * With ADS_ENABLED=1, free and signed-out listeners may get one `type: "ad"` item spliced in (lib/station/ads.ts caps); the
+ * player sends its session counters (`played`, `since`, `adAge`, `adSec`, `seen`). Any ad failure leaves the queue unchanged.
  */
 import { NextResponse, type NextRequest } from "next/server";
 
+import { adsEnabled } from "@/lib/station/ads";
+import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
@@ -94,5 +98,11 @@ export async function GET(req: NextRequest) {
       }),
     )
   ).filter((t) => t !== null);
+  if (adsEnabled() && tracks.length > 1) {
+    try {
+      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks });
+      if (ad) return NextResponse.json({ tracks: [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)] });
+    } catch { /* ads are optional: serve the plain queue */ }
+  }
   return NextResponse.json({ tracks });
 }
