@@ -24,6 +24,10 @@ comment on table public.song_packs is
 
 alter table public.song_packs enable row level security;
 
+-- Supabase grants ALL on new public tables to anon/authenticated; clients only ever read their own rows.
+revoke all on public.song_packs from public, anon, authenticated;
+grant select on public.song_packs to authenticated;
+
 create policy song_packs_select_own on public.song_packs
   for select to authenticated
   using (user_id = auth.uid());
