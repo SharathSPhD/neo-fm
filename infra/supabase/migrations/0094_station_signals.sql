@@ -1,4 +1,4 @@
--- 0093_station_signals.sql
+-- 0094_station_signals.sql
 -- Listener signals from /station (play, like, skip, replay, share, finish). Own-row only; ranking v0 reads them
 -- server-side per listener. track_id has no foreign key on purpose: the pool schema is owned by another migration
 -- and a retired track must not block deleting signals.

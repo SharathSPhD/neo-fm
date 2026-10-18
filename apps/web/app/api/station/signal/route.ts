@@ -1,6 +1,6 @@
 /**
  * POST /api/station/signal {"trackId","kind","positionMs"?} -- one listener signal from /station.
- * Own-row log (migration 0093, service-role writes after we authenticate). Degrades to 204 when the table is not there
+ * Own-row log (migration 0094, service-role writes after we authenticate). Degrades to 204 when the table is not there
  * yet so a missing migration never breaks playback.
  */
 import { NextResponse } from "next/server";
