@@ -836,4 +836,13 @@ export const bn: Dict = {
   "embedb.copied": "কপি হয়েছে",
   "embedb.failed": "ব্যর্থ",
   "embedb.copy": "কোড কপি করুন",
+  "meaning.heading": "গানের কথার অর্থ",
+  "meaning.original": "মূল",
+  "meaning.roman": "রোমান হরফে",
+  "meaning.english": "ইংরেজি অর্থ",
+  "meaning.disclaimer": "ইংরেজি অর্থ এআই-এর করা যান্ত্রিক অনুবাদ। এটি ভাবটুকু জানায়, কাব্য নয়, আর সাংস্কৃতিক সূক্ষ্মতা বাদ পড়তে পারে।",
+  "meaning.loading": "অর্থ তৈরি হচ্ছে…",
+  "meaning.error": "এখন অর্থ লোড করা গেল না।",
+  "meaning.retry": "আবার চেষ্টা করুন",
+  "meaning.limit": "আজকের জন্য গানের কথার অর্থের সীমা পূর্ণ হয়েছে। কাল আবার চেষ্টা করুন।",
 };

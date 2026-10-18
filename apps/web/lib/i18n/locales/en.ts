@@ -834,4 +834,13 @@ export const en = {
   "embedb.copied": "Copied",
   "embedb.failed": "Failed",
   "embedb.copy": "Copy code",
+  "meaning.heading": "Lyrics meaning",
+  "meaning.original": "Original",
+  "meaning.roman": "Romanised",
+  "meaning.english": "English meaning",
+  "meaning.disclaimer": "English meaning is an AI machine translation. It conveys the sense, not the poetry, and may miss cultural nuance.",
+  "meaning.loading": "Preparing the meaning…",
+  "meaning.error": "Couldn't load the meaning right now.",
+  "meaning.retry": "Try again",
+  "meaning.limit": "You've reached today's limit for lyric meanings. Try again tomorrow.",
 } as const;
