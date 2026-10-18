@@ -6,7 +6,7 @@ import { isLiveSubscriptionStatus } from "@/lib/billing/checkout-guard";
 import { hasStationPass } from "@/lib/billing/pass";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-import { AD_CAPS, adItem, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot } from "./ads";
+import { AD_CAPS, adItem, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
@@ -14,6 +14,7 @@ type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
 const URL_TTL_SECONDS = 60 * 60;
 const DAY_MS = 86_400_000;
 const TEN_MIN_MS = 600_000;
+const HOUR_MS = 3_600_000;
 /** Stand-in for "tracks since the last break" when there has been none this session. */
 const NO_BREAK_YET = 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -25,6 +26,7 @@ export interface AdClientState {
   sinceBreak: number;
   lastBreakAgeMs: number | null;
   adSecondsLast10Min: number;
+  adsLastHour: number;
   seen: string[];
 }
 
@@ -41,6 +43,7 @@ export function parseAdState(sp: URLSearchParams): AdClientState {
     sinceBreak: sp.has("since") ? int(sp.get("since")) : NO_BREAK_YET,
     lastBreakAgeMs: sp.has("adAge") ? int(sp.get("adAge"), 86_400) * 1000 : null,
     adSecondsLast10Min: int(sp.get("adSec"), 600),
+    adsLastHour: int(sp.get("adHr"), 100),
     seen: (sp.get("seen") ?? "").split(",").filter((s) => UUID.test(s)).slice(0, 50),
   };
 }
@@ -59,7 +62,7 @@ async function loadSlots(admin: Admin): Promise<AdSlot[]> {
 
 /** Signed-in listeners: what they already heard in the last day, from ad_events (start rows). */
 async function loadHistory(admin: Admin, userId: string, slots: AdSlot[], now: number) {
-  const out = { adsToday: 0, perCreativeToday: {} as Record<string, number>, lastBreakAgeMs: null as number | null, adSecondsLast10Min: 0 };
+  const out = { adsToday: 0, perCreativeToday: {} as Record<string, number>, lastBreakAgeMs: null as number | null, adSecondsLast10Min: 0, adsLastHour: 0 };
   try {
     const since = new Date(now - DAY_MS).toISOString();
     const res = (await (admin.from as unknown as (t: string) => {
@@ -74,25 +77,33 @@ async function loadHistory(admin: Admin, userId: string, slots: AdSlot[], now: n
       out.perCreativeToday[id] = (out.perCreativeToday[id] ?? 0) + 1;
       const age = now - at;
       if (out.lastBreakAgeMs === null || age < out.lastBreakAgeMs) out.lastBreakAgeMs = age;
+      if (age <= HOUR_MS) out.adsLastHour += 1;
       if (age <= TEN_MIN_MS) out.adSecondsLast10Min += secs.get(id) ?? AD_CAPS.cardOnlySeconds;
     }
   } catch { /* no history: client counters only */ }
   return out;
 }
 
-/** Creator, Pro, any live subscription and the Station pass are ad-free. Reads fail open to "free" only for signed-out listeners. */
-async function isPaid(admin: Admin, userId: string): Promise<boolean> {
+/**
+ * The listener's ad tier: null for the Station pass (no ads, wins over any other entitlement), otherwise the lightest
+ * applicable tier row. Signed-out listeners, and any lookup that fails, are "free" (ads-revenue.md section 11).
+ * hasStationPass is false when migration 0098 is not applied.
+ */
+export async function adTierFor(admin: Admin, userId: string | null): Promise<AdTier | null> {
+  if (!userId) return "free";
   try {
+    if (await hasStationPass(admin, userId)) return null;
     const [u, b] = await Promise.all([
       (admin.from("users").select("tier").eq("id", userId).maybeSingle()) as unknown as Promise<{ data: { tier?: string } | null }>,
       (admin.from("user_billing").select("status").eq("user_id", userId).maybeSingle()) as unknown as Promise<{ data: { status?: string } | null }>,
     ]);
-    if ((u.data?.tier ?? "free") !== "free" || isLiveSubscriptionStatus(b.data?.status)) return true;
-    // The Station pass is ad-free too. hasStationPass is false when migration 0098 is not applied.
-    return await hasStationPass(admin, userId);
+    const tier = u.data?.tier ?? "free";
+    if (tier === "pro") return "pro";
+    if (tier === "creator") return "creator";
+    // A live subscription on a tier row we do not know yet still gets the lighter Creator row, not the Free one.
+    return isLiveSubscriptionStatus(b.data?.status) ? "creator" : "free";
   } catch {
-    // Cannot tell: do not serve an ad to someone who might be paying.
-    return true;
+    return "free";
   }
 }
 
@@ -104,7 +115,7 @@ const seenCounts = (seen: string[]) => {
 
 export interface AdInsertion { item: AdItem; index: number }
 
-/** The break to splice into `tracks`, or null (flag off, paid listener, caps, no eligible slot, tables missing). */
+/** The break to splice into `tracks`, or null (flag off, Station pass, caps, no eligible slot, tables missing). */
 export async function adForQueue(args: {
   admin: Admin;
   userId: string | null;
@@ -117,7 +128,8 @@ export async function adForQueue(args: {
 }): Promise<AdInsertion | null> {
   const { admin, userId, state, language, hour, tracks } = args;
   const now = args.now ?? Date.now();
-  if (userId && (await isPaid(admin, userId))) return null;
+  const tier = await adTierFor(admin, userId);
+  if (!tier) return null;
   const slots = await loadSlots(admin);
   if (slots.length === 0) return null;
   const history = userId ? await loadHistory(admin, userId, slots, now) : null;
@@ -126,7 +138,7 @@ export async function adForQueue(args: {
   for (const [id, n] of Object.entries(history?.perCreativeToday ?? {})) perCreativeToday[id] = Math.max(perCreativeToday[id] ?? 0, n);
   const ctx: AdContext = {
     enabled: true,
-    paid: false,
+    tier,
     language,
     hour,
     now,
@@ -134,6 +146,7 @@ export async function adForQueue(args: {
     sinceBreak: state.sinceBreak,
     lastBreakAgeMs: [state.lastBreakAgeMs, history?.lastBreakAgeMs ?? null].reduce<number | null>((a, b) => (a === null ? b : b === null ? a : Math.min(a, b)), null),
     adSecondsLast10Min: Math.max(state.adSecondsLast10Min, history?.adSecondsLast10Min ?? 0),
+    adsLastHour: Math.max(state.adsLastHour, history?.adsLastHour ?? 0),
     adsToday: Math.max(state.seen.length, history?.adsToday ?? 0),
     perCreativeToday,
   };
@@ -146,5 +159,5 @@ export async function adForQueue(args: {
     if (!data?.signedUrl) return null;
     url = data.signedUrl;
   }
-  return { item: adItem(placement.slot, url, args.nonce ?? now.toString(36)), index: placement.index };
+  return { item: adItem(placement.slot, url, args.nonce ?? now.toString(36), tier), index: placement.index };
 }
