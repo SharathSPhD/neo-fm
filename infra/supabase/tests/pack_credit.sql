@@ -7,9 +7,6 @@
 begin;
 set local client_min_messages = warning;
 
--- recover_song_job (0016) sends to queue 'q_song_jobs', which no migration creates; make it exist for this test only.
-select pgmq.create('q_song_jobs');
-
 insert into auth.users (id, email, raw_user_meta_data, email_confirmed_at)
 values ('cccccccc-0000-4000-8000-00000000000c', 'pack@test.local', '{}', now());
 
