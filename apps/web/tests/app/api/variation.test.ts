@@ -117,6 +117,8 @@ describe("happy path", () => {
         metadata: { fork: { kind: string; distance: number } };
       };
     };
+    // Prod has two create_song_job overloads (7 and 8 args); a call without p_use_pack is ambiguous between them.
+    expect((args as unknown as Record<string, unknown>).p_use_pack).toBe(false);
     // Variation never jitters; tempo is preserved verbatim.
     expect(args.p_song_document.tempo_bpm).toBe(110);
     expect(args.p_song_document.metadata.fork).toMatchObject({
