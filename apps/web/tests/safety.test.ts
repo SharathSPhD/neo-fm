@@ -27,6 +27,9 @@ describe("screenText", () => {
     blocked("a deepfake of the prime minister singing", "real_person_likeness");
     blocked("campaign jingle for our party's rally", "election_persuasion");
     blocked("vote for Modi catchy chorus", "election_persuasion");
+    ok("A song about my first time getting to vote for the first time, nervous and proud");
+    ok("Grandma taught us to vote for what is right");
+    blocked("vote for the BJP jingle", "election_persuasion");
     ok("A birthday song for my sister Meena who loves mangoes");
     ok("A protest song about rising onion prices and the city's broken roads");
     ok("A funny satire about people who never reply to WhatsApp groups");
