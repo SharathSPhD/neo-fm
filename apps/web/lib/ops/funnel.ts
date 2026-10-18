@@ -2,7 +2,7 @@
 
 export const FUNNEL_EVENTS = [
   "landing_view", "pricing_view", "signup_view", "share_view", "checkout_started",
-  // Launch funnel (migration 0096): the station, from first play to share.
+  // Launch funnel (migration 0097): the station, from first play to share.
   "station_play_anon", "station_play_user", "nudge_shown", "nudge_clicked", "onboarding_done", "listened_3", "station_share", "whatsapp_click",
 ] as const;
 export type FunnelEvent = (typeof FUNNEL_EVENTS)[number];
