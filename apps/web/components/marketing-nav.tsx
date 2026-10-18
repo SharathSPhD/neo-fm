@@ -25,16 +25,16 @@ export async function MarketingNav({
         <Link
           href="/"
           aria-label={t("nav.home")}
-          className="text-lg font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+          className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         >
           neo-fm
         </Link>
-        <nav aria-label="Primary" className="flex items-center gap-1 text-sm sm:gap-3">
+        <nav aria-label="Primary" className="flex items-center gap-1 whitespace-nowrap text-sm sm:gap-3">
           {showSubLinks && (
             <>
               <Link
                 href="/discover"
-                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.discover")}
               </Link>
@@ -46,7 +46,7 @@ export async function MarketingNav({
               </Link>
               <Link
                 href="/pricing"
-                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.pricing")}
               </Link>
@@ -78,13 +78,13 @@ export async function MarketingNav({
             <>
               <Link
                 href="/sign-in"
-                className="rounded-md border border-muted/40 px-3 py-1.5 text-foreground/80 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="shrink-0 rounded-md px-2 py-1.5 text-foreground/80 sm:border sm:border-muted/40 sm:px-3 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
-                className="rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="shrink-0 rounded-md bg-accent px-3 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t("nav.getStarted")}
               </Link>
@@ -92,6 +92,14 @@ export async function MarketingNav({
           )}
         </nav>
       </div>
+      {showSubLinks && (
+        // Phones have no room for these beside the sign-up button, so they get their own row.
+        <nav aria-label="Secondary" className="mx-auto flex max-w-6xl gap-4 px-4 pb-3 text-sm text-foreground/70 sm:hidden">
+          <Link href="/discover" className="rounded-md py-1 hover:text-foreground">{t("nav.discover")}</Link>
+          <Link href="/pricing" className="rounded-md py-1 hover:text-foreground">{t("nav.pricing")}</Link>
+          <Link href="/help" className="rounded-md py-1 hover:text-foreground">{t("nav.help")}</Link>
+        </nav>
+      )}
     </header>
   );
 }

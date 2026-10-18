@@ -8,6 +8,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import type { FunnelSummary } from "../../../lib/ops/funnel";
 import type { ErrorGroup } from "../../../lib/obs/group-errors";
+import type { StationHealth } from "../../../lib/ops/station-health";
 import type { HealthSummary } from "../../../lib/ops/health-summary";
 import type { TrendPoint } from "../../../lib/ops/snapshot";
 
@@ -22,6 +23,7 @@ export default function HealthPage() {
   const [trendDays, setTrendDays] = useState(7);
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [station, setStation] = useState<StationHealth | null>(null);
   const [errors, setErrors] = useState<{ groups: ErrorGroup[]; total: number; truncated: boolean } | null>(null);
 
   const load = useCallback(async (s: string, h: number, td: number) => {
@@ -40,6 +42,12 @@ export default function HealthPage() {
       setErr((e as Error).message);
     }
     // Independent of the job summary: a failure here must not hide the rest of the dashboard.
+    try {
+      const r = await fetch(`/api/admin/station-health?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setStation(r.ok ? await r.json() : null);
+    } catch {
+      setStation(null);
+    }
     try {
       const r = await fetch(`/api/admin/client-errors?hours=${h}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       setErrors(r.ok ? await r.json() : null);
@@ -111,6 +119,21 @@ export default function HealthPage() {
           <Table title="Failure reasons" head={["Reason", "Jobs"]} rows={Object.entries(data.failures_by_code).map(([k, v]) => [k, String(v)])} />
           <Table title="Diction match" head={["Language", "Avg match %", "Audited", "QA errors"]}
             rows={Object.entries(data.diction_by_language).map(([l, d]) => [l, d.avg_match_pct === null ? "-" : String(d.avg_match_pct), String(d.n), String(d.errors)])} />
+          {station && (
+            <>
+              {station.alerts.length > 0 && <ul role="alert" className="list-disc pl-5 text-sm text-red-700">{station.alerts.map((a) => <li key={a}>{a}</li>)}</ul>}
+              <Table title="Station" head={["Metric", "Value"]} rows={[
+                ["Listeners with signals", String(station.listeners)],
+                ["Signals per listener", station.signals_per_listener === null ? "-" : station.signals_per_listener.toFixed(1)],
+                ["Plays", String(station.plays)],
+                ["Skip rate", pct(station.skip_rate)],
+                ["Finish rate", pct(station.finish_rate)],
+                ["Audio load failures (page loads)", String(station.audio_load_failures)],
+                ["Audio failure rate", pct(station.audio_failure_rate)],
+                ["Empty queue (page loads)", String(station.queue_empty)],
+              ]} />
+            </>
+          )}
           {funnel && (
             <Table title={`Funnel (${funnel.window_days}d)`} head={["Step", "Count", "Conversion"]} rows={[
               ["Landing views", String(funnel.views.landing_view), ""],
@@ -125,6 +148,7 @@ export default function HealthPage() {
               ["Paying sign-ups", String(funnel.paid_users), pct(funnel.conversion.signup_to_paid)],
             ]} />
           )}
+          {funnel && <LaunchFunnel funnel={funnel} />}
           <section>
             <div className="mb-2 flex items-center gap-3">
               <h2 className="font-medium">Trends</h2>
@@ -207,5 +231,35 @@ function Spark({ title, unit, values }: { title: string; unit: string; values: (
         <path d={path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
       </svg>
     </div>
+  );
+}
+
+const LAUNCH_COLUMNS: { label: string; event?: keyof FunnelSummary["views"] }[] = [
+  { label: "Home views", event: "landing_view" },
+  { label: "Plays (anon)", event: "station_play_anon" },
+  { label: "Plays (signed in)", event: "station_play_user" },
+  { label: "3+ tracks", event: "listened_3" },
+  { label: "Nudge shown", event: "nudge_shown" },
+  { label: "Nudge clicked", event: "nudge_clicked" },
+  { label: "Sign-ups" },
+  { label: "Onboarded", event: "onboarding_done" },
+  { label: "Shares", event: "station_share" },
+  { label: "WhatsApp", event: "whatsapp_click" },
+];
+
+/** Launch funnel: one row per UTC day, newest first. Counters are anonymous per-day counts; sign-ups come from the users table. */
+function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
+  const days = [...new Set([...Object.keys(funnel.by_day), ...Object.keys(funnel.signups_by_day)])].sort().reverse();
+  const cell = (day: string, c: (typeof LAUNCH_COLUMNS)[number]) =>
+    String(c.event ? (funnel.by_day[day]?.[c.event] ?? 0) : (funnel.signups_by_day[day] ?? 0));
+  return (
+    <Table
+      title={`Launch funnel by day (${funnel.window_days}d)`}
+      head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
+      rows={[
+        ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
+        ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
+      ]}
+    />
   );
 }

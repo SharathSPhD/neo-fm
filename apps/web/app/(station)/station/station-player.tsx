@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { sendFunnelEvent } from "@/components/funnel-beacon";
+import { InstallPrompt } from "@/components/install-prompt";
 import { usePlayer } from "@/components/player/player-provider";
+import { reportClientError } from "@/lib/obs/report-client-error";
+import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -13,16 +17,20 @@ interface Track {
   language: string;
   tags: string[];
   url: string;
+  /** Templated host line from the queue API; shown as text on some track changes. */
+  host?: string;
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
 
 /** After this many tracks in a row fail to load, stop skipping and tell the listener instead of looping. */
 const MAX_CONSECUTIVE_ERRORS = 3;
+const HOST_EVERY = 3;
+const HOST_VISIBLE_MS = 12_000;
 
 const LANGS = ["", "hi", "ta", "te", "kn", "bn"] as const;
 
-function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
+function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null) {
   void fetch("/api/station/signal", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -31,7 +39,30 @@ function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
   });
 }
 
-export function StationPlayer() {
+/** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
+const NUDGE_AFTER = 3;
+
+type Energy = "up" | "down";
+
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[] } = {}) {
+  const q = new URLSearchParams({ limit: "10" });
+  if (language) q.set("lang", language);
+  if (energy) q.set("energy", energy);
+  if (extra.like) q.set("like", extra.like);
+  if (extra.exclude) q.set("exclude", extra.exclude);
+  if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  // The server programs by the listener's own clock; fall back silently if the browser will not say.
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz) q.set("tz", tz);
+  } catch { /* no Intl: server falls back to India time */ }
+  return `/api/station/queue?${q}`;
+}
+
+export function StationPlayer({ anonymous = false }: { anonymous?: boolean }) {
+  // Anonymous listeners are not stored: no per-listener signals leave the browser.
+  const sendSignal = anonymous ? () => {} : postSignal;
+  const [played, setPlayed] = useState(0);
   const globalPlayer = usePlayer();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [queue, setQueue] = useState<Track[]>([]);
@@ -45,16 +76,22 @@ export function StationPlayer() {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [plays, setPlays] = useState(0);
+  const [energy, setEnergy] = useState<Energy | null>(null);
+  // Refills read it through a ref so a chip tap never restarts the language effect.
+  const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
+  const tracksStarted = useRef(0);
+  const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
 
   const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
     try {
-      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
-      const res = await fetch(`/api/station/queue?${qs}`);
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
+      if (!data.tracks?.length) reportClientError(STATION_QUEUE_EMPTY, { boundary: "window" });
     } catch {
       setQueue([]);
     }
@@ -78,14 +115,24 @@ export function StationPlayer() {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
     audioRef.current.src = current.url;
+    // A host line on the first track and then every third, so the station has a voice without chattering.
+    const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
+    tracksStarted.current += 1;
+    setHostLine(showHost ? current.host! : null);
     setBlocked(false);
     // Mobile browsers can refuse autoplay after a language change; show a tap target instead of silence.
-    void audioRef.current.play().then(() => sendSignal(current.id, "play", null)).catch(() => setBlocked(true));
+    void audioRef.current.play().then(() => { sendSignal(current.id, "play", null); sendFunnelEvent(anonymous ? "station_play_anon" : "station_play_user"); setPlays((n) => n + 1); }).catch(() => setBlocked(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the head track id should restart playback
   }, [current?.id]);
 
+  // Anonymous counters only (see /api/events): the third finished or skipped track, and the nudge appearing.
+  useEffect(() => { if (played === NUDGE_AFTER) sendFunnelEvent("listened_3", { once: true }); }, [played]);
+  const nudging = anonymous && played >= NUDGE_AFTER;
+  useEffect(() => { if (nudging) sendFunnelEvent("nudge_shown", { once: true }); }, [nudging]);
+
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
+    if (kind !== "error") setPlayed((n) => n + 1);
     if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
@@ -96,6 +143,7 @@ export function StationPlayer() {
   }
 
   function onTrackError() {
+    reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
       setFailed(true);
@@ -103,6 +151,12 @@ export function StationPlayer() {
     }
     advance("error");
   }
+
+  useEffect(() => {
+    if (!hostLine) return;
+    const id = setTimeout(() => setHostLine(null), HOST_VISIBLE_MS);
+    return () => clearTimeout(id);
+  }, [hostLine]);
 
   // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
   const controls = useRef({ skip: () => {} });
@@ -128,6 +182,31 @@ export function StationPlayer() {
     void refill(lang, moods);
   }
 
+  // Re-steer the upcoming tracks without touching the one playing, so a tap shows in what plays next.
+  async function steerTail(next: Energy | null, likeId?: string) {
+    if (!current) return;
+    try {
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods }));
+      const data = (await res.json()) as { tracks?: Track[] };
+      if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
+    } catch { /* keep the current queue */ }
+  }
+
+  function chooseEnergy(dir: Energy) {
+    const next = energy === dir ? null : dir;
+    setEnergy(next);
+    energyRef.current = next;
+    setNote(next ? (next === "up" ? "Livelier tracks coming up" : "Calmer tracks coming up") : "Back to the usual mix");
+    void steerTail(next);
+  }
+
+  function moreLikeThis() {
+    if (!current) return;
+    if (!liked.has(current.id)) like();
+    setNote("More like this coming up");
+    void steerTail(energyRef.current, current.id);
+  }
+
   function like() {
     if (!current || liked.has(current.id)) return;
     setLiked(new Set(liked).add(current.id));
@@ -149,6 +228,7 @@ export function StationPlayer() {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote("Link copied"); }
       sendSignal(current.id, "share", audioRef.current);
+      sendFunnelEvent("station_share");
     } catch { /* share sheet dismissed */ }
   }
 
@@ -156,6 +236,7 @@ export function StationPlayer() {
     if (!current) return;
     window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin)), "_blank", "noopener,noreferrer");
     sendSignal(current.id, "share", audioRef.current);
+    sendFunnelEvent("whatsapp_click");
   }
 
   const moodChips = (
@@ -195,7 +276,7 @@ export function StationPlayer() {
           ))}
         </div>
         {moodChips}
-        <button type="button" onClick={() => setOnboarded(true)} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
+        <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded bg-primary px-4 py-2 text-primary-foreground">
           Start my station
         </button>
       </section>
@@ -204,6 +285,7 @@ export function StationPlayer() {
 
   return (
     <section aria-label="Station player" className="flex flex-col gap-4">
+      <InstallPrompt plays={plays} minPlays={2} />
       <div className="flex flex-wrap gap-2" role="group" aria-label="Language">
         {LANGS.map((l) => (
           <button
@@ -224,6 +306,7 @@ export function StationPlayer() {
 
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
+          {hostLine ? <p role="status" className="text-sm italic text-muted-foreground">{hostLine}</p> : null}
           <p className="text-lg font-medium">{current.title}</p>
           <p className="text-xs text-muted-foreground">{current.language} · {current.tags.slice(0, 4).join(", ")}</p>
           <audio
@@ -255,7 +338,21 @@ export function StationPlayer() {
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
             <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
+            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-primary text-primary-foreground" : ""}`}>Calmer</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
+          </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
+          {nudging ? (
+            <div className="flex flex-col gap-2 rounded border border-primary/40 bg-primary/5 p-3 text-sm">
+              <p>Enjoying the station? Sign up free to save what you like and get music tuned to you.</p>
+              <div className="flex gap-3">
+                <a href="/sign-up?next=%2Fstation" onClick={() => sendFunnelEvent("nudge_clicked")} className="rounded bg-primary px-3 py-1 text-primary-foreground">Sign up free</a>
+                <a href="/sign-in?next=%2Fstation" className="px-1 py-1 underline">Sign in</a>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
