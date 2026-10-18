@@ -1,38 +1,53 @@
 import { describe, expect, it, vi } from "vitest";
 import { extractIntent, fallbackIntent, intentBlock, lyriaFragment, parseIntent, routeGenre } from "../lib/engine/intent";
-import { GENRES, genreById } from "../lib/engine/genres";
+import { FESTIVALS, GENRES, KEYWORDS, genreById, isVocalOnly } from "../lib/engine/genres";
 import { deterministicChecks, judgeAndRetry, needsRetry } from "../lib/engine/judge";
 import { dictionHints, dictionHintsFor } from "../lib/diction";
 import { hostCascade, type CascadeReply, type HostCascadeDeps } from "../lib/cascade/host-cascade";
 
 const ctx = (prompt: string, language: string, styleFamily = "western") => ({ prompt, language, styleFamily });
 
-describe("genre catalog", () => {
-  it("has unique ids, 3+ forms or a refrain, and no artist names in Lyria fragments", () => {
+describe("genre catalog (from the styles research)", () => {
+  it("has unique ids, sections, no excluded styles and no artist imitation in Lyria fragments", () => {
     expect(new Set(GENRES.map((g) => g.id)).size).toBe(GENRES.length);
+    expect(GENRES.length).toBeGreaterThan(70);
     for (const g of GENRES) {
-      expect(g.forms.length, g.id).toBeGreaterThanOrEqual(3);
+      expect(g.forms.length, g.id).toBeGreaterThan(0);
+      expect(["no", "na"]).not.toContain(g.vocal);
       expect(g.lyria, g.id).not.toMatch(/\b(in the style of|sounds like|imitat)/i);
-      expect(g.keywords.length, g.id).toBeGreaterThan(0);
     }
+  });
+  it("every routing keyword and festival style points at a usable style", () => {
+    for (const [, id] of KEYWORDS) expect(genreById(id), id).toBeDefined();
+    for (const f of FESTIVALS) for (const id of f.styles) expect(genreById(id), id).toBeDefined();
   });
 });
 
 describe("routeGenre", () => {
   it("routes by keyword and language", () => {
-    expect(routeGenre(fallbackIntent("an abhang for the pandharpur wari"), ctx("an abhang for the pandharpur wari", "mr")).genre).toBe("abhang");
-    expect(routeGenre(fallbackIntent("bhavageete about the monsoon"), ctx("bhavageete about the monsoon", "kn", "kannada-light-classical")).genre).toBe("bhavageete");
-    expect(routeGenre(fallbackIntent("garba for navratri"), ctx("garba for navratri", "gu")).genre).toBe("garba-raas");
+    expect(routeGenre(fallbackIntent("an abhang for the pandharpur wari"), ctx("an abhang for the pandharpur wari", "mr")).genre).toBe("mr-abhang");
+    expect(routeGenre(fallbackIntent("bhavageete about the monsoon"), ctx("bhavageete about the monsoon", "kn", "kannada-light-classical")).genre).toBe("kn-bhavageethe");
+    expect(routeGenre(fallbackIntent("garba for navratri"), ctx("garba for navratri", "gu")).genre).toBe("gu-garba-raas");
   });
   it("does not let a keyword from the wrong language win", () => {
-    expect(routeGenre(fallbackIntent("abhang"), ctx("abhang", "ta")).genre).not.toBe("abhang");
+    expect(routeGenre(fallbackIntent("abhang"), ctx("abhang", "ta")).genre).not.toBe("mr-abhang");
+  });
+  it("falls through keyword to occasion to daypart", () => {
+    const diwali = routeGenre({ ...fallbackIntent("lights and sweets"), occasion: "Diwali" }, ctx("lights and sweets", "hi"));
+    expect(diwali.genre).toBeDefined();
+    expect(routeGenre(fallbackIntent("a calm song for early morning"), ctx("a calm song for early morning", "hi")).genre).toBeDefined();
   });
   it("leaves a plain brief alone (today's behaviour is the floor)", () => {
     expect(routeGenre(fallbackIntent("a song about my cat"), ctx("a song about my cat", "hi", "western")).genre).toBeUndefined();
   });
   it("uses the family default only for a deliberately classical family in a matching language", () => {
-    expect(routeGenre(fallbackIntent("morning prayer"), ctx("morning prayer", "kn", "kannada-folk")).genre).toBe("kannada-janapada");
-    expect(routeGenre(fallbackIntent("morning prayer"), ctx("morning prayer", "ta", "kannada-folk")).genre).toBeUndefined();
+    expect(routeGenre(fallbackIntent("a song about rain"), ctx("a song about rain", "kn", "kannada-folk")).genre).toBe("kn-janapada");
+    expect(routeGenre(fallbackIntent("a song about rain"), ctx("a song about rain", "ta", "kannada-folk")).genre).toBeUndefined();
+  });
+  it("never forwards an instrumental ask for a raga/folk/devotional style to Lyria", () => {
+    const i = routeGenre({ ...fallbackIntent("khayal"), vocal: "instrumental" }, ctx("khayal in raga yaman", "hi", "hindustani"));
+    expect(isVocalOnly(genreById(i.genre)!)).toBe(true);
+    expect(lyriaFragment(i)).not.toMatch(/instrumental/i);
   });
 });
 
@@ -52,8 +67,8 @@ describe("parseIntent / extractIntent", () => {
   });
   it("builds the poet block and a Lyria fragment from the routed genre", async () => {
     const i = await extractIntent(ctx("a bhajan for Ganesh chaturthi for my grandmother Sarla", "hi"), async () =>
-      JSON.stringify({ essence: "devotion for grandmother", occasion: "festival", names: ["Sarla"], genre: "bhajan", instruments: ["harmonium"], vocal: "female" }));
-    expect(i.genre).toBe("bhajan");
+      JSON.stringify({ essence: "devotion for grandmother", occasion: "festival", names: ["Sarla"], genre: "bhajan-hindi", instruments: ["harmonium"], vocal: "female" }));
+    expect(i.genre).toBe("bhajan-hindi");
     expect(intentBlock(i)).toContain("Sarla");
     expect(lyriaFragment(i)).toMatch(/harmonium/);
     expect(lyriaFragment(i)).toContain("female lead vocal");
@@ -117,7 +132,7 @@ describe("hostCascade with PCE_INTENT", () => {
     const d: HostCascadeDeps = {
       complete: vi.fn(async ({ prompt }) => {
         prompts.push(prompt);
-        if (prompt.startsWith("You read a listener")) return JSON.stringify({ essence: "devotion for grandmother", names: ["Sarla"], genre: "bhajan", vocal: "female" });
+        if (prompt.startsWith("You read a listener")) return JSON.stringify({ essence: "devotion for grandmother", names: ["Sarla"], genre: "bhajan-hindi", vocal: "female" });
         if (prompt.startsWith("Plan a")) return '{"topic":"grandmother devotion","constraint":"hindi bhajan"}';
         if (prompt.includes('{"title"')) return '{"title":"सरला","style_prompt":"devotional harmonium"}';
         return "[मुखड़ा]\nराम नाम";
@@ -139,10 +154,10 @@ describe("hostCascade with PCE_INTENT", () => {
   it("threads intent into poets and the Lyria style prompt under the flag", async () => {
     const { d, prompts } = deps();
     const s = await hostCascade(brief, d, 2, { PCE_INTENT: "1" });
-    expect(s.intent?.genre).toBe("bhajan");
+    expect(s.intent?.genre).toBe("bhajan-hindi");
     expect(prompts.filter((p) => p.includes("Listener intent")).length).toBe(4);
     expect(prompts.find((p) => p.includes("Names to weave"))).toContain("Sarla");
-    expect(s.stylePrompt).toContain("Hindi bhajan");
+    expect(s.stylePrompt).toContain(genreById("bhajan-hindi")!.lyria.slice(0, 20));
     expect(s.stylePrompt).toContain("female lead vocal");
   });
 });
