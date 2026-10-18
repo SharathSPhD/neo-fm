@@ -487,7 +487,10 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
           ) : (
             <>
               <p className="text-lg font-medium">{current.title}</p>
-              <p className="text-xs text-foreground/70">{languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}</p>
+              <p className="text-xs text-foreground/70">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+                {languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}
+              </p>
             </>
           )}
           <audio
