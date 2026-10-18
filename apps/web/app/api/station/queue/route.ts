@@ -2,6 +2,8 @@
  * GET /api/station/queue?lang=hi&tags=birthday,upbeat&limit=10 -- the next tracks for this listener.
  * Ranking (lib/station/rank.ts) scores the pool from the requested language/tags and this listener's signals from the last 30 days;
  * the clock wheel (lib/station/program.ts) then orders the queue for the listener-local hour (`hour=0-23`, India time if absent).
+ * Optional steering (lib/station/steer.ts): `energy=up|down`, `like=<track id>` ("more like this") and `exclude=<track id>`
+ * re-order the programmed list so the listener's tap shows in the very next tracks.
  * Each track carries a short-lived signed URL. Empty list when the pool or signal table is unavailable.
  */
 import { NextResponse, type NextRequest } from "next/server";
@@ -10,6 +12,7 @@ import { loadPool } from "@/lib/station/pool";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
+import { parseSteer, steerQueue } from "@/lib/station/steer";
 import { rowsToSignals, type SignalRow } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -61,6 +64,8 @@ export async function GET(req: NextRequest) {
   const signals = rowsToSignals(rows);
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
   const slate = rankTracks(pool, signals, { language: lang, wantTags, limit: Math.max(limit * 4, 40) });
+  const { exclude, ...steer } = parseSteer(sp);
+  const steered = Boolean(steer.energy || steer.moreLike);
   // What this listener heard lately, oldest first, so rotation carries across refills and sessions.
   const plays = signals.filter((x) => x.kind === "play").sort((a, b) => b.ageMs - a.ageMs);
   const byId = new Map(pool.map((t) => [t.id, t]));
@@ -69,7 +74,9 @@ export async function GET(req: NextRequest) {
     recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
     languageLocked: !!lang,
   };
-  const ranked = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit, rotation });
+  // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later.
+  const programmed = programQueue(slate, { ...localClock(sp.get("hour")), familiar: familiarIds(signals), limit: steered ? Math.min(limit * 3, 60) : limit, rotation });
+  const ranked = steered || exclude ? steerQueue(programmed, pool, steer, exclude).slice(0, limit) : programmed;
   const tracks = (
     await Promise.all(
       ranked.map(async (r) => {

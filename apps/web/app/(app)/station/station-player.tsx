@@ -31,6 +31,18 @@ function sendSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
   });
 }
 
+type Energy = "up" | "down";
+
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[] } = {}) {
+  const q = new URLSearchParams({ limit: "10" });
+  if (language) q.set("lang", language);
+  if (energy) q.set("energy", energy);
+  if (extra.like) q.set("like", extra.like);
+  if (extra.exclude) q.set("exclude", extra.exclude);
+  if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  return `/api/station/queue?${q}`;
+}
+
 export function StationPlayer() {
   const globalPlayer = usePlayer();
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -45,14 +57,16 @@ export function StationPlayer() {
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [energy, setEnergy] = useState<Energy | null>(null);
+  // Refills read it through a ref so a chip tap never restarts the language effect.
+  const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
   const current = queue[0] ?? null;
 
   const refill = useCallback(async (language: string, wanted: string[]) => {
     setLoading(true);
     try {
-      const qs = `limit=10${language ? `&lang=${language}` : ""}${wanted.length ? `&tags=${wanted.join(",")}` : ""}`;
-      const res = await fetch(`/api/station/queue?${qs}`);
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted }));
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
     } catch {
@@ -126,6 +140,31 @@ export function StationPlayer() {
     errorsInARow.current = 0;
     setFailed(false);
     void refill(lang, moods);
+  }
+
+  // Re-steer the upcoming tracks without touching the one playing, so a tap shows in what plays next.
+  async function steerTail(next: Energy | null, likeId?: string) {
+    if (!current) return;
+    try {
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods }));
+      const data = (await res.json()) as { tracks?: Track[] };
+      if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
+    } catch { /* keep the current queue */ }
+  }
+
+  function chooseEnergy(dir: Energy) {
+    const next = energy === dir ? null : dir;
+    setEnergy(next);
+    energyRef.current = next;
+    setNote(next ? (next === "up" ? "Livelier tracks coming up" : "Calmer tracks coming up") : "Back to the usual mix");
+    void steerTail(next);
+  }
+
+  function moreLikeThis() {
+    if (!current) return;
+    if (!liked.has(current.id)) like();
+    setNote("More like this coming up");
+    void steerTail(energyRef.current, current.id);
   }
 
   function like() {
@@ -254,6 +293,11 @@ export function StationPlayer() {
             <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
             <button type="button" onClick={share} className="rounded border px-3 py-2">Share</button>
             <button type="button" onClick={shareWhatsApp} className="rounded border px-3 py-2">WhatsApp</button>
+          </div>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Steer the station">
+            <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">More like this</button>
+            <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-primary text-primary-foreground" : ""}`}>Calmer</button>
+            <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-primary text-primary-foreground" : ""}`}>Livelier</button>
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
         </div>
