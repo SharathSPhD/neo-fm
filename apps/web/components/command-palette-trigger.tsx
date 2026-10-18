@@ -36,7 +36,7 @@ export function CommandPaletteTrigger() {
       className="hidden h-9 items-center gap-2 rounded-md border border-muted/40 bg-background/50 px-3 text-xs font-medium text-foreground/60 transition hover:border-accent/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
     >
       <span aria-hidden>⌕</span>
-      <span>{t("palette.search")}</span>
+      <span className="hidden xl:inline">{t("palette.search")}</span>
       <kbd className="rounded border border-muted/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-foreground/55">
         {label}
       </kbd>

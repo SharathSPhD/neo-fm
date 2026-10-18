@@ -488,7 +488,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
           {isAd && current.ad ? (
             <div className="flex flex-col gap-2" aria-label="Ad">
-              <p className="flex items-center gap-2 text-xs text-foreground/70">
+              <p className="flex items-center gap-2 text-xs text-foreground/80">
                 <span className="rounded-full border px-2 py-0.5">{current.ad.label}</span>
                 {current.ad.aiMade ? <span className="rounded-full border px-2 py-0.5">AI-made</span> : null}
               </p>
@@ -517,8 +517,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
                   <p className="mt-1 truncate text-xl font-semibold sm:text-2xl">{current.title}</p>
                 </div>
               </div>
-              <p className="text-xs text-foreground/70">
-                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+              <p className="text-xs text-foreground/80">
+                <span className="mr-2 rounded border border-foreground/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}
               </p>
             </>

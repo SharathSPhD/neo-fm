@@ -53,7 +53,7 @@ const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
 ];
 
 const TOP_LINK =
-  "rounded-full px-3.5 py-1.5 text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+  "whitespace-nowrap rounded-full px-3 py-1.5 text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
 const TOP_LINK_ACTIVE = "bg-foreground/10 text-foreground";
 
 export function AppShell({
@@ -82,19 +82,20 @@ async function TopNav({ user }: { user: NavUser }) {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <BrandMark />
-          <nav aria-label="Primary" className="hidden items-center gap-1 text-sm sm:flex">
+          <nav aria-label="Primary" className="hidden items-center gap-0.5 whitespace-nowrap text-sm sm:flex">
             {TOP_NAV_LINKS.map((l) => (
               <NavLink key={l.href} href={l.href} className={TOP_LINK} activeClassName={TOP_LINK_ACTIVE}>
                 {t(l.label)}
               </NavLink>
             ))}
-            <NavLink href="/insights" className={TOP_LINK} activeClassName={TOP_LINK_ACTIVE}>
+            {/* Secondary links wait for room; both stay reachable from the command palette and account menu. */}
+            <NavLink href="/insights" className={`${TOP_LINK} hidden lg:inline-block`} activeClassName={TOP_LINK_ACTIVE}>
               Insights
             </NavLink>
-            <WhatsNewLink className={TOP_LINK} activeClassName={TOP_LINK_ACTIVE} />
+            <WhatsNewLink className={`${TOP_LINK} hidden xl:inline-block`} activeClassName={TOP_LINK_ACTIVE} />
           </nav>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-none items-center gap-2">
           <CommandPaletteTrigger />
           <NotificationBell />
           <Link
