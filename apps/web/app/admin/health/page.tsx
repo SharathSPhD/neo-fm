@@ -118,9 +118,11 @@ export default function HealthPage() {
               ["Sign-ups", String(funnel.signups), pct(funnel.conversion.signup_view_to_signup)],
               ["Made a first song", String(funnel.first_song_users), pct(funnel.conversion.signup_to_first_song)],
               ["Songs shared", String(funnel.songs_shared), ""],
+              ["Songs gifted (dedicated)", String(funnel.songs_gifted), ""],
               ["Shared-song views", String(funnel.views.share_view), ""],
               ["Pricing views", String(funnel.views.pricing_view), ""],
               ["Upgrade clicks (checkout started)", String(funnel.views.checkout_started), pct(funnel.conversion.pricing_view_to_checkout)],
+              ["Paying sign-ups", String(funnel.paid_users), pct(funnel.conversion.signup_to_paid)],
             ]} />
           )}
           <section>

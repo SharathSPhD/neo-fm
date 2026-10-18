@@ -45,12 +45,13 @@ export async function loadHealthSummary(db: SupabaseClient, hours: number, env =
 
 export async function loadFunnel(db: SupabaseClient, days: number): Promise<FunnelSummary & { cohort_truncated: boolean }> {
   const sinceTs = new Date(Date.now() - days * 86_400_000);
-  const [views, cohort, shared] = await Promise.all([
+  const [views, cohort, shared, gifted] = await Promise.all([
     db.from("funnel_daily").select("day,event,n").gte("day", sinceTs.toISOString().slice(0, 10)),
     db.from("users").select("id").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
     db.from("jobs").select("id", { count: "exact", head: true }).in("published_visibility", ["public", "unlisted"]).gte("published_at", sinceTs.toISOString()),
+    db.from("jobs").select("id", { count: "exact", head: true }).not("dedication_to", "is", null).gte("created_at", sinceTs.toISOString()),
   ]);
-  const err = [views, cohort, shared].find((r) => r.error)?.error;
+  const err = [views, cohort, shared, gifted].find((r) => r.error)?.error;
   if (err) throw new OpsQueryError(err.message);
   const ids = (cohort.data ?? []).map((u) => String(u.id));
   let firstSongUsers = 0;
@@ -59,8 +60,14 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
     if (error) throw new OpsQueryError(error.message);
     firstSongUsers = new Set((data ?? []).map((j) => String(j.user_id))).size;
   }
+  let paidUsers = 0;
+  if (ids.length) {
+    const { data, error } = await db.from("user_billing").select("user_id").in("status", ["active", "trialing"]).in("user_id", ids).limit(5000);
+    if (error) throw new OpsQueryError(error.message);
+    paidUsers = new Set((data ?? []).map((b) => String(b.user_id))).size;
+  }
   return {
-    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0 }, days),
+    ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers }, days),
     cohort_truncated: ids.length >= COHORT_CAP,
   };
 }
