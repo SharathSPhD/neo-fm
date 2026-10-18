@@ -8,7 +8,12 @@ export interface SignalInput {
   trackId: string;
   kind: StationSignalKind;
   positionMs: number | null;
+  /** Sets (STATION_SETS=1): the block this track played in and its place in it, so block length is measurable. */
+  setId?: string | null;
+  setIndex?: number | null;
 }
+
+const SET_ID_RE = /^set\d{1,4}$/;
 
 /** Validates an untrusted request body; returns null when it is not a well-formed signal. */
 export function parseSignal(body: unknown): SignalInput | null {
@@ -21,7 +26,9 @@ export function parseSignal(body: unknown): SignalInput | null {
     if (typeof b.positionMs !== "number" || !Number.isFinite(b.positionMs) || b.positionMs < 0) return null;
     positionMs = Math.min(Math.round(b.positionMs), 3_600_000);
   }
-  return { trackId: b.trackId, kind: b.kind as StationSignalKind, positionMs };
+  const setId = typeof b.setId === "string" && SET_ID_RE.test(b.setId) ? b.setId : null;
+  const setIndex = setId && typeof b.setIndex === "number" && Number.isInteger(b.setIndex) && b.setIndex >= 0 && b.setIndex <= 9 ? b.setIndex : null;
+  return { trackId: b.trackId, kind: b.kind as StationSignalKind, positionMs, ...(b.setId !== undefined ? { setId, setIndex } : {}) };
 }
 
 export interface SignalRow {

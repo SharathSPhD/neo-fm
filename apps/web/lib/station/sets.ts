@@ -43,8 +43,10 @@ export interface Arranged { tracks: PoolTrack[]; sets: Map<string, SetInfo> }
  * block changes language so the "no more than three of one language in a row" rule still holds. After each block an
  * instrumental is added when the share stays under the daypart cap and is still under its target. At dawn, none goes
  * next to a devotional block.
+ * `recent` is what this listener just played, oldest first. It seeds the share, because a queue is only ~10 tracks of about
+ * 30 seconds and one fetch alone can never hold an instrumental (150 s) under the cap: without it a listener never gets one.
  */
-export function arrangeSets(vocals: PoolTrack[], instrumentals: PoolTrack[], opts: { hour: number; limit: number; setSize?: number }): Arranged {
+export function arrangeSets(vocals: PoolTrack[], instrumentals: PoolTrack[], opts: { hour: number; limit: number; setSize?: number; recent?: PoolTrack[] }): Arranged {
   const part = daypartOf(opts.hour);
   const policy = instrumentalPolicy(part);
   const size = Math.max(2, opts.setSize ?? SET_SIZE);
@@ -54,6 +56,10 @@ export function arrangeSets(vocals: PoolTrack[], instrumentals: PoolTrack[], opt
   const sets = new Map<string, SetInfo>();
   let total = 0;
   let instrTime = 0;
+  for (const t of opts.recent ?? []) {
+    total += seconds(t);
+    if (isInstrumental(t)) instrTime += seconds(t);
+  }
   let lastLanguage: string | null = null;
   let blockNo = 0;
 

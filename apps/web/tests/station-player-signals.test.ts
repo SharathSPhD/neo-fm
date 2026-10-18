@@ -17,7 +17,7 @@ describe("station listener signals", () => {
     // Signed-in listeners use postSignal; only anonymous visitors get the no-op.
     expect(src).toMatch(/const sendSignal = anonymous \? \(\) => \{\} : postSignal/);
     expect(src).toMatch(/sendSignal\(current\.id, "play"/);
-    expect(src).toMatch(/sendSignal\(current\.id, kind, audioRef\.current\)/); // advance(): skip and finish
+    expect(src).toMatch(/sendSignal\(current\.id, kind, audioRef\.current, current\.set\)/); // advance(): skip and finish
     expect(src).toMatch(/onEnded=\{\(\) => advance\("finish"\)\}/);
     expect(src).toMatch(/advance\("skip"\)/);
     for (const k of ["like", "replay", "share"]) expect(src).toContain(`sendSignal(current.id, "${k}"`);

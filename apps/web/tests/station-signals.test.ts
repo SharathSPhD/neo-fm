@@ -26,3 +26,13 @@ describe("rowsToSignals", () => {
     expect(r).toEqual([{ trackId: id, kind: "like", ageMs: 3_600_000 }]);
   });
 });
+
+describe("parseSignal set fields", () => {
+  const base = { trackId: "123e4567-e89b-42d3-a456-426614174000", kind: "play" };
+  it("accepts a set id and index", () => {
+    expect(parseSignal({ ...base, setId: "set3", setIndex: 2 })).toMatchObject({ setId: "set3", setIndex: 2 });
+  });
+  it("drops a malformed set id and its index instead of rejecting the signal", () => {
+    expect(parseSignal({ ...base, setId: "x; drop", setIndex: 2 })).toMatchObject({ setId: null, setIndex: null });
+  });
+});
