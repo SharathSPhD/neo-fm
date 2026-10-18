@@ -60,6 +60,13 @@ export const HOST_MODELS = { draft: "claude-haiku-5-5", plan: "claude-haiku-5-5"
 
 const POET = `You write exactly ONE candidate song lyric for the brief you are given, in the target language and native script, honouring the form. Reply with only the lyric text: section tags on their own lines, no commentary, no translation, no markdown. ${SAFETY}`;
 
+/** Everything the poet is told before the engine's own prompt: language, length, taste card and (flag on) the intent block. */
+export function poetPrefix(b: { language: string; styleFamily: string; targetSeconds: number; tasteCard?: string }, lines: number, iBlock: string): string {
+  return `Language: ${b.language}. Style family: ${b.styleFamily}. Length: about ${lines} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words; section it for singing (e.g. pallavi/anupallavi/charanam, mukhda/antara, verse/chorus). Do not write more than that.\n${b.tasteCard ? `${b.tasteCard}\n` : ""}${iBlock}`;
+}
+
+export { POET, stripFences };
+
 /** First JSON object in a model reply (models wrap JSON in fences or prose). */
 export function extractJson<T>(text: string): T | null {
   const start = text.indexOf("{");
@@ -105,7 +112,7 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
   const gens = { draft: [] as string[], revision: [] as string[] };
   const write = (prompts: string[]) => Promise.all(prompts.map((p) => d.complete({
     model: HOST_MODELS.draft, system: POET, maxTokens: 1500,
-    prompt: `Language: ${b.language}. Style family: ${b.styleFamily}. Length: about ${lines} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words; section it for singing (e.g. pallavi/anupallavi/charanam, mukhda/antara, verse/chorus). Do not write more than that.\n${b.tasteCard ? `${b.tasteCard}\n` : ""}${iBlock}\n${p}`,
+    prompt: `${poetPrefix(b, lines, iBlock)}\n${p}`,
   }).then(stripFences)));
   let reply: CascadeReply = await d.cascade({ brief, generations: gens, engine: b.engine });
   for (let round = 0; reply.status === "needs" && round < 3; round++) {
