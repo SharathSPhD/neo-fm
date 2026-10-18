@@ -45,4 +45,20 @@ describe("funnel", () => {
     const f = buildFunnel([], { signups: 0, firstSongUsers: 0, shared: 0, gifted: 0, paidUsers: 0 }, 7);
     expect(f.conversion.signup_to_first_song).toBeNull();
   });
+
+  it("counts launch-funnel events and sign-ups per day", () => {
+    for (const e of ["station_play_anon", "station_play_user", "nudge_shown", "nudge_clicked", "onboarding_done", "listened_3", "station_share", "whatsapp_click"]) {
+      expect(isFunnelEvent(e)).toBe(true);
+    }
+    const f = buildFunnel(
+      [
+        { day: "2026-11-05", event: "station_play_anon", n: 30 }, { day: "2026-11-05", event: "nudge_shown", n: 9 },
+        { day: "2026-11-06", event: "station_play_anon", n: 12 }, { day: "2026-11-06", event: "nudge_clicked", n: 3 },
+      ],
+      { signups: 3, firstSongUsers: 0, shared: 0, gifted: 0, paidUsers: 0, signupDays: ["2026-11-05", "2026-11-06", "2026-11-06"] }, 7,
+    );
+    expect(f.views).toMatchObject({ station_play_anon: 42, nudge_shown: 9, nudge_clicked: 3, whatsapp_click: 0 });
+    expect(f.signups_by_day).toEqual({ "2026-11-05": 1, "2026-11-06": 2 });
+    expect(f.by_day["2026-11-06"]).toEqual({ station_play_anon: 12, nudge_clicked: 3 });
+  });
 });

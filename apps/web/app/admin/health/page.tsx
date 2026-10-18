@@ -125,6 +125,7 @@ export default function HealthPage() {
               ["Paying sign-ups", String(funnel.paid_users), pct(funnel.conversion.signup_to_paid)],
             ]} />
           )}
+          {funnel && <LaunchFunnel funnel={funnel} />}
           <section>
             <div className="mb-2 flex items-center gap-3">
               <h2 className="font-medium">Trends</h2>
@@ -207,5 +208,35 @@ function Spark({ title, unit, values }: { title: string; unit: string; values: (
         <path d={path} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
       </svg>
     </div>
+  );
+}
+
+const LAUNCH_COLUMNS: { label: string; event?: keyof FunnelSummary["views"] }[] = [
+  { label: "Home views", event: "landing_view" },
+  { label: "Plays (anon)", event: "station_play_anon" },
+  { label: "Plays (signed in)", event: "station_play_user" },
+  { label: "3+ tracks", event: "listened_3" },
+  { label: "Nudge shown", event: "nudge_shown" },
+  { label: "Nudge clicked", event: "nudge_clicked" },
+  { label: "Sign-ups" },
+  { label: "Onboarded", event: "onboarding_done" },
+  { label: "Shares", event: "station_share" },
+  { label: "WhatsApp", event: "whatsapp_click" },
+];
+
+/** Launch funnel: one row per UTC day, newest first. Counters are anonymous per-day counts; sign-ups come from the users table. */
+function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
+  const days = [...new Set([...Object.keys(funnel.by_day), ...Object.keys(funnel.signups_by_day)])].sort().reverse();
+  const cell = (day: string, c: (typeof LAUNCH_COLUMNS)[number]) =>
+    String(c.event ? (funnel.by_day[day]?.[c.event] ?? 0) : (funnel.signups_by_day[day] ?? 0));
+  return (
+    <Table
+      title={`Launch funnel by day (${funnel.window_days}d)`}
+      head={["Day (UTC)", ...LAUNCH_COLUMNS.map((c) => c.label)]}
+      rows={[
+        ["Total", ...LAUNCH_COLUMNS.map((c) => String(c.event ? funnel.views[c.event] : funnel.signups))],
+        ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
+      ]}
+    />
   );
 }
