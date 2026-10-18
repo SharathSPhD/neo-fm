@@ -1,5 +1,5 @@
 /**
- * Station ranking v0: tag rules plus the listener's own recent signals. No ML, no embeddings, and no claim of
+ * Station ranking v1: tag rules plus the listener's own recent signals, an exploration bonus for unheard tracks, and per-language finish ratio and mix. No ML, no embeddings, and no claim of
  * personalisation beyond what is scored here: a track gains for tags and languages the listener liked or
  * finished, loses for ones they skipped, and is pushed down after it was just heard.
  */
@@ -31,6 +31,11 @@ export interface RankOptions {
 const HALF_LIFE_MS = 14 * 86_400_000;
 const WEIGHT: Record<StationSignalKind, number> = { like: 3, share: 2, replay: 2, finish: 1, play: 0, skip: -2 };
 const RECENT_PLAY_MS = 6 * 3_600_000;
+/** A track the listener has no signal on at all gets a nudge, so the station keeps exploring instead of replaying favourites. */
+const EXPLORE_BONUS = 1.5;
+/** Finish ratio only counts once a language has this many plays; below that it is noise. */
+const MIN_PLAYS_FOR_RATIO = 3;
+const MIN_ENGAGED_FOR_MIX = 5;
 
 const decay = (ageMs: number) => Math.pow(0.5, Math.max(0, ageMs) / HALF_LIFE_MS);
 
@@ -55,6 +60,29 @@ export function rankTracks(pool: PoolTrack[], signals: StationSignal[], opts: Ra
     if (s.kind === "skip") trackAdj.set(t.id, (trackAdj.get(t.id) ?? 0) - 2 * decay(s.ageMs));
   }
 
+  // Per-language engagement: the share of the listener's plays/finishes that went to each language (the mix), and how
+  // often they finish what they start there (smoothed so one early finish does not swing it).
+  const plays = new Map<string, number>();
+  const finishes = new Map<string, number>();
+  const touched = new Set<string>();
+  let engaged = 0;
+  for (const s of signals) {
+    touched.add(s.trackId);
+    const t = byId.get(s.trackId);
+    if (!t) continue;
+    if (s.kind === "play") plays.set(t.language, (plays.get(t.language) ?? 0) + 1);
+    if (s.kind === "finish") finishes.set(t.language, (finishes.get(t.language) ?? 0) + 1);
+    if (s.kind === "play" || s.kind === "finish") engaged += 1;
+  }
+  const langScore = (lang: string) => {
+    const p = plays.get(lang) ?? 0;
+    const f = finishes.get(lang) ?? 0;
+    // The mix only means something once there is some history; scale it in so a first play does not dominate.
+    const share = engaged > 0 ? ((p + f) / engaged) * Math.min(1, engaged / MIN_ENGAGED_FOR_MIX) : 0;
+    const ratio = p >= MIN_PLAYS_FOR_RATIO ? (f + 1) / (p + 2) - 0.5 : 0;
+    return 1.5 * share + 2 * ratio;
+  };
+
   let candidates = pool;
   if (language && pool.some((t) => t.language === language)) candidates = pool.filter((t) => t.language === language);
 
@@ -67,6 +95,8 @@ export function rankTracks(pool: PoolTrack[], signals: StationSignal[], opts: Ra
     }
     score += 0.5 * (langAffinity.get(t.language) ?? 0);
     score += trackAdj.get(t.id) ?? 0;
+    score += langScore(t.language);
+    if (!touched.has(t.id)) score += EXPLORE_BONUS;
     const heard = lastHeard.get(t.id);
     if (heard !== undefined && heard < RECENT_PLAY_MS) score -= 10 * (1 - heard / RECENT_PLAY_MS);
     return { t, score: score + random() * 0.5 };

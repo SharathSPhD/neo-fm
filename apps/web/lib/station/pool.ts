@@ -6,6 +6,7 @@
  */
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
+import { ttlCache } from "./cache";
 import type { PoolTrack } from "./rank";
 
 export interface PoolRow {
@@ -54,7 +55,7 @@ export function rowToTrack(r: PoolRow): StationTrack {
   };
 }
 
-export async function loadPool(): Promise<StationTrack[]> {
+async function readPool(): Promise<StationTrack[]> {
   try {
     const { data, error } = await (
       createServiceRoleClient().from as unknown as (t: string) => {
@@ -69,6 +70,9 @@ export async function loadPool(): Promise<StationTrack[]> {
     return [];
   }
 }
+
+/** The pool changes only when admin ingest runs, so a minute of staleness per instance is harmless and saves a read per queue call. */
+export const loadPool = ttlCache(readPool, 60_000);
 
 /** One admitted track by id for the public share page; null when missing, not admitted, or on any read failure. */
 export async function loadPoolTrack(id: string): Promise<StationTrack | null> {
