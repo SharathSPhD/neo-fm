@@ -22,6 +22,10 @@ interface Track {
   url: string;
   /** Templated host line from the queue API; shown as text on some track changes. */
   host?: string;
+  durationSeconds?: number;
+  /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
+  type?: "ad";
+  ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean };
 }
 
 type Kind = "play" | "like" | "skip" | "replay" | "share" | "finish";
@@ -57,18 +61,36 @@ function postSignal(trackId: string, kind: Kind, audio: HTMLAudioElement | null)
   });
 }
 
+type AdEventKind = "start" | "complete" | "tap";
+
+/** House-ad log. Never a taste signal; the server ignores it entirely unless ADS_ENABLED=1. */
+function postAdEvent(slotId: string, event: AdEventKind) {
+  void fetch("/api/station/ad-event", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({ slotId, event }),
+  }).catch(() => undefined);
+}
+
+/** A card-only spot (no audio) holds the screen this long, then the station carries on. */
+const AD_CARD_MS = 6_000;
+/** Ad seconds are counted over this window for the server's cap. */
+const AD_WINDOW_MS = 600_000;
+
 /** Visitors hear this many tracks before the sign-up nudge appears; playback never stops for it. */
 const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; station?: string } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string } = {}) {
   const q = new URLSearchParams({ limit: "10" });
   if (language) q.set("lang", language);
   if (energy) q.set("energy", energy);
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  for (const [k, v] of Object.entries(extra.ads ?? {})) q.set(k, v);
   if (extra.station) q.set("station", extra.station);
   // The server programs by the listener's own clock; fall back silently if the browser will not say.
   try {
@@ -105,14 +127,28 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
   const tracksStarted = useRef(0);
+  // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
+  const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
+  const currentId = useRef<string | null>(null);
   const [hostLine, setHostLine] = useState<string | null>(null);
   const current = queue[0] ?? null;
+
+  const adParams = useCallback((): Record<string, string> => {
+    const a = adSession.current;
+    const now = Date.now();
+    const out: Record<string, string> = { played: String(a.played) };
+    if (a.lastAdAt !== null) { out.since = String(a.since); out.adAge = String(Math.round((now - a.lastAdAt) / 1000)); }
+    const sec = a.spots.filter((x) => now - x.at < AD_WINDOW_MS).reduce((n, x) => n + x.sec, 0);
+    if (sec) out.adSec = String(sec);
+    if (a.seen.length) out.seen = a.seen.join(",");
+    return out;
+  }, []);
 
   const refill = useCallback(async (language: string, wanted: string[], stationSlug: string) => {
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: adParams() }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -123,7 +159,7 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
       setQueueError(true);
     }
     setLoading(false);
-  }, []);
+  }, [adParams]);
 
   useEffect(() => {
     const saved = loadPrefs();
@@ -143,6 +179,34 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   useEffect(() => {
     if (!current || !audioRef.current) return;
     globalPlayer.close();
+    currentId.current = current.id;
+    if (current.type === "ad" && current.ad) {
+      // A card-only spot leaves ~6 s of silence, which can stall background audio on a locked phone: drop it when hidden.
+      if (!current.url && typeof document !== "undefined" && document.hidden) { controls.current.skip(); return; }
+      // A break: labelled, skippable, no taste signal, no host line. Card-only spots just hold the card for a few seconds.
+      const a = adSession.current;
+      a.since = 0;
+      a.lastAdAt = Date.now();
+      a.seen.push(current.ad.slotId);
+      a.spots.push({ at: a.lastAdAt, sec: current.durationSeconds ?? AD_CARD_MS / 1000 });
+      setHostLine(null);
+      setBlocked(false);
+      postAdEvent(current.ad.slotId, "start");
+      if (current.url) {
+        audioRef.current.src = current.url;
+        void audioRef.current.play().catch(() => setBlocked(true));
+      } else {
+        const id = current.id;
+        const t = setTimeout(() => { if (currentId.current === id) controls.current.finish(); }, AD_CARD_MS);
+        // Locking the phone mid-card: end the spot now so the next track starts while the page can still play.
+        const onHide = () => { if (document.hidden && currentId.current === id) controls.current.finish(); };
+        document.addEventListener("visibilitychange", onHide);
+        return () => { clearTimeout(t); document.removeEventListener("visibilitychange", onHide); };
+      }
+      return;
+    }
+    adSession.current.played += 1;
+    adSession.current.since += 1;
     audioRef.current.src = current.url;
     // A host line on the first track and then every third, so the station has a voice without chattering.
     const showHost = tracksStarted.current % HOST_EVERY === 0 && !!current.host;
@@ -157,12 +221,16 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   // Anonymous counters only (see /api/events): the third finished or skipped track, and the nudge appearing.
   useEffect(() => { if (played === NUDGE_AFTER) sendFunnelEvent("listened_3", { once: true }); }, [played]);
   const nudging = anonymous && played >= NUDGE_AFTER;
+  const isAd = current?.type === "ad";
   useEffect(() => { if (nudging) sendFunnelEvent("nudge_shown", { once: true }); }, [nudging]);
 
   function advance(kind: "skip" | "finish" | "error") {
     if (!current) return;
-    if (kind !== "error") setPlayed((n) => n + 1);
-    if (kind !== "error") sendSignal(current.id, kind, audioRef.current);
+    const isAd = current.type === "ad";
+    if (isAd && kind === "finish" && current.ad) postAdEvent(current.ad.slotId, "complete");
+    // Ads are not listening taste: no signal, and skipping one is not a track skip.
+    if (kind !== "error" && !isAd) setPlayed((n) => n + 1);
+    if (kind !== "error" && !isAd) sendSignal(current.id, kind, audioRef.current);
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
       void refill(lang, moods, station);
@@ -172,6 +240,8 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   }
 
   function onTrackError() {
+    // A spot that will not load is dropped quietly; it is not a station audio failure.
+    if (current?.type === "ad") { advance("skip"); return; }
     reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
@@ -188,8 +258,9 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   }, [hostLine]);
 
   // Lock-screen and headset controls; handlers read the latest closure through a ref so they never go stale.
-  const controls = useRef({ skip: () => {} });
+  const controls = useRef({ skip: () => {}, finish: () => {} });
   controls.current.skip = () => advance("skip");
+  controls.current.finish = () => advance("finish");
   useEffect(() => {
     if (!current) return;
     setMediaMetadata({ title: current.title, artist: "neo-fm Station" });
@@ -215,7 +286,7 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station }));
+      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station, ads: adParams() }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -380,18 +451,41 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
       {current ? (
         <div className="flex flex-col gap-3 rounded-lg border p-4">
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
-          <p className="text-lg font-medium">{current.title}</p>
-          <p className="text-xs text-foreground/70">{languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}</p>
+          {isAd && current.ad ? (
+            <div className="flex flex-col gap-2" aria-label="Ad">
+              <p className="flex items-center gap-2 text-xs text-foreground/70">
+                <span className="rounded-full border px-2 py-0.5">{current.ad.label}</span>
+                {current.ad.aiMade ? <span className="rounded-full border px-2 py-0.5">AI-made</span> : null}
+              </p>
+              <p className="text-lg font-medium">{current.ad.headline}</p>
+              {current.ad.ctaUrl && current.ad.ctaLabel ? (
+                <a
+                  href={current.ad.ctaUrl}
+                  target={current.ad.ctaUrl.startsWith("/") ? undefined : "_blank"}
+                  rel="noopener noreferrer sponsored"
+                  onClick={() => postAdEvent(current.ad!.slotId, "tap")}
+                  className="self-start rounded bg-accent px-3 py-2 text-background"
+                >
+                  {current.ad.ctaLabel}
+                </a>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <p className="text-lg font-medium">{current.title}</p>
+              <p className="text-xs text-foreground/70">{languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}</p>
+            </>
+          )}
           <audio
             ref={audioRef}
-            controls
-            className="w-full"
+            controls={!isAd}
+            className={isAd ? "hidden" : "w-full"}
             onEnded={() => advance("finish")}
             onPlaying={() => { errorsInARow.current = 0; setBlocked(false); setMediaPlaybackState(true); }}
             onPause={() => setMediaPlaybackState(false)}
             onError={onTrackError}
           />
-          {queue[1] ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
+          {queue[1]?.url ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
             <button type="button" onClick={() => void audioRef.current?.play()} className="rounded bg-accent px-3 py-2 text-background">
               {t("station.tapToPlay")}
@@ -402,6 +496,11 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
               {t("station.failed")} <button type="button" onClick={retry} className="underline">{t("station.retry")}</button>
             </p>
           ) : null}
+          {isAd ? (
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => advance("skip")} className="rounded border px-3 py-2">Skip</button>
+            </div>
+          ) : (
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={like} aria-pressed={liked.has(current.id)} className="rounded border px-3 py-2">
               {liked.has(current.id) ? t("station.liked") : t("station.like")}
@@ -411,7 +510,8 @@ export function StationPlayer({ anonymous = false, initialStation = "" }: { anon
             <button type="button" onClick={share} className="rounded border px-3 py-2">{t("station.share")}</button>
             <button type="button" onClick={shareWhatsApp} className="rounded bg-[#25D366] px-3 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
-          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")}>
+          )}
+          <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd}>
             <button type="button" onClick={moreLikeThis} className="rounded-full border px-3 py-1 text-sm">{t("station.steer.more")}</button>
             <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className={`rounded-full border px-3 py-1 text-sm ${energy === "down" ? "bg-accent text-background" : ""}`}>{t("station.steer.calmer")}</button>
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className={`rounded-full border px-3 py-1 text-sm ${energy === "up" ? "bg-accent text-background" : ""}`}>{t("station.steer.livelier")}</button>
