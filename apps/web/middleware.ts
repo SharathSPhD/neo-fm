@@ -63,6 +63,8 @@ export async function middleware(request: NextRequest) {
   const nonce = newNonce();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  // Lets server layouts (the signed-out redirect) know which page was asked for, query string included.
+  requestHeaders.set("x-pathname", pathname + request.nextUrl.search);
   requestHeaders.set(
     "content-security-policy-report-only",
     strictCsp({ supabaseHost: sbHost, isEmbed: isEmbedPath(pathname), nonce }),
