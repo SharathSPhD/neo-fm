@@ -13,10 +13,17 @@ export const NOTIFICATION_TYPES = [
   "collection_add",
   "dedication",
   "takedown",
+  "station_nudge",
 ] as const;
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 
 /** Types that carry failure or safety information: in-app delivery can't be switched off. */
+/**
+ * Types with no row in `notifications` (its type check predates them): delivered by their own job, push only,
+ * so the bell and notify_user() never see them.
+ */
+export const PUSH_ONLY_TYPES: readonly NotificationType[] = ["station_nudge"];
+
 export const MANDATORY_TYPES: readonly NotificationType[] = ["takedown", "song_failed"];
 
 /** Defaults when a user has not chosen: everything in-app; push only for the personal, low-volume types. */
@@ -28,6 +35,8 @@ export const DEFAULT_PUSH: Record<NotificationType, boolean> = {
   collection_add: false,
   dedication: false,
   takedown: true,
+  // Opt-in: a daily nudge is never on by default.
+  station_nudge: false,
 };
 
 export interface TypePref {
@@ -49,6 +58,9 @@ export function resolvePrefs(raw: unknown): ResolvedPrefs {
   return out;
 }
 
+/** Prefs key holding the UTC date (YYYY-MM-DD) of the last station nudge sent to this user. */
+export const NUDGE_LAST_KEY = "station_nudge_last";
+
 const TypePrefPatch = z.object({ in_app: z.boolean().optional(), push: z.boolean().optional() }).strict();
 
 /** Partial update: only known types, only the two switches. */
@@ -58,11 +70,15 @@ export const PrefsPatchSchema = z
 export type PrefsPatch = z.infer<typeof PrefsPatchSchema>;
 
 /** Applies a patch to stored prefs, returning the sparse object to store. Mandatory types stay in-app. */
-export function applyPrefsPatch(stored: unknown, patch: PrefsPatch): Record<string, TypePref> {
-  const merged = resolvePrefs(stored);
+export function applyPrefsPatch(stored: unknown, patch: PrefsPatch): ResolvedPrefs & { [NUDGE_LAST_KEY]?: string } {
+  const merged: ResolvedPrefs & { [NUDGE_LAST_KEY]?: string } = resolvePrefs(stored);
+  // The nudge job's own bookkeeping lives beside the switches; a user's toggle must not erase it.
+  const last = (stored as Record<string, unknown> | null | undefined)?.[NUDGE_LAST_KEY];
+  if (typeof last === "string") merged[NUDGE_LAST_KEY] = last;
   for (const [t, p] of Object.entries(patch) as [NotificationType, Partial<TypePref>][]) {
-    if (p.in_app !== undefined && !MANDATORY_TYPES.includes(t)) merged[t].in_app = p.in_app;
-    if (p.push !== undefined) merged[t].push = p.push;
+    const cur = merged[t];
+    if (p.in_app !== undefined && !MANDATORY_TYPES.includes(t)) cur.in_app = p.in_app;
+    if (p.push !== undefined) cur.push = p.push;
   }
   return merged;
 }
@@ -125,6 +141,8 @@ export function renderNotification(n: Pick<NotificationRow, "type" | "data" | "c
       };
     case "dedication":
       return { title: `A song was dedicated to you`, body: title ? quote(title) : undefined, href: str(d.public_id) ? `/s/${str(d.public_id)}` : "/library" };
+    case "station_nudge":
+      return { title: "Your station is ready", body: "Tune in: fresh tracks picked for you.", href: "/station" };
     case "takedown":
       return {
         title: `${quote(title)} was removed from public view`,
