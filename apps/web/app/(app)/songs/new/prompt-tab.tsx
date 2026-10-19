@@ -7,6 +7,7 @@ import { useEffect, useState, useTransition } from "react";
 import { EXAMPLE_IDEAS } from "@/lib/first-run/examples";
 import { isUiLang, type UiKey } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { policyErrorMessage } from "@/lib/safety/client-message";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 import { duetHeld, type VoiceChoice } from "@/lib/voice";
@@ -154,6 +155,11 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
       setError(
         reason === "storage_bytes" ? t("prompt.errStorage") : t("prompt.errQuota"),
       );
+      return;
+    }
+    const policy = await policyErrorMessage(res, t);
+    if (policy) {
+      setError(policy);
       return;
     }
     if (!res.ok) {

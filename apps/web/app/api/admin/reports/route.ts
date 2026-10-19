@@ -6,15 +6,16 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
-import { listQueue } from "../../../../lib/moderation/reports";
+import { listPoolQueue, listQueue } from "../../../../lib/moderation/reports";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   if (!checkAdminBearer(req.headers.get("authorization")).ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
-    const items = await listQueue(serviceClient());
-    return NextResponse.json({ open_songs: items.length, items });
+    const db = serviceClient();
+    const [items, pool_items] = await Promise.all([listQueue(db), listPoolQueue(db)]);
+    return NextResponse.json({ open_songs: items.length, items, open_pool_tracks: pool_items.length, pool_items });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "queue_failed" }, { status: 500 });
   }

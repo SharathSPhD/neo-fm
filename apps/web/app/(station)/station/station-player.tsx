@@ -8,6 +8,7 @@ import { useAmbientTint } from "@/components/use-ambient-tint";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NAMED_STATIONS } from "@/lib/station/named";
 import { usePlayer } from "@/components/player/player-provider";
+import { ReportButton } from "@/components/report-button";
 import { expansionLanguage } from "@/lib/languages/registry";
 import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
@@ -647,6 +648,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             <button type="button" onClick={shareWhatsApp} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
           </div>
           )}
+          {!isAd && !isVoice ? <ReportButton key={current.id} trackId={current.id} compact /> : null}
           <div className="flex flex-wrap gap-2" role="group" aria-label={t("station.steer.label")} hidden={isAd || isVoice}>
             <button type="button" onClick={moreLikeThis} className="chip">{t("station.steer.more")}</button>
             <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className="chip">{t("station.steer.calmer")}</button>

@@ -29,6 +29,13 @@ describe("screenText", () => {
     blocked("erotic song about a 15-year-old", "sexual_minors");
     blocked("a schoolgirl and a sensual dance", "sexual_minors");
   });
+  it("blocks explicit sexual content but not romance, longing or sensual imagery", () => {
+    blocked("write a porn song with graphic sexual lyrics", "explicit_sexual");
+    blocked("explicit sex scene set to a slow beat", "explicit_sexual");
+    ok("A slow romantic ghazal about desire and the night we first met");
+    ok("Sensual monsoon song, wet saris and longing glances, folk style");
+    ok("A wedding night song with shy laughter and bangles");
+  });
   it("blocks real-person likeness and election persuasion but not dedications, satire or issue songs", () => {
     blocked("a deepfake of the prime minister singing", "real_person_likeness");
     blocked("campaign jingle for our party's rally", "election_persuasion");

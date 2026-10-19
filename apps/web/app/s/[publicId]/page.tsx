@@ -15,7 +15,7 @@
  *
  * Robots: `unlisted` -> noindex, `public` -> index.
  */
-import { ReportButton } from "./report-button";
+import { ReportButton } from "@/components/report-button";
 import { serverI18n } from "@/lib/i18n/server";
 import { translate } from "@/lib/i18n/ui-strings";
 import { FunnelBeacon } from "@/components/funnel-beacon";
