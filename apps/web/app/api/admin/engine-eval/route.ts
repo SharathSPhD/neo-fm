@@ -68,6 +68,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const db = serviceClient(); const client = anthropicClient();
   const set = q.get("set") ?? "both";
   const n = Math.max(1, Math.min(30, Number(q.get("n") ?? 15)));
+  const from = Math.max(0, Number(q.get("from") ?? 0)); // styled/named sets: start offset, so a long set runs in chunks under the function timeout
   const retry = q.get("retry") === "1";
   const styles = q.get("styles") === "1"; // with poets=1: the candidate arm gets the PCE_STYLES note instead of the intent block
   const poets = q.get("poets") === "1" || styles;
@@ -93,10 +94,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
   }
   if (set === "styled") {
-    for (const sb of STYLED_BRIEFS.slice(0, n)) cases.push({ set: "occasion", id: sb.id, language: sb.language, style: sb.style, brief: sb.text, draft: "", baseline: "" });
+    for (const sb of STYLED_BRIEFS.slice(from, from + n)) cases.push({ set: "occasion", id: sb.id, language: sb.language, style: sb.style, brief: sb.text, draft: "", baseline: "" });
   }
   if (set === "named" || (poets && set === "both")) {
-    for (const nb of NAMED.slice(0, n)) cases.push({ set: "occasion", id: nb.id, language: nb.language, style: nb.style, brief: nb.text, draft: "", baseline: "" });
+    for (const nb of NAMED.slice(from, from + n)) cases.push({ set: "occasion", id: nb.id, language: nb.language, style: nb.style, brief: nb.text, draft: "", baseline: "" });
   }
   if (cases.length === 0) return NextResponse.json({ error: "no stored drafts for this set" }, { status: 409 });
 
