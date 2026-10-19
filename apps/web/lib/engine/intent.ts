@@ -126,13 +126,15 @@ export function intentBlock(i: IntentSpec): string {
 }
 
 /** English fragment appended to the Lyria style prompt for the routed genre, raga/tala and requested instruments. */
+const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1);
+
 export function lyriaFragment(i: IntentSpec, env: Readonly<Record<string, string | undefined>> = process.env): string {
   // Raga and tala words in the Lyria prompt can trigger wordless alap even in a sung track (lab R5), so they have their own flag (PCE_RAGA_PROMPT=1) to A/B against raga-only-in-the-tag.
   const ragaWords = env.PCE_RAGA_PROMPT === "1";
   const g = genreById(i.genre);
   return [
     g?.lyria ?? "",
-    ragaWords && i.raga ? `Raga ${i.raga}.` : "",
+    ragaWords && i.raga ? `Raga ${cap(i.raga)}.` : "",
     ragaWords && i.tala ? `Tala ${i.tala}.` : "",
     i.instruments.length ? `Featured instruments: ${i.instruments.join(", ")}.` : "",
     // Raga/folk/devotional styles are always sung (lab R5), so an "instrumental" ask there is not forwarded to Lyria.
@@ -147,7 +149,7 @@ export const RAGA_CUES: Readonly<Record<string, string>> = {
   mohanam: "pentatonic, bright and joyful", malkauns: "late-night raga, deep, pentatonic, introspective", darbari: "late-night raga, majestic, heavy and slow",
   todi: "morning raga, intense, longing", shankarabharanam: "major scale, majestic and bright", hamsadhwani: "pentatonic, bright, auspicious",
   kharaharapriya: "tender, minor-sounding", mayamalavagowla: "dawn raga, devotional, flat second and sixth", desh: "monsoon raga, romantic, light",
-  bageshree: "late-night raga, longing and tender",
+  bageshree: "late-night raga, longing and tender", bhoop: "pentatonic, bright and joyful", bhup: "pentatonic, bright and joyful", malhar: "monsoon raga, rain and longing",
 };
 const RAGA_RE = /(?:\b(?:raag|raga|ragam)\s+([a-z]{3,20})\b)|(?:\b([a-z]{3,20})\s+(?:raag|raga|ragam)\b)/i;
 

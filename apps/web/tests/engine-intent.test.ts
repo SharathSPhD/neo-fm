@@ -184,13 +184,14 @@ describe("styleOnly (PCE_STYLES)", () => {
   it("detects a named raga; the raga words reach Lyria only with PCE_RAGA_PROMPT=1", () => {
     expect(ragaIn("sing it in raga Bhairavi please")).toBe("bhairavi");
     expect(ragaIn("Yaman raga at dusk")).toBe("yaman");
+    expect(ragaIn("Malhar raga for the rain")).toBe("malhar");
     expect(ragaIn("a raga for the rain")).toBeUndefined();
     expect(ragaIn("the constructor raga")).toBeUndefined();
     const off = styleOnly(ctx("an evening in raga Yaman", "hi"), {});
     expect(off?.raga).toBe("yaman");
-    expect(off?.fragment ?? "").not.toMatch(/Raga yaman|serene/);
+    expect(off?.fragment ?? "").not.toMatch(/Raga Yaman|serene/);
     const on = styleOnly(ctx("an evening in raga Yaman", "hi"), { PCE_RAGA_PROMPT: "1" });
-    expect(on?.fragment).toContain("Raga yaman.");
+    expect(on?.fragment).toContain("Raga Yaman.");
     expect(on?.fragment).toContain(RAGA_CUES.yaman!);
   });
   it("raga styles stay vocal: an instrumental hint is never forwarded", () => {
