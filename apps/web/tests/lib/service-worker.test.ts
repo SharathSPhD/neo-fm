@@ -15,4 +15,11 @@ describe("service worker privacy", () => {
     expect(sw).toContain('url.pathname.startsWith("/api/")');
     expect(sw).toContain("isSupabaseStorage");
   });
+  it("leaves media and cross-origin requests to the browser (R2 pool audio failed through respondWith)", () => {
+    expect(sw).toMatch(/req\.destination === "audio"/);
+    expect(sw).toMatch(/req\.headers\.has\("range"\)/);
+    expect(sw).toMatch(/url\.origin !== self\.location\.origin/);
+    // The bypass must come before every respondWith.
+    expect(sw.indexOf('req.destination === "audio"')).toBeLessThan(sw.indexOf("event.respondWith"));
+  });
 });
