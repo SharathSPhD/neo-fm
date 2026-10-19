@@ -8,6 +8,7 @@
  */
 import raw from "./voice-lines.json";
 import { daypartOf, type Daypart } from "./program";
+import { poolCdnUrl } from "./cdn";
 
 export type VoiceKind = "host-link" | "ident-daypart" | "time-check" | "ident-station";
 
@@ -29,6 +30,14 @@ export const VOICE_CAPS = { firstAfterTracks: 2, everyTracks: 3, seenWindow: 30 
 
 export function voiceLinksEnabled(): boolean {
   return process.env.STATION_VOICE_LINKS === "1";
+}
+
+/**
+ * Serve the spoken files from the R2 CDN (key `voice/<id>.mp3`, filled by POST /api/admin/voice-mirror) instead of the app's
+ * own /voice static files. Needs POOL_CDN_BASE too; the static path stays on the item as the fallback.
+ */
+export function voiceCdnEnabled(): boolean {
+  return process.env.STATION_VOICE_CDN === "1";
 }
 
 /**
@@ -152,10 +161,14 @@ export interface VoiceItem {
   tags: string[];
   durationSeconds: number;
   url: string;
+  /** Static copy the player retries once when the CDN copy fails; absent when `url` already is the static copy. */
+  fallbackUrl?: string;
   voice: { lineId: string; kind: VoiceKind; text: string; aiMade: true; hour: number | null; fadeInMs: number };
 }
 
-export function voiceItem(line: VoiceLine, nonce: string): VoiceItem {
+export function voiceItem(line: VoiceLine, nonce: string, cdnBase = voiceCdnEnabled() ? process.env.POOL_CDN_BASE : undefined): VoiceItem {
+  const staticUrl = `/voice/${line.id}.mp3`;
+  const cdn = cdnBase ? poolCdnUrl(`voice/${line.id}.mp3`, cdnBase) : null;
   return {
     id: `voice:${line.id}:${nonce}`,
     type: "voice",
@@ -163,7 +176,8 @@ export function voiceItem(line: VoiceLine, nonce: string): VoiceItem {
     language: line.lang,
     tags: [],
     durationSeconds: line.seconds,
-    url: `/voice/${line.id}.mp3`,
+    url: cdn ?? staticUrl,
+    ...(cdn ? { fallbackUrl: staticUrl } : {}),
     voice: { lineId: line.id, kind: line.kind, text: line.text, aiMade: true, hour: line.hour ?? null, fadeInMs: 250 },
   };
 }
