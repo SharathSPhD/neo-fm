@@ -68,7 +68,7 @@ export const te: Dict = {
   "nav.signIn": "సైన్ ఇన్",
   "nav.getStarted": "ప్రారంభించండి",
   "nav.newSong": "కొత్త పాట",
-  "nav.create": "తయారు చేయి",
+  "nav.create": "సృష్టించండి",
   "nav.account": "ఖాతా",
   "menu.setHandle": "మీ హ్యాండిల్ సెట్ చేయండి",
   "menu.profile": "నా ప్రొఫైల్",
