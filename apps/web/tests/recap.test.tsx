@@ -84,8 +84,10 @@ describe("recap story render", () => {
     songs: [song("a", { title: "बरसात की रात", moods: ["calm", "joyful"] }), song("b", { language: "kn" }), song("c", { language: "ta" })],
     likes: { a: 12 }, listeners: { a: 140, b: 3 }, collectionsCreated: 2, songsCollected: 4,
   });
+  // Each render rasterises a PNG with fonts (3-4 s alone); under a parallel full-suite run it exceeds vitest's 5 s default.
+  const RENDER_TIMEOUT_MS = 30_000;
   for (const lang of UI_LANGS) {
-    it(`renders ${lang}`, async () => {
+    it(`renders ${lang}`, { timeout: RENDER_TIMEOUT_MS }, async () => {
       const res = await renderRecapStory({ recap, month: "2026-10", lang });
       const png = Buffer.from(await res.arrayBuffer());
       expect(png.subarray(1, 4).toString()).toBe("PNG");
@@ -96,7 +98,7 @@ describe("recap story render", () => {
       }
     });
   }
-  it("renders the empty month", async () => {
+  it("renders the empty month", { timeout: RENDER_TIMEOUT_MS }, async () => {
     const res = await renderRecapStory({ recap: buildRecap({ songs: [], likes: {}, listeners: {}, collectionsCreated: 0, songsCollected: 0 }), month: "2026-10", lang: "ta" });
     expect(Buffer.from(await res.arrayBuffer()).subarray(1, 4).toString()).toBe("PNG");
   });
