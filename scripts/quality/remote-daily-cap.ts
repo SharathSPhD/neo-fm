@@ -6,7 +6,7 @@
  */
 import type { DailyCap } from "../../apps/web/lib/ops/provider-cap";
 
-export function remoteDailyCap(provider: "lyria" | "veo" | "tts" = "lyria", env: NodeJS.ProcessEnv = process.env, f: typeof fetch = fetch): DailyCap {
+export function remoteDailyCap(provider: "lyria" | "veo" | "tts" = "lyria", env: Record<string, string | undefined> = process.env, f: typeof fetch = fetch): DailyCap {
   const base = (env.POOL_BASE_URL ?? "").replace(/\/$/, "");
   const secret = env[env.ADMIN_SECRET_ENV ?? "MA_PROD_ADMIN_SECRET"];
   if (!base || !secret) throw new Error("daily cap: set POOL_BASE_URL and the admin secret (MA_PROD_ADMIN_SECRET) so renders count against the day's cap");
