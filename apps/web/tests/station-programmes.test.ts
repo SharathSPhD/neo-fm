@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { programmeLines } from "../lib/station/programmes";
@@ -14,7 +16,10 @@ describe("programmes", () => {
 
   it("only offers lines whose audio has been rendered", () => {
     expect(programmeLines(true).every((l) => l.kind === "programme" && l.seconds > 0)).toBe(true);
-    expect(programmeLines(true)).toEqual([]); // nothing rendered yet
+  });
+
+  it("ship an audio file for every rendered line", () => {
+    for (const l of programmeLines(true)) expect(existsSync(join(__dirname, "../public/voice", `${l.id}.mp3`))).toBe(true);
   });
 
   it("take every Nth break, other breaks stay host links", () => {
