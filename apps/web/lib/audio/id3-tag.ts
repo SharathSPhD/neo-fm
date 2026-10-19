@@ -37,6 +37,7 @@ export function tagMp3(audio: Uint8Array, p: Id3Provenance): Uint8Array {
   if (audio[0] === 0x49 && audio[1] === 0x44 && audio[2] === 0x33) {
     start = 10 + (((audio[6] ?? 0) & 0x7f) << 21 | ((audio[7] ?? 0) & 0x7f) << 14 | ((audio[8] ?? 0) & 0x7f) << 7 | ((audio[9] ?? 0) & 0x7f));
     if ((audio[5] ?? 0) & 0x10) start += 10; // footer present
+    if (start > audio.length) return audio; // malformed size: never throw on the render path
   }
   const frames = [
     ...txxx("AI_GENERATED", "true"),

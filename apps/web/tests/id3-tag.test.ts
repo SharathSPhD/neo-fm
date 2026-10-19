@@ -12,6 +12,12 @@ function frames(n: number): Uint8Array {
 const text = (b: Uint8Array) => new TextDecoder().decode(b);
 
 describe("tagMp3", () => {
+  it("returns the input unchanged when an existing ID3 size overruns the buffer", () => {
+    const bad = new Uint8Array([0x49, 0x44, 0x33, 3, 0, 0, 0x7f, 0x7f, 0x7f, 0x7f, 1, 2, 3, 4]);
+    expect(() => tagMp3(bad, { site: "https://x.test" })).not.toThrow();
+    expect(tagMp3(bad, { site: "https://x.test" })).toBe(bad);
+  });
+
   const p = { site: "https://neo-fm.com" };
   it("prepends an ID3v2.4 tag carrying the AI flag and leaves the audio intact", () => {
     const src = frames(50);
