@@ -88,7 +88,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   if (!meta.id || !/^[a-z0-9._-]{1,80}$/i.test(meta.id) || !language || !SOURCES.includes(meta.source)) return NextResponse.json({ error: "bad meta (id, language, source)" }, { status: 400 });
 
   const audio = new Uint8Array(await file.arrayBuffer());
-  if (!meta.lyrics && meta.lyrics_from && /^[A-Za-z0-9]{1,12}$/.test(meta.lyrics_from.batch) && /^[a-z0-9-]{1,20}$/i.test(meta.lyrics_from.brief_id)) {
+  if (!meta.lyrics && meta.lyrics_from && /^[A-Za-z0-9]{1,12}$/.test(meta.lyrics_from.batch) && /^[a-z0-9-]{1,40}$/i.test(meta.lyrics_from.brief_id)) {
     const { data } = await db.from("eval_runs").select("lyrics").eq("batch", meta.lyrics_from.batch).eq("brief_id", meta.lyrics_from.brief_id).eq("arm", "pce").maybeSingle();
     meta.lyrics = (data as { lyrics?: string } | null)?.lyrics ?? undefined;
     // A 30 s clip sings only the opening lines, so the same cut that was rendered is what gets scored.
@@ -177,6 +177,34 @@ async function backfillDuration(db: Db, limit: number) {
   return NextResponse.json({ updated: out.filter((o) => typeof o.duration_seconds === "number" && !o.error).length, results: out });
 }
 
+/** Re-scores an already stored pool file against its PCE lyrics (rows that were rejected only because the lyrics never reached the gate). */
+async function rescore(db: Db, body: { audio_path?: string; lyrics_from?: { batch?: string; brief_id?: string } }, geminiKey: string | undefined) {
+  const path = body.audio_path ?? "";
+  const lf = body.lyrics_from;
+  if (!/^pool\/new_render\/[A-Za-z0-9._-]{1,100}\.mp3$/.test(path) || !lf?.batch || !lf.brief_id || !/^[A-Za-z0-9]{1,12}$/.test(lf.batch) || !/^[a-z0-9-]{1,40}$/i.test(lf.brief_id)) return NextResponse.json({ error: "audio_path (pool/new_render/*.mp3) and lyrics_from required" }, { status: 400 });
+  if (!geminiKey) return NextResponse.json({ error: "no_gemini_key" }, { status: 503 });
+  const { data: row } = await db.from("pool_tracks").select("id,status,language").eq("audio_path", path).maybeSingle();
+  if (!row) return NextResponse.json({ error: "no_such_track" }, { status: 404 });
+  const { data: run } = await db.from("eval_runs").select("lyrics").eq("batch", lf.batch).eq("brief_id", lf.brief_id).eq("arm", "pce").maybeSingle();
+  const lyrics = (run as { lyrics?: string } | null)?.lyrics;
+  if (!lyrics) return NextResponse.json({ error: "no_lyrics" }, { status: 404 });
+  const dl = await db.storage.from("tracks").download(path);
+  if (dl.error || !dl.data) return NextResponse.json({ error: "no_audio" }, { status: 404 });
+  const audio = new Uint8Array(await dl.data.arrayBuffer());
+  const sung = singableLines(lyrics).join("\n") || lyrics;
+  const scored = await auditDiction(sung, audio, "audio/mpeg", (row as { language: string }).language, geminiKey);
+  const gate = dictionVerdict(scored, scoreTranscriptUnordered(sung, scored.transcript));
+  const qa = { unorderedPct: gate.unorderedPct, verdict: gate.verdict };
+  const id = (row as { id: string }).id;
+  await db.from("pool_tracks").update({ diction_u: qa.unorderedPct, diction_verdict: qa.verdict }).eq("id", id);
+  if (!passesAdmission(qa)) return NextResponse.json({ id, ...qa, status: "rejected" });
+  await db.from("pool_tracks").update({ status: "candidate" }).eq("id", id).eq("status", "rejected");
+  const { data: res, error } = await db.rpc("admit_pool_track", { p_id: id });
+  if (error) return NextResponse.json({ error: error.message }, { status: 502 });
+  if (String(res) === "admitted") await mirrorAdmittedTrack(db, path);
+  return NextResponse.json({ id, ...qa, status: String(res) });
+}
+
 export async function POST(req: NextRequest) {
   const auth = checkAdminBearer(req.headers.get("authorization"));
   if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -184,7 +212,8 @@ export async function POST(req: NextRequest) {
   const geminiKey = process.env.GEMINI_API_KEY;
   const ct = req.headers.get("content-type") ?? "";
   if (ct.startsWith("multipart/form-data")) return ingestFile(db, await req.formData(), geminiKey);
-  const body = (await req.json().catch(() => ({}))) as { mode?: string; limit?: number; owner_ids?: unknown };
+  const body = (await req.json().catch(() => ({}))) as { mode?: string; limit?: number; owner_ids?: unknown; audio_path?: string; lyrics_from?: { batch?: string; brief_id?: string } };
+  if (body.mode === "rescore") return rescore(db, body, geminiKey);
   if (body.mode === "prod_jobs") {
     const owners = Array.isArray(body.owner_ids) ? body.owner_ids.filter((x): x is string => typeof x === "string" && UUID.test(x)) : [];
     if (owners.length === 0) return NextResponse.json({ error: "owner_ids required: name the internal/test accounts whose songs may enter the shared pool" }, { status: 400 });
