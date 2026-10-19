@@ -1,6 +1,6 @@
 /**
  * /help -- FAQ grounded in /pricing, /terms, /privacy and /trust (content: lib/help/faq.ts).
- * `?lang=hi|ta|te|kn|bn` (else the site language cookie) shows a machine translation with a notice; English is authoritative.
+ * `?lang=hi|ta|te|kn|mr|bn` (else the site language cookie) shows a machine translation with a notice; English is authoritative.
  */
 import type { Metadata } from "next";
 import Link from "next/link";
