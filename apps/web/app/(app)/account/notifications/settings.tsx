@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   MANDATORY_TYPES,
   NOTIFICATION_TYPES,
+  PUSH_ONLY_TYPES,
   type NotificationType,
   type ResolvedPrefs,
 } from "@/lib/notifications/types";
@@ -16,6 +17,7 @@ const LABELS: Record<NotificationType, { name: string; hint: string }> = {
   follow: { name: "New followers", hint: "Someone started following you." },
   collection_add: { name: "Added to a playlist", hint: "One of your public songs was added to someone's playlist." },
   dedication: { name: "Dedications", hint: "A song was dedicated to you." },
+  station_nudge: { name: "Daily station reminder", hint: "One push a day when your station has fresh tracks. Off unless you turn it on." },
   takedown: { name: "Takedown notices", hint: "Always shown in the app: a song of yours was removed from public view." },
 };
 
@@ -174,16 +176,22 @@ export function NotificationSettings() {
                   <p className="text-sm font-medium">{LABELS[t].name}</p>
                   <p className="text-xs text-foreground/55">{LABELS[t].hint}</p>
                 </div>
-                <label role="cell" className="flex h-11 w-16 items-center justify-center">
-                  <input
-                    type="checkbox"
-                    checked={prefs[t].in_app}
-                    disabled={mandatory}
-                    onChange={(e) => void setPref(t, "in_app", e.target.checked)}
-                    aria-label={`${LABELS[t].name}: in app`}
-                    className="h-5 w-5"
-                  />
-                </label>
+                {PUSH_ONLY_TYPES.includes(t) ? (
+                  <span role="cell" className="flex h-11 w-16 items-center justify-center text-foreground/40" aria-hidden="true">
+                    –
+                  </span>
+                ) : (
+                  <label role="cell" className="flex h-11 w-16 items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={prefs[t].in_app}
+                      disabled={mandatory}
+                      onChange={(e) => void setPref(t, "in_app", e.target.checked)}
+                      aria-label={`${LABELS[t].name}: in app`}
+                      className="h-5 w-5"
+                    />
+                  </label>
+                )}
                 <label role="cell" className="flex h-11 w-16 items-center justify-center">
                   <input
                     type="checkbox"

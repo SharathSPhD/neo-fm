@@ -28,6 +28,10 @@
     {
       "path": "/api/notifications/push-drain",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/notifications/station-nudge",
+      "schedule": "30 13 * * *"
     }
   ]
 }
