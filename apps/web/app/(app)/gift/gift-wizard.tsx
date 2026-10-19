@@ -10,6 +10,7 @@ import {
   GIFT_NOTE_MAX,
   OCCASIONS,
   RELATIONSHIPS,
+  giftLabel,
   planGift,
   type GiftLanguage,
 } from "@/lib/gift/occasions";
@@ -98,7 +99,7 @@ export function GiftWizard({ initialOccasion }: { initialOccasion: string }) {
                 occasion === o.id ? "border-accent bg-accent/15 text-accent" : "border-muted/30 text-foreground/70 hover:border-accent/60"
               }`}
             >
-              {o.label[labelLang]}
+              {giftLabel(o.label, labelLang)}
             </button>
           ))}
         </div>
@@ -122,7 +123,7 @@ export function GiftWizard({ initialOccasion }: { initialOccasion: string }) {
           <label htmlFor="gift-rel" className={label}>{t("gift.relationship")}</label>
           <select id="gift-rel" value={relationship} onChange={(e) => setRelationship(e.target.value)} className={field}>
             {RELATIONSHIPS.map((r) => (
-              <option key={r.id} value={r.id}>{r.label[labelLang]}</option>
+              <option key={r.id} value={r.id}>{giftLabel(r.label, labelLang)}</option>
             ))}
           </select>
         </div>

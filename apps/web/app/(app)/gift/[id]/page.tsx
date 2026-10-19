@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { JobProgress } from "@/components/job-progress";
-import { occasionById } from "@/lib/gift/occasions";
+import { giftLabel, occasionById } from "@/lib/gift/occasions";
 import { serverI18n } from "@/lib/i18n/server";
 import { SongIdSchema } from "@/lib/api/song-schemas";
 import { createServerClient } from "@/lib/supabase/server";
@@ -42,7 +42,7 @@ export default async function GiftStatusPage(props: {
   if (!data) notFound();
 
   const occasion = occasionById(searchParams?.occasion);
-  const occasionLabel = occasion?.label[lang] ?? t("gift.title");
+  const occasionLabel = occasion ? giftLabel(occasion.label, lang) : t("gift.title");
   const to = data.dedication_to;
 
   return (

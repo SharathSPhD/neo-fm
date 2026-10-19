@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   referrer: "no-referrer",
 };
 
-const LANGUAGE_NAMES = { hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", bn: "Bengali" } as const;
+const LANGUAGE_NAMES = { hi: "Hindi", ta: "Tamil", te: "Telugu", kn: "Kannada", mr: "Marathi", bn: "Bengali" } as const;
 
 export default async function UiReviewPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

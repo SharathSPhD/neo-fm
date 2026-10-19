@@ -69,6 +69,11 @@ export const RELATIONSHIPS: readonly Relationship[] = [
 const OCCASION_BY_ID = new Map(OCCASIONS.map((o) => [o.id, o] as const));
 const RELATIONSHIP_BY_ID = new Map(RELATIONSHIPS.map((r) => [r.id, r] as const));
 
+/** Gift copy is written for the gift languages only; other UI languages (for example Marathi) read English. */
+export function giftLabel(label: Record<"en" | GiftLanguage, string>, lang: string): string {
+  return label[lang as "en" | GiftLanguage] ?? label.en;
+}
+
 export function occasionById(id: string | null | undefined): Occasion | null {
   return (id && OCCASION_BY_ID.get(id)) || null;
 }

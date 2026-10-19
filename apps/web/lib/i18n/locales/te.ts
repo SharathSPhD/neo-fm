@@ -69,7 +69,7 @@ export const te: Dict = {
   "player.next": "తదుపరి పాట",
   "player.previous": "మునుపటి పాట",
   "nav.signIn": "సైన్ ఇన్",
-  "nav.getStarted": "ప్రారంభించండి",
+  "nav.getStarted": "ప్రారంభం",
   "nav.newSong": "కొత్త పాట",
   "nav.create": "సృష్టించండి",
   "nav.account": "ఖాతా",

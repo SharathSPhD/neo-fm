@@ -16,7 +16,7 @@
  */
 import { notFound, redirect } from "next/navigation";
 
-import { occasionById } from "@/lib/gift/occasions";
+import { giftLabel, occasionById } from "@/lib/gift/occasions";
 import { serverI18n } from "@/lib/i18n/server";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
@@ -318,7 +318,7 @@ export default async function SongDetailPage(
               message: dedicationRow?.dedication_message ?? "",
             }}
             canShare={data.status === "completed"}
-            occasion={occasionById(searchParams?.occasion)?.label[lang] ?? null}
+            occasion={(() => { const o = occasionById(searchParams?.occasion); return o ? giftLabel(o.label, lang) : null; })()}
             clipSource={
               signedUrl && (doc as SongDocumentView | null | undefined)?.sections?.length
                 ? {

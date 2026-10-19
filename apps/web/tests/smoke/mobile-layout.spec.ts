@@ -28,6 +28,24 @@ test.describe("no sideways scroll on small phones", () => {
   }
 });
 
+// #325: the header CTA overflowed by 4px in Telugu at 360px. Every UI language must fit.
+test.describe("no sideways scroll at 360px in every UI language", () => {
+  for (const lang of ["hi", "ta", "te", "kn", "bn", "mr"]) {
+    for (const path of ["/", "/pricing", "/help", "/station"]) {
+      test(`${lang} ${path}`, async ({ page, context, baseURL }) => {
+        await context.addCookies([{ name: "neo-fm-lang", value: lang, url: baseURL ?? "http://localhost:3000" }]);
+        await page.setViewportSize({ width: 360, height: 740 });
+        await page.goto(path);
+        const { scroll, client } = await page.evaluate(() => ({
+          scroll: document.documentElement.scrollWidth,
+          client: document.documentElement.clientWidth,
+        }));
+        expect(scroll).toBeLessThanOrEqual(client);
+      });
+    }
+  }
+});
+
 test.describe("page titles", () => {
   const TITLES: [string, RegExp][] = [
     ["/sign-in", /^Sign in -- neo-fm$/],

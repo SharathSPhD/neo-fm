@@ -69,7 +69,7 @@ export const ta: Dict = {
   "player.next": "அடுத்த பாடல்",
   "player.previous": "முந்தைய பாடல்",
   "nav.signIn": "உள்நுழை",
-  "nav.getStarted": "தொடங்குங்கள்",
+  "nav.getStarted": "தொடங்கு",
   "nav.newSong": "புதிய பாடல்",
   "nav.create": "உருவாக்கு",
   "nav.account": "கணக்கு",

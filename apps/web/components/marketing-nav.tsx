@@ -79,7 +79,7 @@ export async function MarketingNav({
               </Link>
               <Link
                 href="/sign-up"
-                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-3 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-[400px]:px-4 sm:py-1.5"
+                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-2.5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-[400px]:px-4 sm:py-1.5"
               >
                 {t("nav.getStarted")}
               </Link>
