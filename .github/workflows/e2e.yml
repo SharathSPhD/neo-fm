@@ -28,9 +28,9 @@ jobs:
       E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
       E2E_SLOW: ${{ (inputs.slow || github.event_name == 'schedule') && '1' || '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: pnpm
@@ -38,7 +38,7 @@ jobs:
       - run: pnpm --filter @neo-fm/web exec playwright install --with-deps chromium
       - name: playwright
         run: pnpm --filter @neo-fm/web exec playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
