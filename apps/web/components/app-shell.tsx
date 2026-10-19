@@ -21,6 +21,7 @@ import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
 import { NavLink } from "./nav-link";
 import { IconAccount, IconDiscover, IconLibrary, IconPlus, IconStation } from "./nav-icons";
+import { LanguageSwitcher } from "./language-switcher";
 import { UserMenu } from "./user-menu";
 import { WhatsNewLink } from "./whats-new-link";
 
@@ -98,6 +99,8 @@ async function TopNav({ user }: { user: NavUser }) {
         <div className="flex flex-none items-center gap-2">
           <CommandPaletteTrigger />
           <NotificationBell />
+          {/* On phones the picker lives in the account menu (no room beside the bell and avatar at 360px). */}
+          <div className="hidden sm:block"><LanguageSwitcher compact /></div>
           <Link
             href="/songs/new"
             className="hidden h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
