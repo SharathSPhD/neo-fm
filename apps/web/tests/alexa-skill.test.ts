@@ -153,6 +153,8 @@ describe("alexa skill package", () => {
         const declared = new Set((intent.slots ?? []).map((s) => s.name));
         for (const sample of intent.samples) for (const m of sample.matchAll(/\{(\w+)\}/g)) expect(declared.has(m[1]!)).toBe(true);
       }
+      // ASK rejects custom samples on AMAZON.NextIntent ("cannot be extended"); Alexa's built-in phrases cover next/skip.
+      expect(lm.intents.find((i: { name: string }) => i.name === "AMAZON.NextIntent").samples).toEqual([]);
       const codes = lm.types[0].values.map((v: { id: string }) => v.id);
       expect(codes).toEqual(["hi", "ta", "te", "kn", "bn", "en"]);
     });

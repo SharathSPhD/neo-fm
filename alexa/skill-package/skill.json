@@ -20,7 +20,10 @@
             "telugu",
             "kannada",
             "bengali"
-          ]
+          ],
+          "privacyPolicyUrl": "https://www.neo-fm.com/privacy",
+          "termsOfUseUrl": "https://www.neo-fm.com/terms",
+          "largeIconUri": "https://www.neo-fm.com/icon-512.png"
         },
         "en-GB": {
           "name": "neo-fm",
@@ -40,7 +43,10 @@
             "telugu",
             "kannada",
             "bengali"
-          ]
+          ],
+          "privacyPolicyUrl": "https://www.neo-fm.com/privacy",
+          "termsOfUseUrl": "https://www.neo-fm.com/terms",
+          "largeIconUri": "https://www.neo-fm.com/icon-512.png"
         },
         "hi-IN": {
           "name": "neo-fm",
@@ -56,7 +62,10 @@
             "एफ़एम",
             "हिंदी",
             "तमिल"
-          ]
+          ],
+          "privacyPolicyUrl": "https://www.neo-fm.com/privacy",
+          "termsOfUseUrl": "https://www.neo-fm.com/terms",
+          "largeIconUri": "https://www.neo-fm.com/icon-512.png"
         }
       },
       "isAvailableWorldwide": false,
