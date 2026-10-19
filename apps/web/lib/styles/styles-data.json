@@ -1,0 +1,6036 @@
+{
+ "version": "2026-10-18",
+ "authors": "styles research thread",
+ "sources": "Domain knowledge on Indian music (not live-verified); lab findings lab/results.md R5, M2, lang-probe; pool vocab apps/web/lib/pool/tags.ts; festival dates from calendar knowledge (verify).",
+ "vocab": {
+  "moods": [
+   "devotional",
+   "joyful",
+   "nostalgic",
+   "romantic",
+   "festive",
+   "calm",
+   "energetic",
+   "melancholic",
+   "celebratory",
+   "playful"
+  ],
+  "dayparts": [
+   "dawn",
+   "morning",
+   "midday",
+   "evening",
+   "dusk",
+   "night"
+  ],
+  "themes": [
+   "diwali",
+   "wedding",
+   "anniversary",
+   "birthday",
+   "mother",
+   "rakhi",
+   "farewell",
+   "new-year",
+   "harvest",
+   "monsoon",
+   "bhakti",
+   "friendship",
+   "travel",
+   "village",
+   "love",
+   "spring"
+  ],
+  "energies": [
+   "low",
+   "mid",
+   "high"
+  ]
+ },
+ "lyria_vocal_scale": {
+  "good": "tested and reliable in lab or pool",
+  "ok": "plausible, tested for the language but not the style",
+  "risky": "melismatic or classical; expect diction loss; budget extra renders and run diction gate",
+  "untested": "language or style never rendered",
+  "na": "instrumental style",
+  "no": "do not generate"
+ },
+ "styles": [
+  {
+   "id": "hindustani-khayal-vilambit",
+   "name": "Khayal, slow (bada khayal)",
+   "tradition": "hindustani",
+   "languages": [
+    "hi",
+    "sa"
+   ],
+   "region": "North India (gharana tradition: Gwalior, Kirana, Agra, Jaipur-Atrauli)",
+   "lyric_form": "Bandish of two parts: sthayi, antara; short poem in Braj/Hindi, 2 to 8 lines, sung with long alap, vistar, taan",
+   "metre": "free-metre poem fitted to tala; 1 to 4 lines repeat as refrain",
+   "instruments": [
+    "tanpura",
+    "tabla",
+    "harmonium",
+    "sarangi",
+    "sitar (accompaniment)"
+   ],
+   "tempo_bpm": [
+    40,
+    70
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "devotional",
+    "romantic",
+    "melancholic"
+   ],
+   "themes": [
+    "bhakti",
+    "love"
+   ],
+   "tala": "Vilambit ektal (12), vilambit teental (16), jhumra (14)",
+   "raga_hint": "Time-bound: Bhairav/Todi dawn, Yaman/Marwa dusk, Malkauns/Darbari night",
+   "lyria_hint_native": "हिंदुस्तानी ख़याल, अति विलंबित एकताल, तानपुरा, तबला, सारंगी, गहरी आलाप, शास्त्रीय पुरुष स्वर",
+   "lyria_hint_en": "Hindustani khayal, very slow vilambit ektal, tanpura drone, tabla, sarangi, long alap, trained male voice, raga-appropriate for the hour",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Lyria tends to sing wordless alap and may ignore the bandish text; expect low diction match. Use as a short alap-style intro or a light-classical hybrid, not a pure khayal.",
+   "pce_sections": [
+    "sthayi",
+    "antara",
+    "sthayi"
+   ],
+   "must_avoid": [
+    "moon-heart-rain pairings",
+    "generic 'ishq' filler"
+   ],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "hindustani-khayal-drut",
+   "name": "Khayal, fast (chhota khayal) and tarana",
+   "tradition": "hindustani",
+   "languages": [
+    "hi"
+   ],
+   "region": "North India",
+   "lyric_form": "Short bandish, 4 to 8 lines, with sargam and taan; tarana uses meaningless syllables (ta na dir dir)",
+   "metre": "8 to 16 beat cycle; syllabic, no lexical meaning in tarana",
+   "instruments": [
+    "tanpura",
+    "tabla",
+    "harmonium",
+    "sarangi"
+   ],
+   "tempo_bpm": [
+    110,
+    180
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "dusk"
+   ],
+   "moods": [
+    "joyful",
+    "energetic",
+    "devotional"
+   ],
+   "themes": [
+    "spring",
+    "bhakti"
+   ],
+   "tala": "Drut teental (16), ektal (12), jhaptal (10), rupak (7)",
+   "raga_hint": null,
+   "lyria_hint_native": "द्रुत तीनताल बंदिश, तेज़ तान और सरगम, हारमोनियम, तबला, राग भूपाली या बहार",
+   "lyria_hint_en": "Fast Hindustani chhota khayal in drut teental, rapid taans and sargam, tabla, harmonium, bright raga (Bhoopali or Bahar)",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Fast taans are where synthetic voices sound least natural (judge: stiff rhythm, vowel sustain). Tarana syllables avoid diction scoring problems but have no lyric content for PCE.",
+   "pce_sections": [
+    "bandish",
+    "taan",
+    "sargam"
+   ],
+   "must_avoid": [
+    "cliche 'bahar aayi' only"
+   ],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "hindustani-dhrupad",
+   "name": "Dhrupad",
+   "tradition": "hindustani",
+   "languages": [
+    "sa",
+    "hi"
+   ],
+   "region": "North India (Dagar tradition, Mathura-Vrindavan, Mithila)",
+   "lyric_form": "Four-part composition: sthayi, antara, sanchari, abhog; Sanskrit/Braj, devotional, seasonal, praise",
+   "metre": "even syllabic metre set to 10-14 beat cycles; text is secondary to nom-tom alap",
+   "instruments": [
+    "tanpura",
+    "pakhawaj",
+    "rudra veena",
+    "surbahar"
+   ],
+   "tempo_bpm": [
+    40,
+    80
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "night"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Chautal (12), sultal (10), dhamar (14)",
+   "raga_hint": null,
+   "lyria_hint_native": "ध्रुपद गायन, पखावज, तानपुरा, चौताल, गंभीर धीमी नोम-तोम आलाप, ब्रजभाषा, पुरुष स्वर",
+   "lyria_hint_en": "Dhrupad: deep male voice, pakhawaj, tanpura, slow nom-tom alap, chautal, austere and meditative",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Rare, no pop-ish features. Pakhawaj is poorly rendered by general music models. Park until a human check exists.",
+   "pce_sections": [
+    "alap",
+    "sthayi",
+    "antara",
+    "sanchari",
+    "abhog"
+   ],
+   "must_avoid": [
+    "pop hooks"
+   ],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "hindustani-thumri",
+   "name": "Thumri and dadra",
+   "tradition": "hindustani",
+   "languages": [
+    "hi"
+   ],
+   "region": "Banaras, Lucknow, Purab ang",
+   "lyric_form": "Romantic-devotional lyric, Radha-Krishna and separation (viraha); short 2 to 6 line text expressed through bol-banao (melodic elaboration)",
+   "metre": "6 and 14 beat cycles; flexible, rubato",
+   "instruments": [
+    "harmonium",
+    "sarangi",
+    "tabla",
+    "tanpura"
+   ],
+   "tempo_bpm": [
+    60,
+    110
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "melancholic",
+    "devotional"
+   ],
+   "themes": [
+    "love"
+   ],
+   "tala": "Deepchandi (14), dadra (6), kaharwa (8)",
+   "raga_hint": "Khamaj, Pilu, Kafi, Bhairavi, Des",
+   "lyria_hint_native": "ठुमरी, पूरबी अंग, दादरा ताल, हारमोनियम, सारंगी, श्रृंगार रस, कोमल स्त्री स्वर, बोल बनाव",
+   "lyria_hint_en": "Thumri in Purab ang, dadra 6 beats, harmonium and sarangi, tender female voice, shringar rasa, expressive ornaments",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Good candidate for Lyria vocals: slow, lyric, single voice. Expect Hindi/Urdu phrasing rather than Braj. Keep text in simple Hindi.",
+   "pce_sections": [
+    "asthayi",
+    "antara",
+    "bol-banao"
+   ],
+   "must_avoid": [
+    "'piya' in every line",
+    "moon/rain pairings"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "hindustani-seasonal-chaiti-kajri-hori",
+   "name": "Seasonal light classical: chaiti, kajri, hori, sawan jhula",
+   "tradition": "hindustani",
+   "languages": [
+    "hi",
+    "bho"
+   ],
+   "region": "Uttar Pradesh, Bihar (Mirzapur, Banaras)",
+   "lyric_form": "Seasonal folk-classical couplets: chaiti (spring, Chaitra), kajri (monsoon), hori (Holi), jhula (swing)",
+   "metre": "couplet + refrain; 6/8 swing; dholak-driven",
+   "instruments": [
+    "dholak",
+    "harmonium",
+    "manjira",
+    "sarangi"
+   ],
+   "tempo_bpm": [
+    80,
+    120
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "romantic",
+    "playful",
+    "festive"
+   ],
+   "themes": [
+    "monsoon",
+    "spring",
+    "love"
+   ],
+   "tala": "Dadra (6), kaharwa (8), dhamar (14, hori)",
+   "raga_hint": null,
+   "lyria_hint_native": "चैती, कजरी, सावन का झूला, होरी, ढोलक, हारमोनियम, पूर्वांचल लोक-शास्त्रीय, महिला कोरस",
+   "lyria_hint_en": "Seasonal chaiti/kajri/hori from eastern Uttar Pradesh, dholak and harmonium, women's chorus, swing rhythm",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Folk-light: Lyria usually handles dholak plus female chorus well. Tie to monsoon/Holi/Chaitra in the station calendar.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "generic 'barkha' only"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "hindustani-instrumental-raga",
+   "name": "Instrumental raga (alap, jod, jhala, gat)",
+   "tradition": "hindustani",
+   "languages": [
+    "zxx"
+   ],
+   "region": "Pan-Indian",
+   "lyric_form": "Wordless; structure alap, jod, jhala, then composed gat in a tala",
+   "metre": "wordless; tala cycle in gat",
+   "instruments": [
+    "sitar",
+    "sarod",
+    "bansuri",
+    "santoor",
+    "shehnai",
+    "tabla",
+    "tanpura"
+   ],
+   "tempo_bpm": [
+    40,
+    160
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "morning",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "devotional",
+    "melancholic"
+   ],
+   "themes": [],
+   "tala": "Teental, jhaptal, rupak, ektal; alap has no tala",
+   "raga_hint": "Dawn Bhairav/Ahir Bhairav, midday Madhyamad Sarang, dusk Marwa/Puriya, night Yaman/Malkauns",
+   "lyria_hint_native": "सितार और तबला, राग यमन, आलाप जोड़ झाला, गत तीनताल, केवल वाद्य",
+   "lyria_hint_en": "Instrumental raga: sitar or bansuri with tabla and tanpura, alap then gat, no singing, no humming, no vocalise",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB R5: classical prompts vocalised in 10 of 13 renders, raga+folk+devotional 75 to 100 percent of the time. Do not target the instrumental pool with raga prompts. Only santoor (Marwa, 'dusk-santoor-marwa') and a piano raga passed the gate. Use a 'wordless vocalise' pool kind if S wants dawn/dusk raga.",
+   "pce_sections": [
+    "alap",
+    "jod",
+    "jhala",
+    "gat"
+   ],
+   "must_avoid": [
+    "tabla solo clutter"
+   ],
+   "legacy_genre": "classical",
+   "launch_priority": "launch-conditional",
+   "sensitivity": null
+  },
+  {
+   "id": "shehnai-mangal",
+   "name": "Shehnai mangal dhwani",
+   "tradition": "hindustani",
+   "languages": [
+    "zxx",
+    "hi"
+   ],
+   "region": "North India, weddings and temples",
+   "lyric_form": "Wordless auspicious invocation; Bismillah Khan tradition",
+   "metre": "free alap into dadra/kaharwa gat",
+   "instruments": [
+    "shehnai",
+    "tabla",
+    "nagara",
+    "tanpura"
+   ],
+   "tempo_bpm": [
+    70,
+    110
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "morning"
+   ],
+   "moods": [
+    "festive",
+    "celebratory",
+    "devotional"
+   ],
+   "themes": [
+    "wedding",
+    "bhakti"
+   ],
+   "tala": "Kaharwa (8), dadra (6)",
+   "raga_hint": null,
+   "lyria_hint_native": "शहनाई मंगल ध्वनि, तबला, नगाड़ा, शादी का स्वागत, शुभ आरंभ, केवल वाद्य",
+   "lyria_hint_en": "Shehnai mangal dhwani for a wedding entrance, tabla and nagara, auspicious and warm, instrumental only",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Passed: 'festive-wedding-shehnai' in lab but with vocal blips risk; strict no-vocals prompt still needs the gate. Good for wedding station idents.",
+   "pce_sections": [
+    "invocation",
+    "gat"
+   ],
+   "must_avoid": [
+    "siren-like wail"
+   ],
+   "legacy_genre": "classical",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ghazal",
+   "name": "Ghazal (Urdu/Hindi)",
+   "tradition": "hindustani",
+   "languages": [
+    "ur",
+    "hi"
+   ],
+   "region": "Delhi, Lucknow, Hyderabad, Lahore",
+   "lyric_form": "Series of independent couplets (sher); matla opening, radif refrain, qafia rhyme, maqta with poet's pen name",
+   "metre": "bahr (Arabic-Persian quantitative metres, 19 standard); 12 to 20 syllable lines; AA BA CA rhyme",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "sarangi",
+    "santoor",
+    "acoustic guitar",
+    "violin"
+   ],
+   "tempo_bpm": [
+    60,
+    95
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dusk",
+    "night",
+    "evening"
+   ],
+   "moods": [
+    "romantic",
+    "melancholic",
+    "nostalgic",
+    "calm"
+   ],
+   "themes": [
+    "love",
+    "farewell"
+   ],
+   "tala": "Kaharwa (8), dadra (6), roopak (7), deepchandi",
+   "raga_hint": "Yaman, Bhairavi, Pilu, Kafi, Darbari",
+   "lyria_hint_native": "ग़ज़ल, उर्दू शायरी, मतला और रदीफ़, हारमोनियम, तबला, सारंगी, धीमी कहरवा ताल, मखमली पुरुष स्वर",
+   "lyria_hint_en": "Ghazal with matla and radif, slow kaharwa, harmonium, tabla, sarangi, velvet male or sweet female voice, nostalgic",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Lab: rainy-guitar-ghazal passed generation; vocal ghazal needs Urdu register discipline from PCE. Ghazal is Urdu-leaning, so ur support (RTL render) is the blocker for the script, not Lyria.",
+   "pce_sections": [
+    "matla",
+    "sher",
+    "sher",
+    "sher",
+    "maqta"
+   ],
+   "must_avoid": [
+    "'dil' in both lines of every sher",
+    "moon-heart-rain trio"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "qawwali",
+   "name": "Qawwali",
+   "tradition": "hindustani",
+   "languages": [
+    "ur",
+    "hi",
+    "pa"
+   ],
+   "region": "Delhi, Ajmer, Hyderabad, Lahore, Punjab (Chishti Sufi tradition)",
+   "lyric_form": "Devotional poetry in Persian, Urdu, Punjabi, Braj; hamd, naat, manqabat, marifat; call-and-response",
+   "metre": "strophe + repeating refrain (bandish), gradual acceleration",
+   "instruments": [
+    "harmonium",
+    "dholak",
+    "tabla",
+    "hand claps",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    70,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "evening",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "devotional",
+    "energetic",
+    "celebratory"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Dadra (6), kaharwa (8)",
+   "raga_hint": null,
+   "lyria_hint_native": "क़व्वाली, तालियाँ, ढोलक, हारमोनियम, कोरस, धीमी शुरुआत से तेज़ उफ़ान, सूफ़ी रंग",
+   "lyria_hint_en": "Qawwali: rhythmic hand claps, dholak, harmonium, male lead with chorus, slow start building to a trance climax",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB M2: the qawwali and duet profiles were the only ones that visibly changed the arrangement; hi-qawwali-m-2 pronunciation passed. Keep to universal Sufi themes (love, longing, the Beloved); avoid religious figures.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "bol-baant",
+    "refrain-acceleration"
+   ],
+   "must_avoid": [
+    "named saints/prophets",
+    "sectarian content"
+   ],
+   "legacy_genre": "sufi",
+   "launch_priority": "launch",
+   "sensitivity": "Religious poetry: no depiction or speech put in the mouth of religious figures; stay with universal themes (safety-legal.md)"
+  },
+  {
+   "id": "sufi-kalam",
+   "name": "Sufi kalam",
+   "tradition": "hindustani",
+   "languages": [
+    "pa",
+    "ur",
+    "hi"
+   ],
+   "region": "Punjab, Sindh, Delhi (Bulleh Shah, Waris Shah, Amir Khusrau, Baba Farid, Kabir)",
+   "lyric_form": "Mystical short poems (kafi); love of the Beloved; Punjabi kafi, Urdu/Hindi kalam",
+   "metre": "rhymed couplets with refrain",
+   "instruments": [
+    "harmonium",
+    "dholak",
+    "daf",
+    "acoustic guitar",
+    "bass",
+    "vocal chorus"
+   ],
+   "tempo_bpm": [
+    70,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "devotional",
+    "romantic",
+    "calm"
+   ],
+   "themes": [
+    "bhakti",
+    "love"
+   ],
+   "tala": "Dadra, kaharwa, 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "सूफ़ियाना कलाम, दफ़, हारमोनियम, गिटार, रूहानी गहरी आवाज़, धीमी बढ़त",
+   "lyria_hint_en": "Modern Sufi kalam, daf, harmonium, guitar, soulful voice, gradual build; public-domain poets only if lyric reuse",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB: sufi instrumental generated but vocalised both times; as a vocal track it is the natural fit. Original lyrics only; classic kalam by dead poets may be quoted only if public domain and attributed.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "refrain"
+   ],
+   "must_avoid": [
+    "Bulleh Shah quote-stuffing"
+   ],
+   "legacy_genre": "sufi",
+   "launch_priority": "launch",
+   "sensitivity": "Same religion rule as qawwali"
+  },
+  {
+   "id": "bhajan-hindi",
+   "name": "Bhajan (nirgun and sagun)",
+   "tradition": "devotional",
+   "languages": [
+    "hi"
+   ],
+   "region": "North India (Kabir, Meera, Tulsidas, Surdas, Sant Ravidas)",
+   "lyric_form": "Devotional hymn to a deity (sagun) or the formless (nirgun); simple 4 to 8 line verses with repeating refrain",
+   "metre": "even-line couplets, 8 to 12 syllables; refrain repeated",
+   "instruments": [
+    "harmonium",
+    "dholak",
+    "manjira",
+    "tanpura",
+    "flute",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    70,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Kaharwa (8), dadra (6), keherwa, ektal",
+   "raga_hint": null,
+   "lyria_hint_native": "भजन, हारमोनियम, ढोलक, मंजीरा, कोरस, सुबह की भक्ति, सरल दोहराव वाली पंक्तियाँ",
+   "lyria_hint_en": "Morning bhajan, harmonium, dholak, manjira, women's chorus, simple repeating refrain, devotional and warm",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB M2: bhajan profile produced accepted Hindi (bhajan-m-1 flagged AI-sounding); the vocal render is dependable, the instrumental raga/devotional is not.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "refrain"
+   ],
+   "must_avoid": [
+    "'Ram naam' rhyme only"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "aarti-stuti",
+   "name": "Aarti and stuti",
+   "tradition": "devotional",
+   "languages": [
+    "hi",
+    "sa"
+   ],
+   "region": "Pan-Hindu",
+   "lyric_form": "Ritual lamp-waving hymn with chorus; Sanskrit/Hindi stuti",
+   "metre": "4-beat bounce, building refrain; fixed text traditionally",
+   "instruments": [
+    "bells",
+    "conch",
+    "dholak",
+    "manjira",
+    "harmonium",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    85,
+    110
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "festive"
+   ],
+   "themes": [
+    "bhakti",
+    "diwali"
+   ],
+   "tala": "Kaharwa (8) with accelerating dholak",
+   "raga_hint": null,
+   "lyria_hint_native": "आरती, घंटी, शंख, ढोलक, मंजीरा, सामूहिक गायन, सुबह-शाम की पूजा",
+   "lyria_hint_en": "Temple aarti with bells, conch, dholak, manjira, group chorus, steady rhythm that quickens",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Traditional texts are public-domain; fresh aartis fine. Offer around dawn/dusk and Diwali.",
+   "pce_sections": [
+    "opening",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "named deity claims of miracle"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": "Deity names are fine; no claims about believers/non-believers"
+  },
+  {
+   "id": "hindi-filmpop",
+   "name": "Bollywood / Hindi film pop",
+   "tradition": "film",
+   "languages": [
+    "hi",
+    "hinglish"
+   ],
+   "region": "Mumbai",
+   "lyric_form": "Mukhda/antara with hook; romantic, item, party, wedding, sad-lover",
+   "metre": "8 to 12 syllables per line, antyaprasa end-rhyme, 4-line antara",
+   "instruments": [
+    "synth",
+    "guitar",
+    "dhol",
+    "bass",
+    "strings",
+    "vocal harmonies"
+   ],
+   "tempo_bpm": [
+    90,
+    128
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "joyful",
+    "romantic",
+    "energetic",
+    "playful"
+   ],
+   "themes": [
+    "love",
+    "friendship",
+    "wedding",
+    "travel"
+   ],
+   "tala": "4/4 with dhol, dadra variants",
+   "raga_hint": null,
+   "lyria_hint_native": "बॉलीवुड पॉप, कैची मुखड़ा, सिंथ, ढोल, आधुनिक प्रोडक्शन, मधुर पुरुष और महिला गायन",
+   "lyria_hint_en": "Contemporary Bollywood pop, catchy mukhda, synth, dhol, big chorus, polished production",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Core of the live pool. Lab mood tags: drive-filmpop-groove passed as instrumental.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "mukhda",
+    "antara",
+    "mukhda"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio",
+    "'tera mera' refrain loop"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "hindi-retro-filmi",
+   "name": "Hindi retro film melody (50s to 80s)",
+   "tradition": "film",
+   "languages": [
+    "hi"
+   ],
+   "region": "Mumbai",
+   "lyric_form": "Melodic ballads and disco-era numbers",
+   "metre": "antyaprasa rhyme, 7 to 10 syllables",
+   "instruments": [
+    "orchestral strings",
+    "sitar",
+    "accordion",
+    "tabla",
+    "analogue bass",
+    "brass"
+   ],
+   "tempo_bpm": [
+    70,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening",
+    "dusk"
+   ],
+   "moods": [
+    "nostalgic",
+    "romantic",
+    "joyful"
+   ],
+   "themes": [
+    "love",
+    "farewell"
+   ],
+   "tala": "Dadra, kaharwa, disco 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "सत्तर के दशक की रेट्रो फ़िल्मी धुन, ऑर्केस्ट्रा स्ट्रिंग्स, सितार, एनालॉग बास, सुरीली आवाज़",
+   "lyria_hint_en": "1970s Hindi film melody with string section, sitar flourishes, tabla, warm analogue bass; or 1980s disco with brass",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Lab: filmpop-retro-disco exists in m3. Style references are fine; do not name living singers or composers in prompts.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "mukhda"
+   ],
+   "must_avoid": [
+    "named singer imitation"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "hindi-indie-folk",
+   "name": "Hindi indie / acoustic folk-pop",
+   "tradition": "pop",
+   "languages": [
+    "hi",
+    "hinglish"
+   ],
+   "region": "Mumbai, Delhi, Bengaluru",
+   "lyric_form": "Singer-songwriter verse/chorus, conversational Hindi or Hinglish",
+   "metre": "free verse, 6 to 10 syllables",
+   "instruments": [
+    "acoustic guitar",
+    "cajon",
+    "flute",
+    "bass",
+    "soft percussion"
+   ],
+   "tempo_bpm": [
+    70,
+    105
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "nostalgic",
+    "calm",
+    "romantic",
+    "joyful"
+   ],
+   "themes": [
+    "travel",
+    "friendship"
+   ],
+   "tala": "4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "हिंदी इंडी फ़ोक, अकूस्टिक गिटार, कैज़ोन, कोमल आवाज़, शहर की शाम",
+   "lyria_hint_en": "Hindi indie folk-pop, acoustic guitar, cajon, gentle conversational vocal, evening city mood",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "M2: hi-indie-f-2 accepted. Default for 'me-time' requests.",
+   "pce_sections": [
+    "verse",
+    "chorus",
+    "verse",
+    "chorus",
+    "bridge"
+   ],
+   "must_avoid": [
+    "generic 'safar' lines"
+   ],
+   "legacy_genre": "indie",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "hindi-lori",
+   "name": "Lori (lullaby, Hindi)",
+   "tradition": "folk",
+   "languages": [
+    "hi"
+   ],
+   "region": "North India",
+   "lyric_form": "Soft repeating lullaby addressed to a child; mother/grandmother voice",
+   "metre": "3 to 4 line verses, simple end-rhyme, soothing repetition",
+   "instruments": [
+    "soft flute",
+    "harmonium",
+    "tanpura",
+    "soft dholak",
+    "humming"
+   ],
+   "tempo_bpm": [
+    55,
+    80
+   ],
+   "energy": "low",
+   "dayparts": [
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "nostalgic"
+   ],
+   "themes": [
+    "mother",
+    "village"
+   ],
+   "tala": "6/8 or 4/4 slow swing",
+   "raga_hint": null,
+   "lyria_hint_native": "लोरी, धीमी कोमल धुन, बांसुरी, हल्का हारमोनियम, माँ की मीठी आवाज़, नींद",
+   "lyria_hint_en": "Hindi lori, very soft, slow sway, flute and light harmonium, mother's gentle voice, sleepy",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB: sleep instruments (flute-rain, veena) pass about half the time. Vocal lullabies are easier than instrumental. Good for the 'Sleep' station.",
+   "pce_sections": [
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "scary imagery"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "vivah-geet-hi",
+   "name": "Vivah geet and sangeet songs (north Indian wedding)",
+   "tradition": "folk",
+   "languages": [
+    "hi",
+    "bho",
+    "pa"
+   ],
+   "region": "UP, Bihar, Rajasthan, Punjab",
+   "lyric_form": "Ritual wedding songs: haldi, mehendi, banna-banni, gaari (teasing), vidaai",
+   "metre": "couplet + refrain, call-and-response by women's chorus",
+   "instruments": [
+    "dholak",
+    "harmonium",
+    "thali",
+    "chorus",
+    "shehnai"
+   ],
+   "tempo_bpm": [
+    85,
+    125
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "celebratory",
+    "playful",
+    "festive"
+   ],
+   "themes": [
+    "wedding"
+   ],
+   "tala": "Kaharwa, dadra",
+   "raga_hint": null,
+   "lyria_hint_native": "विवाह गीत, ढोलक, थाली की ताल, महिलाओं का कोरस, हल्दी मेहंदी, छेड़छाड़ वाले बोल",
+   "lyria_hint_en": "North Indian wedding songs, dholak and thali, women's chorus, playful teasing, joyful",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Wedding is a launch hook. Keep teasing songs gentle (moderation); vidaai is emotional and calm.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "sexual innuendo"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bhojpuri-sohar-chaiti",
+   "name": "Bhojpuri sohar, chaiti, kajri",
+   "tradition": "folk",
+   "languages": [
+    "bho"
+   ],
+   "region": "Bhojpur, eastern UP, Bihar",
+   "lyric_form": "Seasonal and ritual couplets: sohar (birth), chaiti (spring longing), kajri (monsoon)",
+   "metre": "couplet + refrain 'ho Rama', 'piya'",
+   "instruments": [
+    "dholak",
+    "harmonium",
+    "jhal",
+    "manjira",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    80,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "calm",
+    "romantic",
+    "nostalgic"
+   ],
+   "themes": [
+    "monsoon",
+    "spring",
+    "village"
+   ],
+   "tala": "Dadra, deepchandi",
+   "raga_hint": null,
+   "lyria_hint_native": "सोहर, चैता, कजरी, भोजपुरी लोकगीत, ढोलक, हारमोनियम, झाल, महिला स्वर, पुरबिया बोली",
+   "lyria_hint_en": "Bhojpuri sohar, chaita or kajri, dholak, jhal, harmonium, women's voices, village feeling",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "UNTESTED. language-expansion.md risk: Lyria may sing Bhojpuri as Hindi. Wave 2. Family-safe moderation list required.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "crude innuendo"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "bhojpuri-birha-bidesia",
+   "name": "Birha and bidesia",
+   "tradition": "folk",
+   "languages": [
+    "bho"
+   ],
+   "region": "Bhojpur, Ahir community, migrant labour belt",
+   "lyric_form": "Narrative separation (viraha) and migration (bidesia); Bhikhari Thakur tradition",
+   "metre": "long narrative lines, repeating plaint",
+   "instruments": [
+    "dholak",
+    "harmonium",
+    "jhal",
+    "nagara"
+   ],
+   "tempo_bpm": [
+    70,
+    110
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "melancholic",
+    "nostalgic"
+   ],
+   "themes": [
+    "farewell",
+    "village"
+   ],
+   "tala": "Dadra, kaharwa",
+   "raga_hint": null,
+   "lyria_hint_native": "बिरहा, बिदेसिया, भोजपुरी विरह गीत, ढोलक, झाल, परदेस गए पिया की याद",
+   "lyria_hint_en": "Bhojpuri birha or bidesia, dholak and jhal, plaintive male voice, longing for the absent migrant",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "UNTESTED. Strong cultural fit with migrant listeners (diaspora wedge). Wave 2.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "chhath-geet",
+   "name": "Chhath geet",
+   "tradition": "devotional",
+   "languages": [
+    "bho",
+    "hi"
+   ],
+   "region": "Bihar, eastern UP, Jharkhand, Nepal Terai (Sharda Sinha tradition)",
+   "lyric_form": "Devotional songs to Surya and Chhathi Maiya; collected as ritual songs by women",
+   "metre": "unaccompanied or minimal; refrain-driven",
+   "instruments": [
+    "dholak",
+    "harmonium",
+    "women's chorus"
+   ],
+   "tempo_bpm": [
+    65,
+    100
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "festive"
+   ],
+   "themes": [
+    "bhakti",
+    "harvest"
+   ],
+   "tala": "Dadra",
+   "raga_hint": null,
+   "lyria_hint_native": "छठ गीत, छठी मईया, सूरज को अर्घ्य, महिला स्वर, ढोलक, सुबह और शाम का घाट",
+   "lyria_hint_en": "Chhath geet at the riverbank, women's voices, dholak, devotional and serene; dawn and dusk",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "UNTESTED. Seasonal (Oct/Nov): Chhath 2026 falls about 14 to 16 Nov, a week after Diwali (date to verify). Strong seasonal hook for Bhojpuri/Hindi.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "carnatic-kriti",
+   "name": "Kriti (Carnatic)",
+   "tradition": "carnatic",
+   "languages": [
+    "te",
+    "ta",
+    "kn",
+    "sa"
+   ],
+   "region": "South India (Trinity: Tyagaraja, Dikshitar, Syama Sastri; Papanasam Sivan, Purandara Dasa)",
+   "lyric_form": "Pallavi, anupallavi, charanam(s), with sangatis (melodic variations); devotional, composer's signature (mudra) in the last line",
+   "metre": "fixed tala, line lengths balanced by matra; dvitiyakshara prasa in Telugu, edugai in Tamil",
+   "instruments": [
+    "veena",
+    "violin",
+    "mridangam",
+    "tanpura",
+    "flute",
+    "ghatam"
+   ],
+   "tempo_bpm": [
+    60,
+    120
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "morning",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Adi (8), rupaka (6), misra chapu (7), khanda chapu (5), triputa",
+   "raga_hint": "Mohanam, Kalyani, Hamsadhwani, Bhairavi, Madhyamavati, Shankarabharanam",
+   "lyria_hint_native": "கர்நாடக சங்கீதம் கீர்த்தனை, வீணை, வயலின், மிருதங்கம், ஆதி தாளம், பல்லவி அனுபல்லவி சரணம்",
+   "lyria_hint_en": "Carnatic kriti in adi tala, veena, violin and mridangam, pallavi anupallavi charanam, pure devotional, gamaka-rich male or female voice",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB: classical prompts vocalised in 10 of 13 instrumental attempts. As a vocal track the issue is diction: Lyria will lengthen vowels (gamaka) and the diction gate may score lower. Test 5 renders per language before launch.",
+   "pce_sections": [
+    "pallavi",
+    "anupallavi",
+    "charanam",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "Sanskrit padding",
+    "stock 'Rama' filler"
+   ],
+   "legacy_genre": "keerthana",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "carnatic-annamacharya-sankirtana",
+   "name": "Annamayya sankirtana (Telugu)",
+   "tradition": "carnatic",
+   "languages": [
+    "te"
+   ],
+   "region": "Tirupati, Andhra Pradesh (15th century Annamacharya)",
+   "lyric_form": "Pallavi + charanams, devotional to Venkateswara, spiritual-erotic (adhyatma, shringara) strands",
+   "metre": "line length ~8 to 12 syllables, pairs with prasa",
+   "instruments": [
+    "veena",
+    "violin",
+    "mridangam",
+    "tanpura",
+    "flute",
+    "nadaswaram"
+   ],
+   "tempo_bpm": [
+    65,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "joyful",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Adi, misra chapu, khanda chapu",
+   "raga_hint": null,
+   "lyria_hint_native": "అన్నమయ్య సంకీర్తన, తిరుమల వెంకటేశ్వరుడు, పల్లవి చరణం, వీణ, వయోలిన్, మృదంగం, భక్తి",
+   "lyria_hint_en": "Annamayya sankirtana, devotional Telugu, pallavi and charanam, veena, violin, mridangam, clear and devout voice",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Text is older than copyright; original new compositions fine. Telugu is a live language.",
+   "pce_sections": [
+    "pallavi",
+    "charanam",
+    "charanam",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "Sanskritised stock words"
+   ],
+   "legacy_genre": "keerthana",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "suprabhatam-stotra",
+   "name": "Suprabhatam and stotram (morning waking hymns)",
+   "tradition": "devotional",
+   "languages": [
+    "sa",
+    "te",
+    "ta",
+    "kn"
+   ],
+   "region": "South India (Sri Venkateswara Suprabhatam, Kausalya Supraja)",
+   "lyric_form": "Sanskrit shloka waking-the-deity verses; Margazhi Thiruppavai/Thiruvempavai in Tamil",
+   "metre": "anushtup shloka 8-syllable x4",
+   "instruments": [
+    "nadaswaram",
+    "veena",
+    "tanpura",
+    "soft mridangam",
+    "bells"
+   ],
+   "tempo_bpm": [
+    55,
+    85
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Slow adi or free metre",
+   "raga_hint": null,
+   "lyria_hint_native": "சுப்ரபாதம், திருப்பாவை, நாதஸ்வரம், மணி, அதிகாலை, மெல்லிய தம்பூரா",
+   "lyria_hint_en": "Suprabhatam at dawn, soft nadaswaram, veena and bells, free-flowing shloka chant, serene",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Traditional texts are public domain; a new AI performance is fine with the AI label. Margazhi (mid-Dec to mid-Jan) is a Tamil/Telugu seasonal hook.",
+   "pce_sections": [
+    "shloka",
+    "shloka",
+    "shloka"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "carnatic-padam-javali",
+   "name": "Padam and javali",
+   "tradition": "carnatic",
+   "languages": [
+    "te",
+    "ta"
+   ],
+   "region": "Andhra, Tamil Nadu (Kshetrayya, Sarangapani)",
+   "lyric_form": "Slow love lyric for dance (nayika-nayaka); javali is lighter and quicker",
+   "metre": "ornate slow tempo, 2 to 3 line charanams",
+   "instruments": [
+    "veena",
+    "violin",
+    "mridangam",
+    "tanpura",
+    "flute"
+   ],
+   "tempo_bpm": [
+    50,
+    90
+   ],
+   "energy": "low",
+   "dayparts": [
+    "night",
+    "dusk"
+   ],
+   "moods": [
+    "romantic",
+    "melancholic"
+   ],
+   "themes": [
+    "love"
+   ],
+   "tala": "Adi, rupaka, misra chapu",
+   "raga_hint": null,
+   "lyria_hint_native": "పదం జావళి, భరతనాట్యం, ప్రేమ గీతం, వీణ, వయోలిన్, మృదంగం, నెమ్మదిగా భావోద్వేగం",
+   "lyria_hint_en": "Padam or javali for Bharatanatyam, slow romantic Carnatic lyric, veena, violin, mridangam, emotive",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Rare in listener demand; dance-station niche. Later.",
+   "pce_sections": [
+    "pallavi",
+    "anupallavi",
+    "charanam"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "carnatic-tillana",
+   "name": "Tillana",
+   "tradition": "carnatic",
+   "languages": [
+    "ta",
+    "te",
+    "sa"
+   ],
+   "region": "South India",
+   "lyric_form": "Fast rhythmic dance finale with jati syllables (tom, dhim, ta, dhi) and a short lyric",
+   "metre": "syllabic jatis, brisk",
+   "instruments": [
+    "mridangam",
+    "violin",
+    "flute",
+    "nattuvangam (cymbals)"
+   ],
+   "tempo_bpm": [
+    110,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "joyful",
+    "energetic",
+    "celebratory"
+   ],
+   "themes": [],
+   "tala": "Adi, rupaka",
+   "raga_hint": null,
+   "lyria_hint_native": "தில்லானா, ஜதி, மிருதங்கம், வயலின், புல்லாங்குழல், வேகமான நடன முடிவு",
+   "lyria_hint_en": "Carnatic tillana, rapid jati syllables, mridangam and violin, bright energetic finale",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Syllables without lexical meaning sidestep the diction gate (nothing to match). Lyria drum/violin interplay is a plausible fit; test.",
+   "pce_sections": [
+    "pallavi",
+    "jati",
+    "charanam"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "carnatic-instrumental",
+   "name": "Carnatic instrumental (veena, violin, flute, nadaswaram)",
+   "tradition": "carnatic",
+   "languages": [
+    "zxx"
+   ],
+   "region": "South India",
+   "lyric_form": "Wordless; varnam, kriti on instruments, ragam-tanam-pallavi",
+   "metre": "wordless; adi/rupaka cycles",
+   "instruments": [
+    "veena",
+    "violin",
+    "bansuri",
+    "nadaswaram",
+    "mridangam",
+    "ghatam",
+    "kanjira"
+   ],
+   "tempo_bpm": [
+    60,
+    140
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "morning",
+    "dusk"
+   ],
+   "moods": [
+    "calm",
+    "devotional",
+    "joyful"
+   ],
+   "themes": [],
+   "tala": "Adi, rupaka, misra chapu",
+   "raga_hint": null,
+   "lyria_hint_native": "வீணை, வயலின், புல்லாங்குழல், மிருதங்கம், ஆதி தாளம், கர்நாடக சங்கீதம் கருவி இசை",
+   "lyria_hint_en": "Carnatic instrumental, veena and violin duet, mridangam, adi tala, wordless, no humming",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB: dawn-veena-alap, evening-violin-carnatic, sleep-veena: veena passed ('sleep-veena') but classical overall 3 of 13 clean. Nadaswaram dawn soft passed intermittently.",
+   "pce_sections": [
+    "alapana",
+    "kriti",
+    "tani"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "classical",
+   "launch_priority": "launch-conditional",
+   "sensitivity": null
+  },
+  {
+   "id": "nadaswaram-thavil",
+   "name": "Nadaswaram and thavil (temple/wedding)",
+   "tradition": "carnatic",
+   "languages": [
+    "ta",
+    "te",
+    "zxx"
+   ],
+   "region": "Tamil Nadu, Andhra temples and weddings",
+   "lyric_form": "Auspicious loud outdoor ensemble; wordless",
+   "metre": "fast kriti-based gat, mangala vadyam",
+   "instruments": [
+    "nadaswaram",
+    "thavil",
+    "talam",
+    "sruti box"
+   ],
+   "tempo_bpm": [
+    80,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "dawn",
+    "morning"
+   ],
+   "moods": [
+    "festive",
+    "celebratory",
+    "devotional"
+   ],
+   "themes": [
+    "wedding",
+    "bhakti"
+   ],
+   "tala": "Adi, misra chapu, khanda chapu",
+   "raga_hint": null,
+   "lyria_hint_native": "நாதஸ்வரம், தவில், கெட்டி மேளம், திருமண மங்கல இசை, பண்டிகை",
+   "lyria_hint_en": "Nadaswaram and thavil mangala vadyam for a Tamil wedding, bright festive, instrumental",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB: dawn-nadaswaram-soft generated (soft). Use for wedding idents and Pongal package.",
+   "pce_sections": [
+    "invocation",
+    "gat"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "classical",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "tamil-thevaram-tiruppugazh",
+   "name": "Thevaram, Tiruppugazh, Divya Prabandham (Tamil devotional)",
+   "tradition": "devotional",
+   "languages": [
+    "ta"
+   ],
+   "region": "Tamil Nadu (Nayanmars, Arunagirinathar, Alvars)",
+   "lyric_form": "Tamil Shaivite and Vaishnavite hymns; Tiruppugazh in chandam rhythmic syllables for Murugan; Thiruppavai in Margazhi",
+   "metre": "Tamil pann-based; chanda metre; 30 Thiruppavai verses",
+   "instruments": [
+    "tanpura",
+    "violin",
+    "mridangam",
+    "harmonium",
+    "bells",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    60,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Adi, misra chapu, khanda chapu, tisra",
+   "raga_hint": null,
+   "lyria_hint_native": "தேவாரம், திருப்புகழ், திருப்பாவை, முருகன் பக்தி, மணி ஓசை, குழுவாக பாடல்",
+   "lyria_hint_en": "Tamil Tiruppugazh or Thevaram, devout chorus, violin and mridangam, rhythmic syllables, dawn temple feeling",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Ta live. Texts are ancient (public domain). Murugan, Amman and Ayyappan bhakti are mass-market in Tamil Nadu.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "verse"
+   ],
+   "must_avoid": [
+    "Sanskrit padding"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ta-ayyappan-amman-pattu",
+   "name": "Ayyappan, Amman and Murugan devotional pattu",
+   "tradition": "devotional",
+   "languages": [
+    "ta",
+    "ml"
+   ],
+   "region": "Tamil Nadu, Kerala (Sabarimala season Nov-Jan)",
+   "lyric_form": "Folk-style devotional songs to Ayyappan, Mariamman, Murugan; chorus-friendly",
+   "metre": "simple 4-line verses, refrain 'Swamiye Saranam Ayyappa'",
+   "instruments": [
+    "udukkai",
+    "thavil",
+    "parai",
+    "nadaswaram",
+    "harmonium",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    85,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "energetic",
+    "celebratory"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Misra chapu, khanda chapu, adi",
+   "raga_hint": null,
+   "lyria_hint_native": "ஐயப்பன் பக்தி பாடல், அம்மன் பாடல், உடுக்கை, பறை, குழு பாடல், கார்த்திகை மாதம்",
+   "lyria_hint_en": "Tamil Ayyappan or Amman devotional song, udukkai and parai drums, chorus, spirited devotion",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Seasonal: Sabarimala mala period starts Karthigai/Vrischikam (mid-Nov). Strong seasonal hook for Tamil and Malayalam audiences.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ta-film-melody",
+   "name": "Tamil film melody and pop",
+   "tradition": "film",
+   "languages": [
+    "ta"
+   ],
+   "region": "Chennai (Kollywood)",
+   "lyric_form": "Pallavi + charanams with strong melody; hook-led, quatrain lines with edugai",
+   "metre": "8 to 12 syllable lines with monai/edugai",
+   "instruments": [
+    "synth",
+    "guitar",
+    "strings",
+    "violin",
+    "flute",
+    "dhol/drum kit"
+   ],
+   "tempo_bpm": [
+    80,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "joyful",
+    "nostalgic",
+    "energetic"
+   ],
+   "themes": [
+    "love",
+    "friendship"
+   ],
+   "tala": "4/4, misra chapu fusion",
+   "raga_hint": null,
+   "lyria_hint_native": "தமிழ் திரைப்பட மெலடி, இனிய பல்லவி, ஸ்ட்ரிங்ஸ், கிட்டார், புல்லாங்குழல், நவீன இசை அமைப்பு",
+   "lyria_hint_en": "Tamil film melody, memorable pallavi, strings, guitar, flute, polished modern production",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Ta is live and tested in the pool.",
+   "pce_sections": [
+    "pallavi",
+    "charanam",
+    "pallavi",
+    "charanam"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio",
+    "English words"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ta-gaana",
+   "name": "Chennai gaana",
+   "tradition": "folk",
+   "languages": [
+    "ta"
+   ],
+   "region": "North Chennai working-class neighbourhoods",
+   "lyric_form": "Street-poetry songs about love, loss, life, humour; thara local tapes of dappankuthu",
+   "metre": "irregular, conversational lines; loud percussion",
+   "instruments": [
+    "gaana drums (tharai)",
+    "kuthu drums",
+    "synth bass",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "playful",
+    "melancholic"
+   ],
+   "themes": [
+    "friendship",
+    "travel"
+   ],
+   "tala": "Fast 4/4 with kuthu bounce",
+   "raga_hint": null,
+   "lyria_hint_native": "சென்னை கானா பாடல், தாரை தப்பட்டை, வட்டார பேச்சு தமிழ், சுறுசுறுப்பான இசை",
+   "lyria_hint_en": "Chennai gaana, thara drums, local slang vocals, funny-melancholy street storytelling, high energy",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Local slang is hard for diction scoring; native review is needed before launching gaana packs.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "caste/community references"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": "Avoid caste or neighbourhood-targeting lyrics"
+  },
+  {
+   "id": "ta-kuthu-naattupura",
+   "name": "Kuthu and naattupura paadal (Tamil folk)",
+   "tradition": "folk",
+   "languages": [
+    "ta"
+   ],
+   "region": "Madurai, Tirunelveli, villages (Karakattam, Thappattam, Oyilattam)",
+   "lyric_form": "Folk dance songs and field songs; call-and-response; harvest, village deities",
+   "metre": "repeated lines, onomatopoeia",
+   "instruments": [
+    "parai",
+    "thavil",
+    "urumi melam",
+    "nadaswaram",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    110,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "festive",
+    "playful"
+   ],
+   "themes": [
+    "harvest",
+    "village"
+   ],
+   "tala": "Tisra / rapid 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "நாட்டுப்புறப் பாடல், கரகாட்டம், பறை, தவில், உருமி மேளம், கிராம திருவிழா",
+   "lyria_hint_en": "Tamil folk kuthu, parai and urumi drums, village festival dance, chorus calls",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Existing genre tag 'tamil-folk' in the pool. Raga/folk instrumentals vocalise regardless, so render as vocal tracks.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "tamil-folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ta-thalattu",
+   "name": "Thalattu (Tamil lullaby)",
+   "tradition": "folk",
+   "languages": [
+    "ta"
+   ],
+   "region": "Tamil Nadu",
+   "lyric_form": "Mother's lullaby 'aaraaro aariraro'; soft refrain",
+   "metre": "3 to 4 line verses with repeated 'aararo'",
+   "instruments": [
+    "soft flute",
+    "veena",
+    "tanpura",
+    "humming"
+   ],
+   "tempo_bpm": [
+    55,
+    80
+   ],
+   "energy": "low",
+   "dayparts": [
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "nostalgic"
+   ],
+   "themes": [
+    "mother"
+   ],
+   "tala": "Slow 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "தாலாட்டு, ஆராரோ ஆரிராரோ, மெல்லிய புல்லாங்குழல், தாயின் குரல், தூக்கம்",
+   "lyria_hint_en": "Tamil thalattu, aararo aariraro refrain, very soft, flute and veena, mother's voice",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Same sleep-station logic as hindi-lori.",
+   "pce_sections": [
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ta-villu-pattu",
+   "name": "Villu paattu",
+   "tradition": "folk",
+   "languages": [
+    "ta"
+   ],
+   "region": "Southern Tamil Nadu (Kanyakumari, Tirunelveli)",
+   "lyric_form": "Narrative bow-song about local deities and heroes, with chorus",
+   "metre": "ballad form, spoken-sung",
+   "instruments": [
+    "villu (bow)",
+    "udukkai",
+    "kudam",
+    "ghatam",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    90,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "celebratory"
+   ],
+   "themes": [
+    "village",
+    "bhakti"
+   ],
+   "tala": "Variable folk",
+   "raga_hint": null,
+   "lyria_hint_native": "வில்லுப்பாட்டு, வில், உடுக்கை, குடம், கதை சொல்லும் பாணி, கிராமிய பாடல்",
+   "lyria_hint_en": "Villu paattu, bow instrument and udukkai, storytelling ballad with chorus responses",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Niche; value is cultural. Later.",
+   "pce_sections": [
+    "story",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "tamil-folk",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "te-janapada",
+   "name": "Telugu janapada (folk)",
+   "tradition": "folk",
+   "languages": [
+    "te"
+   ],
+   "region": "Telangana and Andhra (bonalu, burrakatha, oggu katha, kolatam)",
+   "lyric_form": "Folk and festival songs; burrakatha ballads; Bathukamma songs for women's festival (Sep-Oct)",
+   "metre": "simple lines with refrain 'uyyalo'",
+   "instruments": [
+    "dappu",
+    "tamburi",
+    "dholak",
+    "harmonium",
+    "clapping",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "festive",
+    "playful"
+   ],
+   "themes": [
+    "harvest",
+    "village"
+   ],
+   "tala": "Fast 4/4, chowtal",
+   "raga_hint": null,
+   "lyria_hint_native": "తెలుగు జానపద గీతం, బతుకమ్మ, బోనాలు, డప్పు, తంబురి, ఉయ్యాలో, గ్రామీణ శైలి",
+   "lyria_hint_en": "Telugu janapada folk, dappu drums, tamburi, Bathukamma chorus 'uyyalo', village festival rhythm",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Te live. Bathukamma (Sep-Oct) and Bonalu (Jul-Aug) are seasonal.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "te-film-pop",
+   "name": "Telugu film pop and mass beat",
+   "tradition": "film",
+   "languages": [
+    "te"
+   ],
+   "region": "Hyderabad (Tollywood)",
+   "lyric_form": "Hook-led pallavi with mass beat, melody, or dance numbers",
+   "metre": "prasa lines, 8 to 12 syllables",
+   "instruments": [
+    "synth",
+    "dhol",
+    "guitar",
+    "strings",
+    "brass"
+   ],
+   "tempo_bpm": [
+    95,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "joyful",
+    "romantic",
+    "celebratory"
+   ],
+   "themes": [
+    "love",
+    "friendship",
+    "wedding"
+   ],
+   "tala": "4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "తెలుగు సినిమా పాట, మాస్ బీట్, డోల్, సింథ్, హుక్, శక్తివంతమైన గాయకుడు",
+   "lyria_hint_en": "Telugu film song, mass beat, dhol, synth, big hook, energetic male lead",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Te live and tested.",
+   "pce_sections": [
+    "pallavi",
+    "charanam",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "kn-bhavageethe",
+   "name": "Bhavageethe (Kannada light music)",
+   "tradition": "light",
+   "languages": [
+    "kn"
+   ],
+   "region": "Karnataka (Kuvempu, Bendre, K.S. Narasimhaswamy, G.S. Shivarudrappa, Mysore Ananthaswamy, C. Ashwath)",
+   "lyric_form": "Lyrical poem set to melody ('sugama sangeetha'); nature, love, nostalgia, philosophy, patriotism; strophic with repeating pallavi",
+   "metre": "4+4 matra flow; dvitiyakshara prasa; 4 to 6 line stanzas",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "flute",
+    "violin",
+    "sitar (light)",
+    "keyboard"
+   ],
+   "tempo_bpm": [
+    65,
+    100
+   ],
+   "energy": "low",
+   "dayparts": [
+    "morning",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "nostalgic",
+    "calm",
+    "romantic",
+    "melancholic"
+   ],
+   "themes": [
+    "love",
+    "village",
+    "spring"
+   ],
+   "tala": "Kaharwa, dadra, 6/8 swing",
+   "raga_hint": null,
+   "lyria_hint_native": "ಭಾವಗೀತೆ, ಸುಗಮ ಸಂಗೀತ, ಹಾರ್ಮೋನಿಯಂ, ತಬಲಾ, ಕೊಳಲು, ಮೃದುವಾದ ಗಾಯನ, ಕವಿತೆಯಂತೆ",
+   "lyria_hint_en": "Kannada bhavageethe, poem-like lyrics, harmonium, tabla, flute and violin, soft sincere voice, gentle strophic melody",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Kn live and tested. Lyric quality matters more than arrangement: bhavageethe lives in the poem, so PCE should carry the weight (this is where the PCE differentiator shows).",
+   "pce_sections": [
+    "pallavi",
+    "charana",
+    "charana",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "moon-and-heart cliche",
+    "Sanskritised padding"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "kn-dasara-padagalu",
+   "name": "Dasara padagalu (Haridasa devotional)",
+   "tradition": "devotional",
+   "languages": [
+    "kn"
+   ],
+   "region": "Karnataka (Purandara Dasa, Kanaka Dasa, Vijaya Dasa)",
+   "lyric_form": "Devotional songs to Vishnu/Krishna (Vittala), simple pallavi + charanams, philosophy in plain language",
+   "metre": "short lines, internal rhyme, mudra (signature) at end",
+   "instruments": [
+    "tambura",
+    "taal",
+    "harmonium",
+    "mridanga",
+    "violin",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    65,
+    110
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "joyful",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Adi, rupaka, misra chapu",
+   "raga_hint": null,
+   "lyria_hint_native": "ದಾಸರ ಪದಗಳು, ಪುರಂದರದಾಸ, ತಂಬೂರಿ, ತಾಳ, ಮೃದಂಗ, ಭಕ್ತಿ ಗೀತೆ, ಸರಳ ಭಾಷೆ",
+   "lyria_hint_en": "Dasara pada in Kannada, tambura and taal, devout male voice, simple plain-language devotion",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Public-domain texts; a fresh composition is fine. Kn live.",
+   "pce_sections": [
+    "pallavi",
+    "charana",
+    "charana",
+    "pallavi"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "kn-vachana",
+   "name": "Vachana sangeetha",
+   "tradition": "devotional",
+   "languages": [
+    "kn"
+   ],
+   "region": "Karnataka (Basavanna, Akka Mahadevi, Allama Prabhu, 12th century)",
+   "lyric_form": "Free-verse spiritual and social reform poems, plain language; set to melody as vachana gayana",
+   "metre": "free verse; no strict metre; closing signature (ankita)",
+   "instruments": [
+    "tanpura",
+    "harmonium",
+    "flute",
+    "violin",
+    "ektara"
+   ],
+   "tempo_bpm": [
+    55,
+    90
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "night"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "melancholic"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Free or slow adi",
+   "raga_hint": null,
+   "lyria_hint_native": "ವಚನ ಸಂಗೀತ, ಬಸವಣ್ಣ, ಅಕ್ಕ ಮಹಾದೇವಿ, ತಂಬೂರಿ, ಕೊಳಲು, ಆಧ್ಯಾತ್ಮಿಕ ಭಾವ",
+   "lyria_hint_en": "Vachana sangeetha, unmetered devotional poem sung simply, tanpura and flute, contemplative",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Public domain. Needs a native check as meaning is subtle.",
+   "pce_sections": [
+    "verse",
+    "verse"
+   ],
+   "must_avoid": [
+    "religious polemics"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "kn-janapada",
+   "name": "Kannada janapada and yakshagana",
+   "tradition": "folk",
+   "languages": [
+    "kn"
+   ],
+   "region": "Karnataka coast (yakshagana), north Karnataka (janapada), Dollu Kunitha",
+   "lyric_form": "Folk songs, Dollu Kunitha drums, yakshagana prasanga narratives with bhagavata singer",
+   "metre": "repeating refrain; call and response",
+   "instruments": [
+    "dollu",
+    "chande (yakshagana)",
+    "maddale",
+    "harmonium",
+    "taal",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "festive",
+    "celebratory"
+   ],
+   "themes": [
+    "village",
+    "harvest"
+   ],
+   "tala": "Fast folk 6/8 and 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "ಕನ್ನಡ ಜಾನಪದ ಗೀತೆ, ಡೊಳ್ಳು ಕುಣಿತ, ಯಕ್ಷಗಾನ, ಚಂಡೆ, ಮದ್ದಳೆ, ಹಬ್ಬದ ಕುಣಿತ",
+   "lyria_hint_en": "Kannada janapada, dollu kunitha drumming, yakshagana chande and maddale, festive chorus",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Kn live.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "kn-film-pop",
+   "name": "Kannada film pop (Sandalwood)",
+   "tradition": "film",
+   "languages": [
+    "kn"
+   ],
+   "region": "Bengaluru",
+   "lyric_form": "Hook-led pallavi; melody and dance numbers",
+   "metre": "dvitiyakshara prasa, 8 to 12 syllables",
+   "instruments": [
+    "synth",
+    "guitar",
+    "dhol",
+    "strings",
+    "flute"
+   ],
+   "tempo_bpm": [
+    85,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "romantic",
+    "joyful",
+    "energetic",
+    "nostalgic"
+   ],
+   "themes": [
+    "love",
+    "friendship"
+   ],
+   "tala": "4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "ಕನ್ನಡ ಸಿನೆಮಾ ಹಾಡು, ಮಧುರ ಪಲ್ಲವಿ, ಸಿಂಥ್, ಗಿಟಾರ್, ಆಧುನಿಕ ನಿರ್ಮಾಣ",
+   "lyria_hint_en": "Kannada film song, melodious pallavi, synth, guitar, polished modern production",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Kn live.",
+   "pce_sections": [
+    "pallavi",
+    "charana",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "English words"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ml-sopana-sangeetham",
+   "name": "Sopana sangeetham",
+   "tradition": "devotional",
+   "languages": [
+    "ml"
+   ],
+   "region": "Kerala temples (Kathakali and Kutiyattam tradition; Ashtapadi, Jayadeva's Gita Govinda)",
+   "lyric_form": "Temple-step song, slow devotional; Ashtapadi and Kathakali padams; sung beside the sopanam (steps) with edakka",
+   "metre": "slow, unadorned; Sanskrit-Malayalam",
+   "instruments": [
+    "edakka (hourglass drum)",
+    "chengila",
+    "ilathalam",
+    "tanpura"
+   ],
+   "tempo_bpm": [
+    45,
+    80
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Chempata, tripuda, panchari (Kerala talas)",
+   "raga_hint": null,
+   "lyria_hint_native": "സോപാന സംഗീതം, ഇടയ്ക്ക, ചെങ്കില, ഇലത്താളം, ക്ഷേത്രം, അഷ്ടപദി, ഭക്തി",
+   "lyria_hint_en": "Sopana sangeetham at a Kerala temple, edakka and ilathalam, slow devotional chant, serene",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Ml is in wave 1 (probe passed). Sopana is a signature Kerala form but Lyria likely to produce generic bhajan; needs 3 test renders.",
+   "pce_sections": [
+    "verse",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "ml-mappila-pattu",
+   "name": "Mappila pattu",
+   "tradition": "folk",
+   "languages": [
+    "ml"
+   ],
+   "region": "Malabar, Kerala (Mappila Muslim tradition, Arabic-Malayalam)",
+   "lyric_form": "Narrative love, wedding and devotional songs in Arabi-Malayalam; oppana for bride",
+   "metre": "rhymed couplets, call-and-response",
+   "instruments": [
+    "daf",
+    "arabana muttu",
+    "harmonium",
+    "tabla",
+    "violin",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    90,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening"
+   ],
+   "moods": [
+    "celebratory",
+    "romantic",
+    "joyful"
+   ],
+   "themes": [
+    "wedding",
+    "love"
+   ],
+   "tala": "Dadra variants, fast 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "മാപ്പിളപ്പാട്ട്, ഒപ്പന, ദഫ്, അറബന, ഹാർമോണിയം, കല്യാണ പാട്ട്, കോൽക്കളി",
+   "lyria_hint_en": "Mappila pattu, oppana for a wedding, daf and arabana, harmonium, women's chorus and lead, joyful",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Wave 1 language. Avoid religious figures; wedding and love themes only.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": "Religious figures off-limits; wedding/love only"
+  },
+  {
+   "id": "ml-nadan-pattu",
+   "name": "Nadan pattu, vanchi pattu, thiruvathira pattu",
+   "tradition": "folk",
+   "languages": [
+    "ml"
+   ],
+   "region": "Kerala (boat songs, field songs, Onam thiruvathira dance)",
+   "lyric_form": "Folk songs, boat race songs (vanchipattu), Onam dance songs sung by women in a circle",
+   "metre": "rhythmic refrain, group singing",
+   "instruments": [
+    "chenda",
+    "thudi",
+    "maddalam",
+    "chengila",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    90,
+    135
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "joyful",
+    "festive",
+    "energetic"
+   ],
+   "themes": [
+    "harvest",
+    "village",
+    "friendship"
+   ],
+   "tala": "Fast folk, pancharimelam fragments",
+   "raga_hint": null,
+   "lyria_hint_native": "നാടൻ പാട്ട്, വഞ്ചിപ്പാട്ട്, തിരുവാതിരപ്പാട്ട്, ചെണ്ട, മദ്ദളം, ഓണക്കാലം, കൂട്ടായ്മ",
+   "lyria_hint_en": "Malayalam nadan pattu or boat song, chenda and thudi drums, chorus, Onam festival cheer",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Onam 2026 falls around 26 Aug; Thiruvonam is not in the launch window. Keep as year-round village-folk and Aug package.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "ml-film-melody",
+   "name": "Malayalam film melody and indie",
+   "tradition": "film",
+   "languages": [
+    "ml"
+   ],
+   "region": "Kochi, Thiruvananthapuram",
+   "lyric_form": "Melody-driven film songs, soft pallavi + charanam, often nostalgic; modern indie and rap scene",
+   "metre": "quatrains, light prasa",
+   "instruments": [
+    "piano",
+    "guitar",
+    "violin",
+    "flute",
+    "synth",
+    "tabla"
+   ],
+   "tempo_bpm": [
+    70,
+    115
+   ],
+   "energy": "low",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "nostalgic",
+    "romantic",
+    "calm",
+    "melancholic"
+   ],
+   "themes": [
+    "love",
+    "monsoon",
+    "travel"
+   ],
+   "tala": "4/4, 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "മലയാളം സിനിമാ ഗാനം, മെലഡി, പിയാനോ, വയലിൻ, ഗിറ്റാർ, മഴയുടെ ഓർമ്മ",
+   "lyria_hint_en": "Malayalam film melody, piano and violin, soft nostalgic voice, rain-evening mood",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Probe passed: ml-1..3 at 90-98 diction, judge 3.33.",
+   "pce_sections": [
+    "pallavi",
+    "charanam",
+    "pallavi"
+   ],
+   "must_avoid": [
+    "monsoon-heart cliche"
+   ],
+   "legacy_genre": "filmi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-rabindrasangeet",
+   "name": "Rabindrasangeet",
+   "tradition": "light",
+   "languages": [
+    "bn"
+   ],
+   "region": "West Bengal, Bangladesh (Tagore, about 2,200 songs)",
+   "lyric_form": "Poetic songs grouped as puja (devotion), prem (love), prakriti (nature, seasons), swadesh (patriotism), bichitra; sthayi, antara, sanchari, abhog",
+   "metre": "even stanzas; Tagore-created talas (jhampak, shashthi, nabataal); delicate rubato",
+   "instruments": [
+    "harmonium",
+    "esraj",
+    "tabla",
+    "sitar (light)",
+    "piano",
+    "violin"
+   ],
+   "tempo_bpm": [
+    55,
+    95
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "romantic",
+    "nostalgic",
+    "devotional",
+    "melancholic"
+   ],
+   "themes": [
+    "monsoon",
+    "spring",
+    "love"
+   ],
+   "tala": "Dadra, kaharwa, jhampak (5), shashthi (6), rupakra (6)",
+   "raga_hint": "Bhairavi, Bahar, Malhar family, Desh",
+   "lyria_hint_native": "রবীন্দ্রসঙ্গীত, ঋতু ও প্রকৃতি, হারমোনিয়াম, এসরাজ, তবলা, ধীর কোমল স্বর, কাব্যিক",
+   "lyria_hint_en": "Rabindrasangeet style, poetic nature-love song, harmonium, esraj, soft tabla, tender voice, rubato, seasonal imagery",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Tagore's texts are in the public domain (died 1941); new original lyrics in the idiom only. Bn live; Lyria strong on Bengali vocals (M-level checks).",
+   "pce_sections": [
+    "sthayi",
+    "antara",
+    "sanchari",
+    "abhog"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio",
+    "Tagore quote stuffing"
+   ],
+   "legacy_genre": "rabindrasangeet",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-nazrul-geeti",
+   "name": "Nazrul geeti",
+   "tradition": "light",
+   "languages": [
+    "bn"
+   ],
+   "region": "West Bengal, Bangladesh (Kazi Nazrul Islam)",
+   "lyric_form": "Ghazal-inflected Bengali songs, shyama sangeet, Islamic hamd, revolutionary and romantic",
+   "metre": "bahr-like metres with Bengali phrasing",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "bansuri",
+    "sarod",
+    "violin"
+   ],
+   "tempo_bpm": [
+    60,
+    115
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "devotional",
+    "energetic",
+    "melancholic"
+   ],
+   "themes": [
+    "love",
+    "bhakti"
+   ],
+   "tala": "Kaharwa, dadra, teental variants",
+   "raga_hint": null,
+   "lyria_hint_native": "নজরুলগীতি, গজল, শ্যামাসঙ্গীত, হারমোনিয়াম, তবলা, বাঁশি, আবেগময় কণ্ঠ",
+   "lyria_hint_en": "Nazrul geeti, Bengali ghazal-style, harmonium, tabla, bansuri, emotive voice, devotional or romantic",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Texts public domain. Combines with the ghazal entry for hi/ur routing.",
+   "pce_sections": [
+    "sthayi",
+    "antara",
+    "sanchari"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "light-classical",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-baul",
+   "name": "Baul and fakiri",
+   "tradition": "folk",
+   "languages": [
+    "bn"
+   ],
+   "region": "West Bengal (Birbhum, Nadia), Bangladesh (Lalon Fakir, Hason Raja)",
+   "lyric_form": "Philosophical wandering-mystic songs on the body, the Beloved (moner manush), simple faith; repeat with refrain and dance",
+   "metre": "simple 4-line verses, internal rhyme; breathy sung-spoken voice",
+   "instruments": [
+    "ektara",
+    "dotara",
+    "khamak",
+    "duggi",
+    "ghungur",
+    "bamboo flute",
+    "khol"
+   ],
+   "tempo_bpm": [
+    80,
+    120
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful",
+    "nostalgic"
+   ],
+   "themes": [
+    "village",
+    "bhakti",
+    "friendship"
+   ],
+   "tala": "Dadra, kaharwa, 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "বাউল গান, একতারা, দোতারা, খমক, ঘুঙুর, বাঁশি, মনের মানুষ, লালন, গ্রামীণ",
+   "lyria_hint_en": "Baul song, ektara and dotara, khamak, ghungur ankle bells, bamboo flute, village mystic, open-throated voice",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "LAB: score-baul-ektara passed generation but vocalised; as a vocal track it is natural. Unesco-listed tradition: respect, label AI. Original lyrics; avoid quoting Lalon beyond fair short.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [
+    "Lalon quote stuffing"
+   ],
+   "legacy_genre": "bengali-folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-bhatiyali-bhawaiya",
+   "name": "Bhatiyali and bhawaiya",
+   "tradition": "folk",
+   "languages": [
+    "bn",
+    "as"
+   ],
+   "region": "Bangladesh rivers, North Bengal, Goalpara-Assam",
+   "lyric_form": "Boatman songs (bhatiyali, 'downstream') and cart-driver love songs (bhawaiya) in long drawn melodies",
+   "metre": "long vowel sustains; a/b rhymes",
+   "instruments": [
+    "dotara",
+    "bamboo flute",
+    "dhol",
+    "ektara"
+   ],
+   "tempo_bpm": [
+    60,
+    95
+   ],
+   "energy": "low",
+   "dayparts": [
+    "evening",
+    "dusk"
+   ],
+   "moods": [
+    "melancholic",
+    "nostalgic",
+    "romantic"
+   ],
+   "themes": [
+    "village",
+    "love",
+    "farewell"
+   ],
+   "tala": "Free; slow dadra",
+   "raga_hint": null,
+   "lyria_hint_native": "ভাটিয়ালি, ভাওয়াইয়া, নদী ও মাঝি, দোতারা, বাঁশি, দীর্ঘ টান, বিরহ",
+   "lyria_hint_en": "Bengali bhatiyali, long drawn river-boatman melody, dotara and bamboo flute, longing",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Long sustained vowels fit Lyria's weakness (judge: unnatural vowel sustain); check diction.",
+   "pce_sections": [
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "bengali-folk",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-kirtan-padavali",
+   "name": "Kirtan and padavali (Bengal)",
+   "tradition": "devotional",
+   "languages": [
+    "bn"
+   ],
+   "region": "Nabadwip, Bishnupur (Chaitanya tradition)",
+   "lyric_form": "Radha-Krishna narrative songs; call-and-response in group kirtan; dhun",
+   "metre": "long lines, refrain ('Hare Krishna' chant), accelerating",
+   "instruments": [
+    "khol (mridanga)",
+    "kartal (cymbals)",
+    "harmonium",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    70,
+    150
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "joyful",
+    "celebratory"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Dasakushi, teen tal, 8-beat",
+   "raga_hint": null,
+   "lyria_hint_native": "কীর্তন, পদাবলী, খোল, করতাল, হারমোনিয়াম, রাধা-কৃষ্ণ, নামকীর্তন, সমবেত কণ্ঠ",
+   "lyria_hint_en": "Bengali kirtan, khol and kartal, harmonium, call-and-response chorus, accelerating devotion",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Ok for vocal; accelerating form is a good test of Lyria.",
+   "pce_sections": [
+    "slow",
+    "medium",
+    "fast"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-shyama-agamani",
+   "name": "Shyama sangeet and agamani (Durga Puja)",
+   "tradition": "devotional",
+   "languages": [
+    "bn"
+   ],
+   "region": "Bengal (Ramprasad Sen); Mahalaya and Durga Puja season",
+   "lyric_form": "Devotional songs to Kali/Durga; agamani-vijaya songs of the daughter's homecoming and departure; Mahalaya recital",
+   "metre": "emotive, mother-daughter imagery",
+   "instruments": [
+    "dhak",
+    "kansar (gong)",
+    "shankh (conch)",
+    "harmonium",
+    "dhunuchi",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    70,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "celebratory",
+    "nostalgic"
+   ],
+   "themes": [
+    "bhakti",
+    "mother",
+    "farewell"
+   ],
+   "tala": "Dadra, kaharwa",
+   "raga_hint": null,
+   "lyria_hint_native": "শ্যামাসঙ্গীত, আগমনী, বিজয়া, ঢাক, কাঁসর, শঙ্খ, মহালয়া, মা দুর্গা",
+   "lyria_hint_en": "Bengali Durga Puja agamani song, dhak drums, conch, kansar, devotional, mother-daughter longing",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Durga Puja 2026 is 17-21 Oct; Mahalaya 10 Oct (past). Annual package; LAB: festive-kalipuja-dhak passed as instrumental. Vijaya dashami (farewell) is emotive.",
+   "pce_sections": [
+    "pallavi",
+    "charanam"
+   ],
+   "must_avoid": [
+    "named deity depictions"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-adhunik-band",
+   "name": "Bengali adhunik and band music",
+   "tradition": "pop",
+   "languages": [
+    "bn"
+   ],
+   "region": "Kolkata, Dhaka",
+   "lyric_form": "Modern Bengali songs, jibonmukhi (life-oriented) and band rock; storytelling",
+   "metre": "free verse with strong end-rhyme",
+   "instruments": [
+    "acoustic guitar",
+    "electric guitar",
+    "bass",
+    "drum kit",
+    "piano",
+    "violin"
+   ],
+   "tempo_bpm": [
+    80,
+    140
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "nostalgic",
+    "melancholic",
+    "romantic",
+    "joyful"
+   ],
+   "themes": [
+    "travel",
+    "friendship",
+    "love"
+   ],
+   "tala": "4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "আধুনিক বাংলা গান, ব্যান্ড, গিটার, ড্রামস, গল্প বলা, জীবনমুখী, শহরের সন্ধ্যা",
+   "lyria_hint_en": "Modern Bengali band song, acoustic and electric guitar, storytelling vocals, Kolkata evening",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Bn live and tested.",
+   "pce_sections": [
+    "verse",
+    "chorus",
+    "verse",
+    "chorus"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio"
+   ],
+   "legacy_genre": "indie",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "bn-jhumur-gambhira-lokgeeti",
+   "name": "Bengali folk: jhumur, gambhira, palli geeti",
+   "tradition": "folk",
+   "languages": [
+    "bn",
+    "as"
+   ],
+   "region": "Jangalmahal, Malda, Purulia, tea gardens",
+   "lyric_form": "Seasonal and social folk songs; gambhira satire; jhumur dance song; palli geeti village songs",
+   "metre": "short lines, refrain",
+   "instruments": [
+    "madal",
+    "dhamsa",
+    "dhol",
+    "flute",
+    "harmonium"
+   ],
+   "tempo_bpm": [
+    100,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "festive",
+    "playful"
+   ],
+   "themes": [
+    "harvest",
+    "village"
+   ],
+   "tala": "Fast 4/4 and 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "ঝুমুর, গম্ভীরা, পল্লীগীতি, মাদল, ধামসা, গ্রামের উৎসব, নাচের গান",
+   "lyria_hint_en": "Bengali jhumur folk dance song, madal and dhamsa drums, village festival",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Lower priority.",
+   "pce_sections": [
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "bengali-folk",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "mr-abhang",
+   "name": "Abhang (Varkari devotional)",
+   "tradition": "devotional",
+   "languages": [
+    "mr"
+   ],
+   "region": "Maharashtra, Pandharpur (Dnyaneshwar, Namdev, Eknath, Tukaram, Janabai)",
+   "lyric_form": "Four-line rhymed devotional verse to Vitthal; refrain-based group singing; kirtan form",
+   "metre": "abhang metre: 4 lines, rhyme aaba / aaaa; 6+6+6+4 matra ('unbroken')",
+   "instruments": [
+    "taal (cymbals)",
+    "mridanga/pakhawaj",
+    "harmonium",
+    "veena (ektari)",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    80,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "joyful",
+    "calm",
+    "celebratory"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Keharwa, dadra, bhajani theka (8-beat)",
+   "raga_hint": null,
+   "lyria_hint_native": "अभंग, वारकरी, विठ्ठल विठ्ठल, टाळ, मृदंग, पखावज, हार्मोनियम, भक्तिमय कोरस, पंढरपूर वारी",
+   "lyria_hint_en": "Marathi abhang, Varkari devotional, taal cymbals, mridanga, harmonium, group chorus calling Vitthal, joyful devotion",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Mr probe passed (diction 99). Abhang is the signature Marathi devotion; Ashadhi/Kartiki Ekadashi seasonal. Public-domain saints' texts only if verbatim; otherwise original lyrics in the idiom.",
+   "pce_sections": [
+    "refrain",
+    "abhang",
+    "abhang",
+    "refrain"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio",
+    "named living bhakta"
+   ],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "mr-bhavgeet",
+   "name": "Bhavgeet (Marathi light music)",
+   "tradition": "light",
+   "languages": [
+    "mr"
+   ],
+   "region": "Maharashtra (Sudhir Phadke, Hridaynath Mangeshkar; poets Bahinabai, G.D. Madgulkar, Suresh Bhat)",
+   "lyric_form": "Poem-based song; love, nature, nostalgia, motherhood; strophic",
+   "metre": "5+5 or 4+4 matra, antyaprasa",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "flute",
+    "violin",
+    "sitar (light)",
+    "keyboard"
+   ],
+   "tempo_bpm": [
+    65,
+    100
+   ],
+   "energy": "low",
+   "dayparts": [
+    "morning",
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "nostalgic",
+    "romantic",
+    "calm",
+    "melancholic"
+   ],
+   "themes": [
+    "love",
+    "mother",
+    "village"
+   ],
+   "tala": "Dadra, kaharwa",
+   "raga_hint": null,
+   "lyria_hint_native": "भावगीत, सुगम संगीत, हार्मोनियम, तबला, बासरी, मंद गोड आवाज, कवितेसारखी ओळ",
+   "lyria_hint_en": "Marathi bhavgeet, poem-like lyric, harmonium, tabla, flute, gentle sincere voice",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Mr probe passed. Same logic as bhavageethe (kn): lyrics carry it, PCE leverage is highest here.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "antara",
+    "mukhda"
+   ],
+   "must_avoid": [
+    "moon-and-heart cliche"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "mr-lavani",
+   "name": "Lavani",
+   "tradition": "folk",
+   "languages": [
+    "mr"
+   ],
+   "region": "Maharashtra (tamasha theatre; Parbhani, Kolhapur)",
+   "lyric_form": "Two forms: nirguni (spiritual) and shringari (sensual); fast, witty, dholki-driven dance",
+   "metre": "rhymed couplets, quick speech-like lines, dholki 8-beat",
+   "instruments": [
+    "dholki",
+    "tuntune",
+    "manjira",
+    "harmonium",
+    "lezim",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    130,
+    170
+   ],
+   "energy": "high",
+   "dayparts": [
+    "evening"
+   ],
+   "moods": [
+    "playful",
+    "energetic",
+    "romantic",
+    "celebratory"
+   ],
+   "themes": [
+    "love",
+    "village",
+    "wedding"
+   ],
+   "tala": "Fast keherwa/dadra roll with dholki",
+   "raga_hint": null,
+   "lyria_hint_native": "लावणी, ढोलकी, तुणतुणे, मंजिरी, तमाशा, खट्याळ शृंगार, पटकन वाढणारी लय",
+   "lyria_hint_en": "Marathi lavani, fast dholki, tuntune, tamasha dance, witty playful shringar, big female lead",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Ok vocal; lyrics should stay playful, not explicit (moderation). Fast Marathi diction is the test.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [
+    "explicit lyrics"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": "Shringari lavani: keep playful, no explicit content"
+  },
+  {
+   "id": "mr-powada",
+   "name": "Powada (heroic ballad)",
+   "tradition": "folk",
+   "languages": [
+    "mr"
+   ],
+   "region": "Maharashtra (Shivaji tradition)",
+   "lyric_form": "Heroic ballad about Shivaji, Sambhaji, local heroes; shahir (bard) with daf",
+   "metre": "narrative lines, shouted refrain",
+   "instruments": [
+    "daf (halgi)",
+    "tuntune",
+    "dholki",
+    "harmonium",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "celebratory"
+   ],
+   "themes": [
+    "village"
+   ],
+   "tala": "Fast 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "पोवाडा, शाहीर, डफ, तुणतुणे, ढोलकी, शिवरायांचा पराक्रम, वीर रस",
+   "lyria_hint_en": "Marathi powada, shahir with daf, heroic narration, drum-driven",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Historical figures: stay with public-domain legend; no political content (safety-legal.md).",
+   "pce_sections": [
+    "story",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "later",
+   "sensitivity": "Political or communal framing off-limits"
+  },
+  {
+   "id": "mr-koli-geet",
+   "name": "Koli geet",
+   "tradition": "folk",
+   "languages": [
+    "mr"
+   ],
+   "region": "Mumbai coast, Konkan fisherfolk",
+   "lyric_form": "Fisher songs: sea, boats, love, Narali Purnima festival",
+   "metre": "call-and-response, boat-rowing rhythm",
+   "instruments": [
+    "dholki",
+    "tutari (trumpet)",
+    "flute",
+    "clapping",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    110,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "playful",
+    "joyful",
+    "energetic"
+   ],
+   "themes": [
+    "village",
+    "friendship"
+   ],
+   "tala": "Fast 8-beat",
+   "raga_hint": null,
+   "lyria_hint_native": "कोळी गीत, मासेमारी, होडी, सागर, ढोलकी, तुतारी, ताल धरून नाचणारे",
+   "lyria_hint_en": "Marathi koli geet, fisherfolk boat-rowing dance, dholki and tutari, upbeat",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Joyful and easy; good mood-lift track for the Mumbai demographic.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "mr-natyasangeet",
+   "name": "Natyasangeet (Marathi stage music)",
+   "tradition": "hindustani",
+   "languages": [
+    "mr"
+   ],
+   "region": "Pune, Mumbai, Kolhapur (Balgandharva, Keshavrao Bhosale)",
+   "lyric_form": "Dramatic songs with classical-ragadari base (pada), big taan; musicals",
+   "metre": "raga-based but text-led 4-line pada",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "tanpura",
+    "violin",
+    "sarangi"
+   ],
+   "tempo_bpm": [
+    60,
+    120
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "devotional",
+    "melancholic"
+   ],
+   "themes": [
+    "love"
+   ],
+   "tala": "Teental, dadra, kaharwa",
+   "raga_hint": null,
+   "lyria_hint_native": "नाट्यसंगीत, पद, राग आधारित, हार्मोनियम, तबला, तान, भावपूर्ण पुरुष आवाज",
+   "lyria_hint_en": "Marathi natyasangeet, raga-based dramatic song with taan, harmonium, tabla, expressive male voice",
+   "lyria_vocal": "risky",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Same classical risks (diction, taan stiffness). Later.",
+   "pce_sections": [
+    "pada",
+    "pada"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "classical",
+   "launch_priority": "later",
+   "sensitivity": null
+  },
+  {
+   "id": "mr-ganpati-dhol-tasha",
+   "name": "Ganpati and dhol-tasha",
+   "tradition": "festive",
+   "languages": [
+    "mr",
+    "hi"
+   ],
+   "region": "Maharashtra, Goa, Pune (Ganesh Chaturthi, Aug-Sep)",
+   "lyric_form": "Procession songs and aartis; dhol-tasha ensemble; 'Ganpati Bappa Morya'",
+   "metre": "chant refrain, aarti stanza",
+   "instruments": [
+    "dhol",
+    "tasha",
+    "lezim",
+    "zanj",
+    "manjira",
+    "brass band"
+   ],
+   "tempo_bpm": [
+    120,
+    160
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "festive",
+    "celebratory",
+    "energetic",
+    "devotional"
+   ],
+   "themes": [
+    "bhakti",
+    "friendship"
+   ],
+   "tala": "Fast 4/4, dhol-tasha roll",
+   "raga_hint": null,
+   "lyria_hint_native": "गणपती बाप्पा मोरया, ढोल ताशा, लेझीम, मिरवणूक, आरती, जल्लोष",
+   "lyria_hint_en": "Ganpati procession, dhol-tasha, lezim, brass band, festive chant 'Ganpati Bappa Morya'",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB m3: dhol-ganesh-procession generated (instrumental). Ganesh Chaturthi 2026: 14 Sep; not in the launch window, hold as annual package.",
+   "pce_sections": [
+    "chant",
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "festive",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "pa-bhangra",
+   "name": "Bhangra",
+   "tradition": "folk",
+   "languages": [
+    "pa"
+   ],
+   "region": "Punjab, Punjabi diaspora (UK, Canada)",
+   "lyric_form": "Harvest/celebration dance songs: boliyan couplets; lyrics on love, pride, land, friendship, wedding",
+   "metre": "couplets + 'hoye!' refrain",
+   "instruments": [
+    "dhol",
+    "tumbi",
+    "chimta",
+    "algoza",
+    "bass",
+    "synth"
+   ],
+   "tempo_bpm": [
+    110,
+    140
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "joyful",
+    "celebratory"
+   ],
+   "themes": [
+    "harvest",
+    "wedding",
+    "friendship",
+    "travel"
+   ],
+   "tala": "Fast 4/4 dhol with chaal and dhamaal",
+   "raga_hint": null,
+   "lyria_hint_native": "ਭੰਗੜਾ, ਢੋਲ, ਤੂੰਬੀ, ਚਿਮਟਾ, ਬੋਲੀਆਂ, ਪੰਜਾਬੀ ਖੁਸ਼ੀ, ਵਿਆਹ ਦੀ ਧਮਾਲ",
+   "lyria_hint_en": "Punjabi bhangra, driving dhol, tumbi, chimta, boliyan, high-energy wedding celebration",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Pa probe passed (diction 97-100). LAB m3: bhangra-folk-bright, bhangra-punjabi-drive generated.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "refrain",
+    "antara"
+   ],
+   "must_avoid": [
+    "drug and gun references",
+    "caste pride"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": "No gun, drug or violent-pride content (moderation list)"
+  },
+  {
+   "id": "pa-giddha-boliyan",
+   "name": "Giddha and boliyan",
+   "tradition": "folk",
+   "languages": [
+    "pa"
+   ],
+   "region": "Punjab (women's dance)",
+   "lyric_form": "Women's folk couplets (boliyan, tappe) with teasing and banter; dhol & clapping",
+   "metre": "2-line boliyan",
+   "instruments": [
+    "dhol",
+    "dholki",
+    "chimta",
+    "clapping",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    135
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "playful",
+    "joyful",
+    "celebratory"
+   ],
+   "themes": [
+    "wedding",
+    "friendship"
+   ],
+   "tala": "Fast 8-beat",
+   "raga_hint": null,
+   "lyria_hint_native": "ਗਿੱਧਾ, ਬੋਲੀਆਂ, ਟੱਪੇ, ਤਾੜੀਆਂ, ਔਰਤਾਂ ਦੀ ਢੋਲਕੀ, ਹਾਸਾ ਮਜ਼ਾਕ",
+   "lyria_hint_en": "Punjabi giddha with boliyan, women's chorus, dholki and clapping, playful banter",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Good wedding sangeet content.",
+   "pce_sections": [
+    "boli",
+    "refrain",
+    "boli"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "pa-sufi-heer-folk",
+   "name": "Punjabi sufi kafi and heer/jugni",
+   "tradition": "folk",
+   "languages": [
+    "pa"
+   ],
+   "region": "Punjab (Bulleh Shah, Shah Hussain, Waris Shah; jugni, mirza, heer)",
+   "lyric_form": "Mystic kafi and tragic romance narrative (Heer-Ranjha); jugni",
+   "metre": "refrain-driven; tumbi",
+   "instruments": [
+    "tumbi",
+    "harmonium",
+    "dholak",
+    "algoza",
+    "chimta"
+   ],
+   "tempo_bpm": [
+    75,
+    120
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening",
+    "dusk"
+   ],
+   "moods": [
+    "romantic",
+    "melancholic",
+    "devotional"
+   ],
+   "themes": [
+    "love"
+   ],
+   "tala": "Dadra, 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "ਸੂਫ਼ੀ ਕਾਫ਼ੀ, ਹੀਰ ਰਾਂਝਾ, ਤੂੰਬੀ, ਹਾਰਮੋਨੀਅਮ, ਢੋਲਕ, ਦਰਦ ਭਰੀ ਆਵਾਜ਼",
+   "lyria_hint_en": "Punjabi sufi kafi or Heer folk, tumbi and harmonium, aching voice, tragic-romantic",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Public-domain poets. Check Gurmukhi script only (Shahmukhi out).",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "pa-shabad-kirtan",
+   "name": "Shabad kirtan (Gurbani, sacred)",
+   "tradition": "devotional",
+   "languages": [
+    "pa"
+   ],
+   "region": "Punjab, Sikh sangat (raga-based Gurbani kirtan)",
+   "lyric_form": "Raga-based congregational hymns from the Guru Granth Sahib; sacred scripture",
+   "metre": "verse from scripture only",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "rabab",
+    "dilruba",
+    "jori"
+   ],
+   "tempo_bpm": [
+    50,
+    90
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Teental, kaharwa, jhaptal",
+   "raga_hint": null,
+   "lyria_hint_native": "ਸ਼ਬਦ ਕੀਰਤਨ, ਹਾਰਮੋਨੀਅਮ, ਤਬਲਾ, ਸ਼ਾਂਤ ਭਗਤੀ",
+   "lyria_hint_en": "Not to be generated: sacred scripture. Use an instrumental calm raga instead.",
+   "lyria_vocal": "no",
+   "lyria_instrumental": "poor",
+   "lyria_note": "DO NOT GENERATE. Gurbani is sacred scripture; AI-generated shabad, recitation or imitation is disrespectful to most of the community and carries legal/community risk. Offer none; route 'shabad' requests to original devotional (non-scriptural) or decline gently.",
+   "pce_sections": [],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "excluded",
+   "sensitivity": "Excluded: scripture, community-sensitive"
+  },
+  {
+   "id": "pa-pop-hiphop",
+   "name": "Punjabi pop and hip-hop",
+   "tradition": "pop",
+   "languages": [
+    "pa"
+   ],
+   "region": "Chandigarh, Ludhiana, Toronto, London",
+   "lyric_form": "Contemporary Punjabi pop, trap-bhangra, rap; lyrics on swagger, love, ambition, nostalgia of home",
+   "metre": "rap verses + hook",
+   "instruments": [
+    "808 bass",
+    "dhol sample",
+    "tumbi sample",
+    "synth",
+    "trap hi-hats"
+   ],
+   "tempo_bpm": [
+    90,
+    145
+   ],
+   "energy": "high",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "energetic",
+    "playful",
+    "romantic"
+   ],
+   "themes": [
+    "friendship",
+    "travel"
+   ],
+   "tala": "Trap 4/4 (halftime) with bhangra grid",
+   "raga_hint": null,
+   "lyria_hint_native": "ਪੰਜਾਬੀ ਪੌਪ, ਟਰੈਪ ਭੰਗੜਾ, ਰੈਪ, 808 ਬੇਸ, ਢੋਲ ਸੈਂਪਲ, ਆਤਮਵਿਸ਼ਵਾਸ ਭਰੀ ਪੇਸ਼ਕਾਰੀ",
+   "lyria_hint_en": "Punjabi trap-bhangra pop, 808 bass, dhol and tumbi samples, confident vocal and rap hook",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Moderation: strong list needed (gun and drug references are genre defaults). Lab: drive-trap-tabla rejected once, pop instruments pass.",
+   "pce_sections": [
+    "hook",
+    "verse",
+    "hook",
+    "verse"
+   ],
+   "must_avoid": [
+    "gun/drug glorification"
+   ],
+   "legacy_genre": "pop",
+   "launch_priority": "v1.1",
+   "sensitivity": "Gun, drug and violence glorification common in genre; strict list"
+  },
+  {
+   "id": "gu-garba-raas",
+   "name": "Garba and dandiya raas",
+   "tradition": "folk",
+   "languages": [
+    "gu",
+    "hi"
+   ],
+   "region": "Gujarat, Mumbai, Gujarati diaspora (Navratri, Sep-Oct)",
+   "lyric_form": "Devotional-festive dance songs to Amba; circular dance; progressive tempo (dheemo, medium, fast)",
+   "metre": "couplet + refrain, clap-driven 6/8 and 8/4 'trikal' garba",
+   "instruments": [
+    "dhol",
+    "dholak",
+    "dandiya sticks",
+    "harmonium",
+    "synth",
+    "brass",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    100,
+    165
+   ],
+   "energy": "high",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "festive",
+    "celebratory",
+    "energetic",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti",
+    "friendship",
+    "harvest"
+   ],
+   "tala": "Garba 6/8 (dadra), 8-beat roll, 3-clap trikal",
+   "raga_hint": null,
+   "lyria_hint_native": "ગરબા, દાંડિયા રાસ, ઢોલ, ઢોલક, તાળી, માતાજીના ગરબા, નવરાત્રિની રાત, તાલ પર ધમાલ",
+   "lyria_hint_en": "Gujarati garba, three-clap rhythm, dhol, dandiya sticks, chorus, Navratri night, accelerating tempo",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Gu probe passed (diction 86-100). LAB m3: 4 garba instrumentals generated (garba-dandiya-night etc.). Navratri 2026 passed 11-19 Oct; seasonal package returns next Sep/Oct; use year-round for wedding sangeet.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "gu-bhajan-prabhatiya",
+   "name": "Gujarati bhajan, prabhatiya, haveli sangeet",
+   "tradition": "devotional",
+   "languages": [
+    "gu"
+   ],
+   "region": "Gujarat (Narsinh Mehta, Mirabai, Dayaram; Pushtimarg haveli)",
+   "lyric_form": "Morning (prabhatiya) and devotional hymns; 'Vaishnav Jan To'; haveli sangeet is raga-based Krishna seva",
+   "metre": "even-line couplets with refrain",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "manjira",
+    "tanpura",
+    "flute"
+   ],
+   "tempo_bpm": [
+    65,
+    105
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Dadra, kaharwa",
+   "raga_hint": null,
+   "lyria_hint_native": "ગુજરાતી ભજન, પ્રભાતિયા, હવેલી સંગીત, હાર્મોનિયમ, તબલા, મંજીરા, સવારની ભક્તિ",
+   "lyria_hint_en": "Gujarati prabhatiya or bhajan, harmonium, tabla, manjira, gentle morning devotion",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Public domain texts (Narsinh Mehta). Gu probe passed.",
+   "pce_sections": [
+    "mukhda",
+    "antara"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "gu-lokgeet-dayro",
+   "name": "Gujarati lokgeet and dayro",
+   "tradition": "folk",
+   "languages": [
+    "gu"
+   ],
+   "region": "Kutch, Saurashtra (dayro, bhavai, rasda)",
+   "lyric_form": "Folk songs, dayro storytelling nights, wedding songs (fatana, lagn geet)",
+   "metre": "rhymed couplets",
+   "instruments": [
+    "dholak",
+    "manjira",
+    "harmonium",
+    "ektaro",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    85,
+    130
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening"
+   ],
+   "moods": [
+    "joyful",
+    "celebratory",
+    "nostalgic"
+   ],
+   "themes": [
+    "village",
+    "wedding"
+   ],
+   "tala": "6/8, 8-beat",
+   "raga_hint": null,
+   "lyria_hint_native": "ગુજરાતી લોકગીત, ડાયરો, કચ્છી, ઢોલક, મંજીરા, લગ્નગીત, ગામડાની ગાથા",
+   "lyria_hint_en": "Gujarati lokgeet and dayro evening, dholak, manjira, storytelling singer, village warmth",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Good wedding and village content.",
+   "pce_sections": [
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "gu-sugam-sangeet",
+   "name": "Gujarati sugam sangeet and ghazal",
+   "tradition": "light",
+   "languages": [
+    "gu"
+   ],
+   "region": "Ahmedabad, Mumbai",
+   "lyric_form": "Poem-based light music and Gujarati ghazal (poets: Shoonya Palanpuri, Amrut Ghayal, Narmad)",
+   "metre": "ghazal-style couplets",
+   "instruments": [
+    "harmonium",
+    "tabla",
+    "santoor",
+    "guitar"
+   ],
+   "tempo_bpm": [
+    60,
+    95
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "nostalgic",
+    "melancholic"
+   ],
+   "themes": [
+    "love"
+   ],
+   "tala": "Kaharwa, dadra",
+   "raga_hint": null,
+   "lyria_hint_native": "ગુજરાતી ગઝલ, સુગમ સંગીત, હાર્મોનિયમ, તબલા, સંતૂર, મખમલી અવાજ",
+   "lyria_hint_en": "Gujarati sugam sangeet or ghazal, harmonium, tabla, santoor, velvet voice, nostalgic",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "poor",
+   "lyria_note": "PCE leverage again.",
+   "pce_sections": [
+    "matla",
+    "sher",
+    "sher"
+   ],
+   "must_avoid": [
+    "moon-heart-rain trio"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "or-odissi-sangeet-janana",
+   "name": "Odissi sangeet, janana, Jagannath bhajan",
+   "tradition": "devotional",
+   "languages": [
+    "or"
+   ],
+   "region": "Odisha (Jayadeva Geeta Govinda, Salabega, Upendra Bhanja, Puri Jagannath)",
+   "lyric_form": "Classical Odissi songs (ashtapadi), janana (devotional prayers to Jagannath), chhanda, champu",
+   "metre": "sloka-based, long vowels",
+   "instruments": [
+    "pakhawaj",
+    "harmonium",
+    "flute",
+    "violin",
+    "manjira"
+   ],
+   "tempo_bpm": [
+    55,
+    100
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm",
+    "joyful"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Ektali, jhampa, khemta",
+   "raga_hint": null,
+   "lyria_hint_native": "ଓଡ଼ିଶୀ ସଙ୍ଗୀତ, ଜଣାଣ, ଜଗନ୍ନାଥ ଭଜନ, ପଖୱାଜ, ବଂଶୀ, ଭକ୍ତିମୟ",
+   "lyria_hint_en": "Odissi sangeet or Jagannath janana, pakhawaj, flute, devout slow voice, temple feel",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Wave 2 language: or is untested; expect lower model quality. Janana/ bhajan is the safe entry; Rath Yatra season.",
+   "pce_sections": [
+    "pallavi",
+    "charana"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "or-sambalpuri-folk",
+   "name": "Sambalpuri and Odia folk (dalkhai, jhumar)",
+   "tradition": "folk",
+   "languages": [
+    "or"
+   ],
+   "region": "Western Odisha, tribal belt",
+   "lyric_form": "Dalkhai dance songs, Sambalpuri pop; harvest festival Nuakhai",
+   "metre": "refrain",
+   "instruments": [
+    "dhol",
+    "nisan",
+    "mahuri",
+    "flute",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    110,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "energetic",
+    "joyful",
+    "festive"
+   ],
+   "themes": [
+    "harvest",
+    "village"
+   ],
+   "tala": "Fast 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "ସମ୍ବଲପୁରୀ ଗୀତ, ଦାଲଖାଇ, ଢୋଲ, ନିଶାଣ, ମହୁରୀ, ନୂଆଖାଇ ପର୍ବ, ଉତ୍ସବ",
+   "lyria_hint_en": "Sambalpuri folk dalkhai, dhol and nisan, Nuakhai harvest festival, joyful chorus",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Nuakhai is Aug-Sep. Wave 2.",
+   "pce_sections": [
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "or-film-pop",
+   "name": "Odia film and modern pop",
+   "tradition": "film",
+   "languages": [
+    "or"
+   ],
+   "region": "Bhubaneswar, Cuttack (Ollywood)",
+   "lyric_form": "Melodic film songs, romantic and festive",
+   "metre": "antyaprasa",
+   "instruments": [
+    "synth",
+    "dhol",
+    "guitar",
+    "flute"
+   ],
+   "tempo_bpm": [
+    85,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "romantic",
+    "joyful",
+    "nostalgic"
+   ],
+   "themes": [
+    "love",
+    "friendship"
+   ],
+   "tala": "4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "ଓଡ଼ିଆ ସିନେମା ଗୀତ, ମଧୁର ପ୍ରେମ, ଗିଟାର, ବଂଶୀ, ଆଧୁନିକ ସଂଗୀତ",
+   "lyria_hint_en": "Odia film song, melodic romantic, guitar, flute, modern production",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Wave 2.",
+   "pce_sections": [
+    "mukhda",
+    "antara"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "filmi",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "as-bihu-husori",
+   "name": "Bihu geet and husori",
+   "tradition": "folk",
+   "languages": [
+    "as"
+   ],
+   "region": "Assam (Rongali Bihu April, Bhogali Jan, Kati Oct)",
+   "lyric_form": "Spring-festival dance songs: love, youth, nature; husori is group blessing singing door to door; bihu naam",
+   "metre": "short rhymed couplets, repeated refrain; bihu pepa calls",
+   "instruments": [
+    "dhol",
+    "pepa (buffalo-horn pipe)",
+    "gogona",
+    "toka",
+    "xutuli",
+    "taal",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    120,
+    170
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "joyful",
+    "energetic",
+    "celebratory",
+    "festive"
+   ],
+   "themes": [
+    "spring",
+    "harvest",
+    "love"
+   ],
+   "tala": "Bihu 8-beat fast",
+   "raga_hint": null,
+   "lyria_hint_native": "বিহু গীত, হুচৰি, ঢোল, পেঁপা, গগনা, ঢোলৰ খিনিখিনি, বসন্তৰ উৎসৱ",
+   "lyria_hint_en": "Assamese Bihu, dhol and pepa, gogona, spring-festival dance, young chorus, high energy",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Wave 2. Rongali Bihu is mid-April (not launch window) but the form is evergreen.",
+   "pce_sections": [
+    "refrain",
+    "verse",
+    "refrain"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "folk",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "as-borgeet-ojapali",
+   "name": "Borgeet and ojapali",
+   "tradition": "devotional",
+   "languages": [
+    "as"
+   ],
+   "region": "Assam (Srimanta Sankardev, Madhavdev; namghar)",
+   "lyric_form": "Raga-based devotional songs; ojapali narrative chorus performance",
+   "metre": "stanza + refrain (dhruva)",
+   "instruments": [
+    "khol",
+    "taal",
+    "tanpura",
+    "harmonium",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    55,
+    100
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "dusk"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "tala": "Rupak, ektal, kharman",
+   "raga_hint": null,
+   "lyria_hint_native": "বৰগীত, অজাপালি, খোল, তাল, নামঘৰ, ভক্তিমূলক গান",
+   "lyria_hint_en": "Assamese borgeet at a namghar, khol and taal, devotional chorus, slow",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "poor",
+   "lyria_note": "Wave 2; scripture-adjacent, apply the same care.",
+   "pce_sections": [
+    "dhruva",
+    "verse"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "devotional",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "as-hazarika-jyoti-sangeet",
+   "name": "Assamese modern: Jyoti sangeet, Hazarika-style, pop",
+   "tradition": "light",
+   "languages": [
+    "as"
+   ],
+   "region": "Assam (Jyoti Prasad Agarwala, Bhupen Hazarika, Zubeen-era pop)",
+   "lyric_form": "Humanist, river and unity songs; modern Assamese pop",
+   "metre": "strophic, poetic",
+   "instruments": [
+    "guitar",
+    "harmonium",
+    "flute",
+    "dhol",
+    "strings"
+   ],
+   "tempo_bpm": [
+    70,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "morning",
+    "evening"
+   ],
+   "moods": [
+    "nostalgic",
+    "joyful",
+    "calm",
+    "romantic"
+   ],
+   "themes": [
+    "village",
+    "friendship",
+    "love"
+   ],
+   "tala": "4/4, 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": "অসমীয়া আধুনিক গান, জ্যোতি সংগীত, নদী আৰু মানুহ, গিটাৰ, ধোল, বাঁহী",
+   "lyria_hint_en": "Assamese modern song in the Hazarika tradition, river humanism, guitar, flute, warm voice",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Wave 2. Do not imitate named living or recently deceased singers' voices.",
+   "pce_sections": [
+    "mukhda",
+    "antara"
+   ],
+   "must_avoid": [],
+   "legacy_genre": "indie",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "ur-nazm-qawwali-pop",
+   "name": "Urdu pop, nazm, film-ghazal",
+   "tradition": "pop",
+   "languages": [
+    "ur"
+   ],
+   "region": "Lahore, Karachi, Hyderabad, Lucknow, Mumbai",
+   "lyric_form": "Urdu nazm, film songs with ghazal flavour; rock-pop",
+   "metre": "nazm: free/rhymed stanza",
+   "instruments": [
+    "harmonium",
+    "guitar",
+    "tabla",
+    "strings",
+    "synth"
+   ],
+   "tempo_bpm": [
+    75,
+    125
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "dusk",
+    "night"
+   ],
+   "moods": [
+    "romantic",
+    "melancholic",
+    "nostalgic"
+   ],
+   "themes": [
+    "love",
+    "farewell"
+   ],
+   "tala": "Kaharwa, 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "اردو نظم، رومانوی گیت، ہارمونیم، گٹار، طبلہ، مدھر آواز",
+   "lyria_hint_en": "Urdu romantic song with ghazal flavour, harmonium, guitar, tabla, melodious voice",
+   "lyria_vocal": "untested",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Wave 2 (RTL, Nastaliq). Ghazal/qawwali are the high-value entries; they route through the language ur only when the script path exists.",
+   "pce_sections": [
+    "matla",
+    "sher",
+    "maqta"
+   ],
+   "must_avoid": [
+    "named poet imitation"
+   ],
+   "legacy_genre": "light-classical",
+   "launch_priority": "wave2",
+   "sensitivity": null
+  },
+  {
+   "id": "lullaby-regional",
+   "name": "Regional lullabies (lori, thalattu, jo jo, aaro, ghum para)",
+   "tradition": "folk",
+   "languages": [
+    "hi",
+    "ta",
+    "te",
+    "kn",
+    "bn",
+    "mr",
+    "pa",
+    "gu",
+    "ml",
+    "or",
+    "as",
+    "bho",
+    "ur"
+   ],
+   "region": "Pan-Indian",
+   "lyric_form": "Short repeating lullaby; mother or grandmother voice; sleep",
+   "metre": "1 to 3 line verses, onomatopoeia refrain",
+   "instruments": [
+    "soft flute",
+    "tanpura",
+    "harmonium",
+    "humming",
+    "soft strings"
+   ],
+   "tempo_bpm": [
+    50,
+    78
+   ],
+   "energy": "low",
+   "dayparts": [
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "nostalgic"
+   ],
+   "themes": [
+    "mother"
+   ],
+   "tala": "Slow 6/8",
+   "raga_hint": null,
+   "lyria_hint_native": {
+    "hi": "लोरी, धीमी कोमल धुन, बांसुरी, माँ की आवाज़, नींद",
+    "ta": "தாலாட்டு, ஆராரோ ஆரிராரோ, மெல்லிய புல்லாங்குழல், தாயின் குரல்",
+    "te": "జోల పాట, జో అచ్యుతానంద, మెత్తని వేణువు, అమ్మ గొంతు, నిద్ర",
+    "kn": "ಲಾಲಿ ಹಾಡು, ಜೋ ಜೋ, ಮೃದುವಾದ ಕೊಳಲು, ತಾಯಿಯ ದನಿ, ನಿದ್ದೆ",
+    "bn": "ঘুমপাড়ানি গান, ঘুমপাড়ানি মাসি পিসি, মৃদু বাঁশি, মায়ের কণ্ঠ",
+    "mr": "अंगाई गीत, निजनिज रे बाळा, मंद बासरी, आईचा आवाज, झोप",
+    "pa": "ਲੋਰੀ, ਮੱਠੀ ਬੰਸਰੀ, ਮਾਂ ਦੀ ਮਿੱਠੀ ਆਵਾਜ਼, ਨੀਂਦ",
+    "gu": "હાલરડું, ધીમી વાંસળી, માતાનો અવાજ, ઊંઘ",
+    "ml": "താരാട്ടുപാട്ട്, ഉറക്കുപാട്ട്, മൃദുവായ ഓടക്കുഴൽ, അമ്മയുടെ ശബ്ദം"
+   },
+   "lyria_hint_en": "Soft lullaby in the listener's language, very slow, flute and tanpura, a mother's voice, sleepy",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Cross-language. The 'Sleep' station base; sleep-flute-rain and sleep-veena admitted as instrumentals.",
+   "pce_sections": [
+    "verse",
+    "refrain",
+    "verse"
+   ],
+   "must_avoid": [
+    "scary imagery"
+   ],
+   "legacy_genre": "folk",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "lofi-indian",
+   "name": "Indian lo-fi (sitar, flute, rhodes)",
+   "tradition": "fusion",
+   "languages": [
+    "zxx",
+    "hi",
+    "en"
+   ],
+   "region": "Pan-Indian",
+   "lyric_form": "Study/sleep beat with Indian timbres; instrumental or sparse vocals",
+   "metre": "none",
+   "instruments": [
+    "rhodes",
+    "lo-fi drums",
+    "sitar",
+    "bansuri",
+    "vinyl texture",
+    "soft bass"
+   ],
+   "tempo_bpm": [
+    60,
+    90
+   ],
+   "energy": "low",
+   "dayparts": [
+    "midday",
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "nostalgic"
+   ],
+   "themes": [],
+   "tala": "Boom-bap 4/4 laid back",
+   "raga_hint": null,
+   "lyria_hint_native": "लो-फ़ाई बीट, सितार, बांसुरी, रोड्स पियानो, नींद और पढ़ाई, आरामदायक, केवल वाद्य",
+   "lyria_hint_en": "Indian lo-fi, rhodes, mellow drums, sitar and bansuri accents, vinyl crackle, calm, no vocals",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB: lofi renders pass 60-75 percent voice-free; the best instrumental pool candidate (focus-lofi-rhodes, -sitar admitted).",
+   "pce_sections": [],
+   "must_avoid": [],
+   "legacy_genre": "lofi",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "ambient-meditation",
+   "name": "Ambient meditation (tanpura, Om, bowls)",
+   "tradition": "fusion",
+   "languages": [
+    "zxx"
+   ],
+   "region": "Pan-Indian",
+   "lyric_form": "Drone pads, tanpura, singing bowls, slow breathing; no melody",
+   "metre": "none",
+   "instruments": [
+    "tanpura",
+    "pads",
+    "singing bowls",
+    "bells",
+    "soft flute"
+   ],
+   "tempo_bpm": [
+    40,
+    60
+   ],
+   "energy": "low",
+   "dayparts": [
+    "dawn",
+    "night"
+   ],
+   "moods": [
+    "calm"
+   ],
+   "themes": [],
+   "tala": "Free/no tala",
+   "raga_hint": null,
+   "lyria_hint_native": "ध्यान संगीत, तानपुरा ड्रोन, घंटियाँ, गायन कटोरे, शांत, बिना बोल",
+   "lyria_hint_en": "Ambient meditation, tanpura drone, singing bowls, slow pads, no melody, no vocals, no chant",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB: focus-ambient-tanpura admitted. Avoid 'Om' chanting words that invite vocals.",
+   "pce_sections": [],
+   "must_avoid": [],
+   "legacy_genre": "ambient",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "desi-edm-hiphop",
+   "name": "Desi EDM, trap and hip-hop",
+   "tradition": "pop",
+   "languages": [
+    "hi",
+    "pa",
+    "ta",
+    "kn",
+    "hinglish",
+    "en"
+   ],
+   "region": "Urban India",
+   "lyric_form": "Dance and rap tracks with Indian samples; rap verses in regional languages",
+   "metre": "rap bars 16, hooks",
+   "instruments": [
+    "808",
+    "synth lead",
+    "dhol sample",
+    "tabla sample",
+    "bass"
+   ],
+   "tempo_bpm": [
+    100,
+    150
+   ],
+   "energy": "high",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "energetic",
+    "playful",
+    "celebratory"
+   ],
+   "themes": [
+    "friendship",
+    "travel"
+   ],
+   "tala": "4/4, trap halftime",
+   "raga_hint": null,
+   "lyria_hint_native": "देसी EDM, ढोल और तबला सैंपल, बास ड्रॉप, रैप वर्स, पार्टी एनर्जी",
+   "lyria_hint_en": "Desi EDM or trap, dhol and tabla samples, big bass drop, rap verse in the listener's language",
+   "lyria_vocal": "ok",
+   "lyria_instrumental": "ok",
+   "lyria_note": "LAB m3: dance-edm-india, dance-trap-dhol, dance-house-bansuri generated. Strong for reels/Shorts audio.",
+   "pce_sections": [
+    "hook",
+    "verse",
+    "drop",
+    "verse"
+   ],
+   "must_avoid": [
+    "gun/drug glorification"
+   ],
+   "legacy_genre": "edm",
+   "launch_priority": "launch",
+   "sensitivity": null
+  },
+  {
+   "id": "indo-jazz-fusion",
+   "name": "Indo-jazz and world fusion",
+   "tradition": "fusion",
+   "languages": [
+    "zxx",
+    "hi",
+    "ta"
+   ],
+   "region": "Mumbai, Chennai, Bengaluru",
+   "lyric_form": "Raga-jazz improvisation, saxophone/violin/piano with tabla and mridangam",
+   "metre": "none",
+   "instruments": [
+    "saxophone",
+    "piano",
+    "violin",
+    "tabla",
+    "mridangam",
+    "upright bass"
+   ],
+   "tempo_bpm": [
+    70,
+    140
+   ],
+   "energy": "mid",
+   "dayparts": [
+    "evening",
+    "night"
+   ],
+   "moods": [
+    "calm",
+    "joyful",
+    "nostalgic"
+   ],
+   "themes": [],
+   "tala": "7/8, 5/4, 4/4",
+   "raga_hint": null,
+   "lyria_hint_native": "इंडो-जैज़ फ्यूज़न, सैक्सोफ़ोन, पियानो, तबला, मृदंगम, राग पर इम्प्रोवाइज़ेशन, केवल वाद्य",
+   "lyria_hint_en": "Indo-jazz fusion, saxophone and piano with tabla, raga-based improvisation, instrumental",
+   "lyria_vocal": "na",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Lyria handles jazz fusion well; raga words will invite vocalise, so say 'scale-based' not 'raga'.",
+   "pce_sections": [],
+   "must_avoid": [],
+   "legacy_genre": "jazz",
+   "launch_priority": "v1.1",
+   "sensitivity": null
+  },
+  {
+   "id": "patriotic-desh-bhakti",
+   "name": "Patriotic songs (desh bhakti)",
+   "tradition": "film",
+   "languages": [
+    "hi",
+    "ta",
+    "te",
+    "kn",
+    "bn",
+    "mr",
+    "pa",
+    "gu",
+    "ml"
+   ],
+   "region": "Pan-Indian",
+   "lyric_form": "Republic Day / Independence Day uplift songs; nation, unity, soldiers",
+   "metre": "marching rhythm, stirring hook",
+   "instruments": [
+    "brass band",
+    "dhol",
+    "flute",
+    "strings",
+    "chorus"
+   ],
+   "tempo_bpm": [
+    90,
+    125
+   ],
+   "energy": "high",
+   "dayparts": [
+    "morning"
+   ],
+   "moods": [
+    "energetic",
+    "joyful",
+    "celebratory"
+   ],
+   "themes": [],
+   "tala": "4/4 marching",
+   "raga_hint": null,
+   "lyria_hint_native": "देशभक्ति गीत, तिरंगा, एकता, बैंड, ढोल, कोरस, उत्साह भरी सुबह",
+   "lyria_hint_en": "Patriotic song for Independence Day, brass band, dhol, big chorus, uplifting unity",
+   "lyria_vocal": "good",
+   "lyria_instrumental": "ok",
+   "lyria_note": "Non-political only (safety-legal.md): unity, land, seasons of the year; no party, military operations or specific events.",
+   "pce_sections": [
+    "mukhda",
+    "antara",
+    "refrain"
+   ],
+   "must_avoid": [
+    "political parties",
+    "named leaders"
+   ],
+   "legacy_genre": "patriotic",
+   "launch_priority": "v1.1",
+   "sensitivity": "Non-political only"
+  }
+ ],
+ "ragas": [
+  {
+   "raga": "Bhairav",
+   "tradition": "hindustani",
+   "time": "dawn (first prahar, 4-7 am)",
+   "season_or_occasion": "any; Navratri mornings",
+   "rasa_mood": "serene devotion, gravity",
+   "pool_moods": [
+    "devotional",
+    "calm"
+   ],
+   "dayparts": [
+    "dawn"
+   ],
+   "typical_use": "morning bhajan, khayal, flute/sitar alap",
+   "note": ""
+  },
+  {
+   "raga": "Ahir Bhairav",
+   "tradition": "hindustani",
+   "time": "dawn",
+   "season_or_occasion": "any",
+   "rasa_mood": "calm, folk-like, lilting",
+   "pool_moods": [
+    "calm",
+    "joyful"
+   ],
+   "dayparts": [
+    "dawn",
+    "morning"
+   ],
+   "typical_use": "film songs, lilting morning melody",
+   "note": "lab: dawn-sitar-ahir vocalised"
+  },
+  {
+   "raga": "Lalit",
+   "tradition": "hindustani",
+   "time": "pre-dawn",
+   "season_or_occasion": "any",
+   "rasa_mood": "yearning, hush",
+   "pool_moods": [
+    "calm",
+    "melancholic"
+   ],
+   "dayparts": [
+    "dawn"
+   ],
+   "typical_use": "morning khayal",
+   "note": ""
+  },
+  {
+   "raga": "Todi",
+   "tradition": "hindustani",
+   "time": "late morning (9-12)",
+   "season_or_occasion": "any",
+   "rasa_mood": "pathos, devotion",
+   "pool_moods": [
+    "melancholic",
+    "devotional"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "khayal, bhajan, film pathos",
+   "note": ""
+  },
+  {
+   "raga": "Bhatiyar",
+   "tradition": "hindustani",
+   "time": "dawn",
+   "season_or_occasion": "any",
+   "rasa_mood": "austere",
+   "pool_moods": [
+    "calm"
+   ],
+   "dayparts": [
+    "dawn"
+   ],
+   "typical_use": "dawn khayal",
+   "note": ""
+  },
+  {
+   "raga": "Ramkali",
+   "tradition": "hindustani",
+   "time": "dawn",
+   "season_or_occasion": "any",
+   "rasa_mood": "devotional, sacred (Gurbani raga)",
+   "pool_moods": [
+    "devotional"
+   ],
+   "dayparts": [
+    "dawn"
+   ],
+   "typical_use": "morning devotion",
+   "note": "Gurbani use is excluded"
+  },
+  {
+   "raga": "Bilawal / Alhaiya Bilawal",
+   "tradition": "hindustani",
+   "time": "morning (7-10)",
+   "season_or_occasion": "any",
+   "rasa_mood": "joy, ease",
+   "pool_moods": [
+    "joyful",
+    "calm"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "morning khayal, children's songs",
+   "note": ""
+  },
+  {
+   "raga": "Deshkar",
+   "tradition": "hindustani",
+   "time": "morning",
+   "season_or_occasion": "any",
+   "rasa_mood": "bright serenity",
+   "pool_moods": [
+    "joyful",
+    "calm"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "morning sitar, bhajan",
+   "note": ""
+  },
+  {
+   "raga": "Bhoopali (Bhoop)",
+   "tradition": "hindustani",
+   "time": "evening (6-9) and dusk",
+   "season_or_occasion": "any; monsoon",
+   "rasa_mood": "peace, joy",
+   "pool_moods": [
+    "calm",
+    "joyful"
+   ],
+   "dayparts": [
+    "evening",
+    "dusk"
+   ],
+   "typical_use": "film songs, bhajans, khayal",
+   "note": "pentatonic: Carnatic Mohanam parallel"
+  },
+  {
+   "raga": "Yaman",
+   "tradition": "hindustani",
+   "time": "evening / first prahar of night (7-10 pm)",
+   "season_or_occasion": "any; love",
+   "rasa_mood": "romance, calm devotion",
+   "pool_moods": [
+    "romantic",
+    "calm",
+    "devotional"
+   ],
+   "dayparts": [
+    "evening",
+    "dusk",
+    "night"
+   ],
+   "typical_use": "khayal, ghazal, film romance",
+   "note": "lab: evening-yaman-sitar passed as instrumental"
+  },
+  {
+   "raga": "Marwa",
+   "tradition": "hindustani",
+   "time": "sunset (about 5-7 pm)",
+   "season_or_occasion": "any",
+   "rasa_mood": "restlessness, longing at dusk",
+   "pool_moods": [
+    "melancholic",
+    "nostalgic"
+   ],
+   "dayparts": [
+    "dusk"
+   ],
+   "typical_use": "dusk sitar/santoor",
+   "note": "lab: dusk-santoor-marwa admitted"
+  },
+  {
+   "raga": "Puriya Dhanashri / Puriya",
+   "tradition": "hindustani",
+   "time": "late evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "intense, devotional longing",
+   "pool_moods": [
+    "melancholic",
+    "devotional"
+   ],
+   "dayparts": [
+    "dusk"
+   ],
+   "typical_use": "dusk khayal",
+   "note": ""
+  },
+  {
+   "raga": "Shree",
+   "tradition": "hindustani",
+   "time": "sunset",
+   "season_or_occasion": "autumn",
+   "rasa_mood": "gravity, grandeur",
+   "pool_moods": [
+    "devotional",
+    "calm"
+   ],
+   "dayparts": [
+    "dusk"
+   ],
+   "typical_use": "dusk, festival",
+   "note": ""
+  },
+  {
+   "raga": "Multani",
+   "tradition": "hindustani",
+   "time": "afternoon (3-6 pm)",
+   "season_or_occasion": "any",
+   "rasa_mood": "tender ache",
+   "pool_moods": [
+    "melancholic",
+    "romantic"
+   ],
+   "dayparts": [
+    "midday",
+    "evening"
+   ],
+   "typical_use": "afternoon khayal",
+   "note": ""
+  },
+  {
+   "raga": "Bhimpalasi",
+   "tradition": "hindustani",
+   "time": "afternoon (3-6 pm)",
+   "season_or_occasion": "any",
+   "rasa_mood": "tenderness, romantic",
+   "pool_moods": [
+    "romantic",
+    "nostalgic",
+    "calm"
+   ],
+   "dayparts": [
+    "midday",
+    "evening"
+   ],
+   "typical_use": "film melodies",
+   "note": ""
+  },
+  {
+   "raga": "Madhyamad Sarang / Brindavani Sarang",
+   "tradition": "hindustani",
+   "time": "midday (11-3 pm)",
+   "season_or_occasion": "summer",
+   "rasa_mood": "heat, calm brightness",
+   "pool_moods": [
+    "calm"
+   ],
+   "dayparts": [
+    "midday"
+   ],
+   "typical_use": "midday focus",
+   "note": ""
+  },
+  {
+   "raga": "Kedar",
+   "tradition": "hindustani",
+   "time": "night (9-12)",
+   "season_or_occasion": "any",
+   "rasa_mood": "devotional romance",
+   "pool_moods": [
+    "devotional",
+    "romantic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "night khayal",
+   "note": ""
+  },
+  {
+   "raga": "Bihag",
+   "tradition": "hindustani",
+   "time": "night (9-12)",
+   "season_or_occasion": "any",
+   "rasa_mood": "love, tenderness",
+   "pool_moods": [
+    "romantic",
+    "calm"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "night khayal, film songs",
+   "note": ""
+  },
+  {
+   "raga": "Hameer",
+   "tradition": "hindustani",
+   "time": "night",
+   "season_or_occasion": "any",
+   "rasa_mood": "grand romance",
+   "pool_moods": [
+    "romantic",
+    "joyful"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "night khayal",
+   "note": ""
+  },
+  {
+   "raga": "Darbari Kanada",
+   "tradition": "hindustani",
+   "time": "late night (12-3 am)",
+   "season_or_occasion": "any",
+   "rasa_mood": "majestic, introspective",
+   "pool_moods": [
+    "calm",
+    "melancholic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "late night, sleep-adjacent",
+   "note": ""
+  },
+  {
+   "raga": "Malkauns",
+   "tradition": "hindustani",
+   "time": "midnight to 3 am",
+   "season_or_occasion": "any",
+   "rasa_mood": "heavy, meditative",
+   "pool_moods": [
+    "calm",
+    "melancholic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "deep night, meditation",
+   "note": ""
+  },
+  {
+   "raga": "Chandrakauns",
+   "tradition": "hindustani",
+   "time": "midnight",
+   "season_or_occasion": "any",
+   "rasa_mood": "moonlit longing",
+   "pool_moods": [
+    "melancholic",
+    "romantic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "film themes",
+   "note": ""
+  },
+  {
+   "raga": "Bageshree",
+   "tradition": "hindustani",
+   "time": "late night",
+   "season_or_occasion": "any",
+   "rasa_mood": "longing, tenderness",
+   "pool_moods": [
+    "romantic",
+    "melancholic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "ghazal, film",
+   "note": ""
+  },
+  {
+   "raga": "Jaijaiwanti",
+   "tradition": "hindustani",
+   "time": "late night",
+   "season_or_occasion": "any",
+   "rasa_mood": "dignified pathos",
+   "pool_moods": [
+    "melancholic",
+    "calm"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "night khayal",
+   "note": ""
+  },
+  {
+   "raga": "Desh",
+   "tradition": "hindustani",
+   "time": "night",
+   "season_or_occasion": "monsoon",
+   "rasa_mood": "monsoon love, patriotic (Vande Mataram)",
+   "pool_moods": [
+    "romantic",
+    "nostalgic",
+    "calm"
+   ],
+   "dayparts": [
+    "night",
+    "evening"
+   ],
+   "typical_use": "monsoon songs, light classical, patriotic",
+   "note": ""
+  },
+  {
+   "raga": "Malhar family (Miyan ki, Megh, Gaud Malhar)",
+   "tradition": "hindustani",
+   "time": "monsoon, any time",
+   "season_or_occasion": "monsoon (Jun-Sep)",
+   "rasa_mood": "rain, desire",
+   "pool_moods": [
+    "romantic",
+    "joyful",
+    "nostalgic"
+   ],
+   "dayparts": [
+    "evening"
+   ],
+   "typical_use": "monsoon package",
+   "note": "season beats time-of-day"
+  },
+  {
+   "raga": "Basant / Bahar / Hindol",
+   "tradition": "hindustani",
+   "time": "spring",
+   "season_or_occasion": "spring, Vasant Panchami, Holi",
+   "rasa_mood": "joy, renewal",
+   "pool_moods": [
+    "joyful",
+    "festive"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "spring package",
+   "note": ""
+  },
+  {
+   "raga": "Kafi / Khamaj / Pilu / Pahadi",
+   "tradition": "hindustani",
+   "time": "late evening, light classical",
+   "season_or_occasion": "Holi, folk",
+   "rasa_mood": "playful, light romance, folk",
+   "pool_moods": [
+    "playful",
+    "romantic",
+    "joyful"
+   ],
+   "dayparts": [
+    "evening"
+   ],
+   "typical_use": "thumri, dadra, hori, ghazal, film",
+   "note": ""
+  },
+  {
+   "raga": "Bhairavi (Hindustani)",
+   "tradition": "hindustani",
+   "time": "any, closes a concert; morning",
+   "season_or_occasion": "any",
+   "rasa_mood": "tender devotion, pathos",
+   "pool_moods": [
+    "devotional",
+    "melancholic"
+   ],
+   "dayparts": [
+    "morning",
+    "night"
+   ],
+   "typical_use": "bhajan, ghazal, film",
+   "note": ""
+  },
+  {
+   "raga": "Mayamalavagowla",
+   "tradition": "carnatic",
+   "time": "early morning",
+   "season_or_occasion": "any",
+   "rasa_mood": "devotional, practice raga",
+   "pool_moods": [
+    "devotional",
+    "calm"
+   ],
+   "dayparts": [
+    "dawn"
+   ],
+   "typical_use": "morning kriti",
+   "note": ""
+  },
+  {
+   "raga": "Bhoopalam / Bilahari",
+   "tradition": "carnatic",
+   "time": "dawn / morning",
+   "season_or_occasion": "any",
+   "rasa_mood": "awakening, auspicious",
+   "pool_moods": [
+    "devotional",
+    "joyful"
+   ],
+   "dayparts": [
+    "dawn",
+    "morning"
+   ],
+   "typical_use": "Suprabhatam, morning kriti",
+   "note": ""
+  },
+  {
+   "raga": "Hamsadhwani",
+   "tradition": "carnatic",
+   "time": "auspicious opening",
+   "season_or_occasion": "any, Ganesh",
+   "rasa_mood": "joyful auspicious",
+   "pool_moods": [
+    "joyful",
+    "festive"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "concert opener, Ganesh kritis",
+   "note": ""
+  },
+  {
+   "raga": "Mohanam",
+   "tradition": "carnatic",
+   "time": "any, evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "joy, openness (pentatonic)",
+   "pool_moods": [
+    "joyful",
+    "calm"
+   ],
+   "dayparts": [
+    "evening"
+   ],
+   "typical_use": "universal Carnatic/folk bridging",
+   "note": ""
+  },
+  {
+   "raga": "Shankarabharanam",
+   "tradition": "carnatic",
+   "time": "any, morning",
+   "season_or_occasion": "any",
+   "rasa_mood": "majesty (like Bilawal/Western major)",
+   "pool_moods": [
+    "joyful",
+    "calm"
+   ],
+   "dayparts": [
+    "morning"
+   ],
+   "typical_use": "showcase kriti",
+   "note": ""
+  },
+  {
+   "raga": "Kalyani",
+   "tradition": "carnatic",
+   "time": "evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "grandeur, calm joy (Yaman equivalent)",
+   "pool_moods": [
+    "calm",
+    "romantic"
+   ],
+   "dayparts": [
+    "evening",
+    "dusk"
+   ],
+   "typical_use": "evening kriti",
+   "note": ""
+  },
+  {
+   "raga": "Kharaharapriya",
+   "tradition": "carnatic",
+   "time": "any",
+   "season_or_occasion": "any",
+   "rasa_mood": "pathos, tenderness",
+   "pool_moods": [
+    "melancholic",
+    "romantic"
+   ],
+   "dayparts": [
+    "evening"
+   ],
+   "typical_use": "film melodies",
+   "note": ""
+  },
+  {
+   "raga": "Anandabhairavi",
+   "tradition": "carnatic",
+   "time": "any",
+   "season_or_occasion": "Mangala, lullabies",
+   "rasa_mood": "tender, lullaby",
+   "pool_moods": [
+    "calm",
+    "nostalgic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "Syama Sastri, lullabies",
+   "note": ""
+  },
+  {
+   "raga": "Neelambari",
+   "tradition": "carnatic",
+   "time": "night",
+   "season_or_occasion": "any",
+   "rasa_mood": "sleep, lullaby",
+   "pool_moods": [
+    "calm"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "thalattu, Muthuswami Dikshitar",
+   "note": ""
+  },
+  {
+   "raga": "Madhyamavati",
+   "tradition": "carnatic",
+   "time": "any, concert closing; midday",
+   "season_or_occasion": "any",
+   "rasa_mood": "peace, auspicious end",
+   "pool_moods": [
+    "calm",
+    "devotional"
+   ],
+   "dayparts": [
+    "midday",
+    "dusk"
+   ],
+   "typical_use": "concert mangalam, focus",
+   "note": ""
+  },
+  {
+   "raga": "Kambhoji",
+   "tradition": "carnatic",
+   "time": "evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "pensive majesty",
+   "pool_moods": [
+    "devotional",
+    "melancholic"
+   ],
+   "dayparts": [
+    "dusk"
+   ],
+   "typical_use": "evening kriti",
+   "note": ""
+  },
+  {
+   "raga": "Sindhu Bhairavi",
+   "tradition": "carnatic",
+   "time": "late evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "tender, popular light classical (also film)",
+   "pool_moods": [
+    "romantic",
+    "melancholic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "light-classical, film",
+   "note": ""
+  },
+  {
+   "raga": "Hindolam",
+   "tradition": "carnatic",
+   "time": "evening",
+   "season_or_occasion": "any",
+   "rasa_mood": "plaintive, spring-like (Malkauns parallel)",
+   "pool_moods": [
+    "calm",
+    "melancholic"
+   ],
+   "dayparts": [
+    "night"
+   ],
+   "typical_use": "kriti, film",
+   "note": ""
+  }
+ ],
+ "talas": [
+  {
+   "tala": "Teental (Trital)",
+   "tradition": "hindustani",
+   "beats": 16,
+   "structure": "4+4+4+4",
+   "tempo_bpm": [
+    40,
+    200
+   ],
+   "used_in": "khayal, instrumental gat, bollywood slow"
+  },
+  {
+   "tala": "Ektal",
+   "tradition": "hindustani",
+   "beats": 12,
+   "structure": "2+2+2+2+2+2",
+   "tempo_bpm": [
+    30,
+    120
+   ],
+   "used_in": "khayal vilambit, drut"
+  },
+  {
+   "tala": "Jhaptal",
+   "tradition": "hindustani",
+   "beats": 10,
+   "structure": "2+3+2+3",
+   "tempo_bpm": [
+    60,
+    140
+   ],
+   "used_in": "khayal, instrumental"
+  },
+  {
+   "tala": "Rupak",
+   "tradition": "hindustani",
+   "beats": 7,
+   "structure": "3+2+2 (starts on khali)",
+   "tempo_bpm": [
+    60,
+    150
+   ],
+   "used_in": "ghazal, film, light classical"
+  },
+  {
+   "tala": "Dadra",
+   "tradition": "hindustani",
+   "beats": 6,
+   "structure": "3+3",
+   "tempo_bpm": [
+    60,
+    150
+   ],
+   "used_in": "thumri, dadra, bhajan, ghazal, folk, film"
+  },
+  {
+   "tala": "Keherwa (Kaharwa)",
+   "tradition": "hindustani",
+   "beats": 8,
+   "structure": "4+4",
+   "tempo_bpm": [
+    60,
+    170
+   ],
+   "used_in": "ghazal, bhajan, qawwali, folk, film: the workhorse 8-beat"
+  },
+  {
+   "tala": "Deepchandi",
+   "tradition": "hindustani",
+   "beats": 14,
+   "structure": "3+4+3+4",
+   "tempo_bpm": [
+    50,
+    100
+   ],
+   "used_in": "thumri, light classical"
+  },
+  {
+   "tala": "Chautal",
+   "tradition": "hindustani",
+   "beats": 12,
+   "structure": "2+2+2+2+2+2 (pakhawaj)",
+   "tempo_bpm": [
+    40,
+    100
+   ],
+   "used_in": "dhrupad"
+  },
+  {
+   "tala": "Dhamar",
+   "tradition": "hindustani",
+   "beats": 14,
+   "structure": "5+2+3+4",
+   "tempo_bpm": [
+    50,
+    100
+   ],
+   "used_in": "dhrupad, hori"
+  },
+  {
+   "tala": "Jhumra",
+   "tradition": "hindustani",
+   "beats": 14,
+   "structure": "3+4+3+4",
+   "tempo_bpm": [
+    30,
+    60
+   ],
+   "used_in": "vilambit khayal"
+  },
+  {
+   "tala": "Adi tala",
+   "tradition": "carnatic",
+   "beats": 8,
+   "structure": "4+2+2 (chatusra jati triputa)",
+   "tempo_bpm": [
+    60,
+    130
+   ],
+   "used_in": "kriti, varnam: the default Carnatic tala"
+  },
+  {
+   "tala": "Rupaka tala",
+   "tradition": "carnatic",
+   "beats": 6,
+   "structure": "2+4 (3 beats form)",
+   "tempo_bpm": [
+    60,
+    110
+   ],
+   "used_in": "kriti, padam"
+  },
+  {
+   "tala": "Misra chapu",
+   "tradition": "carnatic",
+   "beats": 7,
+   "structure": "3+4 or 3+2+2",
+   "tempo_bpm": [
+    80,
+    140
+   ],
+   "used_in": "kriti, film, folk"
+  },
+  {
+   "tala": "Khanda chapu",
+   "tradition": "carnatic",
+   "beats": 5,
+   "structure": "2+3",
+   "tempo_bpm": [
+    80,
+    140
+   ],
+   "used_in": "kriti, film"
+  },
+  {
+   "tala": "Triputa tala",
+   "tradition": "carnatic",
+   "beats": 7,
+   "structure": "3+2+2",
+   "tempo_bpm": [
+    60,
+    120
+   ],
+   "used_in": "kriti"
+  },
+  {
+   "tala": "Jhampa tala",
+   "tradition": "carnatic",
+   "beats": 10,
+   "structure": "7+1+2",
+   "tempo_bpm": [
+    60,
+    100
+   ],
+   "used_in": "kriti"
+  },
+  {
+   "tala": "Garba (6/8, trikal)",
+   "tradition": "folk",
+   "beats": 6,
+   "structure": "3 claps / 6-8 beat cycle",
+   "tempo_bpm": [
+    100,
+    165
+   ],
+   "used_in": "garba, dandiya"
+  },
+  {
+   "tala": "Lavani / dholki 8",
+   "tradition": "folk",
+   "beats": 8,
+   "structure": "fast dholki roll",
+   "tempo_bpm": [
+    130,
+    170
+   ],
+   "used_in": "lavani"
+  },
+  {
+   "tala": "Bhajani theka",
+   "tradition": "folk",
+   "beats": 8,
+   "structure": "dholak 4+4",
+   "tempo_bpm": [
+    70,
+    130
+   ],
+   "used_in": "bhajan, abhang, kirtan"
+  },
+  {
+   "tala": "Bhangra chaal",
+   "tradition": "folk",
+   "beats": 8,
+   "structure": "dhol 4+4 with dhamaal",
+   "tempo_bpm": [
+    110,
+    140
+   ],
+   "used_in": "bhangra"
+  },
+  {
+   "tala": "Bihu 8-beat",
+   "tradition": "folk",
+   "beats": 8,
+   "structure": "dhol + pepa 4+4",
+   "tempo_bpm": [
+    120,
+    170
+   ],
+   "used_in": "bihu"
+  },
+  {
+   "tala": "Panchari / chempata",
+   "tradition": "kerala",
+   "beats": 8,
+   "structure": "chenda 4+4 with kalasam",
+   "tempo_bpm": [
+    60,
+    130
+   ],
+   "used_in": "sopana, panchari melam"
+  },
+  {
+   "tala": "Rabindra talas",
+   "tradition": "bengal",
+   "beats": 6,
+   "structure": "jhampak 5, shashthi 6, rupakra 6, nabatal 9",
+   "tempo_bpm": [
+    55,
+    100
+   ],
+   "used_in": "rabindrasangeet"
+  }
+ ],
+ "festivals": [
+  {
+   "festival": "Diwali / Deepavali",
+   "date_2026": "8 Nov 2026",
+   "regions": "Pan-India",
+   "styles": [
+    "bhajan-hindi",
+    "aarti-stuti",
+    "hindi-filmpop",
+    "hindustani-seasonal-chaiti-kajri-hori",
+    "desi-edm-hiphop",
+    "carnatic-annamacharya-sankirtana"
+   ],
+   "themes": [
+    "diwali",
+    "bhakti",
+    "wedding"
+   ],
+   "moods": [
+    "festive",
+    "celebratory"
+   ]
+  },
+  {
+   "festival": "Chhath",
+   "date_2026": "about 14-16 Nov 2026 (verify)",
+   "regions": "Bihar, UP, Jharkhand",
+   "styles": [
+    "chhath-geet",
+    "bhojpuri-sohar-chaiti"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ]
+  },
+  {
+   "festival": "Sabarimala / Ayyappa season (Mandala)",
+   "date_2026": "from about 16 Nov 2026 to mid Jan (verify)",
+   "regions": "Kerala, Tamil Nadu, Karnataka, Andhra",
+   "styles": [
+    "ta-ayyappan-amman-pattu"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "devotional"
+   ]
+  },
+  {
+   "festival": "Karthigai Deepam",
+   "date_2026": "late Nov / Dec (verify)",
+   "regions": "Tamil Nadu",
+   "styles": [
+    "tamil-thevaram-tiruppugazh",
+    "ta-ayyappan-amman-pattu"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "devotional",
+    "festive"
+   ]
+  },
+  {
+   "festival": "Margazhi season (Thiruppavai, music season)",
+   "date_2026": "mid Dec 2026 to mid Jan 2027 (verify)",
+   "regions": "Tamil Nadu, Chennai, Andhra",
+   "styles": [
+    "tamil-thevaram-tiruppugazh",
+    "carnatic-kriti",
+    "suprabhatam-stotra"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "devotional",
+    "calm"
+   ]
+  },
+  {
+   "festival": "Pongal / Makar Sankranti / Lohri / Bihu Magh",
+   "date_2026": "about 13-15 Jan 2027",
+   "regions": "Tamil Nadu, Telangana, Andhra, Punjab, Assam, Karnataka",
+   "styles": [
+    "ta-kuthu-naattupura",
+    "te-janapada",
+    "pa-bhangra",
+    "as-bihu-husori",
+    "kn-janapada"
+   ],
+   "themes": [
+    "harvest",
+    "new-year"
+   ],
+   "moods": [
+    "festive",
+    "joyful"
+   ]
+  },
+  {
+   "festival": "Republic Day",
+   "date_2026": "26 Jan 2027",
+   "regions": "Pan-India",
+   "styles": [
+    "patriotic-desh-bhakti"
+   ],
+   "themes": [],
+   "moods": [
+    "energetic",
+    "celebratory"
+   ]
+  },
+  {
+   "festival": "Vasant Panchami / Saraswati puja",
+   "date_2026": "about Feb 2027",
+   "regions": "Bengal, Bihar, North India",
+   "styles": [
+    "hindustani-instrumental-raga",
+    "bn-rabindrasangeet",
+    "bhajan-hindi"
+   ],
+   "themes": [
+    "spring",
+    "bhakti"
+   ],
+   "moods": [
+    "calm",
+    "devotional"
+   ]
+  },
+  {
+   "festival": "Holi",
+   "date_2026": "Mar 2027",
+   "regions": "North India",
+   "styles": [
+    "hindustani-seasonal-chaiti-kajri-hori",
+    "hindi-filmpop",
+    "pa-bhangra"
+   ],
+   "themes": [
+    "spring"
+   ],
+   "moods": [
+    "playful",
+    "festive"
+   ]
+  },
+  {
+   "festival": "Ugadi / Gudi Padwa / Puthandu / Vishu / Pohela Boishakh / Rongali Bihu / Baisakhi",
+   "date_2026": "Apr 2027 (about 6-15 Apr)",
+   "regions": "Karnataka, Andhra, Maharashtra, Tamil Nadu, Kerala, Bengal, Assam, Punjab",
+   "styles": [
+    "kn-bhavageethe",
+    "te-janapada",
+    "bn-rabindrasangeet",
+    "as-bihu-husori",
+    "pa-bhangra",
+    "ml-nadan-pattu"
+   ],
+   "themes": [
+    "new-year",
+    "spring"
+   ],
+   "moods": [
+    "joyful",
+    "festive"
+   ]
+  },
+  {
+   "festival": "Eid",
+   "date_2026": "about Mar 2027 (verify)",
+   "regions": "Pan-India",
+   "styles": [
+    "qawwali",
+    "sufi-kalam",
+    "ghazal"
+   ],
+   "themes": [],
+   "moods": [
+    "celebratory",
+    "devotional"
+   ]
+  },
+  {
+   "festival": "Ganesh Chaturthi",
+   "date_2026": "Sep 2027 (2026 was 14 Sep)",
+   "regions": "Maharashtra, Karnataka, Andhra, Goa",
+   "styles": [
+    "mr-ganpati-dhol-tasha",
+    "mr-abhang",
+    "aarti-stuti"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "festive",
+    "devotional"
+   ]
+  },
+  {
+   "festival": "Onam",
+   "date_2026": "late Aug / Sep",
+   "regions": "Kerala",
+   "styles": [
+    "ml-nadan-pattu",
+    "ml-film-melody"
+   ],
+   "themes": [
+    "harvest"
+   ],
+   "moods": [
+    "festive",
+    "joyful"
+   ]
+  },
+  {
+   "festival": "Navratri / Garba / Durga Puja / Dussehra",
+   "date_2026": "Oct (2026 passed: Navratri 11-19 Oct, Durga Puja 17-21 Oct)",
+   "regions": "Gujarat, Bengal, North India",
+   "styles": [
+    "gu-garba-raas",
+    "bn-shyama-agamani",
+    "aarti-stuti",
+    "bhajan-hindi"
+   ],
+   "themes": [
+    "bhakti"
+   ],
+   "moods": [
+    "festive",
+    "energetic",
+    "devotional"
+   ]
+  },
+  {
+   "festival": "Rakhi / Raksha Bandhan",
+   "date_2026": "Aug",
+   "regions": "North India",
+   "styles": [
+    "hindi-filmpop",
+    "vivah-geet-hi",
+    "hindi-indie-folk"
+   ],
+   "themes": [
+    "rakhi"
+   ],
+   "moods": [
+    "nostalgic",
+    "joyful"
+   ]
+  },
+  {
+   "festival": "Weddings (year-round; peak Nov-Feb)",
+   "date_2026": "Nov 2026 to Feb 2027 peak",
+   "regions": "Pan-India",
+   "styles": [
+    "vivah-geet-hi",
+    "shehnai-mangal",
+    "pa-giddha-boliyan",
+    "pa-bhangra",
+    "gu-garba-raas",
+    "nadaswaram-thavil",
+    "mr-lavani",
+    "ml-mappila-pattu",
+    "hindi-filmpop"
+   ],
+   "themes": [
+    "wedding"
+   ],
+   "moods": [
+    "celebratory",
+    "joyful",
+    "festive"
+   ]
+  }
+ ],
+ "routing": {
+  "notes": [
+   "Pick language first (listener's request or station language), then match intent keywords, then mood/daypart/theme, then fallback.",
+   "Order of resolution: (1) explicit style keyword in keyword_map; (2) occasion/theme -> festivals[].styles; (3) mood+daypart -> pool tags; (4) language default list in by_language (first launch entries).",
+   "lyria_vocal 'no' = never generate (excluded). 'risky' = allowed only with diction gate on and 2+ attempts budgeted. 'untested' = wave 2, not in default lists until the language probe passes (LANG_WAVES).",
+   "For raga, devotional and folk instrumentals, do NOT route to the instrumental pool (R5). Route to a vocal style or a wordless-vocalise kind if S approves it."
+  ],
+  "keyword_map": {
+   "abhang": "mr-abhang",
+   "varkari": "mr-abhang",
+   "vitthal": "mr-abhang",
+   "अभंग": "mr-abhang",
+   "lavani": "mr-lavani",
+   "लावणी": "mr-lavani",
+   "powada": "mr-powada",
+   "पोवाडा": "mr-powada",
+   "bhavgeet": "mr-bhavgeet",
+   "भावगीत": "mr-bhavgeet",
+   "natyasangeet": "mr-natyasangeet",
+   "koli": "mr-koli-geet",
+   "bhavageethe": "kn-bhavageethe",
+   "bhavageete": "kn-bhavageethe",
+   "ಭಾವಗೀತೆ": "kn-bhavageethe",
+   "dasara pada": "kn-dasara-padagalu",
+   "purandara": "kn-dasara-padagalu",
+   "vachana": "kn-vachana",
+   "janapada": "kn-janapada",
+   "yakshagana": "kn-janapada",
+   "rabindrasangeet": "bn-rabindrasangeet",
+   "rabindra": "bn-rabindrasangeet",
+   "tagore": "bn-rabindrasangeet",
+   "রবীন্দ্রসঙ্গীত": "bn-rabindrasangeet",
+   "nazrul": "bn-nazrul-geeti",
+   "baul": "bn-baul",
+   "বাউল": "bn-baul",
+   "bhatiyali": "bn-bhatiyali-bhawaiya",
+   "bhawaiya": "bn-bhatiyali-bhawaiya",
+   "kirtan": "bn-kirtan-padavali",
+   "agamani": "bn-shyama-agamani",
+   "shyama sangeet": "bn-shyama-agamani",
+   "durga puja": "bn-shyama-agamani",
+   "garba": "gu-garba-raas",
+   "dandiya": "gu-garba-raas",
+   "ગરબા": "gu-garba-raas",
+   "raas": "gu-garba-raas",
+   "dayro": "gu-lokgeet-dayro",
+   "prabhatiya": "gu-bhajan-prabhatiya",
+   "bhangra": "pa-bhangra",
+   "ਭੰਗੜਾ": "pa-bhangra",
+   "giddha": "pa-giddha-boliyan",
+   "boliyan": "pa-giddha-boliyan",
+   "heer": "pa-sufi-heer-folk",
+   "jugni": "pa-sufi-heer-folk",
+   "sopanam": "ml-sopana-sangeetham",
+   "sopana": "ml-sopana-sangeetham",
+   "mappila": "ml-mappila-pattu",
+   "oppana": "ml-mappila-pattu",
+   "vanchipattu": "ml-nadan-pattu",
+   "nadan pattu": "ml-nadan-pattu",
+   "thiruvathira": "ml-nadan-pattu",
+   "kriti": "carnatic-kriti",
+   "keerthana": "carnatic-kriti",
+   "carnatic": "carnatic-kriti",
+   "annamayya": "carnatic-annamacharya-sankirtana",
+   "annamacharya": "carnatic-annamacharya-sankirtana",
+   "suprabhatam": "suprabhatam-stotra",
+   "thiruppavai": "suprabhatam-stotra",
+   "tiruppugazh": "tamil-thevaram-tiruppugazh",
+   "thevaram": "tamil-thevaram-tiruppugazh",
+   "tillana": "carnatic-tillana",
+   "padam": "carnatic-padam-javali",
+   "javali": "carnatic-padam-javali",
+   "nadaswaram": "nadaswaram-thavil",
+   "gaana": "ta-gaana",
+   "kuthu": "ta-kuthu-naattupura",
+   "thalattu": "ta-thalattu",
+   "villu pattu": "ta-villu-pattu",
+   "ayyappan": "ta-ayyappan-amman-pattu",
+   "ayyappa": "ta-ayyappan-amman-pattu",
+   "khayal": "hindustani-khayal-vilambit",
+   "dhrupad": "hindustani-dhrupad",
+   "thumri": "hindustani-thumri",
+   "dadra": "hindustani-thumri",
+   "kajri": "hindustani-seasonal-chaiti-kajri-hori",
+   "chaiti": "hindustani-seasonal-chaiti-kajri-hori",
+   "hori": "hindustani-seasonal-chaiti-kajri-hori",
+   "shehnai": "shehnai-mangal",
+   "raga": "hindustani-instrumental-raga",
+   "ghazal": "ghazal",
+   "ग़ज़ल": "ghazal",
+   "غزل": "ghazal",
+   "qawwali": "qawwali",
+   "क़व्वाली": "qawwali",
+   "قوالی": "qawwali",
+   "sufi": "sufi-kalam",
+   "kalam": "sufi-kalam",
+   "bhajan": "bhajan-hindi",
+   "भजन": "bhajan-hindi",
+   "aarti": "aarti-stuti",
+   "आरती": "aarti-stuti",
+   "lori": "lullaby-regional",
+   "lullaby": "lullaby-regional",
+   "thalattu ": "lullaby-regional",
+   "halarda": "lullaby-regional",
+   "wedding song": "vivah-geet-hi",
+   "vivah": "vivah-geet-hi",
+   "sangeet": "vivah-geet-hi",
+   "sohar": "bhojpuri-sohar-chaiti",
+   "birha": "bhojpuri-birha-bidesia",
+   "bidesia": "bhojpuri-birha-bidesia",
+   "chhath": "chhath-geet",
+   "bihu": "as-bihu-husori",
+   "husori": "as-bihu-husori",
+   "borgeet": "as-borgeet-ojapali",
+   "ojapali": "as-borgeet-ojapali",
+   "sambalpuri": "or-sambalpuri-folk",
+   "janana": "or-odissi-sangeet-janana",
+   "jagannath": "or-odissi-sangeet-janana",
+   "lofi": "lofi-indian",
+   "lo-fi": "lofi-indian",
+   "meditation": "ambient-meditation",
+   "edm": "desi-edm-hiphop",
+   "rap": "desi-edm-hiphop",
+   "hip hop": "desi-edm-hiphop",
+   "fusion": "indo-jazz-fusion",
+   "desh bhakti": "patriotic-desh-bhakti",
+   "patriotic": "patriotic-desh-bhakti",
+   "retro": "hindi-retro-filmi",
+   "bollywood": "hindi-filmpop",
+   "shabad": "pa-shabad-kirtan",
+   "gurbani": "pa-shabad-kirtan"
+  },
+  "by_language": {
+   "hi": [
+    "aarti-stuti",
+    "bhajan-hindi",
+    "desi-edm-hiphop",
+    "ghazal",
+    "gu-garba-raas",
+    "hindi-filmpop",
+    "hindi-indie-folk",
+    "hindi-lori",
+    "hindi-retro-filmi",
+    "lofi-indian",
+    "lullaby-regional",
+    "qawwali",
+    "shehnai-mangal",
+    "sufi-kalam",
+    "vivah-geet-hi",
+    "hindustani-seasonal-chaiti-kajri-hori",
+    "hindustani-thumri",
+    "indo-jazz-fusion",
+    "mr-ganpati-dhol-tasha",
+    "patriotic-desh-bhakti",
+    "chhath-geet",
+    "hindustani-dhrupad",
+    "hindustani-khayal-drut",
+    "hindustani-khayal-vilambit"
+   ],
+   "ta": [
+    "desi-edm-hiphop",
+    "lullaby-regional",
+    "nadaswaram-thavil",
+    "suprabhatam-stotra",
+    "ta-ayyappan-amman-pattu",
+    "ta-film-melody",
+    "ta-kuthu-naattupura",
+    "ta-thalattu",
+    "tamil-thevaram-tiruppugazh",
+    "carnatic-kriti",
+    "indo-jazz-fusion",
+    "patriotic-desh-bhakti",
+    "ta-gaana",
+    "carnatic-padam-javali",
+    "carnatic-tillana",
+    "ta-villu-pattu"
+   ],
+   "te": [
+    "carnatic-annamacharya-sankirtana",
+    "lullaby-regional",
+    "nadaswaram-thavil",
+    "suprabhatam-stotra",
+    "te-film-pop",
+    "te-janapada",
+    "carnatic-kriti",
+    "patriotic-desh-bhakti",
+    "carnatic-padam-javali",
+    "carnatic-tillana"
+   ],
+   "kn": [
+    "desi-edm-hiphop",
+    "kn-bhavageethe",
+    "kn-dasara-padagalu",
+    "kn-film-pop",
+    "kn-janapada",
+    "lullaby-regional",
+    "suprabhatam-stotra",
+    "carnatic-kriti",
+    "kn-vachana",
+    "patriotic-desh-bhakti"
+   ],
+   "bn": [
+    "bn-adhunik-band",
+    "bn-baul",
+    "bn-rabindrasangeet",
+    "bn-shyama-agamani",
+    "lullaby-regional",
+    "bn-bhatiyali-bhawaiya",
+    "bn-kirtan-padavali",
+    "bn-nazrul-geeti",
+    "patriotic-desh-bhakti",
+    "bn-jhumur-gambhira-lokgeeti"
+   ],
+   "mr": [
+    "lullaby-regional",
+    "mr-abhang",
+    "mr-bhavgeet",
+    "mr-lavani",
+    "mr-ganpati-dhol-tasha",
+    "mr-koli-geet",
+    "patriotic-desh-bhakti",
+    "mr-natyasangeet",
+    "mr-powada"
+   ],
+   "pa": [
+    "desi-edm-hiphop",
+    "lullaby-regional",
+    "pa-bhangra",
+    "pa-giddha-boliyan",
+    "pa-sufi-heer-folk",
+    "qawwali",
+    "sufi-kalam",
+    "vivah-geet-hi",
+    "pa-pop-hiphop",
+    "patriotic-desh-bhakti"
+   ],
+   "gu": [
+    "gu-bhajan-prabhatiya",
+    "gu-garba-raas",
+    "lullaby-regional",
+    "gu-lokgeet-dayro",
+    "gu-sugam-sangeet",
+    "patriotic-desh-bhakti"
+   ],
+   "ml": [
+    "lullaby-regional",
+    "ml-film-melody",
+    "ta-ayyappan-amman-pattu",
+    "ml-mappila-pattu",
+    "ml-nadan-pattu",
+    "ml-sopana-sangeetham",
+    "patriotic-desh-bhakti"
+   ],
+   "bho": [
+    "lullaby-regional",
+    "vivah-geet-hi",
+    "hindustani-seasonal-chaiti-kajri-hori",
+    "bhojpuri-birha-bidesia",
+    "bhojpuri-sohar-chaiti",
+    "chhath-geet"
+   ],
+   "or": [
+    "lullaby-regional",
+    "or-film-pop",
+    "or-odissi-sangeet-janana",
+    "or-sambalpuri-folk"
+   ],
+   "ur": [
+    "ghazal",
+    "lullaby-regional",
+    "qawwali",
+    "sufi-kalam",
+    "ur-nazm-qawwali-pop"
+   ],
+   "as": [
+    "lullaby-regional",
+    "bn-bhatiyali-bhawaiya",
+    "as-bihu-husori",
+    "as-borgeet-ojapali",
+    "as-hazarika-jyoti-sangeet",
+    "bn-jhumur-gambhira-lokgeeti"
+   ]
+  },
+  "daypart_defaults": {
+   "dawn": [
+    "bhajan-hindi",
+    "suprabhatam-stotra",
+    "hindustani-khayal-vilambit",
+    "carnatic-kriti",
+    "kn-dasara-padagalu",
+    "mr-abhang",
+    "gu-bhajan-prabhatiya",
+    "ambient-meditation"
+   ],
+   "morning": [
+    "hindi-indie-folk",
+    "hindi-filmpop",
+    "bn-adhunik-band",
+    "ta-film-melody",
+    "te-film-pop"
+   ],
+   "midday": [
+    "lofi-indian",
+    "ambient-meditation",
+    "hindi-indie-folk"
+   ],
+   "evening": [
+    "hindi-filmpop",
+    "hindi-retro-filmi",
+    "ta-film-melody",
+    "ml-film-melody",
+    "pa-bhangra"
+   ],
+   "dusk": [
+    "ghazal",
+    "qawwali",
+    "bhajan-hindi",
+    "aarti-stuti",
+    "hindustani-thumri",
+    "bn-rabindrasangeet",
+    "kn-bhavageethe",
+    "mr-bhavgeet"
+   ],
+   "night": [
+    "ghazal",
+    "bn-rabindrasangeet",
+    "lullaby-regional",
+    "lofi-indian",
+    "ambient-meditation",
+    "hindustani-khayal-vilambit"
+   ]
+  }
+ }
+}
