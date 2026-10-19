@@ -3,7 +3,7 @@
  * for, the occasion, the mood, the genre) reach the poets, the polisher, the Lyria style prompt and the judge, instead
  * of being squeezed into a 30-word `topic`. Pure functions plus one injected model call; flag `PCE_INTENT=1`.
  */
-import { DAYPART_DEFAULTS, FESTIVALS, GENRES, KEYWORDS, fitsLanguage, genreById, isVocalOnly } from "./genres";
+import { DAYPART_DEFAULTS, FESTIVALS, GENRES, KEYWORDS, fitsLanguage, genreById, isVocalOnly, mentions } from "./genres";
 
 export interface IntentSpec {
   /** One sentence in English: what the listener wants to feel or say. */
@@ -99,7 +99,7 @@ export function routeGenre(intent: IntentSpec, ctx: { prompt: string; language: 
   if (named && fitsLanguage(named, ctx.language)) return intent;
   const text = ` ${ctx.prompt} ${intent.essence} ${intent.raga ?? ""} ${intent.instruments.join(" ")} `.toLowerCase();
   const pick = (id: string | undefined) => { const g = genreById(id); return g && fitsLanguage(g, ctx.language) ? { ...intent, genre: g.id } : null; };
-  for (const [k, id] of KEYWORDS) if (text.includes(k.toLowerCase())) { const r = pick(id); if (r) return r; }
+  for (const [k, id] of KEYWORDS) if (mentions(text, k)) { const r = pick(id); if (r) return r; }
   const occ = `${text} ${intent.occasion ?? ""}`.toLowerCase();
   for (const f of FESTIVALS) {
     const head = f.name.split(/[\s/,()]+/).filter((w) => w.length > 3);
@@ -126,12 +126,14 @@ export function intentBlock(i: IntentSpec): string {
 }
 
 /** English fragment appended to the Lyria style prompt for the routed genre, raga/tala and requested instruments. */
-export function lyriaFragment(i: IntentSpec): string {
+export function lyriaFragment(i: IntentSpec, env: Readonly<Record<string, string | undefined>> = process.env): string {
+  // Raga and tala words in the Lyria prompt can trigger wordless alap even in a sung track (lab R5), so they have their own flag (PCE_RAGA_PROMPT=1) to A/B against raga-only-in-the-tag.
+  const ragaWords = env.PCE_RAGA_PROMPT === "1";
   const g = genreById(i.genre);
   return [
     g?.lyria ?? "",
-    i.raga ? `Raga ${i.raga}.` : "",
-    i.tala ? `Tala ${i.tala}.` : "",
+    ragaWords && i.raga ? `Raga ${i.raga}.` : "",
+    ragaWords && i.tala ? `Tala ${i.tala}.` : "",
     i.instruments.length ? `Featured instruments: ${i.instruments.join(", ")}.` : "",
     // Raga/folk/devotional styles are always sung (lab R5), so an "instrumental" ask there is not forwarded to Lyria.
     i.vocal === "instrumental" && g && isVocalOnly(g) ? "" : i.vocal === "instrumental" ? "" : i.vocal ? `${i.vocal} lead vocal.` : "",
@@ -161,10 +163,10 @@ export function ragaIn(prompt: string): string | undefined {
  * the intent text. The poets and the polisher get only the style's form and metre notes; Lyria gets the style's English hint.
  * Returns null for a plain brief, so today's behaviour is the floor.
  */
-export function styleOnly(ctx: { prompt: string; language: string; styleFamily: string }): { genre: string; note: string; fragment: string } | null {
+export function styleOnly(ctx: { prompt: string; language: string; styleFamily: string }, env: Readonly<Record<string, string | undefined>> = process.env): { genre: string; raga?: string; note: string; fragment: string } | null {
   const raga = ragaIn(ctx.prompt);
   const spec = routeGenre({ ...fallbackIntent(ctx.prompt), ...(raga ? { raga } : {}) }, ctx);
   const g = genreById(spec.genre);
   if (!g && !raga) return null;
-  return { genre: g?.id ?? "", note: g ? `Style: ${g.name}. Form: ${g.forms.join(" / ")}. ${g.lyricNotes}` : "", fragment: [lyriaFragment(spec), raga ? `${RAGA_CUES[raga]}.` : ""].filter(Boolean).join(" ") };
+  return { genre: g?.id ?? "", note: g ? `Style: ${g.name}. Form: ${g.forms.join(" / ")}. ${g.lyricNotes}` : "", ...(raga ? { raga } : {}), fragment: [lyriaFragment(spec, env), raga && env.PCE_RAGA_PROMPT === "1" ? `${RAGA_CUES[raga]}.` : ""].filter(Boolean).join(" ") };
 }

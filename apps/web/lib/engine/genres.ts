@@ -62,7 +62,8 @@ export const isVocalOnly = (g: Genre): boolean => VOCAL_ONLY.has(g.tradition);
 
 /** `[keyword, styleId]` longest keyword first, so "dasara pada" beats "dasa". Keywords whose style is excluded are dropped. */
 export const KEYWORDS: readonly (readonly [string, string])[] = Object.entries(data.routing.keyword_map)
-  .filter(([, id]) => BY_ID.has(id)).sort((a, b) => b[0].length - a[0].length);
+  // Bare "sangeet" also appears in sugam sangeet, natyasangeet and rabindrasangeet, so it never routes on its own.
+  .filter(([k, id]) => BY_ID.has(id) && k.toLowerCase() !== "sangeet").sort((a, b) => b[0].length - a[0].length);
 
 export const FESTIVALS = data.festivals.map((f) => ({ name: f.festival.toLowerCase(), styles: f.styles.filter((id) => BY_ID.has(id)), themes: f.themes }));
 export const DAYPART_DEFAULTS: Record<string, readonly string[]> = data.routing.daypart_defaults;
@@ -70,3 +71,17 @@ export const LANGUAGE_DEFAULTS: Record<string, readonly string[]> = data.routing
 
 /** A style fits a language when listed for it, or when it is pan-language (more than three languages, e.g. lullabies). */
 export const fitsLanguage = (g: Genre, language: string): boolean => g.languages.includes(language) || g.languages.length > 3;
+
+/** Latin keywords match whole words only ("hori" must not fire on "authority", "raga" not on "ragamuffin"); other scripts have no spaces, so they stay substring matches. */
+export function mentions(text: string, key: string): boolean {
+  const t = text.toLowerCase(), k = key.toLowerCase();
+  if (!/^[a-z0-9 ]+$/.test(k)) return t.includes(k);
+  let from = 0;
+  for (;;) {
+    const i = t.indexOf(k, from);
+    if (i < 0) return false;
+    const before = i === 0 ? "" : t[i - 1]!, after = t[i + k.length] ?? "";
+    if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) return true;
+    from = i + 1;
+  }
+}

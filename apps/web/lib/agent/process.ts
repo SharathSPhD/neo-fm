@@ -156,6 +156,11 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       // PCE_STYLES: route the style without a model call; ignored when the full intent is on (it already carries the genre).
       const styled = !intent && process.env.PCE_STYLES === "1" ? styleOnly({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }) : null;
       if (styled) trace.push(`styles routed genre=${styled.genre || "none"}`);
+      // The pool tags raga from document_json.raga.name, so a raga named in the brief is recorded there (best-effort).
+      const ragaName = styled?.raga ?? intent?.raga?.toLowerCase();
+      if (ragaName && !(doc.document_json as { raga?: { name?: string } }).raga?.name) {
+        try { await db.from("song_documents").update({ document_json: { ...doc.document_json, raga: { ...((doc.document_json as { raga?: object }).raga ?? {}), name: ragaName } } }).eq("id", job.song_document_id); } catch { /* the tag is advisory */ }
+      }
       const brief = {
         language: doc.language, styleFamily: doc.style_family,
         targetSeconds: doc.document_json.target_duration_seconds ?? 30,
