@@ -30,6 +30,7 @@ import { singableLines } from "../../../../lib/lyrics/singable";
 import { checkNoVocals } from "../../../../lib/pool/instrumental";
 import { mirrorAdmittedTrack } from "../../../../lib/pool/mirror";
 import { mp3DurationSeconds } from "../../../../lib/pool/mp3-duration";
+import { headLines } from "../../../../lib/admin/lyrics-head";
 import { normalizeRaga } from "../../../../lib/pool/raga";
 import { POOL_DAYPARTS, POOL_ENERGIES, POOL_MOODS, POOL_THEMES, deriveEnergyDaypart, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
@@ -48,7 +49,7 @@ interface FileMeta {
   id: string; source: (typeof SOURCES)[number]; language: string; title?: string; genre?: string; raga?: string;
   mood?: string[]; theme?: string[]; tempo_bpm?: number; duration_seconds?: number; lyrics?: string;
   /** Load the sung lyrics from a stored PCE eval row instead of sending them. */
-  lyrics_from?: { batch: string; brief_id: string };
+  lyrics_from?: { batch: string; brief_id: string; max_lines?: number };
   /** Score with the diction gate and return the result without storing the file or a pool row (A/B runs). */
   score_only?: boolean;
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
@@ -90,6 +91,8 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   if (!meta.lyrics && meta.lyrics_from && /^[A-Za-z0-9]{1,12}$/.test(meta.lyrics_from.batch) && /^[a-z0-9-]{1,20}$/i.test(meta.lyrics_from.brief_id)) {
     const { data } = await db.from("eval_runs").select("lyrics").eq("batch", meta.lyrics_from.batch).eq("brief_id", meta.lyrics_from.brief_id).eq("arm", "pce").maybeSingle();
     meta.lyrics = (data as { lyrics?: string } | null)?.lyrics ?? undefined;
+    // A 30 s clip sings only the opening lines, so the same cut that was rendered is what gets scored.
+    if (meta.lyrics && Number.isFinite(meta.lyrics_from.max_lines)) meta.lyrics = headLines(meta.lyrics, Number(meta.lyrics_from.max_lines));
   }
   let qa: { unorderedPct: number | null; verdict: DictionVerdict | null } = { unorderedPct: meta.diction_u ?? null, verdict: meta.diction_verdict ?? null };
   let vocalsAbsent: boolean | null = null;
