@@ -145,13 +145,13 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
             <p role="status" className="mt-3 min-h-[1.25rem] text-xs text-foreground/60">
               {state === "error" ? "Couldn't load the audio. Open the station to listen." : ""}
             </p>
-            <Link href="/station" className="text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Tune in to the station</Link>
+            <Link href="/station" className="inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Tune in to the station</Link>
           </>
         ) : (
           <>
             <p className="text-xs text-foreground/60">No community song in {meta.name} yet. Here is how you could start one:</p>
             <p lang={meta.code} className="mt-3 text-xl leading-relaxed sm:text-2xl">{sample?.idea}</p>
-            <Link href="/sign-up?next=/songs/new" className="mt-4 inline-block text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Make the first {meta.name} song</Link>
+            <Link href="/sign-up?next=/songs/new" className="mt-4 inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Make the first {meta.name} song</Link>
           </>
         )}
       </div>

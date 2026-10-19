@@ -46,7 +46,7 @@ function href(lang: IdeaLang, occasion: Occasion | null, mood: Mood | null): str
 }
 
 const chip = (active: boolean, disabled = false) =>
-  `rounded-full border px-3 py-1 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
+  `rounded-full border px-3 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
     active
       ? "border-accent bg-accent/15 text-accent"
       : disabled
