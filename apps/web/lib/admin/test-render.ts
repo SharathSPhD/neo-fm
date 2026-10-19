@@ -5,7 +5,9 @@ export interface RenderItem { label: string; language: string; lyrics?: string; 
   /** false skips the per-language pronunciation hint (the hints probe arm); default true. */
   hints?: boolean;
   /** true: also transcribe the render with Gemini and return the order-free diction match against the lyrics. */
-  score?: boolean }
+  score?: boolean;
+  /** true: the cheap 30 s clip model (about GBP 0.05) instead of the 60 s full model. */
+  clip?: boolean }
 
 export function renderCap(env = process.env): number {
   const n = Math.floor(Number(env.TEST_RENDER_MAX ?? 3));
@@ -23,6 +25,7 @@ export function validateItems(body: unknown, cap: number): { ok: true; items: Re
     if (it.native !== undefined && typeof it.native !== "boolean") return { ok: false, error: "native must be a boolean" };
     if (it.hints !== undefined && typeof it.hints !== "boolean") return { ok: false, error: "hints must be a boolean" };
     if (it.score !== undefined && typeof it.score !== "boolean") return { ok: false, error: "score must be a boolean" };
+    if (it.clip !== undefined && typeof it.clip !== "boolean") return { ok: false, error: "clip must be a boolean" };
     if (!it.lyrics && !it.brief_id) return { ok: false, error: "each item needs lyrics or brief_id" };
   }
   return { ok: true, items: items as RenderItem[] };
