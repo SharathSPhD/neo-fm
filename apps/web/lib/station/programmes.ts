@@ -18,3 +18,8 @@ export function programmesEnabled(): boolean {
 export function programmeLines(enabled: boolean = programmesEnabled()): VoiceLine[] {
   return enabled ? PROGRAMMES.filter((l) => l.rendered && l.seconds > 0) : [];
 }
+
+/** Every rendered programme regardless of the flag, so the CDN mirror can fill `voice/programme/<id>.mp3` before it is switched on. */
+export function renderedProgrammes(): VoiceLine[] {
+  return PROGRAMMES.filter((l) => l.rendered && l.seconds > 0);
+}

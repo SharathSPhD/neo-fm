@@ -15,6 +15,7 @@ import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
+import { takeFallback } from "@/lib/station/fallback";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
 interface Track {
@@ -153,6 +154,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   const errorsInARow = useRef(0);
   /** Track ids whose CDN URL already failed once and were retried from the signed Supabase URL. */
   const cdnRetried = useRef(new Set<string>());
+  /** Voice items already retried from their static fallbackUrl. */
+  const fallbackTried = useRef(new Set<string>());
   const tracksStarted = useRef(0);
   // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
   const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
@@ -315,8 +318,9 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   function onTrackError() {
     // A spot or spoken link that will not load is dropped quietly; it is not a station audio failure.
-    if (current?.type === "voice" && current.fallbackUrl && audioRef.current && !audioRef.current.src.endsWith(current.fallbackUrl)) {
-      audioRef.current.src = current.fallbackUrl;
+    const fallback = current?.type === "voice" && audioRef.current ? takeFallback(current, fallbackTried.current) : null;
+    if (fallback && audioRef.current) {
+      audioRef.current.src = fallback;
       void audioRef.current.play().catch(() => setBlocked(true));
       return;
     }
