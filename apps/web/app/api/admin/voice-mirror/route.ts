@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/voice-mirror (Bearer ADMIN_SECRET via checkAdminBearer): copies the station's spoken segments (the static
- * files under /voice, listed in lib/station/voice-links.ts) into the R2 bucket as `voice/<id>.mp3`, so the queue route can
+ * files under /voice, listed in lib/station/voice-links.ts and the rendered programmes in lib/station/programmes.ts) into the R2 bucket as `voice/<id>.mp3`, so the queue route can
  * serve them from POOL_CDN_BASE when STATION_VOICE_CDN=1. No model call and no spend.
  *
  *   POST                dry run: counts what R2 already has. Writes nothing.
@@ -12,7 +12,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { r2Configured, r2Request } from "../../../../lib/pool/r2";
+import { renderedProgrammes } from "../../../../lib/station/programmes";
 import { VOICE_LINES } from "../../../../lib/station/voice-links";
+
+/** Host links, idents and time checks, plus the rendered spoken programmes (`voice/programme/<id>.mp3`). */
+const MIRRORED = [...VOICE_LINES, ...renderedProgrammes()];
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const apply = req.nextUrl.searchParams.get("apply") === "1";
   const missing: string[] = [];
   let present = 0;
-  for (const { id } of VOICE_LINES) {
+  for (const { id } of MIRRORED) {
     if ((await r2Request("HEAD", `voice/${id}.mp3`)).status === 200) present++;
     else missing.push(id);
   }
@@ -41,5 +45,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       else failed.push({ id, status: put.status });
     }
   }
-  return NextResponse.json({ total: VOICE_LINES.length, present, missing: missing.length - copied, copied, failed, apply });
+  return NextResponse.json({ total: MIRRORED.length, present, missing: missing.length - copied, copied, failed, apply });
 }

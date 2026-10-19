@@ -13,6 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { renderedProgrammes } from "../../../../lib/station/programmes";
 import { VOICE_LINES } from "../../../../lib/station/voice-links";
 import { POOL_CACHE_CONTROL, r2Configured, r2Key, r2Request, r2SetPoolCacheControl } from "../../../../lib/pool/r2";
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const keys = [
     ...(data as { audio_path: string }[]).map((r) => r2Key(r.audio_path)),
-    ...VOICE_LINES.map((l) => `voice/${l.id}.mp3`),
+    ...[...VOICE_LINES, ...renderedProgrammes()].map((l) => `voice/${l.id}.mp3`),
   ];
   let ok = 0;
   let notInR2 = 0;
