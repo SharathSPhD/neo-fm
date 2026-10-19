@@ -22,7 +22,7 @@ const KINDS = new Set(["host-link", "ident-daypart", "time-check", "ident-statio
 const manifest = JSON.parse(readFileSync(join(labDir, "manifest.json"), "utf8"));
 const lines = [];
 for (const [id, m] of Object.entries(manifest)) {
-  if (!KINDS.has(m.kind) || !m.ai_label) continue;
+  if (!KINDS.has(m.kind) || !m.ai_label || m.native_review === "rejected") continue;
   const wav = join(labDir, m.file);
   const mp3 = join(outDir, `${id}.mp3`);
   if (!existsSync(wav)) continue;

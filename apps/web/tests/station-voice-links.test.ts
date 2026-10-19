@@ -136,3 +136,14 @@ describe("spoken segment delivery and disclosure", () => {
     }
   });
 });
+
+describe("rendered launch-language segments", () => {
+  it("has idents and host links for every launch language and none rejected", () => {
+    for (const lang of ["hi", "te", "kn", "mr"]) {
+      for (const kind of ["ident-daypart", "host-link"] as const) {
+        expect(VOICE_LINES.some((l) => l.lang === lang && l.kind === kind), `${lang} ${kind}`).toBe(true);
+      }
+    }
+    expect(VOICE_LINES.some((l) => l.id === "ident-daypart/te-evening-2")).toBe(false);
+  });
+});

@@ -52,6 +52,6 @@ describe("voice links in GET /api/station/queue", () => {
   });
 
   it("keeps the plain queue when no rendered line fits the language", async () => {
-    expect((await items("&lang=kn")).some((x) => x.type === "voice")).toBe(false);
+    expect((await items("&lang=gu")).some((x) => x.type === "voice")).toBe(false);
   });
 });
