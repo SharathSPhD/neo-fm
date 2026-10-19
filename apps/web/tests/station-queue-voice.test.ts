@@ -28,12 +28,12 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("voice links in GET /api/station/queue", () => {
-  it("splices one AI-labelled static-file link after the first two tracks, greeting first", async () => {
+  it("splices one AI-labelled static-file link after the first two tracks, a greeting or a link first", async () => {
     const t = await items();
     const v = t.filter((x) => x.type === "voice");
     expect(v).toHaveLength(1);
     expect(t.indexOf(v[0]!)).toBe(2);
-    expect(v[0]).toMatchObject({ url: expect.stringMatching(/^\/voice\/ident-daypart\/hi-morning-\d\.mp3$/), voice: { aiMade: true } });
+    expect(v[0]).toMatchObject({ url: expect.stringMatching(/^\/voice\/(ident-daypart|host-link)\/hi-morning-\d\.mp3$/), voice: { aiMade: true } });
     expect(t).toHaveLength(9);
   });
 

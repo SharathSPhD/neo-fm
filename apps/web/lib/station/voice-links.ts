@@ -95,7 +95,7 @@ export interface VoiceSlotItem {
   joinedToPrev?: boolean;
 }
 
-/** Order of break kinds by how many breaks have played: greeting first, then links, a station ident every fourth. */
+/** Order of break kinds by how many breaks have played: a greeting, then links, a station ident every fourth. */
 export const PROGRAMME_EVERY = 4;
 const ROTATION: VoiceKind[] = ["ident-daypart", "host-link", "host-link", "ident-station"];
 
@@ -117,7 +117,10 @@ export function chooseLine(lines: VoiceLine[], ctx: VoiceContext, lang: string, 
   if (ctx.timeChecks && breaks > 0 && lastCheckHour !== ctx.hour) wanted.push("time-check");
   // A programme (lib/station/programmes.ts) takes every PROGRAMME_EVERY-th break when lines exist; otherwise the break is a normal one.
   if (breaks % PROGRAMME_EVERY === PROGRAMME_EVERY - 1) wanted.push("programme");
-  wanted.push(ROTATION[breaks % ROTATION.length]!, "host-link", "ident-daypart");
+  // Every fresh session starts at break 0, and a daypart has only three idents, so a fixed greeting-first rule played the same
+  // three lines to every new listener; the opening break picks between a greeting and a link at random instead.
+  const first = breaks === 0 && rand() >= 0.5 ? "host-link" : ROTATION[breaks % ROTATION.length]!;
+  wanted.push(first, "host-link", "ident-daypart");
   for (const kind of wanted) {
     const pool = candidates(lines, ctx, lang, kind);
     if (pool.length > 0) return pool[Math.min(Math.floor(rand() * pool.length), pool.length - 1)]!;
