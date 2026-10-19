@@ -31,9 +31,10 @@ for (const vp of VIEWPORTS) {
       await expectNoSeriousA11yViolations(page, `dev-preview ${vp.name}`);
     });
 
-    test("picking a language switches the UI and the ideas", async ({ page }) => {
+    test("picking a language switches the ideas, not the site language", async ({ page }) => {
       await page.getByRole("radio", { name: "தமிழ்" }).click();
-      await expect(page.getByRole("heading", { name: "உங்கள் முதல் பாடலை உருவாக்குங்கள்" })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Make your first song" })).toBeVisible();
+      await expect(page.locator("html")).toHaveAttribute("lang", "en");
       await expect(page.getByTestId("first-run-idea")).toHaveCount(3);
       await page.getByTestId("first-run-idea").first().click();
       await expect(page.locator("#prompt")).toHaveValue(/மழைக்காலத்தில்/);
