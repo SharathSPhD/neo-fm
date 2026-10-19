@@ -7,9 +7,9 @@
           "summary": "A personal FM station of AI-made music in Hindi, Tamil, Telugu, Kannada, Bengali and English.",
           "description": "neo-fm is an FM station that never stops. Say a language, or just say next, and it plays original songs made by AI, labelled as AI, in your language. Ask for more like this, or something calmer or livelier, and the station follows.",
           "examplePhrases": [
-            "Alexa, open neo f m",
-            "Alexa, ask neo f m to play Tamil",
-            "Alexa, ask neo f m for something calmer"
+            "Alexa, open neo station",
+            "Alexa, ask neo station to play Tamil",
+            "Alexa, ask neo station for something calmer"
           ],
           "keywords": [
             "music",
@@ -30,9 +30,9 @@
           "summary": "A personal FM station of AI-made music, with a focus on Indian languages: Hindi, Tamil, Telugu, Kannada, Bengali and English.",
           "description": "neo-fm is an FM station that never stops. Say a language, or just say next, and it plays original songs made by AI, labelled as AI, in your language. Ask for more like this, or something calmer or livelier, and the station follows.",
           "examplePhrases": [
-            "Alexa, open neo f m",
-            "Alexa, ask neo f m to play Tamil",
-            "Alexa, ask neo f m for something calmer"
+            "Alexa, open neo station",
+            "Alexa, ask neo station to play Tamil",
+            "Alexa, ask neo station for something calmer"
           ],
           "keywords": [
             "music",
@@ -73,7 +73,7 @@
         "IN",
         "GB"
       ],
-      "testingInstructions": "No sign-in. Say 'Alexa, open neo f m' to start the station; say 'next', 'more like this', 'something calmer', 'pause', 'resume' and 'stop'. Say 'Alexa, ask neo f m to play Tamil' to lock a language. Every song is original and AI-made, and the skill says so on launch.",
+      "testingInstructions": "No sign-in. Say 'Alexa, open neo station' to start the station; say 'next', 'more like this', 'something calmer', 'pause', 'resume' and 'stop'. Say 'Alexa, ask neo station to play Tamil' to lock a language. Every song is original and AI-made, and the skill says so on launch.",
       "category": "MUSIC_AND_AUDIO"
     },
     "apis": {
