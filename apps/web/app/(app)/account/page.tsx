@@ -199,7 +199,7 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
         ) : null}
       </section>
 
-      {billing?.stripe_subscription_id ? (
+      {billing?.stripe_subscription_id || pass ? (
         <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
           <h2 className="text-sm font-medium tracking-tight">{t("account.billing")}</h2>
           <p className="text-xs text-foreground/60">
