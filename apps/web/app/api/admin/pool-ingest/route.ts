@@ -30,6 +30,7 @@ import { singableLines } from "../../../../lib/lyrics/singable";
 import { checkNoVocals } from "../../../../lib/pool/instrumental";
 import { mirrorAdmittedTrack } from "../../../../lib/pool/mirror";
 import { mp3DurationSeconds } from "../../../../lib/pool/mp3-duration";
+import { normalizeRaga } from "../../../../lib/pool/raga";
 import { POOL_DAYPARTS, POOL_ENERGIES, POOL_MOODS, POOL_THEMES, deriveEnergyDaypart, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
 export const dynamic = "force-dynamic";
@@ -109,13 +110,14 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
   if (upErr) return NextResponse.json({ error: `upload: ${upErr.message}` }, { status: 502 });
   const mood = pickVocab(meta.mood ?? [], POOL_MOODS);
   const theme = pickVocab(meta.theme ?? [], POOL_THEMES);
-  const derived = deriveEnergyDaypart({ mood, theme, genre: meta.genre ?? null, tempo_bpm: meta.tempo_bpm ?? null });
+  const raga = normalizeRaga(meta.raga);
+  const derived = deriveEnergyDaypart({ mood, theme, genre: meta.genre ?? null, tempo_bpm: meta.tempo_bpm ?? null, raga });
   const dayparts = pickVocab(meta.daypart ?? [], POOL_DAYPARTS);
   const measured = mp3DurationSeconds(audio);
   const duration = meta.duration_seconds ?? (measured !== null ? Math.round(measured) : null);
   const r = await admit(db, {
     job_id: null, source: meta.source, audio_path: path, title: meta.title ?? null, duration_seconds: duration,
-    language, genre: meta.genre ?? null, raga: meta.raga ?? null,
+    language, genre: meta.genre ?? null, raga,
     mood, theme, tempo_bpm: meta.tempo_bpm ?? null,
     energy: (POOL_ENERGIES as readonly string[]).includes(meta.energy ?? "") ? meta.energy : derived.energy,
     daypart: dayparts.length ? dayparts : derived.daypart,

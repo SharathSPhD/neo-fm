@@ -3,6 +3,7 @@
  * Pure functions: the ingest route and the seed script both go through here so the rule lives in one place.
  */
 import type { DictionVerdict } from "../diction/gate";
+import { normalizeRaga, ragaInfo } from "./raga";
 
 /** "zxx" (ISO 639-2, no linguistic content) marks an instrumental: one render serves every listener. */
 export const POOL_LANGUAGES = ["hi", "ta", "te", "kn", "bn", "en", "sa", "hinglish", "zxx", "mr", "pa", "gu", "ml", "bho", "or", "ur", "as"] as const;
@@ -46,7 +47,9 @@ interface DocLike {
   language?: string;
   style_family?: string;
   tempo_bpm?: number;
-  metadata?: { prompt?: string };
+  /** Raga the song was made for (song document `raga`), set by the producer or the engine. */
+  raga?: { name?: string } | null;
+  metadata?: { prompt?: string; genre?: string };
   sections?: Array<{ tags?: string[] }>;
 }
 
@@ -86,8 +89,9 @@ export function tagsFromDocument(doc: DocLike): PoolTags | null {
   if (!language) return null;
   const tagList = (doc.sections ?? []).flatMap((s) => s.tags ?? []);
   const find = (prefix: string) => tagList.find((t) => t.startsWith(prefix))?.slice(prefix.length) ?? null;
-  const genre = find("genre:") ?? doc.style_family ?? null;
-  const raga = find("raga:");
+  // The routed style id (engine PCE_STYLES) rides in metadata.genre; the coarse DB family is the fallback.
+  const genre = find("genre:") ?? doc.metadata?.genre ?? doc.style_family ?? null;
+  const raga = normalizeRaga(find("raga:") ?? doc.raga?.name);
   const text = `${doc.metadata?.prompt ?? ""} ${doc.style_family ?? ""}`;
   const hit = (hints: Array<[RegExp, string]>) => [...new Set(hints.filter(([re]) => re.test(text)).map(([, v]) => v))];
   const bpm = typeof doc.tempo_bpm === "number" && doc.tempo_bpm >= 40 && doc.tempo_bpm <= 220 ? Math.round(doc.tempo_bpm) : null;
@@ -119,7 +123,7 @@ export type PoolEnergy = (typeof POOL_ENERGIES)[number];
  * Energy and daypart from mood, genre and theme, so a new track never lands untagged. Same rule as the 0096 backfill
  * (pool/tag-backfill-0096.sql), so it is as unverified as the tags it reads; tag_source says so.
  */
-export function deriveEnergyDaypart(t: { mood: readonly string[]; theme: readonly string[]; genre: string | null; tempo_bpm: number | null }): { energy: PoolEnergy; daypart: string[] } {
+export function deriveEnergyDaypart(t: { mood: readonly string[]; theme: readonly string[]; genre: string | null; tempo_bpm: number | null; raga?: string | null }): { energy: PoolEnergy; daypart: string[] } {
   const has = (list: readonly string[], ...v: string[]) => v.some((x) => list.includes(x));
   const { mood, theme, genre } = t;
   const energy: PoolEnergy =
@@ -134,5 +138,7 @@ export function deriveEnergyDaypart(t: { mood: readonly string[]; theme: readonl
     energy !== "high" && (has(mood, "devotional", "festive") || has(theme, "diwali", "bhakti", "wedding")) ? "dusk" : null,
     energy === "low" && (has(mood, "calm", "melancholic", "nostalgic", "romantic") || genre === "lofi") ? "night" : null,
   ].filter((x): x is string => x !== null);
-  return { energy, daypart: parts.length ? parts : ["evening"] };
+  // A known raga is bound to a time of day, which beats the mood guess.
+  const ragaParts = ragaInfo(t.raga)?.dayparts ?? [];
+  return { energy, daypart: ragaParts.length ? [...ragaParts] : parts.length ? parts : ["evening"] };
 }
