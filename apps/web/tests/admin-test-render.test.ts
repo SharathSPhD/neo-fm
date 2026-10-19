@@ -42,3 +42,12 @@ describe("test-render target_seconds", () => {
     expect(one(300)).toBe(false);
   });
 });
+
+describe("test-render clip", () => {
+  const item = { label: "hi-clip", language: "hi", lyrics: "x" };
+
+  it("accepts a boolean clip flag and rejects anything else", () => {
+    expect(validateItems({ items: [{ ...item, clip: true }] }, 3).ok).toBe(true);
+    expect(validateItems({ items: [{ ...item, clip: "yes" }] }, 3).ok).toBe(false);
+  });
+});

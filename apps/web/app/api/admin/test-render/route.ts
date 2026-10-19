@@ -1,6 +1,6 @@
 /**
  * POST /api/admin/test-render (Bearer ADMIN_SECRET via checkAdminBearer)
- *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style?, target_seconds?, native? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
+ *   { items: [{ label, language, lyrics?, brief_id?, eval_batch?, style?, target_seconds?, native?, clip? }] }   at most TEST_RENDER_MAX items per call (default 3, hard cap 5)
  * Renders each item with the same Lyria path a user job takes (moderation screen, romanized singing script, diction hints,
  * the 60 s full model) so operators can measure render cost and quality. There is no user, job or quota here, so the cap
  * above and the spend estimate in the response are the only guards: the caller owns the budget. `brief_id` loads the stored
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       if (!verdict.allowed) return { label: it.label, error: "moderation_refused" };
       const ss = singingScript(lyrics);
       const r = await generateMusic(
-        { stylePrompt: [style, native || it.hints === false ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
+        { stylePrompt: [style, native || it.hints === false ? "" : dictionHints(HINT_KEY[it.language] ?? it.language), ss.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" "), lyrics: ss.romanized ? ss.text : lyrics, durationClass: it.clip ? "clip" : "full", targetSeconds: it.target_seconds ?? TARGET_SECONDS, labels: native?.labels },
         { guard, dailyCap: dailyCap(db, "lyria", "batch"), apiKey: key },
       );
       const path = `admin-test/${it.label}.mp3`;
@@ -74,13 +74,14 @@ export async function POST(req: NextRequest) {
     }
   }));
   const ok = results.filter((r) => "url" in r).length;
-  const est_cost_gbp = Math.round(ok * estimatedCostGbp("full") * 100) / 100;
+  const clips = v.items.filter((i) => i.clip && results.some((r) => r.label === i.label && "url" in r)).length;
+  const est_cost_gbp = Math.round(((ok - clips) * estimatedCostGbp("full") + clips * estimatedCostGbp("clip")) * 100) / 100;
   // No ledger row backs these renders, so the log line is the only record of what an operator spent.
   getLogger("/api/admin/test-render", req).info("admin_test_render", { requested: v.items.length, renders_ok: ok, est_cost_gbp, labels: v.items.map((i) => i.label) });
   return NextResponse.json({
     results,
     renders_ok: ok,
     est_cost_gbp,
-    cost_basis: "estimate (LYRIA_COST_GBP_FULL, default 0.25), not Google billing",
+    cost_basis: "estimate (LYRIA_COST_GBP_FULL default 0.25, LYRIA_COST_GBP_CLIP default 0.05), not Google billing",
   });
 }
