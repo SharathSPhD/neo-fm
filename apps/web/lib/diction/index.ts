@@ -211,7 +211,7 @@ export function scoreBoth(intended: string, transcript: string): { ordered: numb
   return { ordered: scoreTranscript(intended, transcript).matchPct, unordered: scoreTranscriptUnordered(intended, transcript).matchPct };
 }
 
-const LAUNCH_CODE_NAME: Record<string, string> = { hi: "hindi", ta: "tamil", te: "telugu", kn: "kannada", bn: "bengali", sa: "sanskrit" };
+const LAUNCH_CODE_NAME: Record<string, string> = { hi: "hindi", ta: "tamil", te: "telugu", kn: "kannada", bn: "bengali", sa: "sanskrit", mr: "marathi", pa: "punjabi", gu: "gujarati" };
 
 /**
  * Production passes language CODES, so the five launch languages resolved to "" (the keys above are names). With

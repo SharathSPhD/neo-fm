@@ -221,3 +221,15 @@ describe("keyword matching", () => {
     expect(styleOnly(ctx("a light sangeet for the evening", "hi"))?.genre ?? "").not.toBe("vivah-geet-hi");
   });
 });
+
+describe("Marathi, Punjabi and Gujarati paths", () => {
+  it("routes their named forms, and never routes gurbani or shabad requests to a style", () => {
+    expect(styleOnly(ctx("an abhang for the wari", "mr"))?.genre).toBe("mr-abhang");
+    expect(styleOnly(ctx("a bhangra for baisakhi", "pa"))?.genre).toBe("pa-bhangra");
+    expect(styleOnly(ctx("a garba for navratri", "gu"))?.genre).toBe("gu-garba-raas");
+    expect(styleOnly(ctx("a gurbani shabad kirtan", "pa"))?.genre ?? "").not.toMatch(/shabad/);
+  });
+  it("pronunciation hints resolve for mr, pa, gu behind the launch flag", () => {
+    for (const code of ["mr", "pa", "gu"]) expect(dictionHintsFor(code, { DICTION_HINTS_LAUNCH: "1" }), code).not.toBe("");
+  });
+});

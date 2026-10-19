@@ -74,7 +74,7 @@ Reply with JSON only: {"intent": <1-5, 5 = every asked-for fact, name and feelin
 
 export async function judgeIntent(i: IntentSpec, lyrics: string, language: string, complete: Complete, model = "claude-haiku-5-5"): Promise<IntentVerdict | null> {
   try {
-    const reply = await complete({ model, prompt: judgePrompt(i, lyrics, language), maxTokens: 400 });
+    const reply = await complete({ model, prompt: judgePrompt(i, lyrics, language), maxTokens: 1000 });
     const s = reply.indexOf("{"), e = reply.lastIndexOf("}");
     if (s < 0 || e <= s) return null;
     const o = JSON.parse(reply.slice(s, e + 1)) as Record<string, unknown>;
