@@ -52,3 +52,35 @@ export function isMissingFunction(error: unknown): boolean {
   const e = error as { code?: string; message?: string } | null;
   return e?.code === "PGRST202" || e?.code === "42883" || /could not find the function|does not exist/i.test(e?.message ?? "");
 }
+
+/**
+ * The listener's own Station pass, or null. The pass is its own entitlement (migration 0098), not a tier, so the plan
+ * badge never shows it. Read through the owner-select policy (has_station_pass is service-role only); "paid up" is the same
+ * predicate as has_station_pass. A missing table reads as no pass.
+ */
+export async function readOwnStationPass(
+  supabase: { from: unknown },
+  userId: string,
+): Promise<{ currentPeriodEnd: string; cancelAtPeriodEnd: boolean } | null> {
+  try {
+    const { data } = await (
+      (supabase as { from: unknown }).from as unknown as (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: string) => {
+            maybeSingle: () => Promise<{
+              data: { status: string; current_period_end: string; cancel_at_period_end: boolean } | null;
+            }>;
+          };
+        };
+      }
+    )("station_passes")
+      .select("status, current_period_end, cancel_at_period_end")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!data || !["active", "trialing", "past_due"].includes(data.status)) return null;
+    if (new Date(data.current_period_end).getTime() <= Date.now()) return null;
+    return { currentPeriodEnd: data.current_period_end, cancelAtPeriodEnd: data.cancel_at_period_end };
+  } catch {
+    return null;
+  }
+}

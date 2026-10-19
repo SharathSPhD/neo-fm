@@ -22,6 +22,7 @@ import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isBillingEnabled } from "@/lib/billing/config";
+import { readOwnStationPass } from "@/lib/billing/pass";
 import { startOfMonthIso } from "@/lib/billing/usage";
 import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
@@ -120,7 +121,7 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
   const { t } = await serverI18n();
   const supabase = createServerClient();
   // user_billing is only meaningful when billing is on; the table exists either way.
-  const [{ data: row }, { data: billing }] = await Promise.all([
+  const [{ data: row }, { data: billing }, pass] = await Promise.all([
     supabase.from("users").select("tier, created_at").eq("id", userId).maybeSingle(),
     isBillingEnabled()
       ? supabase
@@ -129,6 +130,7 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
           .eq("user_id", userId)
           .maybeSingle()
       : Promise.resolve({ data: null as null }),
+    readOwnStationPass(supabase, userId),
   ]);
 
   const plan = PLAN_LABEL[row?.tier ?? "free"] ?? "Free";
@@ -160,6 +162,14 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
               <span className="rounded-full border border-accent/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
                 {plan}
               </span>
+              {pass ? (
+                <span
+                  data-testid="station-pass-badge"
+                  className="rounded-full border border-accent/60 bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent"
+                >
+                  Station pass
+                </span>
+              ) : null}
               <a
                 href="/pricing"
                 className="text-xs text-foreground/60 hover:text-foreground"
@@ -178,12 +188,18 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
             value={renews}
           />
         ) : null}
+        {pass ? (
+          <Row
+            label={pass.cancelAtPeriodEnd ? t("account.endsOn") : t("account.renewsOn")}
+            value={new Date(pass.currentPeriodEnd).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+          />
+        ) : null}
         {memberSince ? (
           <Row label={t("account.memberSince")} value={memberSince} />
         ) : null}
       </section>
 
-      {billing?.stripe_subscription_id ? (
+      {billing?.stripe_subscription_id || pass ? (
         <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
           <h2 className="text-sm font-medium tracking-tight">{t("account.billing")}</h2>
           <p className="text-xs text-foreground/60">
