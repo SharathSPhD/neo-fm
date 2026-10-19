@@ -4,8 +4,8 @@
   "kind": "programme",
   "lang": "hi",
   "daypart": "dawn",
-  "seconds": 0,
-  "rendered": false,
+  "seconds": 16.0,
+  "rendered": true,
   "text": "neo-fm पर ये हैं सुबह के सुर। भोर के इस पहर में राग भैरव और भैरवी की धुनें बेहद सुकून देती हैं। यहाँ हर गीत एआई से बनाया गया है, और आपकी पसंद के हिसाब से चुना जाता है।"
  },
  {
@@ -13,8 +13,8 @@
   "kind": "programme",
   "lang": "hi",
   "daypart": "evening",
-  "seconds": 0,
-  "rendered": false,
+  "seconds": 18.3,
+  "rendered": true,
   "text": "neo-fm पर ढलती शाम के सुर। इस पहर राग यमन की मिठास दिल को छू जाती है। यहाँ हर गीत एआई से बनाया गया है। जो गीत पसंद आए, उस पर दिल दबाइए, स्टेशन आपकी पसंद समझता जाएगा।"
  },
  {
@@ -22,8 +22,8 @@
   "kind": "programme",
   "lang": "hi",
   "daypart": "night",
-  "seconds": 0,
-  "rendered": false,
+  "seconds": 15.5,
+  "rendered": true,
   "text": "neo-fm पर रात के सुर। रात की शांति में राग मालकौंस जैसे गहरे सुर बहुत भाते हैं। यहाँ हर गीत एआई से बनाया गया है। बस आराम से सुनते रहिए।"
  }
 ]
