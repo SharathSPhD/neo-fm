@@ -136,3 +136,20 @@ describe("spoken segment delivery and disclosure", () => {
     }
   });
 });
+
+describe("variety for fresh sessions", () => {
+  it("does not play only idents on a listener's first break", () => {
+    const real = VOICE_LINES.filter((l) => l.lang === "hi");
+    let n = 0;
+    const rand = () => { n = (n * 7 + 3) % 101; return n / 101; };
+    const kinds = new Set<string>();
+    const ids = new Set<string>();
+    for (let i = 0; i < 200; i++) {
+      const p = pickVoice(real, queue(6), ctx({ state: state({ played: 0, since: 0, breaks: 0 }) }), rand);
+      if (p) { kinds.add(p.line.kind); ids.add(p.line.id); }
+    }
+    expect(kinds.has("host-link")).toBe(true);
+    expect(kinds.has("ident-daypart")).toBe(true);
+    expect(ids.size).toBeGreaterThan(3);
+  });
+});
