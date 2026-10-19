@@ -4,7 +4,7 @@ import type { UiLang } from "@/lib/i18n/ui-strings";
  * Song language the creation API understands for each guide language.
  * Identical today; kept as a map so the guide never sends an unknown code.
  */
-export const GUIDE_LANGS: readonly UiLang[] = ["hi", "ta", "te", "kn", "bn", "en"];
+export const GUIDE_LANGS: readonly UiLang[] = ["hi", "ta", "te", "kn", "mr", "bn", "en"];
 
 /**
  * Three starter ideas per language, written in that language's own script
@@ -30,6 +30,11 @@ export const EXAMPLE_IDEAS: Record<UiLang, readonly [string, string, string]> = 
     "ಪಶ್ಚಿಮ ಘಟ್ಟಗಳ ಸಂಜೆಯ ಸೌಂದರ್ಯದ ಬಗ್ಗೆ ಒಂದು ಭಾವಗೀತೆ",
     "ಹಬ್ಬದ ಸಂಭ್ರಮವನ್ನು ಸಾರುವ ಉತ್ಸಾಹದ ಜಾನಪದ ಗೀತೆ",
     "ಅಮ್ಮನ ಲಾಲಿ ಹಾಡು: ಮೃದುವಾಗಿ, ಮಮತೆಯಿಂದ",
+  ],
+  mr: [
+    "पावसाच्या पहिल्या सरीवर एक हळुवार प्रेमगीत, जुन्या मराठी चित्रपटगीतांसारखे",
+    "आईची अंगाईगीत: संथ, मायाळू आवाजात, तानपुऱ्याच्या साथीने",
+    "मैत्रीवर एक जोशपूर्ण गाणे, ढोलकी आणि टाळ्यांसह",
   ],
   bn: [
     "বর্ষার সন্ধ্যায় প্রিয়জনের অপেক্ষা নিয়ে একটি রবীন্দ্রসংগীত-ধাঁচের গান",

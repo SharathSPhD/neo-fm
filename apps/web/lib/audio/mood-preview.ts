@@ -17,6 +17,7 @@ export const MOOD_SCALES: Record<UiLang, readonly number[]> = {
   ta: [0, 1, 4, 5, 7, 8, 11, 12], // Mayamalavagowla
   te: [0, 2, 4, 5, 7, 9, 11, 12], // Shankarabharanam
   kn: [0, 2, 4, 7, 9, 12], // Mohanam
+  mr: [0, 2, 4, 7, 9, 12], // Bhoop
   bn: [0, 1, 3, 5, 7, 8, 10, 12], // Bhairavi
   en: [0, 2, 4, 7, 9, 12], // major pentatonic
 };

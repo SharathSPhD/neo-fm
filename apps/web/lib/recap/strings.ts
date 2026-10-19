@@ -21,6 +21,7 @@ export const RECAP_STRINGS: Record<UiLang, RecapStrings> = {
   ta: { title: "இசையில் என் மாதம்", songs: "பாடல்கள் உருவாக்கினேன்", languages: "மொழிகள்", topSong: "சிறந்த பாடல்", likes: "விருப்பங்கள்", listens: "முறை கேட்கப்பட்டது", moods: "மனநிலைகள்", collections: "தொகுப்புகள்", empty: "இந்த மாதம் இன்னும் பாடல்கள் இல்லை", locale: "ta-IN" },
   te: { title: "సంగీతంలో నా నెల", songs: "పాటలు చేశాను", languages: "భాషలు", topSong: "టాప్ పాట", likes: "లైకులు", listens: "సార్లు విన్నారు", moods: "మూడ్స్", collections: "కలెక్షన్లు", empty: "ఈ నెలలో ఇంకా పాటలు లేవు", locale: "te-IN" },
   kn: { title: "ಸಂಗೀತದಲ್ಲಿ ನನ್ನ ತಿಂಗಳು", songs: "ಹಾಡುಗಳನ್ನು ಮಾಡಿದೆ", languages: "ಭಾಷೆಗಳು", topSong: "ಅತ್ಯುತ್ತಮ ಹಾಡು", likes: "ಲೈಕ್‌ಗಳು", listens: "ಬಾರಿ ಕೇಳಲಾಗಿದೆ", moods: "ಮೂಡ್‌ಗಳು", collections: "ಸಂಗ್ರಹಗಳು", empty: "ಈ ತಿಂಗಳು ಇನ್ನೂ ಹಾಡುಗಳಿಲ್ಲ", locale: "kn-IN" },
+  mr: { title: "संगीतातला माझा महिना", songs: "गाणी बनवली", languages: "भाषा", topSong: "सर्वात आवडते गाणे", likes: "लाइक्स", listens: "वेळा ऐकले", moods: "मूड", collections: "संग्रह", empty: "या महिन्यात अजून गाणी नाहीत", locale: "mr-IN" },
   bn: { title: "গানে আমার মাস", songs: "গান বানিয়েছি", languages: "ভাষা", topSong: "সেরা গান", likes: "লাইক", listens: "বার শোনা হয়েছে", moods: "মুড", collections: "কালেকশন", empty: "এই মাসে এখনও কোনও গান নেই", locale: "bn-IN" },
 };
 

@@ -5,7 +5,7 @@
  */
 import type { UiLang } from "@/lib/i18n/ui-strings";
 
-const MOODS: Record<string, Record<Exclude<UiLang, "en">, string>> = {
+const MOODS: Record<string, Record<Exclude<UiLang, "en" | "mr">, string>> = {
   calm: { hi: "शांत", ta: "அமைதி", te: "ప్రశాంతం", kn: "ಶಾಂತ", bn: "শান্ত" },
   peaceful: { hi: "सुकून भरा", ta: "நிம்மதி", te: "ప్రశాంతమైన", kn: "ನೆಮ್ಮದಿ", bn: "প্রশান্ত" },
   serene: { hi: "निर्मल", ta: "தெளிவான அமைதி", te: "నిర్మలం", kn: "ನಿರ್ಮಲ", bn: "নির্মল" },
@@ -33,5 +33,5 @@ const MOODS: Record<string, Record<Exclude<UiLang, "en">, string>> = {
 /** Label for a mood tag in `lang`; unknown moods and English keep the stored word. */
 export function moodLabel(mood: string, lang: UiLang): string {
   if (lang === "en") return mood;
-  return MOODS[mood.toLowerCase()]?.[lang] ?? mood;
+  return MOODS[mood.toLowerCase()]?.[lang as Exclude<UiLang, "en" | "mr">] ?? mood;
 }

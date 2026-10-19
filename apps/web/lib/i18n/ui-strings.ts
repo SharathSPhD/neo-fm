@@ -13,10 +13,11 @@ import { bn } from "./locales/bn";
 import { en } from "./locales/en";
 import { hi } from "./locales/hi";
 import { kn } from "./locales/kn";
+import { mr } from "./locales/mr";
 import { ta } from "./locales/ta";
 import { te } from "./locales/te";
 
-export const UI_LANGS = ["en", "hi", "ta", "te", "kn", "bn"] as const;
+export const UI_LANGS = ["en", "hi", "ta", "te", "kn", "mr", "bn"] as const;
 export type UiLang = (typeof UI_LANGS)[number];
 
 /** Name of each language written in its own script (what the picker shows). */
@@ -26,6 +27,7 @@ export const UI_LANG_ENDONYM: Record<UiLang, string> = {
   ta: "தமிழ்",
   te: "తెలుగు",
   kn: "ಕನ್ನಡ",
+  mr: "मराठी",
   bn: "বাংলা",
 };
 
@@ -36,13 +38,14 @@ export const TRANSLATION_STATUS: Record<UiLang, "source" | "pending-review" | "r
   ta: "pending-review",
   te: "pending-review",
   kn: "pending-review",
+  mr: "pending-review",
   bn: "pending-review",
 };
 
 export type UiKey = keyof typeof en;
 export type Dict = Record<UiKey, string>;
 
-export const UI_STRINGS: Record<UiLang, Dict> = { en, hi, ta, te, kn, bn };
+export const UI_STRINGS: Record<UiLang, Dict> = { en, hi, ta, te, kn, mr, bn };
 
 export const DEFAULT_UI_LANG: UiLang = "en";
 export const UI_LANG_COOKIE = "neo-fm-lang";

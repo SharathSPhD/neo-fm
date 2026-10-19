@@ -3,7 +3,7 @@
  * Each entry is localized per language; a missing language falls back to English.
  * Newest first. The first entry's id drives the in-app "new" badge.
  */
-export const WHATS_NEW_LANGS = ["en", "hi", "ta", "te", "kn", "bn"] as const;
+export const WHATS_NEW_LANGS = ["en", "hi", "ta", "te", "kn", "mr", "bn"] as const;
 export type WhatsNewLang = (typeof WHATS_NEW_LANGS)[number];
 
 type Text = { en: string } & Partial<Record<Exclude<WhatsNewLang, "en">, string>>;
