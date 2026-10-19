@@ -31,6 +31,8 @@ import { checkNoVocals } from "../../../../lib/pool/instrumental";
 import { mirrorAdmittedTrack } from "../../../../lib/pool/mirror";
 import { mp3DurationSeconds } from "../../../../lib/pool/mp3-duration";
 import { headLines } from "../../../../lib/admin/lyrics-head";
+import { tagMp3 } from "../../../../lib/audio/id3-tag";
+import { siteBase } from "../../../../lib/social/site";
 import { normalizeRaga } from "../../../../lib/pool/raga";
 import { POOL_DAYPARTS, POOL_ENERGIES, POOL_MOODS, POOL_THEMES, deriveEnergyDaypart, normalizeLanguage, passesAdmission, passesInstrumentalAdmission, pickVocab, tagsFromDocument } from "../../../../lib/pool/tags";
 
@@ -109,7 +111,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
 
   if (meta.score_only) return NextResponse.json({ id: meta.id, ...qa, stored: false });
   const path = `pool/${meta.source}/${meta.id}.mp3`;
-  const { error: upErr } = await db.storage.from("tracks").upload(path, audio, { contentType: file.type || "audio/mpeg", upsert: true });
+  const { error: upErr } = await db.storage.from("tracks").upload(path, tagMp3(audio, { site: siteBase() }), { contentType: file.type || "audio/mpeg", upsert: true });
   if (upErr) return NextResponse.json({ error: `upload: ${upErr.message}` }, { status: 502 });
   const mood = pickVocab(meta.mood ?? [], POOL_MOODS);
   const theme = pickVocab(meta.theme ?? [], POOL_THEMES);
