@@ -32,7 +32,7 @@ import { screenRequest } from "../../../../lib/safety";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const CODE: Record<string, string> = { kannada: "kn", tamil: "ta", telugu: "te", hindi: "hi", bengali: "bn" };
+const CODE: Record<string, string> = { kannada: "kn", tamil: "ta", telugu: "te", hindi: "hi", bengali: "bn", marathi: "mr", punjabi: "pa", gujarati: "gu" };
 const NAMED: { id: string; language: string; style: string; text: string }[] = [
   { id: "named-kn-1", language: "Kannada", style: "kannada-light-classical", text: "A birthday song for my younger sister Meenakshi, who loves jasmine flowers and sings while she cooks" },
   { id: "named-ta-1", language: "Tamil", style: "tamil-light-classical", text: "A wedding anniversary song for my parents Selvam and Kamala, twenty years of monsoon evenings and filter coffee" },
