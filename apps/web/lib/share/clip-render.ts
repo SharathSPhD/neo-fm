@@ -163,7 +163,7 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
   ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.6)";
   ctx.font = `500 34px ${f.fontFamily}`;
-  ctx.fillText("neo.fm", W / 2, H - 80);
+  ctx.fillText("neo.fm · AI-generated", W / 2, H - 80);
 
   ctx.restore();
 }

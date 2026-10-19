@@ -24,6 +24,8 @@ import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
+import { tagMp3 } from "../audio/id3-tag";
+import { siteBase } from "../social/site";
 import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
 import { hasStationPass, withPassCap } from "../billing/pass";
 import { agentIdFor, planForTier, type UserTier } from "./tiers";
@@ -243,7 +245,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
         // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).
         const path = `${jobId}/${n}.mp3`;
-        const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, r.audio, { contentType: r.mimeType, upsert: true }));
+        const { error } = await timed("upload", async () => db.storage.from("tracks").upload(path, tagMp3(r.audio, { site: siteBase() }), { contentType: r.mimeType, upsert: true }));
         if (error) throw new Error(error.message);
         postRenderFrom = Date.now();
         return path;
