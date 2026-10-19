@@ -2,9 +2,17 @@
  * /offline -- shown by the PWA service worker when a navigation fails
  * with no cached entry. Static page; safe to cache aggressively.
  */
+import type { Metadata } from "next";
+
 import { T } from "@/components/t";
 
 export const dynamic = "force-static";
+
+export const metadata: Metadata = {
+  title: "You're offline -- neo-fm",
+  description: "neo-fm can't reach the network right now. Reconnect and try again.",
+  robots: { index: false },
+};
 
 export default function OfflinePage() {
   return (

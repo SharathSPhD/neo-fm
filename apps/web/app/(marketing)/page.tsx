@@ -216,7 +216,7 @@ async function Footer() {
             href={languagePagePath(l)}
             hrefLang={l.code}
             lang={l.code}
-            className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {l.native}
           </Link>
@@ -237,43 +237,43 @@ async function Footer() {
         <p className="flex flex-wrap items-center gap-4 text-xs text-foreground/50">
           <Link
             href="/pricing"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("nav.pricing")}
           </Link>
           <Link
             href="/trust"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.trust")}
           </Link>
           <Link
             href="/privacy"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.privacy")}
           </Link>
           <Link
             href="/terms"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.terms")}
           </Link>
           <Link
             href="/ai-disclosure"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.ai")}
           </Link>
           <Link
             href="/help"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("nav.help")}
           </Link>
           <Link
             href="/feedback"
-            className="hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
           >
             {t("footer.contact")}
           </Link>

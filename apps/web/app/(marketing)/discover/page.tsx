@@ -237,8 +237,8 @@ export default async function DiscoverPage(
               href={href}
               className={
                 active
-                  ? "rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-accent"
-                  : "rounded-full border border-muted/30 px-3 py-1 text-foreground/70 hover:border-accent/30 hover:text-foreground"
+                  ? "rounded-full border border-accent/40 bg-accent/10 px-3 py-1.5 text-accent"
+                  : "rounded-full border border-muted/30 px-3 py-1.5 text-foreground/70 hover:border-accent/30 hover:text-foreground"
               }
             >
               {o.value ? o.label : t("discover.allStyles")}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -7,6 +8,12 @@ import { createServerClient } from "@/lib/supabase/server";
 import { BrandMark } from "@/components/brand-mark";
 import { SignInForm } from "./sign-in-form";
 import { serverI18n } from "@/lib/i18n/server";
+
+export const metadata: Metadata = {
+  title: "Sign in -- neo-fm",
+  description: "Sign in to your neo-fm station and pick up where you left off.",
+  robots: { index: false },
+};
 
 export default async function SignInPage(
   props: {

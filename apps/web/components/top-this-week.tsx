@@ -23,7 +23,7 @@ export async function TopThisWeek({ lang }: { lang: string | null }) {
                 key={o.v ?? "all"}
                 href={o.v ? `/discover?chart=${o.v}` : "/discover"}
                 aria-current={o.v === lang ? "true" : undefined}
-                className={`rounded-full border px-2.5 py-1 ${
+                className={`rounded-full border px-2.5 py-2 ${
                   o.v === lang
                     ? "border-accent bg-accent/10 text-accent"
                     : "border-muted/30 text-foreground/60 hover:border-accent/50"

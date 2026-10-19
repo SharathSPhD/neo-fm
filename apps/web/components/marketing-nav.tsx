@@ -22,9 +22,9 @@ export async function MarketingNav({
   const { t } = await serverI18n();
   return (
     <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 sm:py-5">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-4 min-[400px]:px-4 sm:px-6 sm:py-5">
         <BrandMark label={t("nav.home")} />
-        <nav aria-label="Primary" className="flex items-center gap-1 whitespace-nowrap text-sm sm:gap-3">
+        <nav aria-label="Primary" className="flex min-w-0 items-center gap-0.5 whitespace-nowrap min-[400px]:gap-1 text-sm sm:gap-3">
           {showSubLinks && (
             <>
               <Link
@@ -53,7 +53,7 @@ export async function MarketingNav({
               </Link>
             </>
           )}
-          <LanguageSwitcher />
+          <LanguageSwitcher compact />
           {isSignedIn ? (
             <>
               <Link
@@ -79,7 +79,7 @@ export async function MarketingNav({
               </Link>
               <Link
                 href="/sign-up"
-                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-3 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-[400px]:px-4 sm:py-1.5"
               >
                 {t("nav.getStarted")}
               </Link>
@@ -90,9 +90,9 @@ export async function MarketingNav({
       {showSubLinks && (
         // Phones have no room for these beside the sign-up button, so they get their own row.
         <nav aria-label="Secondary" className="mx-auto flex max-w-6xl gap-4 px-4 pb-3 text-sm text-foreground/70 sm:hidden">
-          <Link href="/discover" className="rounded-md py-1 hover:text-foreground">{t("nav.discover")}</Link>
-          <Link href="/pricing" className="rounded-md py-1 hover:text-foreground">{t("nav.pricing")}</Link>
-          <Link href="/help" className="rounded-md py-1 hover:text-foreground">{t("nav.help")}</Link>
+          <Link href="/discover" className="inline-flex min-h-8 items-center rounded-md hover:text-foreground">{t("nav.discover")}</Link>
+          <Link href="/pricing" className="inline-flex min-h-8 items-center rounded-md hover:text-foreground">{t("nav.pricing")}</Link>
+          <Link href="/help" className="inline-flex min-h-8 items-center rounded-md hover:text-foreground">{t("nav.help")}</Link>
         </nav>
       )}
     </header>

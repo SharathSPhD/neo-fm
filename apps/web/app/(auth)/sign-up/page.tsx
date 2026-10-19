@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -8,6 +9,11 @@ import { GoogleButton } from "../google-button";
 import { BrandMark } from "@/components/brand-mark";
 import { SignUpForm } from "./sign-up-form";
 import { serverI18n } from "@/lib/i18n/server";
+
+export const metadata: Metadata = {
+  title: "Create your account -- neo-fm",
+  description: "Create a free neo-fm account and start your own personal FM station in your language.",
+};
 
 export default async function SignUpPage() {
   const { t } = await serverI18n();
