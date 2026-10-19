@@ -6,7 +6,7 @@
  */
 import { SAFETY } from "../agent/definitions";
 import { sanitizeBriefPrompt } from "../agent/runner";
-import { extractIntent, intentBlock, lyriaFragment, type IntentSpec } from "../engine/intent";
+import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
 
 export type CascadeReply =
   | { status: "needs"; kind: "draft" | "revision"; prompts: string[] }
@@ -104,7 +104,9 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
     K, seed: 0,
   };
   const intent = await intentP;
-  const iBlock = intent ? `${intentBlock(intent)}\n` : "";
+  // PCE_STYLES: style routing without a model call or intent text; the full intent (PCE_INTENT) already carries the genre.
+  const styled = !intent && env.PCE_STYLES === "1" ? styleOnly({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }) : null;
+  const iBlock = intent ? `${intentBlock(intent)}\n` : styled?.note ? `${styled.note}\n` : "";
   if (intent) d.log?.(`intent ok genre=${intent.genre ?? "none"} names=${intent.names.length} src=${intent.source}`);
   d.log?.(`plan ok topic="${brief.topic.slice(0, 60)}" aspects=${brief.aspects.length}`);
 
@@ -133,7 +135,7 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
   const title = (finish.title ?? "").trim().slice(0, 120) || words(lyrics.split("\n").find((l) => l.trim() && !/^[\[(].*[\])]$/.test(l.trim())) ?? "Untitled", 8);
   const baseStyle = words(finish.style_prompt?.trim() || `${b.styleFamily} ${b.language} song, expressive vocals`, 80);
   // The routed genre/raga/tala/instruments are appended after the cap: they come from the catalog, not from model free text.
-  const stylePrompt = intent ? [baseStyle, lyriaFragment(intent)].filter(Boolean).join(" ") : baseStyle;
+  const stylePrompt = intent ? [baseStyle, lyriaFragment(intent)].filter(Boolean).join(" ") : styled?.fragment ? `${baseStyle} ${styled.fragment}` : baseStyle;
 
   return {
     lyrics, title, stylePrompt, ...(intent ? { intent } : {}),

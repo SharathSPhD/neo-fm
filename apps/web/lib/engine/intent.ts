@@ -137,3 +137,34 @@ export function lyriaFragment(i: IntentSpec): string {
     i.vocal === "instrumental" && g && isVocalOnly(g) ? "" : i.vocal === "instrumental" ? "" : i.vocal ? `${i.vocal} lead vocal.` : "",
   ].filter(Boolean).join(" ");
 }
+
+/** Scale or mood cue appended after a named raga, so Lyria gets more than a name it may not know. General knowledge, awaiting the styles thread's review. */
+export const RAGA_CUES: Readonly<Record<string, string>> = {
+  yaman: "evening raga, serene, sharp fourth", kalyani: "bright auspicious raga, sharp fourth", bhairav: "dawn raga, devotional, flat second and sixth",
+  bhairavi: "tender devotional raga, flat second, third, sixth and seventh", bhupali: "pentatonic, bright and joyful", bhoopali: "pentatonic, bright and joyful",
+  mohanam: "pentatonic, bright and joyful", malkauns: "late-night raga, deep, pentatonic, introspective", darbari: "late-night raga, majestic, heavy and slow",
+  todi: "morning raga, intense, longing", shankarabharanam: "major scale, majestic and bright", hamsadhwani: "pentatonic, bright, auspicious",
+  kharaharapriya: "tender, minor-sounding", mayamalavagowla: "dawn raga, devotional, flat second and sixth", desh: "monsoon raga, romantic, light",
+  bageshree: "late-night raga, longing and tender",
+};
+const RAGA_RE = /(?:\b(?:raag|raga|ragam)\s+([a-z]{3,20})\b)|(?:\b([a-z]{3,20})\s+(?:raag|raga|ragam)\b)/i;
+
+/** A raga named in the brief, only when it is one we hold a cue for (so "a raga" or "the raga" never becomes a raga). */
+export function ragaIn(prompt: string): string | undefined {
+  const m = RAGA_RE.exec(prompt);
+  const name = (m?.[1] ?? m?.[2] ?? "").toLowerCase();
+  return Object.hasOwn(RAGA_CUES, name) ? name : undefined;
+}
+
+/**
+ * Style-only routing (flag `PCE_STYLES=1`): the same keyword, festival and daypart router, with no model call and none of
+ * the intent text. The poets and the polisher get only the style's form and metre notes; Lyria gets the style's English hint.
+ * Returns null for a plain brief, so today's behaviour is the floor.
+ */
+export function styleOnly(ctx: { prompt: string; language: string; styleFamily: string }): { genre: string; note: string; fragment: string } | null {
+  const raga = ragaIn(ctx.prompt);
+  const spec = routeGenre({ ...fallbackIntent(ctx.prompt), ...(raga ? { raga } : {}) }, ctx);
+  const g = genreById(spec.genre);
+  if (!g && !raga) return null;
+  return { genre: g?.id ?? "", note: g ? `Style: ${g.name}. Form: ${g.forms.join(" / ")}. ${g.lyricNotes}` : "", fragment: [lyriaFragment(spec), raga ? `${RAGA_CUES[raga]}.` : ""].filter(Boolean).join(" ") };
+}

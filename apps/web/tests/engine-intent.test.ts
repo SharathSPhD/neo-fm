@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { extractIntent, fallbackIntent, intentBlock, lyriaFragment, parseIntent, routeGenre } from "../lib/engine/intent";
+import { extractIntent, fallbackIntent, intentBlock, lyriaFragment, parseIntent, ragaIn, routeGenre, styleOnly, RAGA_CUES } from "../lib/engine/intent";
 import { FESTIVALS, GENRES, KEYWORDS, genreById, isVocalOnly } from "../lib/engine/genres";
 import { deterministicChecks, judgeAndRetry, needsRetry } from "../lib/engine/judge";
 import { dictionHints, dictionHintsFor } from "../lib/diction";
@@ -167,5 +167,38 @@ describe("test-render hints toggle", () => {
     const { validateItems } = await import("../lib/admin/test-render");
     expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: false, score: true }] }, 3).ok).toBe(true);
     expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: "no" }] }, 3).ok).toBe(false);
+  });
+});
+
+describe("styleOnly (PCE_STYLES)", () => {
+  it("returns null for a plain brief so today's behaviour is the floor", () => {
+    expect(styleOnly(ctx("a happy song about my dog", "hi"))).toBeNull();
+  });
+  it("routes a keyword brief to a style with form notes and a Lyria fragment, no intent text", () => {
+    const r = styleOnly(ctx("a bhavageethe about the monsoon", "kn", "kannada-light-classical"));
+    expect(r?.genre).toBe("kn-bhavageethe");
+    expect(r?.note).toMatch(/^Style: /);
+    expect(r?.fragment.length).toBeGreaterThan(10);
+    expect(r?.note).not.toMatch(/Listener intent/);
+  });
+  it("sends a named raga and its cue to Lyria, even when no style routes", () => {
+    expect(ragaIn("sing it in raga Bhairavi please")).toBe("bhairavi");
+    expect(ragaIn("Yaman raga at dusk")).toBe("yaman");
+    expect(ragaIn("a raga for the rain")).toBeUndefined();
+    expect(ragaIn("the constructor raga")).toBeUndefined();
+    const r = styleOnly(ctx("an evening in raga Yaman", "hi"));
+    expect(r?.fragment).toContain("Raga yaman.");
+    expect(r?.fragment).toContain(RAGA_CUES.yaman!);
+  });
+  it("raga styles stay vocal: an instrumental hint is never forwarded", () => {
+    const r = styleOnly(ctx("a khayal in raga Yaman", "hi", "hindustani"));
+    expect(r?.fragment ?? "").not.toMatch(/instrumental/i);
+  });
+});
+
+describe("styled eval briefs", () => {
+  it("every styled brief routes to a style the router knows", async () => {
+    const { STYLED_BRIEFS } = await import("../lib/eval/styled-briefs");
+    for (const b of STYLED_BRIEFS) expect(styleOnly(ctx(b.text, b.code, b.style)), b.id).not.toBeNull();
   });
 });
