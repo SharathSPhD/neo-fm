@@ -7,7 +7,9 @@ export interface RenderItem { label: string; language: string; lyrics?: string; 
   /** true: also transcribe the render with Gemini and return the order-free diction match against the lyrics. */
   score?: boolean;
   /** true: the cheap 30 s clip model (about GBP 0.05) instead of the 60 s full model. */
-  clip?: boolean }
+  clip?: boolean;
+  /** keep only the first N sung lines of the stored or given lyrics (clips sing about four). */
+  max_lines?: number }
 
 export function renderCap(env = process.env): number {
   const n = Math.floor(Number(env.TEST_RENDER_MAX ?? 3));
@@ -26,6 +28,7 @@ export function validateItems(body: unknown, cap: number): { ok: true; items: Re
     if (it.hints !== undefined && typeof it.hints !== "boolean") return { ok: false, error: "hints must be a boolean" };
     if (it.score !== undefined && typeof it.score !== "boolean") return { ok: false, error: "score must be a boolean" };
     if (it.clip !== undefined && typeof it.clip !== "boolean") return { ok: false, error: "clip must be a boolean" };
+    if (it.max_lines !== undefined && !(Number.isInteger(it.max_lines) && it.max_lines >= 1 && it.max_lines <= 20)) return { ok: false, error: "max_lines must be an integer from 1 to 20" };
     if (!it.lyrics && !it.brief_id) return { ok: false, error: "each item needs lyrics or brief_id" };
   }
   return { ok: true, items: items as RenderItem[] };

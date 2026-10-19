@@ -15,6 +15,7 @@ import { NATIVE_LABELS, nativeStyle } from "../../../../lib/agent/lyria-native";
 import { dictionHints, scoreTranscriptUnordered } from "../../../../lib/diction";
 import { transcribeSung } from "../../../../lib/diction/gemini";
 import { ROMAN_HINT, singingScript } from "../../../../lib/diction/romanize";
+import { headLines } from "../../../../lib/admin/lyrics-head";
 import { renderCap, validateItems } from "../../../../lib/admin/test-render";
 import { dailyCap } from "../../../../lib/ops/provider-cap";
 import { getLogger } from "../../../../lib/obs/log";
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
         lyrics = (data as { lyrics?: string } | null)?.lyrics ?? "";
         family = (data as { style_family?: string } | null)?.style_family ?? "";
       }
+      if (lyrics && it.max_lines) lyrics = headLines(lyrics, it.max_lines);
       if (!lyrics) return { label: it.label, error: "no_lyrics" };
       const native = it.native ? { labels: NATIVE_LABELS[it.language], style: nativeStyle(it.language, family) } : null;
       if (it.native && (!native?.labels || !native.style)) return { label: it.label, error: "no_native_preset" };
