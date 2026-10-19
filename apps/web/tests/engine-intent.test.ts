@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { extractIntent, fallbackIntent, intentBlock, lyriaFragment, parseIntent, routeGenre } from "../lib/engine/intent";
-import { FESTIVALS, GENRES, KEYWORDS, genreById, isVocalOnly } from "../lib/engine/genres";
+import { extractIntent, fallbackIntent, intentBlock, lyriaFragment, parseIntent, ragaIn, routeGenre, styleOnly, RAGA_CUES } from "../lib/engine/intent";
+import { FESTIVALS, GENRES, KEYWORDS, genreById, isVocalOnly, mentions } from "../lib/engine/genres";
 import { deterministicChecks, judgeAndRetry, needsRetry } from "../lib/engine/judge";
 import { dictionHints, dictionHintsFor } from "../lib/diction";
 import { hostCascade, type CascadeReply, type HostCascadeDeps } from "../lib/cascade/host-cascade";
@@ -167,5 +167,57 @@ describe("test-render hints toggle", () => {
     const { validateItems } = await import("../lib/admin/test-render");
     expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: false, score: true }] }, 3).ok).toBe(true);
     expect(validateItems({ items: [{ label: "a", language: "hi", lyrics: "x", hints: "no" }] }, 3).ok).toBe(false);
+  });
+});
+
+describe("styleOnly (PCE_STYLES)", () => {
+  it("returns null for a plain brief so today's behaviour is the floor", () => {
+    expect(styleOnly(ctx("a happy song about my dog", "hi"))).toBeNull();
+  });
+  it("routes a keyword brief to a style with form notes and a Lyria fragment, no intent text", () => {
+    const r = styleOnly(ctx("a bhavageethe about the monsoon", "kn", "kannada-light-classical"));
+    expect(r?.genre).toBe("kn-bhavageethe");
+    expect(r?.note).toMatch(/^Style: /);
+    expect(r?.fragment.length).toBeGreaterThan(10);
+    expect(r?.note).not.toMatch(/Listener intent/);
+  });
+  it("detects a named raga; the raga words reach Lyria only with PCE_RAGA_PROMPT=1", () => {
+    expect(ragaIn("sing it in raga Bhairavi please")).toBe("bhairavi");
+    expect(ragaIn("Yaman raga at dusk")).toBe("yaman");
+    expect(ragaIn("Malhar raga for the rain")).toBe("malhar");
+    expect(ragaIn("a raga for the rain")).toBeUndefined();
+    expect(ragaIn("the constructor raga")).toBeUndefined();
+    const off = styleOnly(ctx("an evening in raga Yaman", "hi"), {});
+    expect(off?.raga).toBe("yaman");
+    expect(off?.fragment ?? "").not.toMatch(/Raga Yaman|serene/);
+    const on = styleOnly(ctx("an evening in raga Yaman", "hi"), { PCE_RAGA_PROMPT: "1" });
+    expect(on?.fragment).toContain("Raga Yaman.");
+    expect(on?.fragment).toContain(RAGA_CUES.yaman!);
+  });
+  it("raga styles stay vocal: an instrumental hint is never forwarded", () => {
+    const r = styleOnly(ctx("a khayal in raga Yaman", "hi", "hindustani"));
+    expect(r?.fragment ?? "").not.toMatch(/instrumental/i);
+  });
+});
+
+describe("styled eval briefs", () => {
+  it("every styled brief routes to a style the router knows", async () => {
+    const { STYLED_BRIEFS } = await import("../lib/eval/styled-briefs");
+    for (const b of STYLED_BRIEFS) expect(styleOnly(ctx(b.text, b.code, b.style)), b.id).not.toBeNull();
+  });
+});
+
+describe("keyword matching", () => {
+  it("matches Latin keywords on word boundaries only", () => {
+    expect(mentions("a glorious morning", "lori")).toBe(false);
+    expect(mentions("the authority spoke", "hori")).toBe(false);
+    expect(mentions("therapy and wrapped gifts", "rap")).toBe(false);
+    expect(mentions("a holi hori song", "hori")).toBe(true);
+    expect(mentions("sing a lori tonight", "lori")).toBe(true);
+    expect(mentions("ಭಾವಗೀತೆ ಬರೆಯಿರಿ", "ಭಾವಗೀತೆ")).toBe(true);
+  });
+  it("never routes on the bare word sangeet", () => {
+    expect(KEYWORDS.some(([k]) => k.toLowerCase() === "sangeet")).toBe(false);
+    expect(styleOnly(ctx("a light sangeet for the evening", "hi"))?.genre ?? "").not.toBe("vivah-geet-hi");
   });
 });

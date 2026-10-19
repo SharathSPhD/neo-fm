@@ -58,6 +58,8 @@ export interface Brief {
   tasteCard?: string;
   /** Structured request (PCE_INTENT); the agent sees it as extra facts to honour. */
   intent?: IntentSpec;
+  /** Routed style notes (PCE_STYLES): form and metre only, no intent text. */
+  styleNote?: string;
 }
 
 export const RUBRIC = `# neo-fm song rubric - starter, tune the criteria
@@ -87,6 +89,7 @@ export function briefText(b: Brief): string {
     `Lyric length: about ${Math.max(4, Math.round(b.targetSeconds / 5))} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words. Do not write more than that.`,
     ...(b.tasteCard ? [b.tasteCard] : []),
     ...(b.intent ? [intentBlock(b.intent)] : []),
+    ...(b.styleNote ? [b.styleNote] : []),
     ...(b.engine ? [`Engine mode: yes. EMBED_URL=${b.engine.url}`, `EMBED_TOKEN=${b.engine.token}`] : []),
   ].join("\n");
 }

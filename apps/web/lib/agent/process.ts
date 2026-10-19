@@ -15,7 +15,7 @@ import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
-import { extractIntent, intentBlock, lyriaFragment, type IntentSpec } from "../engine/intent";
+import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
 import { judgeAndRetry } from "../engine/judge";
 import { voiceChoiceFor, voiceHint } from "../voice";
 import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
@@ -153,6 +153,14 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       };
       let postRenderFrom = 0;
       const intent = process.env.PCE_INTENT === "1" ? await timed("intent", () => intentFor(db, job.song_document_id, doc)) : undefined;
+      // PCE_STYLES: route the style without a model call; ignored when the full intent is on (it already carries the genre).
+      const styled = !intent && process.env.PCE_STYLES === "1" ? styleOnly({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }) : null;
+      if (styled) trace.push(`styles routed genre=${styled.genre || "none"}`);
+      // The pool tags raga from document_json.raga.name, so a raga named in the brief is recorded there (best-effort).
+      const ragaName = styled?.raga ?? intent?.raga?.toLowerCase();
+      if (ragaName && !(doc.document_json as { raga?: { name?: string } }).raga?.name) {
+        try { await db.from("song_documents").update({ document_json: { ...doc.document_json, raga: { ...((doc.document_json as { raga?: object }).raga ?? {}), name: ragaName } } }).eq("id", job.song_document_id); } catch { /* the tag is advisory */ }
+      }
       const brief = {
         language: doc.language, styleFamily: doc.style_family,
         targetSeconds: doc.document_json.target_duration_seconds ?? 30,
@@ -160,6 +168,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         tasteCard: tasteCard || undefined,
         engine: embedEngine(job.id),
         intent,
+        styleNote: styled?.note || undefined,
       };
       // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
       const store = runStore(db, plan.agent === "free" ? "free" : "pro");
@@ -174,7 +183,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         if (!v.allowed) throw new SafetyRefusal(v.reason);
         // The structured intent (PCE_INTENT) is extracted once per job; polish sees it as part of the brief and the judge reads against it.
         const savedIntent = brief.intent;
-        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : doc.document_json.metadata?.prompt ?? "";
+        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : styled?.note ? `${doc.document_json.metadata?.prompt ?? ""}\n${styled.note}` : doc.document_json.metadata?.prompt ?? "";
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
@@ -205,7 +214,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         }
         // Pronunciation guide: romanization beside each native line cut Gemini-measured CER ~4x in the diction lab.
         // Managed-agent songs get the routed style/raga/tala fragment here; host songs already carry it (idempotent).
-        const frag = savedIntent ? lyriaFragment(savedIntent) : "";
+        const frag = savedIntent ? lyriaFragment(savedIntent) : styled?.fragment ?? "";
         if (frag && !a.stylePrompt.includes(frag)) a = { ...a, stylePrompt: `${a.stylePrompt} ${frag}`.trim() };
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         const sung = ss?.romanized ? ss.text : a.lyrics;
