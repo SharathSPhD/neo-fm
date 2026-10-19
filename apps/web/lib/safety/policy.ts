@@ -12,6 +12,7 @@ export type SafetyCategory =
   | "artist_impersonation"
   | "copyrighted_lyrics"
   | "sexual_minors"
+  | "explicit_sexual"
   | "hate_harassment"
   | "self_harm"
   | "violent_extremism"
@@ -33,6 +34,9 @@ const RULES: Rule[] = [
   { category: "artist_impersonation", re: /\b[Ii]n the style of (?!(?:Dasa|Daasa|Pada|Padas|Ghazal|Qawwali|Lavani|Bhajan|Baul|Bhatiyali|Carnatic|Hindustani|Sufi|Kirtan|Keerthana|Thumri|Dhrupad|Khayal|Rabindra|Nazrul|Folk|Classical|Devotional|Bollywood|Tollywood|Kollywood)\b)[A-Z][a-z]+ [A-Z][a-z]+/, reason: "Imitating a real artist's voice or naming a real artist as a target is not allowed. Describe the sound (instruments, mood, raga) instead." },
   { category: "copyrighted_lyrics", re: /\b(exact lyrics|full lyrics of|lyrics (?:of|from) ["“']|reproduce (?:the )?song|copy (?:the )?lyrics|remix of ["“']|cover version of ["“'])/i, reason: "neo-fm writes original lyrics and cannot reproduce existing songs." },
   { category: "sexual_minors", re: /\b(child|children|minor|underage|schoolgirl|schoolboy|teen(?:age)?r?|\d{1,2}[- ]year[- ]old)\b[\s\S]{0,80}\b(sexual|sensual|erotic|nude|seduc\w+|lust)\b|\b(sexual|sensual|erotic|nude|seduc\w+|lust)\b[\s\S]{0,80}\b(child|children|minor|underage|schoolgirl|schoolboy|teen(?:age)?r?|\d{1,2}[- ]year[- ]old)/i, reason: "Sexual content involving minors is never allowed." },
+  // Adult explicit content: graphic sexual acts or porn. Romance, desire, sensual imagery and double-meaning folk/film
+  // idiom stay allowed; the LLM moderator judges the grey zone and other languages.
+  { category: "explicit_sexual", re: /\b(porn\w*|xxx|hardcore|nsfw|explicit(?:ly)? (?:sex\w*|sexual\w*|erotic\w*)|(?:sex|erotic|nude|naked) (?:scene|act|acts|video)s?|graphic(?:ally)? (?:sex\w*|sexual\w*)|(?:describe|detail\w*) (?:the )?(?:sex|sexual) (?:act|acts))\b/i, reason: "We keep neo-fm free of sexually explicit lyrics. Romance, longing and sensual imagery are welcome, so try describing the feeling rather than the act." },
   { category: "self_harm", re: /\b(how to (?:kill|hurt) myself|glorif\w+ suicide|suicide (?:anthem|song to encourage)|encourage (?:self[- ]harm|suicide))\b/i, reason: "Content encouraging self-harm is not allowed. If you are struggling, please reach out to a local helpline." },
   { category: "violent_extremism", re: /\b(genocide (?:anthem|song)|ethnic cleansing|join (?:isis|al[- ]qaeda)|kill all (?:the )?\w+)\b/i, reason: "Violent extremist content is not allowed." },
   { category: "hate_harassment", re: /\b(slur|dehumani[sz]\w+|inferior race|subhuman)\b/i, reason: "Hateful or harassing content is not allowed." },

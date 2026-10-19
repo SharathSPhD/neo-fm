@@ -13,7 +13,8 @@ const REASONS: { value: string; label: UiKey }[] = [
   { value: "other", label: "pub.report.other" },
 ];
 
-export function ReportButton({ publicId }: { publicId: string }) {
+/** Pass `publicId` for a published song page, or `trackId` for a station pool track. */
+export function ReportButton({ publicId, trackId, compact }: { publicId?: string; trackId?: string; compact?: boolean }) {
   const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState(REASONS[0]!.value);
@@ -23,7 +24,7 @@ export function ReportButton({ publicId }: { publicId: string }) {
   async function send() {
     setState("sending");
     try {
-      const res = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ public_id: publicId, reason, details }) });
+      const res = await fetch("/api/report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(trackId ? { track_id: trackId } : { public_id: publicId }), reason, details }) });
       setState(res.ok ? "done" : "error");
     } catch { setState("error"); }
   }
@@ -32,7 +33,7 @@ export function ReportButton({ publicId }: { publicId: string }) {
   return (
     <div className="text-xs text-foreground/60">
       {!open ? (
-        <button type="button" onClick={() => setOpen(true)} className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded">{t("pub.report.open")}</button>
+        <button type="button" onClick={() => setOpen(true)} className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded">{compact ? t("station.report") : t("pub.report.open")}</button>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="mt-2 flex max-w-md flex-col gap-2 rounded-md border border-muted/30 p-3">
           <label className="flex flex-col gap-1">

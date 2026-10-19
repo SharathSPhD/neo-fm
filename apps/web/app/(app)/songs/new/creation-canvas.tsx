@@ -10,6 +10,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { policyErrorMessage } from "@/lib/safety/client-message";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 
 import {
@@ -339,6 +340,11 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
           ? t("prompt.errStorage")
           : t("prompt.errQuota"),
       );
+      return;
+    }
+    const policy = await policyErrorMessage(res, t);
+    if (policy) {
+      setError(policy);
       return;
     }
     if (!res.ok) {

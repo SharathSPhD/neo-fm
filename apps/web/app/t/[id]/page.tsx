@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ReportButton } from "@/components/report-button";
 import { loadPoolTrack } from "@/lib/station/pool";
 import { isTrackId, trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -60,6 +61,7 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
           Share on WhatsApp
         </a>
       </div>
+      <ReportButton trackId={id} />
     </main>
   );
 }

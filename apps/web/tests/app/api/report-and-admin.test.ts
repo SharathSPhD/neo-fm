@@ -11,12 +11,14 @@ function qb() {
 const inserted: { table: string; row: unknown }[] = [];
 let reportJob: { id: string } | null = null;
 let reportInsertError: unknown = null;
+let poolTrack: { id: string } | null = null;
 let openDupes: unknown[] = [];
 vi.mock("../../../lib/agent/adapters", () => ({
   serviceClient: () => ({
     from: (table: string) => {
       adminState.table = table;
       if (table === "song_reports") return { select: () => { const c: Record<string, unknown> = {}; c.eq = () => c; c.limit = async () => ({ data: openDupes }); return c; }, insert: async (row: unknown) => { inserted.push({ table, row }); return { error: reportInsertError }; } };
+      if (table === "pool_tracks") return { select: () => { const c: Record<string, unknown> = {}; c.eq = () => c; c.maybeSingle = async () => ({ data: poolTrack }); return c; } };
       if (table === "jobs" && adminState.calls.length === 0 && reportMode) return { select: () => ({ eq: () => ({ in: () => ({ maybeSingle: async () => ({ data: reportJob }) }) }) }) };
       return qb();
     },
@@ -30,9 +32,10 @@ import { NextRequest } from "next/server";
 import { POST as report } from "../../../app/api/report/route";
 import { GET as adminQ } from "../../../app/api/admin/q/route";
 
-beforeEach(() => { inserted.length = 0; adminState.calls = []; adminState.rows = []; adminState.error = null; reportJob = { id: "job-1" }; reportInsertError = null; openDupes = []; reporterId = null; reportMode = true; process.env.CRON_SECRET = "s3cret"; delete process.env.AGENT_TICK_SECRET; });
+beforeEach(() => { inserted.length = 0; adminState.calls = []; adminState.rows = []; adminState.error = null; reportJob = { id: "job-1" }; poolTrack = { id: TRACK }; reportInsertError = null; openDupes = []; reporterId = null; reportMode = true; process.env.CRON_SECRET = "s3cret"; delete process.env.AGENT_TICK_SECRET; });
 afterEach(() => { delete process.env.CRON_SECRET; });
 
+const TRACK = "0a1b2c3d-0000-4000-8000-000000000001";
 const rpt = (b: unknown) => new NextRequest("http://x/api/report", { method: "POST", body: typeof b === "string" ? b : JSON.stringify(b) });
 
 describe("POST /api/report", () => {
@@ -74,6 +77,23 @@ describe("POST /api/report", () => {
   it("500s with report_failed when the insert fails", async () => {
     reportInsertError = { message: "db" };
     expect((await report(rpt({ public_id: "p1", reason: "other" }))).status).toBe(500);
+  });
+  it("reports a station pool track by track_id", async () => {
+    const res = await report(rpt({ track_id: TRACK, reason: "hateful_or_harassing", details: "lyric at 0:20" }));
+    expect(res.status).toBe(200);
+    expect(inserted[0]!.row).toMatchObject({ pool_track_id: TRACK, category: "hateful_or_harassing", details: "lyric at 0:20" });
+    expect(inserted[0]!.row).not.toHaveProperty("job_id");
+  });
+  it("404s for a pool track that is not admitted and 400s for a non-uuid track_id", async () => {
+    poolTrack = null;
+    expect((await report(rpt({ track_id: TRACK, reason: "other" }))).status).toBe(404);
+    expect((await report(rpt({ track_id: "nope", reason: "other" }))).status).toBe(400);
+  });
+  it("answers 503 report_unavailable while migration 0110 is not applied", async () => {
+    reportInsertError = { code: "42703", message: 'column "pool_track_id" of relation "song_reports" does not exist' };
+    const res = await report(rpt({ track_id: TRACK, reason: "other" }));
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: "report_unavailable" });
   });
 });
 
