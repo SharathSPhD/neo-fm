@@ -6,7 +6,7 @@ vi.mock("../../../lib/agent/adapters", () => ({
   serviceClient: () => ({
     from: (t: string) => {
       if (t === "station_signals") return { select: () => ({ gte: () => ({ order: () => ({ limit: () => signals() }) }) }) };
-      if (t === "spend_ledger") return { select: () => Promise.resolve({ data: [{ reserved_gbp: "2" }], error: null }) };
+      if (t === "user_spend") return { select: () => Promise.resolve({ data: [{ reserved_gbp: "2" }], error: null }) };
       return { select: () => ({ eq: () => Promise.resolve({ count: 4, error: null }) }) };
     },
   }),

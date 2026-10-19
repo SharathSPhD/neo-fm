@@ -57,7 +57,7 @@ export function summarizeFirstWeek(rows: SignalRow[], windowDays: number): First
 
 export interface CostPerHour {
   listener_hours: number;
-  /** spend_ledger total across providers: what the reserve_spend guard has recorded since it started. */
+  /** user_spend total (all months): Lyria reservations made by listeners' songs. Pool and lab renders run outside the app and are not in it. */
   ledger_gbp: number;
   admitted_pool_tracks: number;
   /** Admitted pool tracks times the per-render estimate (LYRIA_COST_GBP_FULL); an estimate, not billing data. */

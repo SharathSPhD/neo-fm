@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   try {
     const [signals, ledger, pool, funnel] = await Promise.all([
       db.from("station_signals").select("user_id,kind,position_ms,created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(ROW_CAP),
-      db.from("spend_ledger").select("reserved_gbp"),
+      db.from("user_spend").select("reserved_gbp"),
       db.from("pool_tracks").select("id", { count: "exact", head: true }).eq("status", "admitted"),
       loadFunnel(db, days),
     ]);
