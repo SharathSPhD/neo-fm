@@ -128,6 +128,12 @@ describe("alexa skill", () => {
     expect((await handleAlexa(intent("AMAZON.PreviousIntent"), { source })).response.outputSpeech?.text).toMatch(/forward/);
   });
 
+  it("en-GB launch is spoken in English", async () => {
+    const { source } = fakeSource();
+    const r = await handleAlexa({ request: { type: "LaunchRequest", locale: "en-GB" } }, { source });
+    expect(r.response.outputSpeech?.text).toMatch(/made by AI/);
+  });
+
   it("tokens stay under Alexa's 1024-character limit with UUID ids", () => {
     const ids = Array.from({ length: 30 }, (_, i) => `${"0".repeat(8)}-0000-0000-0000-${String(i).padStart(12, "0")}`);
     expect(encodeToken({ language: "hi", recentIds: ids }).length).toBeLessThan(1024);
@@ -138,7 +144,7 @@ describe("alexa skill package", () => {
   const dir = resolve(__dirname, "../../../alexa/skill-package");
   const load = (p: string) => JSON.parse(readFileSync(resolve(dir, p), "utf8"));
 
-  for (const locale of ["en-IN", "hi-IN"]) {
+  for (const locale of ["en-IN", "en-GB", "hi-IN"]) {
     it(`${locale} model has the required playback intents and only slots it declares`, () => {
       const lm = load(`interactionModels/custom/${locale}.json`).interactionModel.languageModel;
       const names = lm.intents.map((i: { name: string }) => i.name);
@@ -152,10 +158,10 @@ describe("alexa skill package", () => {
     });
   }
 
-  it("manifest enables AudioPlayer, is India-only and carries no ads or purchases", () => {
+  it("manifest enables AudioPlayer, is limited to India and the UK and carries no ads or purchases", () => {
     const m = load("skill.json").manifest;
     expect(m.apis.custom.interfaces).toEqual([{ type: "AUDIO_PLAYER" }]);
-    expect(m.publishingInformation.distributionCountries).toEqual(["IN"]);
+    expect(m.publishingInformation.distributionCountries).toEqual(["IN", "GB"]);
     expect(m.privacyAndCompliance).toMatchObject({ allowsPurchases: false, containsAds: false });
   });
 
@@ -170,7 +176,7 @@ describe("alexa skill package", () => {
   });
 
   it("invocation names are lowercase words or Devanagari with no launch phrases", () => {
-    for (const locale of ["en-IN", "hi-IN"]) {
+    for (const locale of ["en-IN", "en-GB", "hi-IN"]) {
       const name = load(`interactionModels/custom/${locale}.json`).interactionModel.languageModel.invocationName as string;
       expect(name).not.toMatch(/\b(alexa|skill|app|open|launch|play)\b/i);
       expect(name).not.toMatch(/[A-Z]/);
