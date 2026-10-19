@@ -32,6 +32,20 @@ class SafetyRefusal extends Error {}
 
 type DocForIntent = { language: string; style_family: string; document_json: { metadata?: { prompt?: string; intent?: IntentSpec; [k: string]: unknown } } & Record<string, unknown> };
 
+/**
+ * Merges one change into song_documents.document_json from a fresh read taken right before the write, so a concurrent
+ * change to another key (voice, metadata edits) is not overwritten by a stale copy. Best-effort: the render does not depend on it.
+ */
+async function patchDocumentJson(db: ReturnType<typeof serviceClient>, docId: string, change: (json: Record<string, unknown>) => Record<string, unknown> | null): Promise<void> {
+  try {
+    const { data } = await db.from("song_documents").select("document_json").eq("id", docId).limit(1);
+    const cur = ((data ?? [])[0] as { document_json?: Record<string, unknown> } | undefined)?.document_json;
+    if (!cur) return;
+    const next = change(cur);
+    if (next) await db.from("song_documents").update({ document_json: next }).eq("id", docId);
+  } catch { /* advisory */ }
+}
+
 /** Reuses an intent stored on the song document (retries, re-renders); otherwise one Haiku call, saved best-effort. */
 async function intentFor(db: ReturnType<typeof serviceClient>, docId: string, doc: DocForIntent): Promise<IntentSpec | undefined> {
   const saved = doc.document_json.metadata?.intent;
@@ -42,7 +56,7 @@ async function intentFor(db: ReturnType<typeof serviceClient>, docId: string, do
     return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   });
   if (!intent.essence) return undefined;
-  try { await db.from("song_documents").update({ document_json: { ...doc.document_json, metadata: { ...doc.document_json.metadata, intent } } }).eq("id", docId); } catch { /* the intent still applies to this render */ }
+  await patchDocumentJson(db, docId, (json) => ({ ...json, metadata: { ...((json.metadata as object | undefined) ?? {}), intent } }));
   return intent;
 }
 
@@ -159,7 +173,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       // The pool tags raga from document_json.raga.name, so a raga named in the brief is recorded there (best-effort).
       const ragaName = styled?.raga ?? intent?.raga?.toLowerCase();
       if (ragaName && !(doc.document_json as { raga?: { name?: string } }).raga?.name) {
-        try { await db.from("song_documents").update({ document_json: { ...doc.document_json, raga: { ...((doc.document_json as { raga?: object }).raga ?? {}), name: ragaName } } }).eq("id", job.song_document_id); } catch { /* the tag is advisory */ }
+        await patchDocumentJson(db, job.song_document_id, (json) => {
+          const raga = (json.raga as { name?: string } | undefined) ?? {};
+          return raga.name ? null : { ...json, raga: { ...raga, name: ragaName } };
+        });
       }
       const brief = {
         language: doc.language, styleFamily: doc.style_family,
