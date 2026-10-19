@@ -13,6 +13,7 @@ import { dirname } from "node:path";
 import { dictionHints } from "../../apps/web/lib/diction";
 import { auditDiction } from "../../apps/web/lib/diction/gemini";
 import { estimatedCostGbp, generateMusic, type DurationClass, type SpendGuard } from "../../apps/web/lib/agent/lyria";
+import { remoteDailyCap } from "./remote-daily-cap";
 
 interface Item { id: string; language: string; lyrics: string }
 interface Rec { id: string; language: string; cls: DurationClass; matchPct: number | null; unorderedPct?: number; tailMissing?: number; lineCount?: number; flagged: { line: string; heard: string; cer: number }[]; transcript?: string; error?: string }
@@ -108,6 +109,7 @@ async function main() {
     const c = (perLang.get(it.language) ?? 0) + 1; perLang.set(it.language, c);
     return c <= Number(perLangCap?.split(",").find((x) => x.startsWith(`${it.language}=`))?.split("=")[1] ?? n) && !done.has(it.id);
   });
+  const dailyCap = remoteDailyCap();
   let spent = 0;
   const guard: SpendGuard = { reserve: async (a) => (spent + a <= cap ? ((spent += a), true) : false), release: async (a) => { spent -= a; } };
   console.error(`${work.length} renders, est GBP ${(work.length * estimatedCostGbp(cls)).toFixed(2)} (cap ${cap})`);
@@ -115,7 +117,7 @@ async function main() {
     const lyrics = cls === "full" ? singable(withOutro(it.lyrics)) : singable(it.lyrics);
     const base: Rec = { id: it.id, language: it.language, cls, matchPct: null, flagged: [] };
     try {
-      const r = await generateMusic({ stylePrompt: `${STYLE[it.language]} ${dictionHints(it.language)}`.trim(), lyrics, durationClass: cls, targetSeconds: cls === "full" ? 60 : undefined }, { guard, apiKey: key });
+      const r = await generateMusic({ stylePrompt: `${STYLE[it.language]} ${dictionHints(it.language)}`.trim(), lyrics, durationClass: cls, targetSeconds: cls === "full" ? 60 : undefined }, { guard, dailyCap, apiKey: key });
       if (audioDir) writeFileSync(`${audioDir}/${it.id}.${/wav/.test(r.mimeType) ? "wav" : "mp3"}`, r.audio);
       const qa = await auditDiction(lyrics, r.audio, r.mimeType, it.language.toLowerCase(), key);
       Object.assign(base, { matchPct: qa.matchPct, transcript: qa.transcript, flagged: qa.lines.filter((l) => l.flagged).map((l) => ({ line: l.intended, heard: l.heard, cer: Number(l.cer.toFixed(2)) })) });
