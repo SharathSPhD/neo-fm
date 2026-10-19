@@ -1,6 +1,7 @@
 /**
  * POST /api/admin/pool-cache-headers (Bearer ADMIN_SECRET via checkAdminBearer): backfills a long, immutable Cache-Control on
- * admitted station-pool audio already in R2, which was uploaded without one and is served no-cache. New mirrors set it on PUT
+ * admitted station-pool audio and the spoken `voice/<id>.mp3` segments already in R2, which were uploaded without one and are
+ * served no-cache. New mirrors set it on PUT
  * (lib/pool/r2.ts), so this only needs to run once. Read-only on Supabase; rewrites object metadata in R2 only.
  *
  *   POST                     dry run: counts objects with the right Cache-Control, the ones that need it, and any not in R2.
@@ -12,6 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
+import { VOICE_LINES } from "../../../../lib/station/voice-links";
 import { POOL_CACHE_CONTROL, r2Configured, r2Key, r2Request, r2SetPoolCacheControl } from "../../../../lib/pool/r2";
 
 export const dynamic = "force-dynamic";
@@ -29,11 +31,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { data, error } = await serviceClient().from("pool_tracks").select("audio_path").eq("status", "admitted");
   if (error || !data) return NextResponse.json({ error: "pool_read_failed" }, { status: 500 });
 
+  const keys = [
+    ...(data as { audio_path: string }[]).map((r) => r2Key(r.audio_path)),
+    ...VOICE_LINES.map((l) => `voice/${l.id}.mp3`),
+  ];
   let ok = 0;
   let notInR2 = 0;
   const stale: string[] = [];
-  for (const { audio_path } of data as { audio_path: string }[]) {
-    const key = r2Key(audio_path);
+  for (const key of keys) {
     if (!key || key.includes("..")) continue;
     const head = await r2Request("HEAD", key);
     if (head.status !== 200) notInR2++;
