@@ -25,13 +25,7 @@
         },
         {
           "name": "AMAZON.NextIntent",
-          "samples": [
-            "next",
-            "next song",
-            "skip",
-            "play another",
-            "another song"
-          ]
+          "samples": []
         },
         {
           "name": "AMAZON.PreviousIntent",

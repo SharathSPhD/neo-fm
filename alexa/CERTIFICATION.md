@@ -36,5 +36,8 @@ Nothing here is submitted. Submission, the Amazon developer account and any beta
 | Let a track finish | Next one starts without a gap |
 | Empty pool (flag on, pool unavailable) | Spoken "station is quiet" message, no crash |
 
+## English (UK) and the Echo on a UK account
+The manifest now carries an en-GB locale and lists GB beside IN so a UK-marketplace Echo can be a **beta tester** (invite the tester's Amazon email; no certification needed for beta, up to 500 testers). Public availability on other accounts still needs certification. Before any public UK listing, re-read the Gemini API terms point in `strategy/terms-check.md` (EEA/UK/CH availability needs paid-tier use) and have a lawyer confirm the AI-music wording; beta use by S's own account is the only UK use planned.
+
 ## Known limits of v1
 Listeners are anonymous (no taste carry-over). "Alexa, play neo-fm" does not work for a custom skill; users say "open neo f m". Tamil, Telugu, Kannada and Bengali are spoken as language names inside en-IN / hi-IN; there are no custom-skill locales for them *(unverified)*. Voice prompts are English and Hindi only.

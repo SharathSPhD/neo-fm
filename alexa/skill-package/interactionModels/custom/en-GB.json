@@ -1,0 +1,178 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "neo f m",
+      "intents": [
+        {
+          "name": "AMAZON.PauseIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ResumeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NextIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.PreviousIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.LoopOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.LoopOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOnIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.ShuffleOffIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.RepeatIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StartOverIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "PlayStationIntent",
+          "slots": [
+            {
+              "name": "language",
+              "type": "StationLanguage"
+            }
+          ],
+          "samples": [
+            "play {language}",
+            "play {language} songs",
+            "play {language} music",
+            "{language} songs",
+            "{language} music",
+            "play the {language} station"
+          ]
+        },
+        {
+          "name": "LikeIntent",
+          "slots": [],
+          "samples": [
+            "i like this",
+            "more like this",
+            "play more like this",
+            "play something like this",
+            "i love this song"
+          ]
+        },
+        {
+          "name": "CalmerIntent",
+          "slots": [],
+          "samples": [
+            "something calmer",
+            "play something calmer",
+            "play something slower",
+            "slow it down",
+            "calmer songs"
+          ]
+        },
+        {
+          "name": "LivelierIntent",
+          "slots": [],
+          "samples": [
+            "something livelier",
+            "play something livelier",
+            "play something faster",
+            "speed it up",
+            "more energy"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "StationLanguage",
+          "values": [
+            {
+              "id": "hi",
+              "name": {
+                "value": "hindi",
+                "synonyms": [
+                  "हिंदी",
+                  "हिन्दी"
+                ]
+              }
+            },
+            {
+              "id": "ta",
+              "name": {
+                "value": "tamil",
+                "synonyms": [
+                  "तमिल"
+                ]
+              }
+            },
+            {
+              "id": "te",
+              "name": {
+                "value": "telugu",
+                "synonyms": [
+                  "तेलुगु"
+                ]
+              }
+            },
+            {
+              "id": "kn",
+              "name": {
+                "value": "kannada",
+                "synonyms": [
+                  "कन्नड़"
+                ]
+              }
+            },
+            {
+              "id": "bn",
+              "name": {
+                "value": "bengali",
+                "synonyms": [
+                  "bangla",
+                  "बंगाली"
+                ]
+              }
+            },
+            {
+              "id": "en",
+              "name": {
+                "value": "english",
+                "synonyms": [
+                  "अंग्रेज़ी"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
