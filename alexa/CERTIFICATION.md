@@ -15,7 +15,7 @@ Nothing here is submitted. Submission, the Amazon developer account and any beta
 1. [ ] **S creates the Amazon developer account** and a custom skill; give the skill id to the coordinator. Set `ALEXA_SKILL_ID` and `ALEXA_SKILL_ENABLED=1` in Vercel (prod change, S's go).
 2. [ ] `ask deploy` this folder (needs the ASK CLI logged in as S) and build the models.
 3. [ ] **ASK simulator / Alexa Developer Console test tab** for every phrase in the table below, en-IN first.
-4. [ ] **On a real Echo:** confirm the signed URL plays (Content-Type `audio/mpeg`), queue-to-queue transitions are gapless, pause/resume/stop work, and the invocation name "neo f m" is recognised. Fix the name if misheard.
+4. [ ] **On a real Echo:** confirm the signed URL plays (Content-Type `audio/mpeg`), queue-to-queue transitions are gapless, pause/resume/stop work, and the invocation name "neo station" is recognised. ("neo f m" was misheard as "novo fm" on a UK Echo.)
 5. [ ] Run the **Skill Validation API** via the ASK CLI; certification needs an overall SUCCESSFUL status (music/radio/podcast testing guide).
 6. [ ] **Beta test** with up to 500 testers (start with about 20 friends and family).
 7. [ ] **Gemini nativeness score for the hi-IN copy** (manifest and speech strings), per S: Gemini scoring, no human readers for now (`launch/indic-copy-review.md`). Use only the already-approved Gemini budget, and do not submit hi-IN before it passes.
@@ -26,8 +26,8 @@ Nothing here is submitted. Submission, the Amazon developer account and any beta
 ## Phrases to test (en-IN)
 | Say | Expect |
 |---|---|
-| "Alexa, open neo f m" | "Every song here is made by AI", then music |
-| "Alexa, ask neo f m to play Tamil" / Hindi / Telugu / Kannada / Bengali / English | Language locked; later tracks stay in it |
+| "Alexa, open neo station" | "Every song here is made by AI", then music |
+| "Alexa, ask neo station to play Tamil" / Hindi / Telugu / Kannada / Bengali / English | Language locked; later tracks stay in it |
 | "next", "skip", remote next button | A different track, no recent repeats |
 | "more like this" | Next track resembles the playing one |
 | "something calmer" / "something livelier" | Next track shifts energy |
@@ -40,4 +40,4 @@ Nothing here is submitted. Submission, the Amazon developer account and any beta
 The manifest now carries an en-GB locale and lists GB beside IN so a UK-marketplace Echo can be a **beta tester** (invite the tester's Amazon email; no certification needed for beta, up to 500 testers). Public availability on other accounts still needs certification. Before any public UK listing, re-read the Gemini API terms point in `strategy/terms-check.md` (EEA/UK/CH availability needs paid-tier use) and have a lawyer confirm the AI-music wording; beta use by S's own account is the only UK use planned.
 
 ## Known limits of v1
-Listeners are anonymous (no taste carry-over). "Alexa, play neo-fm" does not work for a custom skill; users say "open neo f m". Tamil, Telugu, Kannada and Bengali are spoken as language names inside en-IN / hi-IN; there are no custom-skill locales for them *(unverified)*. Voice prompts are English and Hindi only.
+Listeners are anonymous (no taste carry-over). "Alexa, play neo-fm" does not work for a custom skill; users say "open neo station". Tamil, Telugu, Kannada and Bengali are spoken as language names inside en-IN / hi-IN; there are no custom-skill locales for them *(unverified)*. Voice prompts are English and Hindi only.

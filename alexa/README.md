@@ -1,6 +1,6 @@
 # neo-fm Alexa skill (prototype)
 
-A custom Alexa skill using the AudioPlayer interface that plays the station: "Alexa, open neo f m", "ask neo f m to play Tamil", next, more like this, calmer, livelier, pause, resume, stop.
+A custom Alexa skill using the AudioPlayer interface that plays the station: "Alexa, open neo station", "ask neo station to play Tamil", next, more like this, calmer, livelier, pause, resume, stop.
 
 - `skill-package/` is the ASK CLI layout: `skill.json` (manifest, India only, no ads or purchases) and the en-IN and hi-IN interaction models. The hi-IN wording is a first pass and is gated on a Gemini nativeness score (S: no human readers for now; see `launch/indic-copy-review.md`) before certification.
 - The endpoint is `POST /api/alexa` (`apps/web/app/api/alexa/route.ts`). It returns 404 unless `ALEXA_SKILL_ENABLED=1`, and rejects any request that fails Alexa's signature or timestamp check or whose application id differs from `ALEXA_SKILL_ID`.
