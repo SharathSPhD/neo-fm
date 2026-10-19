@@ -18,6 +18,7 @@
  */
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isBillingEnabled } from "@/lib/billing/config";
@@ -63,63 +64,12 @@ export default async function AccountPage(props: PageProps) {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth?.user) redirect("/sign-in?next=/account");
 
-  const { data: row } = await supabase
-    .from("users")
-    .select("tier, created_at")
-    .eq("id", auth.user.id)
-    .maybeSingle();
-
-  const billingEnabled = isBillingEnabled();
-  // Only query user_billing when billing is on -- the table exists
-  // either way, but the column is meaningless in dummy mode.
-  const { data: billing } = billingEnabled
-    ? await supabase
-        .from("user_billing")
-        .select(
-          "status, current_period_end, cancel_at_period_end, stripe_subscription_id",
-        )
-        .eq("user_id", auth.user.id)
-        .maybeSingle()
-    : { data: null as null };
-
-  // Same definition as user_jobs_count_month: completed jobs finished since the start of the UTC month. A failed
-  // lookup hides the meter rather than showing a wrong number.
-  const [{ data: quotaData, error: quotaErr }, { count: usedCount, error: usedErr }] = await Promise.all([
-    supabase.rpc("user_tier_quota", { p_user_id: auth.user.id }),
-    supabase
-      .from("jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", auth.user.id)
-      .eq("status", "completed")
-      .gte("finished_at", startOfMonthIso()),
-  ]);
-  const usage =
-    !quotaErr && !usedErr && typeof quotaData === "number" && usedCount !== null
-      ? { quota: quotaData, used: usedCount }
-      : null;
-
-  const plan = PLAN_LABEL[row?.tier ?? "free"] ?? "Free";
-  const memberSince = row?.created_at
-    ? new Date(row.created_at).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-      })
-    : null;
-
   const upgradedToTier = normalizeUpgradedQuery(searchParams?.upgraded);
   const showUpgradedBanner = upgradedToTier !== null;
+  const userId = auth.user.id;
 
-  const subscriptionStatusLabel = billing?.status
-    ? STATUS_LABEL[billing.status] ?? billing.status
-    : null;
-  const renews = billing?.current_period_end
-    ? new Date(billing.current_period_end).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
-
+  // Only the session check blocks the first paint. The plan/billing rows and the usage meter each stream in behind their own
+  // fallback and query in parallel, so one slow lookup no longer holds the whole page on the skeleton.
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
       <Breadcrumbs items={[{ label: t("nav.account") }]} />
@@ -142,8 +92,67 @@ export default async function AccountPage(props: PageProps) {
         </section>
       ) : null}
 
+      <Suspense fallback={<CardSkeleton rows={3} />}>
+        <PlanCards userId={userId} email={auth.user.email ?? t("account.unknown")} />
+      </Suspense>
+
+      <Suspense fallback={<CardSkeleton rows={1} />}>
+        <UsageCard userId={userId} />
+      </Suspense>
+
+      <section className="flex flex-col gap-1 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+        <h2 className="text-lg font-medium">My month in music</h2>
+        <p className="text-sm text-foreground/60">Your songs, languages and top track this month, as a story image to share.</p>
+        <Link href="/recap" className="text-sm text-accent underline-offset-4 hover:underline">
+          Open recap →
+        </Link>
+      </section>
+
+      <TastePanel />
+      <SocialPanel />
+      <AccountActions email={auth.user.email ?? ""} />
+    </div>
+  );
+}
+
+/** Email, plan, subscription and billing cards. The users and user_billing reads run together. */
+async function PlanCards({ userId, email }: { userId: string; email: string }) {
+  const { t } = await serverI18n();
+  const supabase = createServerClient();
+  // user_billing is only meaningful when billing is on; the table exists either way.
+  const [{ data: row }, { data: billing }] = await Promise.all([
+    supabase.from("users").select("tier, created_at").eq("id", userId).maybeSingle(),
+    isBillingEnabled()
+      ? supabase
+          .from("user_billing")
+          .select("status, current_period_end, cancel_at_period_end, stripe_subscription_id")
+          .eq("user_id", userId)
+          .maybeSingle()
+      : Promise.resolve({ data: null as null }),
+  ]);
+
+  const plan = PLAN_LABEL[row?.tier ?? "free"] ?? "Free";
+  const memberSince = row?.created_at
+    ? new Date(row.created_at).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+      })
+    : null;
+  const subscriptionStatusLabel = billing?.status
+    ? STATUS_LABEL[billing.status] ?? billing.status
+    : null;
+  const renews = billing?.current_period_end
+    ? new Date(billing.current_period_end).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : null;
+
+  return (
+    <>
       <section className="flex flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-        <Row label={t("account.email")} value={auth.user.email ?? t("account.unknown")} />
+        <Row label={t("account.email")} value={email} />
         <Row
           label={t("account.plan")}
           value={
@@ -174,13 +183,6 @@ export default async function AccountPage(props: PageProps) {
         ) : null}
       </section>
 
-      {usage ? (
-        <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-          <h2 className="text-sm font-medium tracking-tight">Plan usage</h2>
-          <UsageMeter quota={usage.quota} used={usage.used} />
-        </section>
-      ) : null}
-
       {billing?.stripe_subscription_id ? (
         <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
           <h2 className="text-sm font-medium tracking-tight">{t("account.billing")}</h2>
@@ -190,19 +192,38 @@ export default async function AccountPage(props: PageProps) {
           <ManageBillingButton />
         </section>
       ) : null}
+    </>
+  );
+}
 
-      <section className="flex flex-col gap-1 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-        <h2 className="text-lg font-medium">My month in music</h2>
-        <p className="text-sm text-foreground/60">Your songs, languages and top track this month, as a story image to share.</p>
-        <Link href="/recap" className="text-sm text-accent underline-offset-4 hover:underline">
-          Open recap →
-        </Link>
-      </section>
+/** Same definition as user_jobs_count_month: completed jobs finished since the start of the UTC month. A failed lookup hides the meter. */
+async function UsageCard({ userId }: { userId: string }) {
+  const supabase = createServerClient();
+  const [{ data: quotaData, error: quotaErr }, { count: usedCount, error: usedErr }] = await Promise.all([
+    supabase.rpc("user_tier_quota", { p_user_id: userId }),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "completed")
+      .gte("finished_at", startOfMonthIso()),
+  ]);
+  if (quotaErr || usedErr || typeof quotaData !== "number" || usedCount === null) return null;
+  return (
+    <section className="flex flex-col gap-2 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+      <h2 className="text-sm font-medium tracking-tight">Plan usage</h2>
+      <UsageMeter quota={quotaData} used={usedCount} />
+    </section>
+  );
+}
 
-      <TastePanel />
-      <SocialPanel />
-      <AccountActions email={auth.user.email ?? ""} />
-    </div>
+function CardSkeleton({ rows }: { rows: number }) {
+  return (
+    <section aria-hidden className="flex animate-pulse flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="h-4 w-full rounded bg-muted/20" />
+      ))}
+    </section>
   );
 }
 
