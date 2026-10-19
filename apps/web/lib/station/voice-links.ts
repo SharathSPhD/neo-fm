@@ -10,7 +10,7 @@ import raw from "./voice-lines.json";
 import { daypartOf, type Daypart } from "./program";
 import { poolCdnUrl } from "./cdn";
 
-export type VoiceKind = "host-link" | "ident-daypart" | "time-check" | "ident-station";
+export type VoiceKind = "host-link" | "ident-daypart" | "time-check" | "ident-station" | "programme";
 
 export interface VoiceLine {
   id: string;
@@ -96,13 +96,14 @@ export interface VoiceSlotItem {
 }
 
 /** Order of break kinds by how many breaks have played: greeting first, then links, a station ident every fourth. */
+export const PROGRAMME_EVERY = 4;
 const ROTATION: VoiceKind[] = ["ident-daypart", "host-link", "host-link", "ident-station"];
 
 function candidates(lines: VoiceLine[], ctx: VoiceContext, lang: string, kind: VoiceKind): VoiceLine[] {
   const part = daypartOf(ctx.hour);
   return lines.filter((l) => {
     if (l.kind !== kind || l.lang !== lang || ctx.state.seen.includes(l.id)) return false;
-    if (kind === "host-link" || kind === "ident-daypart") return l.daypart === part;
+    if (kind === "host-link" || kind === "ident-daypart" || kind === "programme") return l.daypart === part;
     if (kind === "time-check") return l.hour === ctx.hour;
     return true;
   });
@@ -114,6 +115,8 @@ export function chooseLine(lines: VoiceLine[], ctx: VoiceContext, lang: string, 
   const wanted: VoiceKind[] = [];
   // A time check follows the first break whenever the hour has moved on since the last one.
   if (ctx.timeChecks && breaks > 0 && lastCheckHour !== ctx.hour) wanted.push("time-check");
+  // A programme (lib/station/programmes.ts) takes every PROGRAMME_EVERY-th break when lines exist; otherwise the break is a normal one.
+  if (breaks % PROGRAMME_EVERY === PROGRAMME_EVERY - 1) wanted.push("programme");
   wanted.push(ROTATION[breaks % ROTATION.length]!, "host-link", "ident-daypart");
   for (const kind of wanted) {
     const pool = candidates(lines, ctx, lang, kind);
