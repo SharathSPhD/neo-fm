@@ -151,6 +151,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   // Refills read it through a ref so a chip tap never restarts the language effect.
   const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
+  /** Track ids whose CDN URL already failed once and were retried from the signed Supabase URL. */
+  const cdnRetried = useRef(new Set<string>());
   const tracksStarted = useRef(0);
   // Session counters for the ad caps; sent with each queue request (the server holds no per-session state).
   const adSession = useRef({ played: 0, since: 0, lastAdAt: null as number | null, seen: [] as string[], spots: [] as { at: number; sec: number }[] });
@@ -319,6 +321,24 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
       return;
     }
     if (current?.type === "ad" || current?.type === "voice") { advance("skip"); return; }
+    // The CDN copy failed to load: retry once from Supabase storage before counting a failure, so a CDN problem never kills playback.
+    const failed = current;
+    if (failed && !cdnRetried.current.has(failed.id)) {
+      cdnRetried.current.add(failed.id);
+      void fetch(`/api/station/track-url?id=${encodeURIComponent(failed.id)}`, { cache: "no-store" })
+        .then((r) => (r.ok ? (r.json() as Promise<{ url: string }>) : Promise.reject(new Error(`HTTP ${r.status}`))))
+        .then(({ url }) => {
+          if (currentId.current !== failed.id || !audioRef.current) return;
+          audioRef.current.src = url;
+          void audioRef.current.play().catch(() => setBlocked(true));
+        })
+        .catch(() => { if (currentId.current === failed.id) countTrackFailure(); });
+      return;
+    }
+    countTrackFailure();
+  }
+
+  function countTrackFailure() {
     reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;
     if (errorsInARow.current >= MAX_CONSECUTIVE_ERRORS) {
