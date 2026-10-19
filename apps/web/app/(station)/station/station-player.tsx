@@ -32,6 +32,8 @@ interface Track {
   set?: { id: string; index: number; size: number };
   /** Present on house-ad / sponsor items spliced in by the queue API (lib/station/ads.ts). */
   type?: "ad" | "voice";
+  /** Voice items only: the static copy to try once if the CDN copy fails. */
+  fallbackUrl?: string;
   /** Present on AI host links and idents spliced in by the queue API (lib/station/voice-links.ts). */
   voice?: { lineId: string; kind: string; text: string; aiMade: boolean; hour: number | null; fadeInMs: number };
   ad?: { slotId: string; label: string; headline: string; ctaLabel: string | null; ctaUrl: string | null; aiMade: boolean; skipAfterMs: number | null };
@@ -311,6 +313,11 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   function onTrackError() {
     // A spot or spoken link that will not load is dropped quietly; it is not a station audio failure.
+    if (current?.type === "voice" && current.fallbackUrl && audioRef.current && !audioRef.current.src.endsWith(current.fallbackUrl)) {
+      audioRef.current.src = current.fallbackUrl;
+      void audioRef.current.play().catch(() => setBlocked(true));
+      return;
+    }
     if (current?.type === "ad" || current?.type === "voice") { advance("skip"); return; }
     reportClientError(STATION_AUDIO_FAILED, { boundary: "window" });
     errorsInARow.current += 1;

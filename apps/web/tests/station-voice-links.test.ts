@@ -112,3 +112,27 @@ describe("parseVoiceState and voiceItem", () => {
     for (const l of VOICE_LINES) expect(existsSync(join(__dirname, "../public/voice", `${l.id}.mp3`)), l.id).toBe(true);
   });
 });
+
+describe("spoken segment delivery and disclosure", () => {
+  it("serves from the CDN with the static file as fallback when a base is given", () => {
+    const it = voiceItem(line({ id: "host-link/hi-morning-1" }), "n", "https://cdn.example.com/");
+    expect(it.url).toBe("https://cdn.example.com/voice/host-link/hi-morning-1.mp3");
+    expect(it.fallbackUrl).toBe("/voice/host-link/hi-morning-1.mp3");
+  });
+
+  it("serves the static file without a base, or with an unsafe one", () => {
+    expect(voiceItem(line({ id: "host-link/hi-morning-1" }), "n", undefined).url).toBe("/voice/host-link/hi-morning-1.mp3");
+    const http = voiceItem(line({ id: "host-link/hi-morning-1" }), "n", "http://cdn.example.com");
+    expect(http.url).toBe("/voice/host-link/hi-morning-1.mp3");
+    expect(http.fallbackUrl).toBeUndefined();
+  });
+
+  it("marks every rendered segment as AI-made", () => {
+    expect(VOICE_LINES.length).toBeGreaterThan(0);
+    for (const l of VOICE_LINES) {
+      const it = voiceItem(l, "n", undefined);
+      expect(it.voice.aiMade).toBe(true);
+      expect(it.title).toBe("neo-fm AI host");
+    }
+  });
+});
