@@ -142,6 +142,11 @@ const server = createServer(async (req, res) => {
   if (req.method === "GET" && path === "/rest/v1/jobs" && url.searchParams.get("public_id") === `eq.${PUBLIC_ID}`) {
     return rowOrEmpty(PUBLIC_JOB);
   }
+  // Usage meter on /account: slow on purpose, so the smoke can prove the rest of the page streams ahead of it.
+  if (path === "/rest/v1/jobs" && url.searchParams.has("finished_at")) {
+    return setTimeout(() => send(res, 200, [], { "content-range": "*/2" }), 3000);
+  }
+  if (path === "/rest/v1/rpc/user_tier_quota") return send(res, 200, 3);
   if (req.method === "GET") return rowOrEmpty(null);
   // Inserts / updates / deletes: acknowledge, recorded above.
   return send(res, 201, []);
