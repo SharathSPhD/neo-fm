@@ -107,7 +107,7 @@ async function Hero() {
           <span className="eq" aria-hidden><i /><i /><i /><i /></span>
           {t("landing.badge")}
         </span>
-        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl md:text-7xl">
+        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl sm:leading-none md:text-7xl">
           <Accented text={t("landing.title")} />
         </h1>
         <p className="max-w-2xl text-lg text-foreground/75 sm:text-xl">

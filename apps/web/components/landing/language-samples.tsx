@@ -119,7 +119,7 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
                 {state === "playing" ? "■ Stop" : state === "loading" ? "Loading…" : `▶ Hear ${meta.name}`}
               </button>
             </div>
-            <p lang={meta.code} className="mt-4 whitespace-pre-line text-xl leading-relaxed sm:text-2xl">{song.lines.join("\n")}</p>
+            <p lang={meta.code} className="mt-4 whitespace-pre-line text-xl leading-relaxed sm:text-2xl sm:leading-8">{song.lines.join("\n")}</p>
             <p role="status" className="mt-3 min-h-5 text-xs text-foreground/60">
               {state === "error" ? "Couldn't load the audio. Open the song page to listen." : ""}
             </p>
@@ -141,7 +141,7 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
                 {state === "playing" ? "■ Stop" : state === "loading" ? "Loading…" : `▶ Hear ${meta.name}`}
               </button>
             </div>
-            <p lang={meta.code} className="mt-4 text-xl leading-relaxed sm:text-2xl">{sample?.idea}</p>
+            <p lang={meta.code} className="mt-4 text-xl leading-relaxed sm:text-2xl sm:leading-8">{sample?.idea}</p>
             <p role="status" className="mt-3 min-h-5 text-xs text-foreground/60">
               {state === "error" ? "Couldn't load the audio. Open the station to listen." : ""}
             </p>
@@ -150,7 +150,7 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
         ) : (
           <>
             <p className="text-xs text-foreground/60">No community song in {meta.name} yet. Here is how you could start one:</p>
-            <p lang={meta.code} className="mt-3 text-xl leading-relaxed sm:text-2xl">{sample?.idea}</p>
+            <p lang={meta.code} className="mt-3 text-xl leading-relaxed sm:text-2xl sm:leading-8">{sample?.idea}</p>
             <Link href="/sign-up?next=/songs/new" className="mt-4 inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-hidden focus:ring-2 focus:ring-accent">Make the first {meta.name} song</Link>
           </>
         )}

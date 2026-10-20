@@ -132,7 +132,7 @@ export function KaraokeTicker({
         tabIndex={0}
         onWheel={() => (holdUntil.current = Date.now() + USER_SCROLL_HOLD_MS)}
         onTouchMove={() => (holdUntil.current = Date.now() + USER_SCROLL_HOLD_MS)}
-        className="relative max-h-72 overflow-y-auto scroll-smooth rounded-md py-6 text-base leading-relaxed sm:max-h-80 sm:text-lg"
+        className="relative max-h-72 overflow-y-auto scroll-smooth rounded-md py-6 text-base leading-relaxed sm:max-h-80 sm:text-lg sm:leading-7"
         data-testid="lyrics-panel"
       >
         <ol className="flex flex-col">
