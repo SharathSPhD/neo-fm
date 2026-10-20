@@ -71,7 +71,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const set = q.get("set") ?? "both";
   const n = Math.max(1, Math.min(30, Number(q.get("n") ?? 15)));
   const from = Math.max(0, Number(q.get("from") ?? 0)); // styled/named sets: start offset, so a long set runs in chunks under the function timeout
-  const retry = q.get("retry") === "1";
+  const retryOnly = q.get("retryonly") === "1"; // candidate = live polish (plain brief) + judge-and-retry, so the retry step is tested without the polish-time intent block
+  const retry = q.get("retry") === "1" || retryOnly;
   const styles = q.get("styles") === "1"; // with poets=1: the candidate arm gets the PCE_STYLES note instead of the intent block
   const lang = q.get("lang") === "1"; // with poets=1: the candidate arm gets the per-language craft note (PCE_LANG_NOTES)
   const poets = q.get("poets") === "1" || styles || lang;
@@ -157,7 +158,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (t === null) return polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template); // live arm
       const code = CODE[c.language.toLowerCase()] ?? c.language;
       const intent = await extractIntent({ prompt: c.brief, language: code, styleFamily: c.style }, ask);
-      let lyrics = await polishLyrics(client, { language: c.language, style: c.style, brief: `${c.brief}\n${intentBlock(intent)}`, lyrics: c.draft }, template);
+      let lyrics = await polishLyrics(client, { language: c.language, style: c.style, brief: retryOnly ? c.brief : `${c.brief}\n${intentBlock(intent)}`, lyrics: c.draft }, template);
       if (retry) {
         const r = await judgeAndRetry({ intent, lyrics, language: code, targetSeconds: 30 }, { complete: ask, revise: ask, check: async (x) => (await screenRequest(x, "lyrics")).allowed, log: (m) => trace.push(`${c.id}: ${m}`) });
         lyrics = r.lyrics;
@@ -169,5 +170,5 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     spentUsd: () => meter.usd(),
   };
   const result = await runPolishGate(cases, "engine-intent", deps, { maxUsd });
-  return NextResponse.json({ ...result, arms: lang ? { live: "plain poet draft, live polish", candidate: "poet draft + language craft note, polish with the note (PCE_LANG_NOTES)" } : styles ? { live: "plain poet draft, live polish", candidate: "poet draft + routed style note, polish with the note (PCE_STYLES)" } : poets ? { live: "plain poet draft, live polish", candidate: "poet draft with the intent block, live polish (plain brief)" } : { live: "live polish template, plain brief", candidate: retry ? "intent block + judge-and-retry" : "intent block" }, estimate: { claude_usd: total }, spend: meter.snapshot(), max_usd: maxUsd, set, retry_trace: trace, ...(poets ? { fidelity: fidelitySummary(fidelity), fidelity_rows: fidelity } : {}) });
+  return NextResponse.json({ ...result, arms: lang ? { live: "plain poet draft, live polish", candidate: "poet draft + language craft note, polish with the note (PCE_LANG_NOTES)" } : styles ? { live: "plain poet draft, live polish", candidate: "poet draft + routed style note, polish with the note (PCE_STYLES)" } : poets ? { live: "plain poet draft, live polish", candidate: "poet draft with the intent block, live polish (plain brief)" } : { live: "live polish template, plain brief", candidate: retryOnly ? "live polish + judge-and-retry (PCE_JUDGE_RETRY)" : retry ? "intent block + judge-and-retry" : "intent block" }, estimate: { claude_usd: total }, spend: meter.snapshot(), max_usd: maxUsd, set, retry_trace: trace, ...(poets ? { fidelity: fidelitySummary(fidelity), fidelity_rows: fidelity } : {}) });
 }
