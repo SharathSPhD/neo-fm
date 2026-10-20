@@ -318,5 +318,69 @@
   "tier": "form",
   "style": "lavani-inspired",
   "brief": "A playful lavani-style song with a dholki beat about a market evening, new words only"
+ },
+ {
+  "id": "bn-1",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "scene",
+  "style": "rabindrasangeet-inspired",
+  "brief": "The first monsoon clouds over the Padma, a river-town evening"
+ },
+ {
+  "id": "bn-2",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "scene",
+  "style": "bengali-folk",
+  "brief": "Fishermen at dawn on the Hooghly, boat songs and mist"
+ },
+ {
+  "id": "bn-3",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "name",
+  "style": "bengali-pop",
+  "brief": "A birthday song for Riya, eight years old, who loves painting"
+ },
+ {
+  "id": "bn-4",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "name",
+  "style": "bengali-ballad",
+  "brief": "A wedding song for Subhankar and Mitali, two families meeting in Kolkata"
+ },
+ {
+  "id": "bn-5",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "occasion",
+  "style": "bengali-folk",
+  "brief": "Durga Puja evening: dhak beats, pandal lights, a daughter coming home"
+ },
+ {
+  "id": "bn-6",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "occasion",
+  "style": "bengali-folk",
+  "brief": "Poila Boishakh morning, new clothes and the first sweets of the year"
+ },
+ {
+  "id": "bn-7",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "form",
+  "style": "baul-inspired",
+  "brief": "A short Baul-style song on the wandering heart, new words only, with a refrain"
+ },
+ {
+  "id": "bn-8",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "form",
+  "style": "adhunik-song",
+  "brief": "Two original rhymed quatrains (antyamil) on a rainy window, then a refrain"
  }
 ]
