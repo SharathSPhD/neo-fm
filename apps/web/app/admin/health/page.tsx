@@ -161,6 +161,7 @@ export default function HealthPage() {
             ]} />
           )}
           {funnel && <LaunchFunnel funnel={funnel} />}
+          {pull && pull.visits + pull.signups > 0 && <ActivationSteps pull={pull} />}
           {pull && pull.by_language?.length > 0 && <LanguageActivation pull={pull} />}
           {ads && ads.length > 0 && (
             <Table title="House ads" head={["Ad", "Kind", "Languages", "On", "Starts", "Completes", "Taps", "Tap rate"]}
@@ -299,14 +300,33 @@ function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
   );
 }
 
+/** First visit to share: visits, first play, five minutes of listening, share. Signed-in steps cover the sign-up cohort. */
+function ActivationSteps({ pull }: { pull: PullFunnel }) {
+  const step = (label: string, n: number, of: number | null) => [label, String(n), of === null ? "-" : pct(of)];
+  return (
+    <Table
+      title={`Activation steps (${pull.window_days}d)`}
+      head={["Step", "Count", "Share of previous step"]}
+      rows={[
+        step("Visited the site", pull.visits, null),
+        step("Played a track (anonymous)", pull.anon_station_plays, pull.rates.visit_to_anon_play),
+        step("Signed up", pull.signups, pull.rates.visit_to_signup),
+        step("Played or made a first song", pull.activated, pull.rates.signup_to_activated),
+        step("Listened five minutes", pull.listened_5min, pull.rates.activated_to_listened_5min),
+        step("Shared a track", pull.shared, pull.rates.activated_to_shared),
+      ]}
+    />
+  );
+}
+
 /** Activated sign-ups by the language of their first play or song, with day-1 and day-7 return. */
 function LanguageActivation({ pull }: { pull: PullFunnel }) {
   const rate = (r: { returned: number; eligible: number; rate: number | null }) => (r.eligible ? `${r.returned}/${r.eligible} (${pct(r.rate)})` : "-");
   return (
     <Table
       title={`Activation and return by first language (${pull.window_days}d)`}
-      head={["Language", "Activated", "Back on day 1", "Back on day 7"]}
-      rows={pull.by_language.map((l) => [l.language, String(l.activated), rate(l.returned_d1), rate(l.returned_d7)])}
+      head={["Language", "Activated", "Listened 5 min", "Back on day 1", "Back on day 7"]}
+      rows={pull.by_language.map((l) => [l.language, String(l.activated), String(l.listened_5min ?? 0), rate(l.returned_d1), rate(l.returned_d7)])}
     />
   );
 }
