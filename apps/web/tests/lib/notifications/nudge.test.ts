@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { NUDGE_COPY, NUDGE_LANGS, nudgeLang } from "@/lib/notifications/nudge-copy";
 import { runStationNudge, stationNudgeEnabled } from "@/lib/notifications/nudge";
 import { sendPush, type PushConfig } from "@/lib/notifications/push";
+import { sendNative, type FcmConfig } from "@/lib/notifications/fcm";
 import { applyPrefsPatch, NUDGE_LAST_KEY, resolvePrefs } from "@/lib/notifications/types";
 
 const cfg: PushConfig = { publicKey: "k", privateKey: "p", subject: "mailto:a@b.c" };
@@ -13,6 +14,7 @@ function fakeDb(
   prefs: { user_id: string; prefs: Record<string, unknown> }[],
   subs: Record<string, unknown>[],
   jobs: { user_id: string; song_documents: { language: string } }[] = [],
+  tokens: { id: string; user_id: string; token: string }[] = [],
 ) {
   const updates: { user_id: string; prefs: Record<string, unknown> }[] = [];
   const deleted: string[][] = [];
@@ -29,8 +31,9 @@ function fakeDb(
       if (table === "jobs") {
         return { select: () => ({ in: () => ({ order: () => ({ limit: () => ({ returns: async () => ({ data: jobs, error: null }) }) }) }) }) };
       }
+      const rows = table === "native_push_tokens" ? tokens : subs;
       return {
-        select: () => ({ in: () => ({ returns: async () => ({ data: subs, error: null }) }) }),
+        select: () => ({ in: () => ({ returns: async () => ({ data: rows, error: null }) }) }),
         delete: () => ({ in: async (_c: string, ids: string[]) => void deleted.push(ids) }),
       };
     },
@@ -99,6 +102,29 @@ describe("station nudge", () => {
     expect(r).toMatchObject({ sent: 0, failed: 1, removedSubscriptions: 1 });
     expect(updates).toEqual([]);
     expect(deleted).toEqual([["s1"]]);
+  });
+
+  it("nudges an opted-in user who only has the app (FCM token), once a day, and drops dead tokens", async () => {
+    const fcm = { projectId: "p", clientEmail: "e", privateKey: "k" } as unknown as FcmConfig;
+    const tok = (id: string, user: string) => ({ id, user_id: user, token: `${id}-`.padEnd(30, "x") });
+    const { db, updates, deleted } = fakeDb(
+      [
+        { user_id: "u1", prefs: { station_nudge: { push: true } } },
+        { user_id: "u2", prefs: { station_nudge: { push: true } } },
+      ],
+      [],
+      [],
+      [tok("t1", "u1"), tok("t2", "u2")],
+    );
+    const web = vi.fn<typeof sendPush>(async () => "sent");
+    const app = vi.fn<typeof sendNative>(async (_c, token) => (token.startsWith("t2") ? "gone" : "sent"));
+    const r = await runStationNudge(db, cfg, web, NOW, { cfg: fcm, send: app });
+    expect(web).not.toHaveBeenCalled();
+    expect(app).toHaveBeenCalledTimes(2);
+    expect(app.mock.calls[0]![2]).toMatchObject({ title: "Your station is ready", url: "/station" });
+    expect(r).toMatchObject({ optedIn: 2, sent: 1, failed: 1, removedSubscriptions: 1 });
+    expect(updates.map((u) => u.user_id)).toEqual(["u1"]);
+    expect(deleted).toEqual([["t2"]]);
   });
 
   it("a user toggling a switch keeps the last-sent date", () => {

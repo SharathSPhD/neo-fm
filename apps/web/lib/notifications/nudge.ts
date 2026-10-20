@@ -5,6 +5,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { sendNative, type FcmConfig } from "./fcm";
 import { sendPush, type PushConfig, type PushResult } from "./push";
 import { NUDGE_LAST_KEY, renderNotification } from "./types";
 
@@ -22,6 +23,13 @@ const BATCH = 500;
 
 type PrefsRow = { user_id: string; prefs: Record<string, unknown> | null };
 type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string };
+type NativeToken = { id: string; user_id: string; token: string };
+
+/** App (FCM) delivery, off unless a config is passed. */
+export interface NudgeNativeOpts {
+  cfg: FcmConfig;
+  send?: typeof sendNative;
+}
 
 /** Language of each user's most recent song; no stored UI language exists server-side, and no migration is needed. */
 async function listenerLanguages(db: SupabaseClient, userIds: string[]): Promise<Map<string, string>> {
@@ -44,9 +52,10 @@ async function listenerLanguages(db: SupabaseClient, userIds: string[]): Promise
 
 export async function runStationNudge(
   db: SupabaseClient,
-  cfg: PushConfig,
+  cfg: PushConfig | null,
   send: typeof sendPush = sendPush,
   now = Date.now(),
+  native?: NudgeNativeOpts,
 ): Promise<NudgeSummary> {
   const out: NudgeSummary = { optedIn: 0, skippedToday: 0, sent: 0, failed: 0, removedSubscriptions: 0 };
   const today = new Date(now).toISOString().slice(0, 10);
@@ -67,25 +76,47 @@ export async function runStationNudge(
   });
   if (!due.length) return out;
 
-  const { data: subRows } = await db
-    .from("push_subscriptions")
-    .select("id, user_id, endpoint, p256dh, auth")
-    .in("user_id", due.map((r) => r.user_id))
-    .returns<Sub[]>();
+  const dueIds = due.map((r) => r.user_id);
   const subsByUser = new Map<string, Sub[]>();
-  for (const s of subRows ?? []) subsByUser.set(s.user_id, [...(subsByUser.get(s.user_id) ?? []), s]);
+  if (cfg) {
+    const { data: subRows } = await db
+      .from("push_subscriptions")
+      .select("id, user_id, endpoint, p256dh, auth")
+      .in("user_id", dueIds)
+      .returns<Sub[]>();
+    for (const s of subRows ?? []) subsByUser.set(s.user_id, [...(subsByUser.get(s.user_id) ?? []), s]);
+  }
+  // Same opt-in as web push; a missing table (migration 0112 not applied) reads as no tokens.
+  const tokensByUser = new Map<string, NativeToken[]>();
+  if (native) {
+    const { data: tokRows } = await db.from("native_push_tokens").select("id, user_id, token").in("user_id", dueIds).returns<NativeToken[]>();
+    for (const t of tokRows ?? []) tokensByUser.set(t.user_id, [...(tokensByUser.get(t.user_id) ?? []), t]);
+  }
+  const sendApp = native?.send ?? sendNative;
 
   const langByUser = await listenerLanguages(db, due.map((r) => r.user_id));
   const dead = new Set<string>();
+  const deadTokens = new Set<string>();
   for (const r of due) {
     const subs = subsByUser.get(r.user_id) ?? [];
-    if (!subs.length) continue;
+    const tokens = tokensByUser.get(r.user_id) ?? [];
+    if (!subs.length && !tokens.length) continue;
     const msg = renderNotification({ type: "station_nudge", data: { lang: langByUser.get(r.user_id) }, count: 1 });
     const results: PushResult[] = [];
-    for (const s of subs) {
-      const res = await send(cfg, s, { title: msg.title, body: msg.body, url: msg.href, tag: "station-nudge" });
-      if (res === "gone") dead.add(s.id);
-      results.push(res);
+    const payload = { title: msg.title, body: msg.body, url: msg.href, tag: "station-nudge" };
+    if (cfg) {
+      for (const s of subs) {
+        const res = await send(cfg, s, payload);
+        if (res === "gone") dead.add(s.id);
+        results.push(res);
+      }
+    }
+    if (native) {
+      for (const t of tokens) {
+        const res = await sendApp(native.cfg, t.token, payload);
+        if (res === "gone") deadTokens.add(t.id);
+        results.push(res);
+      }
     }
     if (results.includes("sent")) {
       out.sent++;
@@ -100,6 +131,10 @@ export async function runStationNudge(
   if (dead.size) {
     await db.from("push_subscriptions").delete().in("id", [...dead]);
     out.removedSubscriptions = dead.size;
+  }
+  if (deadTokens.size) {
+    await db.from("native_push_tokens").delete().in("id", [...deadTokens]);
+    out.removedSubscriptions += deadTokens.size;
   }
   return out;
 }
