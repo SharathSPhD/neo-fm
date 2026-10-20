@@ -453,6 +453,7 @@ export const en = {
   "job.err.policy": "We couldn't make this one because it didn't pass our content guidelines. Try rewording your idea.",
   "job.err.generic": "Something went wrong while making this song. Please try again.",
   "job.err.busy": "Our music engine is very busy today and can't take new songs right now. Your allowance was not used; please try again a little later.",
+  "job.err.paused": "Song creation is paused for now while we sort out a problem on our side. Your allowance was not used; please try again later.",
   "fork.variation.cta": "Make a variation",
   "fork.variation.submitting": "Generating…",
   "fork.variation.blurb": "A variation re-renders the same composition with the model's natural stochasticity. Tweak any control below; leave them empty for a faithful re-roll.",
