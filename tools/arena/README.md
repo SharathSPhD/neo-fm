@@ -23,7 +23,7 @@ python3 -m arena report --kind lyrics --judge-prefix claude-sonnet
 python3 -m arena page --lyrics-judge-prefix claude-sonnet   # out/leaderboard.html
 python3 -m unittest discover -s tests
 ```
-`seed-lab <path-to-lyrics-lab>` imports the lab's already-paid judgments (G0 to G3, Gemini and one Claude round) so the board starts with real battles.
+`seed-prod <prod-40.json>` imports the PCE thread's production baseline (the reference variant, USD 0.09/song). `seed-lab <path-to-lyrics-lab>` imports the lab's already-paid judgments (G0 to G3, Gemini and one Claude round) so the board starts with real battles.
 
 ## Spend protocol
 Judging a pair of variants over 40 briefs is 80 calls, ceiling about USD 0.75 at list price. Estimates beat the route meter, which undercounts. Ask S with a tap card naming the pair and the ceiling; run with a hard stop; log in `lab/spend.md`.

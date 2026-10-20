@@ -17,6 +17,7 @@ def main(argv=None) -> int:
     p = argparse.ArgumentParser(prog="arena")
     sub = p.add_subparsers(dest="cmd", required=True)
     s = sub.add_parser("seed-lab", help="import the lab's paid judgments (no spend)"); s.add_argument("src")
+    s = sub.add_parser("seed-prod", help="import the PCE thread production baseline"); s.add_argument("src")
     s = sub.add_parser("register", help="add or update a variant")
     s.add_argument("variant"); s.add_argument("--kind", choices=["lyrics", "songs"], required=True)
     s.add_argument("--label"); s.add_argument("--owner", default=""); s.add_argument("--reference", action="store_true")
@@ -36,6 +37,8 @@ def main(argv=None) -> int:
     a = p.parse_args(argv)
     if a.cmd == "seed-lab":
         print(seed.import_lab(a.src, now()))
+    elif a.cmd == "seed-prod":
+        print(seed.import_prod(a.src, now()))
     elif a.cmd == "register":
         v = store.variants(); v[a.variant] = {"kind": a.kind, "label": a.label or a.variant, "owner": a.owner, **({"reference": True} if a.reference else {})}
         store.write_json("variants.json", v)

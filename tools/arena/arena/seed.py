@@ -47,3 +47,33 @@ def import_lab(src: str, ts: str) -> dict:
     fresh = [r for r in rows if (r["a"], r["b"], r["brief"], r["judge"]) not in existing]
     store.append_jsonl("battles.jsonl", fresh)
     return {"battles_added": len(fresh), "variants": len(VARIANTS)}
+
+
+PROD = "prod-haiku6-pce-sonnet-polish"
+
+
+def import_prod(path: str, ts: str, usd_per_song: float = 0.09) -> dict:
+    """PCE thread's production baseline (6 Haiku drafts, engine pick, live Sonnet polish) with its Claude
+    both-orders judgments against G0 and G2. It becomes the reference variant: it is what listeners get.
+    Cost 0.09 USD/song (drafts ~0.04 + polish ~0.05) is the PCE thread's figure, before Lyria."""
+    d = json.loads(Path(path).read_text(encoding="utf-8"))["briefs"]
+    vs = store.variants()
+    for v in vs.values():
+        v.pop("reference", None)
+    vs[PROD] = {"kind": "lyrics", "label": "Production (6 Haiku, PCE pick, Sonnet polish)", "owner": "pce", "reference": True}
+    store.write_json("variants.json", vs)
+    store.write_json(f"entries/lyrics/{PROD}.json", {k: v["polished"] for k, v in d.items() if v["polished"]})
+    rows = []
+    for bid, v in d.items():
+        for key, arm in (("judge_claude_vs_G0", "G0"), ("judge_claude_vs_G2", "G2")):
+            s = {"pce": 1.0, "tie": 0.5, "single": 0.0}.get(v[key])
+            if s is not None:
+                rows.append({"kind": "lyrics", "a": PROD, "b": ARM[arm], "brief": bid, "score": s,
+                             "judge": "claude/pce-thread-both-orders", "ts": ts})
+    have = {(r["a"], r["b"], r["brief"], r["judge"]) for r in store.read_jsonl("battles.jsonl")}
+    fresh = [r for r in rows if (r["a"], r["b"], r["brief"], r["judge"]) not in have]
+    store.append_jsonl("battles.jsonl", fresh)
+    cst = {(r["variant"], r["brief"]) for r in store.read_jsonl("costs.jsonl")}
+    store.append_jsonl("costs.jsonl", [{"variant": PROD, "brief": b, "usd": usd_per_song, "note": "PCE thread estimate, before Lyria", "ts": ts}
+                                       for b in d if (PROD, b) not in cst])
+    return {"battles_added": len(fresh)}
