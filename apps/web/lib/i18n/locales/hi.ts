@@ -939,7 +939,4 @@ export const hi: Dict = {
   "station.nudge.text": "स्टेशन पसंद आ रहा है? मुफ़्त साइन अप करें, पसंदीदा गाने सेव करें और अपनी पसंद का संगीत पाएँ।",
   "station.nudge.signUp": "मुफ़्त साइन अप करें",
   "station.nudge.signIn": "साइन इन करें",
-  "referral.sharedBy": "@{handle} के स्टेशन से आपके लिए साझा किया गया",
-  "referral.joined": "आप @{handle} के लिंक से जुड़े",
-  "referral.count": "आपके शेयर से {n} लोग जुड़े",
 };

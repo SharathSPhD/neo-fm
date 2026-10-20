@@ -26,7 +26,6 @@ import { readOwnStationPass } from "@/lib/billing/pass";
 import { showPlanChip } from "@/lib/billing/plan-chip";
 import { startOfMonthIso } from "@/lib/billing/usage";
 import { serverI18n } from "@/lib/i18n/server";
-import { loadReferralSummary } from "@/lib/share/referral-load";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { AccountActions } from "./account-actions";
@@ -111,27 +110,10 @@ export default async function AccountPage(props: PageProps) {
         </Link>
       </section>
 
-      <Suspense fallback={null}>
-        <ReferralLine userId={userId} />
-      </Suspense>
-
       <TastePanel />
       <SocialPanel />
       <AccountActions email={auth.user.email ?? ""} />
     </div>
-  );
-}
-
-/** Recognition only: who this listener joined from, and how many joined from them. Silent when neither applies. */
-async function ReferralLine({ userId }: { userId: string }) {
-  const { t } = await serverI18n();
-  const r = await loadReferralSummary(userId);
-  if (!r.joinedFrom && r.joined === 0) return null;
-  return (
-    <section className="flex flex-col gap-1 rounded-md border border-muted/20 bg-muted/5 px-5 py-4 text-sm text-foreground/80">
-      {r.joinedFrom ? <p>{t("referral.joined", { handle: r.joinedFrom })}</p> : null}
-      {r.joined > 0 ? <p>{t("referral.count", { n: r.joined })}</p> : null}
-    </section>
   );
 }
 

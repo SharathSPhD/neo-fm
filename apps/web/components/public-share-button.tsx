@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { useShareHandle } from "@/components/referral";
 import { withShareUtm } from "@/lib/share/attribution";
 
 /**
@@ -18,7 +17,6 @@ export function PublicShareButton({
   /** Present only for signed-in viewers. */
   feedbackSongId?: string;
 }) {
-  const shareHandle = useShareHandle(Boolean(feedbackSongId));
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const [recorded, setRecorded] = useState(false);
 
@@ -37,7 +35,7 @@ export function PublicShareButton({
     const clean = `${window.location.origin}${window.location.pathname}`;
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title, text: `Listen to “${title}” on neo-fm, your personal FM`, url: withShareUtm(clean, "native", "song", shareHandle) });
+        await navigator.share({ title, text: `Listen to “${title}” on neo-fm, your personal FM`, url: withShareUtm(clean, "native", "song") });
         record();
         return;
       } catch (e) {
@@ -45,7 +43,7 @@ export function PublicShareButton({
       }
     }
     try {
-      await navigator.clipboard.writeText(withShareUtm(clean, "copy", "song", shareHandle));
+      await navigator.clipboard.writeText(withShareUtm(clean, "copy", "song"));
       setState("copied");
       record();
     } catch {

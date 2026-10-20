@@ -939,7 +939,4 @@ export const bn: Dict = {
   "station.nudge.text": "স্টেশন ভালো লাগছে? বিনামূল্যে সাইন আপ করুন, পছন্দের গান সেভ করুন, আর পান আপনার রুচির গান।",
   "station.nudge.signUp": "বিনামূল্যে সাইন আপ করুন",
   "station.nudge.signIn": "সাইন ইন করুন",
-  "referral.sharedBy": "@{handle}-এর স্টেশন থেকে আপনার জন্য শেয়ার করা",
-  "referral.joined": "আপনি @{handle}-এর লিংক থেকে যোগ দিয়েছেন",
-  "referral.count": "আপনার শেয়ার থেকে {n} জন যোগ দিয়েছেন",
 };

@@ -15,7 +15,6 @@ import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
-import { useShareHandle } from "@/components/referral";
 import { trackShareLink, trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { takeFallback } from "@/lib/station/fallback";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -131,7 +130,6 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
   const { t } = useUiLang();
-  const shareHandle = useShareHandle(!anonymous);
   const sendSignal = anonymous ? () => {} : postSignal;
   const [played, setPlayed] = useState(0);
   const globalPlayer = usePlayer();
@@ -428,7 +426,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     if (!current) return;
     const text = t("station.shareText", { title: current.title });
     const native = typeof navigator.share === "function";
-    const url = trackShareLink(current.id, native ? "native" : "copy", location.origin, shareHandle);
+    const url = trackShareLink(current.id, native ? "native" : "copy", location.origin);
     try {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }
@@ -439,7 +437,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   function shareWhatsApp() {
     if (!current) return;
-    window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin), shareHandle), "_blank", "noopener,noreferrer");
+    window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin)), "_blank", "noopener,noreferrer");
     sendSignal(current.id, "share", audioRef.current);
     sendFunnelEvent("whatsapp_click");
   }

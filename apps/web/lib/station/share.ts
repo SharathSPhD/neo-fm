@@ -12,11 +12,11 @@ export function trackShareUrl(id: string, origin: string = siteUrl()): string {
 }
 
 /** The link inside the message is tagged for the WhatsApp channel; `url` is the clean track URL. */
-export function whatsappShareUrl(title: string, url: string, ref?: string | null): string {
-  return `https://wa.me/?text=${encodeURIComponent(`${title} on neo-fm. Listen: ${withShareUtm(url, "whatsapp", "track", ref)}`)}`;
+export function whatsappShareUrl(title: string, url: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(`${title} on neo-fm. Listen: ${withShareUtm(url, "whatsapp", "track")}`)}`;
 }
 
 /** Track link as it leaves the app for a channel (native sheet or copy). */
-export function trackShareLink(id: string, channel: ShareChannel, origin: string = siteUrl(), ref?: string | null): string {
-  return withShareUtm(trackShareUrl(id, origin), channel, "track", ref);
+export function trackShareLink(id: string, channel: ShareChannel, origin: string = siteUrl()): string {
+  return withShareUtm(trackShareUrl(id, origin), channel, "track");
 }

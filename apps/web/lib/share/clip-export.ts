@@ -41,8 +41,6 @@ export interface ExportClipOptions {
   occasion: string | null;
   message: string | null;
   seed: string;
-  /** Brand line drawn under the progress bar (see clipBrandLine). */
-  brand?: string;
   /**
    * Must be created (and resumed) synchronously inside the user's tap: iOS Safari leaves a context made after an
    * await suspended, which stalls the recorder path at 0%. exportClip closes it.
@@ -154,7 +152,7 @@ async function exportViaRecorder(o: ExportClipOptions): Promise<ExportedClip> {
 
     const motion = motionFor(decoded, o.window);
     const frame = (t: number) =>
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, brand: o.brand, fontFamily, ...motion(t) });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily, ...motion(t) });
     frame(o.window.start);
     rec.start(250);
     src.start(now, o.window.start, duration);
@@ -261,7 +259,7 @@ async function exportViaWebCodecs(o: ExportClipOptions): Promise<ExportedClip> {
     for (let i = 0; i < frames; i++) {
       if (o.signal?.aborted) throw new DOMException("aborted", "AbortError");
       if (failure) throw failure;
-      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, brand: o.brand, fontFamily, ...motion(o.window.start + i / FPS) });
+      drawClipFrame(ctx, { lines: o.lines, window: o.window, t: o.window.start + i / FPS, title: o.title, to: o.to, occasion: o.occasion, message: o.message, cover, seed: o.seed, fontFamily, ...motion(o.window.start + i / FPS) });
       const frame = new VideoFrame(canvas, { timestamp: Math.round((i * 1e6) / FPS), duration: Math.round(1e6 / FPS) });
       venc.encode(frame, { keyFrame: i % (FPS * 2) === 0 });
       frame.close();

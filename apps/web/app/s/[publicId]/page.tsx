@@ -25,10 +25,8 @@ import { whatsappShareUrl } from "@/lib/station/share";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 import { withShareUtm } from "@/lib/share/attribution";
-import { viewerHandle } from "@/lib/share/viewer-handle";
 import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
-import { SharedBy } from "@/components/shared-by";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -208,11 +206,9 @@ export async function generateMetadata(
 export default async function PublicSongPage(
   props: {
     params: Promise<{ publicId: string }>;
-    searchParams: Promise<{ ref?: string | string[] }>;
   }
 ) {
   const params = await props.params;
-  const { ref } = await props.searchParams;
   const idCheck = PublicIdSchema.safeParse(params.publicId);
   if (!idCheck.success) notFound();
 
@@ -229,7 +225,6 @@ export default async function PublicSongPage(
         : t("song.song");
 
   const dedication = await loadDedication(idCheck.data);
-  const sharerHandle = await viewerHandle();
 
   let signedUrl: string | null = null;
   let latestTrack: PublicSongRow["tracks"] extends (infer T)[] | null
@@ -328,7 +323,6 @@ export default async function PublicSongPage(
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(recordingLd) }} />
       ) : null}
       <FunnelBeacon event="share_view" />
-      <SharedBy refParam={ref} />
       <header className="flex flex-col gap-2">
         <Link
           href="/"
@@ -383,7 +377,7 @@ export default async function PublicSongPage(
           <a
             href={whatsappShareUrl(
               dedication ? `A song for ${dedication.to}` : displayTitle,
-              withShareUtm(`${siteUrl()}/s/${data.public_id}`, "whatsapp", dedication ? "gift" : "song", sharerHandle),
+              withShareUtm(`${siteUrl()}/s/${data.public_id}`, "whatsapp", dedication ? "gift" : "song"),
             )}
             target="_blank"
             rel="noopener noreferrer"
