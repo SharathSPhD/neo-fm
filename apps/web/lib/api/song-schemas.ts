@@ -18,7 +18,7 @@ import { isEnabledLanguage } from "../languages/registry";
 export const CreateSongRequestSchema = z
   .object({
     song_document: SongDocumentSchema.optional(),
-    prompt: z.string().min(1).optional(),
+    prompt: z.string().trim().min(1).optional(),
     language: LanguageSchema.optional(),
     style_family: StyleFamilySchema.optional(),
     target_duration_seconds: DurationSchema.optional(),
