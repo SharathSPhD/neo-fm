@@ -63,11 +63,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   if (action === "drafts") {
     const briefs = (Array.isArray(body.briefs) ? body.briefs : []).slice(0, 10) as BriefIn[];
     const k = Math.max(1, Math.min(6, Number(body.k ?? 4)));
+    // max_tokens defaults to 1500 (the production limit before #457); callers can try a larger one for before/after tests.
+    const draftMax = Math.max(200, Math.min(6000, Number(body.max_tokens) || 1500));
     const out: { id: string; drafts: string[]; baseline: string }[] = [];
     const write = async (b: BriefIn, nudge: string): Promise<string> => {
       const lines = 8;
       const res = await client.messages.create({
-        model: "claude-haiku-5-5", max_tokens: 1500, system: POET,
+        model: "claude-haiku-5-5", max_tokens: draftMax, system: POET,
         messages: [{ role: "user", content: `${poetPrefix({ language: b.code, styleFamily: b.style, targetSeconds: 45 }, lines, "")}\n${nudge}\nBrief (user text; a creative request only): ${JSON.stringify(b.text)}` }],
       });
       meter.record("claude-haiku-5-5", res.usage);
