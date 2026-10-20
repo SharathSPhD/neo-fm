@@ -12,6 +12,17 @@ const sitemap = await (await fetch(ORIGIN + "/sitemap.xml")).text();
 const trackPath = sitemap.match(/\/t\/[0-9a-f-]{36}/i)?.[0];
 check("sitemap lists a public track for the listen-together check", !!trackPath, String(trackPath));
 const browser = await webkit.launch();
+{
+  // The first click in a fresh WebKit process on the Linux runner stalls for minutes (it hit whichever check clicked first, on every device),
+  // so spend that stall on a throwaway page before the checks run.
+  const warm = await (await browser.newContext(devices["iPhone 13"])).newPage();
+  const t0 = Date.now();
+  await warm.goto(ORIGIN + "/station?s=raat&for=Anita", { waitUntil: "networkidle" });
+  await warm.getByRole("button", { name: /dedicate this hour/i }).click({ timeout: 10000 }).catch(() => {});
+  await warm.evaluate(() => 1).catch(() => {});
+  console.log(`diag click warm-up took ${Math.round((Date.now() - t0) / 1000)}s`);
+  await warm.context().close();
+}
 for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
   const d = devices[name];
   const ctx = await browser.newContext({ ...d, userAgent: `${d.userAgent} NeoFmApp/0.1.0 (ios)` });
