@@ -9,7 +9,7 @@ import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { estimatedCostGbp } from "../../../../lib/agent/lyria";
 import { costPerListenerHour, summarizeFirstWeek, type SignalRow } from "../../../../lib/ops/first-week";
-import { loadFunnel, OpsQueryError } from "../../../../lib/ops/load";
+import { loadFunnel, loadPullFunnel, OpsQueryError } from "../../../../lib/ops/load";
 
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -23,11 +23,12 @@ export async function GET(req: NextRequest) {
   const since = new Date(Date.now() - days * 86_400_000).toISOString();
   const db = serviceClient();
   try {
-    const [signals, ledger, pool, funnel] = await Promise.all([
+    const [signals, ledger, pool, funnel, pull] = await Promise.all([
       db.from("station_signals").select("user_id,kind,position_ms,created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(ROW_CAP),
       db.from("user_spend").select("reserved_gbp"),
       db.from("pool_tracks").select("id", { count: "exact", head: true }).eq("status", "admitted"),
       loadFunnel(db, days),
+      loadPullFunnel(db, days),
     ]);
     const err = [signals, ledger, pool].find((r) => r.error)?.error;
     if (err) throw new OpsQueryError(err.message);
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
       ...week,
       truncated: (signals.data?.length ?? 0) >= ROW_CAP,
       funnel,
+      pull,
       // Spend is all-time while listener-hours cover only the window, so this is the cost to date over recent listening.
       cost: costPerListenerHour(week.totals.listened_minutes, ledgerGbp, pool.count ?? 0, estimatedCostGbp("full")),
     });
