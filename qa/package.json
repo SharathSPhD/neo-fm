@@ -6,7 +6,8 @@
     "public": "node sweep.js && node i18n.js && node queue.js && node playback.js",
     "staging": "node staging-pass.js",
     "features": "node features.js",
-    "checkout": "node checkout.js"
+    "checkout": "node checkout.js",
+    "create-song": "node create-song.js"
   },
   "dependencies": {
     "playwright-core": "^1.64.1"
