@@ -30,6 +30,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { safeNext } from "@/lib/auth/safe-next";
+import { claimReferral } from "@/lib/referral/claim";
+import { REF_COOKIE, referralEnabled, refFromCookieHeader } from "@/lib/referral/code";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 import { createServerClient } from "@/lib/supabase/server";
 
@@ -60,7 +63,7 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createServerClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { data: session, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
     const signIn = new URL("/sign-in", baseUrl);
@@ -69,5 +72,12 @@ export async function GET(request: NextRequest) {
   }
 
   const dest = new URL(next, baseUrl);
-  return NextResponse.redirect(dest, { status: 303 });
+  const res = NextResponse.redirect(dest, { status: 303 });
+  // A shared link's ?ref= code was kept in a cookie; attribute it once to a brand-new account. Silent on any failure.
+  const ref = refFromCookieHeader(request.headers.get("cookie"));
+  if (ref && session?.user && referralEnabled()) {
+    await claimReferral(createServiceRoleClient(), session.user.id, ref);
+    res.cookies.set(REF_COOKIE, "", { maxAge: 0, path: "/" });
+  }
+  return res;
 }

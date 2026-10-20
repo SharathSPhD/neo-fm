@@ -352,3 +352,11 @@ a:focus {
 }
 .orb[data-paused="true"]::before { animation-play-state: paused; }
 @keyframes orb-spin { to { transform: rotate(360deg); } }
+
+/* Indic scripts: tracking utilities space out conjuncts and tight leading clips matras and subscripts, so reset both. */
+:is(:lang(hi), :lang(mr), :lang(kn), :lang(te), :lang(ta), :lang(bn), :lang(gu), :lang(pa), :lang(ml)) * {
+  letter-spacing: normal !important;
+}
+:is(:lang(hi), :lang(mr), :lang(kn), :lang(te), :lang(ta), :lang(bn), :lang(gu), :lang(pa), :lang(ml)) :is(h1, h2, h3) {
+  line-height: 1.35;
+}

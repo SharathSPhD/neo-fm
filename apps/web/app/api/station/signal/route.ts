@@ -20,7 +20,8 @@ export async function POST(req: Request) {
   const sig = parseSignal(body);
   if (!sig) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   // Still 204 on failure so playback never breaks, but the failure is now logged instead of vanishing.
-  const res = await insertSignal(createServiceRoleClient() as unknown as SignalInsertClient, authed.user.id, sig);
+  const db = createServiceRoleClient();
+  const res = await insertSignal(db as unknown as SignalInsertClient, authed.user.id, sig);
   if (!res.ok) getLogger("api/station/signal", req).warn("station signal not stored", { reason: res.reason, kind: sig.kind });
   return new NextResponse(null, { status: 204 });
 }

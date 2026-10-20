@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { NUDGE_COPY, NUDGE_LANGS, nudgeLang } from "@/lib/notifications/nudge-copy";
 import { runStationNudge, stationNudgeEnabled } from "@/lib/notifications/nudge";
 import { sendPush, type PushConfig } from "@/lib/notifications/push";
 import { applyPrefsPatch, NUDGE_LAST_KEY, resolvePrefs } from "@/lib/notifications/types";
@@ -8,7 +9,11 @@ const cfg: PushConfig = { publicKey: "k", privateKey: "p", subject: "mailto:a@b.
 const NOW = Date.parse("2026-10-19T13:30:00Z");
 
 /** Minimal chainable stand-in for the three queries the job makes. */
-function fakeDb(prefs: { user_id: string; prefs: Record<string, unknown> }[], subs: Record<string, unknown>[]) {
+function fakeDb(
+  prefs: { user_id: string; prefs: Record<string, unknown> }[],
+  subs: Record<string, unknown>[],
+  jobs: { user_id: string; song_documents: { language: string } }[] = [],
+) {
   const updates: { user_id: string; prefs: Record<string, unknown> }[] = [];
   const deleted: string[][] = [];
   const db = {
@@ -20,6 +25,9 @@ function fakeDb(prefs: { user_id: string; prefs: Record<string, unknown> }[], su
             eq: async (_c: string, id: string) => void updates.push({ user_id: id, prefs: row.prefs }),
           }),
         };
+      }
+      if (table === "jobs") {
+        return { select: () => ({ in: () => ({ order: () => ({ limit: () => ({ returns: async () => ({ data: jobs, error: null }) }) }) }) }) };
       }
       return {
         select: () => ({ in: () => ({ returns: async () => ({ data: subs, error: null }) }) }),
@@ -57,6 +65,32 @@ describe("station nudge", () => {
     expect(send).toHaveBeenCalledTimes(1);
     expect(send.mock.calls[0]![2]).toMatchObject({ title: "Your station is ready", url: "/station" });
     expect(updates).toEqual([{ user_id: "u1", prefs: { station_nudge: { push: true }, [NUDGE_LAST_KEY]: "2026-10-19" } }]);
+  });
+
+  it("sends the copy in the language of the user's latest song, English otherwise", async () => {
+    const { db } = fakeDb(
+      [
+        { user_id: "u1", prefs: { station_nudge: { push: true } } },
+        { user_id: "u2", prefs: { station_nudge: { push: true } } },
+        { user_id: "u3", prefs: { station_nudge: { push: true } } },
+      ],
+      [sub("s1", "u1"), sub("s2", "u2"), sub("s3", "u3")],
+      [
+        { user_id: "u1", song_documents: { language: "kn" } },
+        { user_id: "u2", song_documents: { language: "bn" } },
+      ],
+    );
+    const send = vi.fn<typeof sendPush>(async () => "sent");
+    await runStationNudge(db, cfg, send, NOW);
+    const titles = send.mock.calls.map((c) => c[2].title);
+    expect(titles).toEqual([NUDGE_COPY.kn.title, NUDGE_COPY.en.title, NUDGE_COPY.en.title]);
+  });
+
+  it("has non-empty, distinct copy for every nudge language", () => {
+    for (const l of NUDGE_LANGS) expect(NUDGE_COPY[l].title && NUDGE_COPY[l].body).toBeTruthy();
+    expect(new Set(NUDGE_LANGS.map((l) => NUDGE_COPY[l].title)).size).toBe(NUDGE_LANGS.length);
+    expect(nudgeLang("fr")).toBe("en");
+    expect(nudgeLang("mr")).toBe("mr");
   });
 
   it("removes dead subscriptions and does not mark a failed send as sent", async () => {
