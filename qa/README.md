@@ -10,6 +10,7 @@ npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.v
 `npm run checkout` (staging, signed in) opens a Stripe test Checkout Session per plan without completing it; Creator and Pro must work, the pass, annual plans and gift packs are reported as info when not configured.
 
 `npm run create-song` (staging, signed in) checks a blank prompt is rejected and a real prompt is accepted and queued, then opens the song page. Staging has no music keys or worker, so nothing is generated. It needs the staging safety check to run in rules-only mode.
+`npm run ads` (prod, signed out, part of `npm run public`) plays the station as a Free listener, skips ahead until the house-ad card shows, and checks it has its "From neo-fm" label, links to /gift or /pricing, and never sits inside a set.
 
 `npm run features` checks the dedicate-this-hour link (banner, name cleaning, WhatsApp link) and that the push opt-in endpoints respond, on prod, no login needed.
 ```
