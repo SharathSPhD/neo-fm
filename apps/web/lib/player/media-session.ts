@@ -22,6 +22,8 @@ export interface MediaSessionHandlers {
   previous?(): void;
 }
 
+import { nativeMediaSession } from "../native/media-session-bridge";
+
 const DEFAULT_ARTWORK = "/icon-512.png";
 const SEEK_STEP = 10;
 
@@ -38,6 +40,13 @@ function session(): MS | null {
 }
 
 export function setMediaMetadata(track: MediaSessionTrack): void {
+  const src0 = track.artwork || DEFAULT_ARTWORK;
+  nativeMediaSession()?.setMetadata({
+    title: track.title,
+    artist: track.artist,
+    album: track.album ?? "neo-fm",
+    artwork: [{ src: new URL(src0, globalThis.location?.origin ?? "https://www.neo-fm.com").href, sizes: "512x512" }],
+  });
   const ms = session();
   const Meta = (globalThis as unknown as {
     MediaMetadata?: new (init: unknown) => unknown;
@@ -53,6 +62,20 @@ export function setMediaMetadata(track: MediaSessionTrack): void {
 }
 
 export function setMediaHandlers(h: MediaSessionHandlers): void {
+  const native = nativeMediaSession();
+  if (native) {
+    const on = (action: string, fn: ((d: { seekTime?: number | null }) => void) | null) => native.setActionHandler({ action }, fn);
+    on("play", () => h.play());
+    on("pause", () => h.pause());
+    on("stop", () => h.stop());
+    on("nexttrack", h.next ? () => h.next?.() : null);
+    on("previoustrack", h.previous ? () => h.previous?.() : null);
+    on("seekbackward", () => h.seekBy(-SEEK_STEP));
+    on("seekforward", () => h.seekBy(SEEK_STEP));
+    on("seekto", (d) => {
+      if (typeof d?.seekTime === "number") h.seekTo(d.seekTime);
+    });
+  }
   const ms = session();
   if (!ms) return;
   const set = (a: string, fn: ((d: Record<string, number>) => void) | null) => {
@@ -75,11 +98,15 @@ export function setMediaHandlers(h: MediaSessionHandlers): void {
 }
 
 export function setMediaPlaybackState(playing: boolean): void {
+  nativeMediaSession()?.setPlaybackState({ playbackState: playing ? "playing" : "paused" });
   const ms = session();
   if (ms) ms.playbackState = playing ? "playing" : "paused";
 }
 
 export function setMediaPosition(position: number, duration: number): void {
+  if (isFinite(duration) && duration > 0) {
+    nativeMediaSession()?.setPositionState({ duration, playbackRate: 1, position: Math.min(Math.max(0, position), duration) });
+  }
   const ms = session();
   if (!ms?.setPositionState || !isFinite(duration) || duration <= 0) return;
   try {
@@ -94,6 +121,11 @@ export function setMediaPosition(position: number, duration: number): void {
 }
 
 export function clearMediaSession(): void {
+  const native = nativeMediaSession();
+  if (native) {
+    native.setPlaybackState({ playbackState: "none" });
+    for (const a of ["play", "pause", "stop", "nexttrack", "previoustrack", "seekbackward", "seekforward", "seekto"]) native.setActionHandler({ action: a }, null);
+  }
   const ms = session();
   if (!ms) return;
   ms.metadata = null;
