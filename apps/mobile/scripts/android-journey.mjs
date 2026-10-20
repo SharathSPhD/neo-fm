@@ -212,11 +212,17 @@ async function sendFcm(token) {
 }
 if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
   try {
+    // A foreground app receives the message in JS instead of the system shade, so send it with the app in the background.
+    adb("shell", "input", "keyevent", "KEYCODE_HOME");
+    await sleep(2500);
     const status = await sendFcm(fcmToken);
     check("FCM accepts a push to the emulator's token", status === 200, String(status));
     let seen = false;
     for (let i = 0; i < 20 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
     check("the pushed notification shows up on the device", seen);
+    adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
+    await sleep(4000);
+    await attach();
   } catch (e) { check("push delivery through FCM", false, String(e).slice(0, 120)); }
 } else {
   console.log("diag FCM delivery check skipped: no service account in this run");
