@@ -55,6 +55,8 @@ Render estimate GBP 0.25 (runs about 2x low). E2 first slice: 5 style-heavy brie
 
 **E2 slice 1b, holistic judge (Gemini flash audio, both orders, 3 pairs):** the judge picked the same render in both orders for every pair, and it was the one with the LOWER diction match each time (duet 93 over 98, qawwali 85 over 100, bhajan 76 over 100). Gemini Pro hit its 250/day Tier 1 cap after the first duet call (same preference there). Reading: sung-word match and overall preference are different axes, so a diction-only pick can choose the render a holistic listener likes less, and diction should be a veto/floor plus a weight, not the whole score. Caveats: 3 pairs, a flash-family judge, and a judge that may not hear word errors well. The folk and ballad prompts were refused by the safety screen again on a plain-worded retry (not billed), so those two styles are untested.
 
+## E3 result (2026-10-20, 10 renders): B did not beat A; see ops/lyria-cost.md
+
 ## E3 design: prompt-variant search (English style descriptions)
 
 Why English: CLAP and the Lyria style prompt both read English style text far better than native-script tags; the pool's native-script titles made text-audio match about 0.
