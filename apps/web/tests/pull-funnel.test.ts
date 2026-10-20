@@ -76,3 +76,32 @@ describe("buildPullFunnel", () => {
     expect(f.by_language.map((l) => l.language)).toEqual(["te"]);
   });
 });
+
+describe("buildPullFunnel listening and share steps", () => {
+  const cohort = [
+    { id: "a", created_at: "2026-10-10T08:00:00Z" },
+    { id: "b", created_at: "2026-10-10T08:00:00Z" },
+    { id: "c", created_at: "2026-10-10T08:00:00Z" },
+  ];
+  it("sums listening across rows and counts five minutes as the bar", () => {
+    const activity = [
+      { user_id: "a", created_at: "2026-10-10T09:00:00Z", language: "hi", listen_ms: 180_000 },
+      { user_id: "a", created_at: "2026-10-10T09:05:00Z", language: "hi", listen_ms: 120_000, shared: true },
+      { user_id: "b", created_at: "2026-10-10T09:00:00Z", language: "ta", listen_ms: 299_999 },
+      { user_id: "c", created_at: "2026-10-10T09:00:00Z", language: "ta" },
+    ];
+    const f = buildPullFunnel(cohort, activity, counters, 14, NOW);
+    expect(f.activated).toBe(3);
+    expect(f.listened_5min).toBe(1);
+    expect(f.shared).toBe(1);
+    expect(f.rates.activated_to_listened_5min).toBe(0.333);
+    expect(f.rates.activated_to_shared).toBe(0.333);
+    expect(f.by_language.find((l) => l.language === "hi")?.listened_5min).toBe(1);
+    expect(f.by_language.find((l) => l.language === "ta")?.listened_5min).toBe(0);
+  });
+  it("ignores listening from users outside the cohort", () => {
+    const f = buildPullFunnel(cohort, [{ user_id: "z", created_at: "2026-10-10T09:00:00Z", listen_ms: 600_000, shared: true }], counters, 14, NOW);
+    expect(f.listened_5min).toBe(0);
+    expect(f.shared).toBe(0);
+  });
+});
