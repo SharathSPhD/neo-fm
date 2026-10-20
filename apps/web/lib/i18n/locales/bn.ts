@@ -805,6 +805,8 @@ export const bn: Dict = {
   "clip.preview": "ক্লিপের প্রিভিউ",
   "clip.share": "ক্লিপ শেয়ার করুন",
   "clip.download": "ক্লিপ ডাউনলোড করুন",
+  "clip.copyLink": "ভিডিওর বিবরণের জন্য লিংক কপি করুন",
+  "clip.linkCopied": "লিংক কপি হয়েছে",
   "clip.failed": "ক্লিপ বানানো গেল না। আবার চেষ্টা করুন।",
   "clip.unsupported": "এই ব্রাউজার ক্লিপ রেকর্ড করতে পারে না। ফোনে Chrome বা Safari চেষ্টা করুন।",
   "clip.compatNote": "এই ব্রাউজার Instagram-উপযোগী MP4 বানাতে পারেনি। Instagram বা WhatsApp এই ফাইল না নিলে Android-এ Chrome বা iPhone-এ Safari চেষ্টা করুন।",

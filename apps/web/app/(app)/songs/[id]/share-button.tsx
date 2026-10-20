@@ -23,6 +23,7 @@ import {
   DEDICATION_TO_MAX,
   whatsappShareUrl,
 } from "@/lib/share/dedication";
+import { tagShareUrl } from "@/lib/share/tag";
 
 import { ClipExportButton, type ClipSource } from "./clip-export-button";
 import { EmbedBuilder } from "./embed-builder";
@@ -167,13 +168,13 @@ export function ShareButton({
     // same copy-link path as the Copy button.
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share(buildSharePayload(title, url));
+        await navigator.share(buildSharePayload(title, tagShareUrl(url, { source: "sheet", campaign: "clip" })));
         return;
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    await copyToClipboard(url);
+    await copyToClipboard(tagShareUrl(url, { source: "copy", campaign: "clip" }));
   }
 
   if (!canShare) {
@@ -278,7 +279,7 @@ export function ShareButton({
                     </button>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(publicUrl)}
+                      onClick={() => copyToClipboard(tagShareUrl(publicUrl, { source: "copy", campaign: "clip" }))}
                       className="rounded-md border border-muted/30 px-3 py-2 text-xs hover:bg-muted/10"
                     >
                       {copyState === "copied"
@@ -340,7 +341,7 @@ export function ShareButton({
                         href={whatsappShareUrl({
                           to: dedTo,
                           title,
-                          url: publicUrl,
+                          url: tagShareUrl(publicUrl, { source: "whatsapp", campaign: "gift" }),
                         })}
                         target="_blank"
                         rel="noopener noreferrer"

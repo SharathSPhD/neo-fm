@@ -805,6 +805,8 @@ export const ta: Dict = {
   "clip.preview": "கிளிப் முன்னோட்டம்",
   "clip.share": "கிளிப்பைப் பகிர்",
   "clip.download": "கிளிப்பைப் பதிவிறக்கு",
+  "clip.copyLink": "வீடியோ விவரத்துக்கான இணைப்பை நகலெடு",
+  "clip.linkCopied": "இணைப்பு நகலெடுக்கப்பட்டது",
   "clip.failed": "கிளிப்பை உருவாக்க முடியவில்லை. மீண்டும் முயலவும்.",
   "clip.unsupported": "இந்த உலாவியில் கிளிப் பதிவு செய்ய முடியாது. போனில் Chrome அல்லது Safari முயலவும்.",
   "clip.compatNote": "இந்த உலாவியால் Instagram-க்குத் தயாரான MP4 உருவாக்க முடியவில்லை. Instagram அல்லது WhatsApp இந்தக் கோப்பை ஏற்கவில்லை என்றால், Android-ல் Chrome அல்லது iPhone-ல் Safari முயலவும்.",

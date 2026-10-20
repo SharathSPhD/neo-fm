@@ -15,6 +15,7 @@ import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
+import { tagShareUrl } from "@/lib/share/tag";
 import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { takeFallback } from "@/lib/station/fallback";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
@@ -436,7 +437,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   function shareWhatsApp() {
     if (!current) return;
-    window.open(whatsappShareUrl(current.title, trackShareUrl(current.id, location.origin)), "_blank", "noopener,noreferrer");
+    window.open(whatsappShareUrl(current.title, tagShareUrl(trackShareUrl(current.id, location.origin), { source: "whatsapp", campaign: "station" })), "_blank", "noopener,noreferrer");
     sendSignal(current.id, "share", audioRef.current);
     sendFunnelEvent("whatsapp_click");
   }

@@ -805,6 +805,8 @@ export const kn: Dict = {
   "clip.preview": "ಕ್ಲಿಪ್ ಪೂರ್ವವೀಕ್ಷಣೆ",
   "clip.share": "ಕ್ಲಿಪ್ ಹಂಚಿಕೊಳ್ಳಿ",
   "clip.download": "ಕ್ಲಿಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+  "clip.copyLink": "ವೀಡಿಯೊ ವಿವರಣೆಗಾಗಿ ಲಿಂಕ್ ನಕಲಿಸಿ",
+  "clip.linkCopied": "ಲಿಂಕ್ ನಕಲಿಸಲಾಗಿದೆ",
   "clip.failed": "ಕ್ಲಿಪ್ ಮಾಡಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
   "clip.unsupported": "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಕ್ಲಿಪ್ ರೆಕಾರ್ಡ್ ಮಾಡಲು ಸಾಧ್ಯವಿಲ್ಲ. ಫೋನ್‌ನಲ್ಲಿ Chrome ಅಥವಾ Safari ಬಳಸಿ ಪ್ರಯತ್ನಿಸಿ.",
   "clip.compatNote": "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ Instagram-ಸಿದ್ಧ MP4 ರಚಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. Instagram ಅಥವಾ WhatsApp ಈ ಫೈಲ್ ಬೆಂಬಲಿಸದಿದ್ದರೆ, Android ನಲ್ಲಿ Chrome ಅಥವಾ iPhone ನಲ್ಲಿ Safari ಬಳಸಿ ನೋಡಿ.",

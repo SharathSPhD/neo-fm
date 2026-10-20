@@ -805,6 +805,8 @@ export const hi: Dict = {
   "clip.preview": "क्लिप का प्रीव्यू",
   "clip.share": "क्लिप शेयर करें",
   "clip.download": "क्लिप डाउनलोड करें",
+  "clip.copyLink": "वीडियो के विवरण के लिए लिंक कॉपी करें",
+  "clip.linkCopied": "लिंक कॉपी हो गया",
   "clip.failed": "क्लिप नहीं बन सकी। कृपया फिर कोशिश करें।",
   "clip.unsupported": "यह ब्राउज़र क्लिप रिकॉर्ड नहीं कर सकता। फ़ोन पर Chrome या Safari आज़माएँ।",
   "clip.compatNote": "यह ब्राउज़र Instagram-रेडी MP4 नहीं बना सका। अगर Instagram या WhatsApp यह फ़ाइल न ले, तो Android पर Chrome या iPhone पर Safari आज़माएँ।",
