@@ -142,3 +142,33 @@ describe("POST /api/billing/checkout", () => {
     expect(create).not.toHaveBeenCalled();
   });
 });
+
+describe("POST /api/billing/checkout (Station pass already held)", () => {
+  const passUser = (row: { status: string; current_period_end: string; cancel_at_period_end: boolean } | null) => {
+    const supabase = {
+      from: (t: string) => ({
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: t === "station_passes" ? row : null }) }) }),
+      }),
+    };
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1", email: "a@b.co" } as never, supabase: supabase as never });
+  };
+  const future = new Date(Date.now() + 20 * 86_400_000).toISOString();
+
+  it("refuses a second pass checkout with 409 already_subscribed and never calls Stripe", async () => {
+    const POST = await load(ENV); passUser({ status: "active", current_period_end: future, cancel_at_period_end: false });
+    const res = await POST(body({ pass: "station" }));
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.error).toBe("already_subscribed");
+    expect(json.manage_url).toBe("/account");
+    expect(create).not.toHaveBeenCalled();
+  });
+  it("still starts a pass checkout for someone without a paid-up pass (canceled or none)", async () => {
+    const POST = await load(ENV);
+    create.mockResolvedValue({ url: "https://checkout.stripe.test/pass" });
+    passUser({ status: "canceled", current_period_end: future, cancel_at_period_end: false });
+    expect((await POST(body({ pass: "station" }))).status).toBe(200);
+    passUser(null);
+    expect((await POST(body({ pass: "station" }))).status).toBe(200);
+  });
+});

@@ -5,6 +5,8 @@
  */
 import { z } from "zod";
 
+import { NUDGE_COPY, nudgeLang } from "./nudge-copy";
+
 export const NOTIFICATION_TYPES = [
   "song_ready",
   "song_failed",
@@ -142,7 +144,7 @@ export function renderNotification(n: Pick<NotificationRow, "type" | "data" | "c
     case "dedication":
       return { title: `A song was dedicated to you`, body: title ? quote(title) : undefined, href: str(d.public_id) ? `/s/${str(d.public_id)}` : "/library" };
     case "station_nudge":
-      return { title: "Your station is ready", body: "Tune in: fresh tracks picked for you.", href: "/station" };
+      return { ...NUDGE_COPY[nudgeLang(d.lang)], href: "/station" };
     case "takedown":
       return {
         title: `${quote(title)} was removed from public view`,

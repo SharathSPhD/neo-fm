@@ -5,11 +5,13 @@ import { headers } from "next/headers";
 
 import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { siteUrl } from "@/lib/seo/site";
+import { startupImages } from "@/lib/pwa/splash";
 import { AmbientBackground } from "@/components/ambient-background";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
 import { UiLangProvider } from "@/lib/i18n/use-ui-lang";
 import { ClientErrorListener } from "@/components/client-error-listener";
+import { RefCapture } from "@/components/ref-capture";
 import { TelegramMiniApp } from "@/components/telegram-mini-app";
 
 import "./globals.css";
@@ -39,6 +41,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "neo-fm",
+    startupImage: startupImages,
   },
   icons: {
     icon: [
@@ -72,6 +75,7 @@ export default async function RootLayout({
         <AmbientBackground />
         <AuthListener />
         <ClientErrorListener />
+        <RefCapture />
         <TelegramMiniApp />
         {children}
         <ServiceWorkerRegister />
