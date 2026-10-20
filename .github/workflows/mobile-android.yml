@@ -1,0 +1,95 @@
+name: mobile-android
+
+on:
+  push:
+    tags: ["mobile-v*"]
+  pull_request:
+    paths: ["apps/mobile/**", ".github/workflows/mobile-android.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: debug-signed beta APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm --filter @neo-fm/mobile typecheck
+      - name: Sync and build
+        working-directory: apps/mobile
+        run: |
+          npx cap sync android
+          cd android && ./gradlew assembleDebug --no-daemon
+      - name: Name the APK
+        run: cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk neo-fm-beta.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: neo-fm-beta-apk
+          path: neo-fm-beta.apk
+
+  release:
+    name: attach APK to the GitHub Release
+    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    needs: [apk, emulator-smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: neo-fm-beta-apk
+      - name: Create release and upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --prerelease --title "neo-fm beta $GITHUB_REF_NAME" --notes "Beta APK for sideloading (debug-signed). Allow 'install unknown apps' for your browser, then open the file."
+          gh release upload "$GITHUB_REF_NAME" neo-fm-beta.apk --clobber
+
+  emulator-smoke:
+    name: emulator smoke
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: neo-fm-beta-apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@c9c93e6ba9c4194322e114c40970d5983d9a07cc # v2.38.0
+        with:
+          api-level: 34
+          arch: x86_64
+          script: |
+            adb install neo-fm-beta.apk
+            adb shell am start -n com.neofm.app/.MainActivity
+            sleep 25
+            adb shell dumpsys activity activities | grep -q com.neofm.app
+            adb shell input keyevent KEYCODE_HOME
+            sleep 3
+            adb shell pidof com.neofm.app
+            adb exec-out screencap -p > launch.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-launch
+          path: launch.png
+          if-no-files-found: ignore

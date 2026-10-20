@@ -24,6 +24,7 @@ import { useState, useTransition } from "react";
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { checkoutErrorView } from "@/lib/billing/checkout-guard";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { useAppShell } from "@/lib/native/use-app-shell";
 
 type Props = { label: string; variant?: "primary" | "secondary" } & (
   | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never; pass?: never }
@@ -36,6 +37,7 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [manageUrl, setManageUrl] = useState<string | null>(null);
+  const shell = useAppShell();
 
   function start() {
     setError(null);
@@ -82,6 +84,11 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
         setError(err instanceof Error ? err.message : String(err));
       }
     });
+  }
+
+  // Plain text, no link: store rules forbid steering app users to outside purchase (see lib/native/app-shell.ts).
+  if (shell) {
+    return <p className="text-xs text-foreground/60">Plans and packs are managed on neo-fm.com with this same account.</p>;
   }
 
   return (
