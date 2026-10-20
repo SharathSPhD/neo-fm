@@ -1,8 +1,8 @@
 import { rates, type Rate } from "../../eval/cost";
 import type { HarnessConfig } from "./harness";
 
-/** Token profile of one 30 s Indic lyric (heavy tokenization). Assumed, not measured: recalibrate from the run's spend block. */
-const LYRIC = 450, EXEMPLAR = 450, PLAYBOOK = 700, CRITIC_OUT = 350, JUDGE = { in: 1600, out: 260 };
+/** Token profile of one 30 s Indic lyric. LYRIC is calibrated so a plain polish costs about USD 0.05, the measured production figure (2026-10-20 baseline run); the rest scale from it. Recalibrate from each run's spend block. */
+const LYRIC = 2700, EXEMPLAR = 1500, PLAYBOOK = 1500, CRITIC_OUT = 600, JUDGE = { in: 2400, out: 400 };
 const usd = (r: Rate, i: number, o: number) => (i * r.in + o * r.out) / 1e6;
 
 /** Expected Claude USD per song for an arm, assuming every refinement round runs and is judged (the upper bound). */
