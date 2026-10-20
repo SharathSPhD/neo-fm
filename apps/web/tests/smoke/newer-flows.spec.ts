@@ -49,9 +49,18 @@ test.describe("embed", () => {
     await expect(page.getByText("बारिश की पहली बूँद").first()).toBeVisible();
   });
 
-  test("the full song page cannot be framed", async ({ request }) => {
+  test("the full song page may be framed only by itself and Telegram Web", async ({ request }) => {
     const res = await request.get(`/s/${SONG_FIXTURES.hi.publicId}`);
-    expect(res.headers()["x-frame-options"]).toBe("DENY");
+    // X-Frame-Options cannot name Telegram Web, so it is dropped in favour of CSP frame-ancestors.
+    expect(res.headers()["x-frame-options"]).toBeUndefined();
+    const csp = res.headers()["content-security-policy"] ?? "";
+    const ancestors = /frame-ancestors ([^;]+)/.exec(csp)?.[1]?.split(" ");
+    expect(ancestors).toEqual([
+      "'self'",
+      "https://web.telegram.org",
+      "https://webk.telegram.org",
+      "https://webz.telegram.org",
+    ]);
   });
 
   test("an unknown song 404s", async ({ request }) => {
