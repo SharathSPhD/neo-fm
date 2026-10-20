@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { parseAppShell } from "@/lib/native/app-shell";
+import { nativePushRegistered } from "@/lib/native/push-bridge";
 import {
   MANDATORY_TYPES,
   NOTIFICATION_TYPES,
@@ -30,7 +31,7 @@ const b64uToBytes = (s: string): Uint8Array<ArrayBuffer> => {
   return out;
 };
 
-type PushState = "unknown" | "app" | "unavailable" | "unsupported" | "blocked" | "off" | "on";
+type PushState = "unknown" | "app" | "app-on" | "unavailable" | "unsupported" | "blocked" | "off" | "on";
 
 export function NotificationSettings() {
   const [prefs, setPrefs] = useState<ResolvedPrefs | null>(null);
@@ -40,7 +41,7 @@ export function NotificationSettings() {
   const [busy, setBusy] = useState(false);
 
   const detectPush = useCallback(async (publicKey: string | null) => {
-    if (parseAppShell(navigator.userAgent)) return setPush("app");
+    if (parseAppShell(navigator.userAgent)) return setPush(nativePushRegistered() ? "app-on" : "app");
     if (!publicKey) return setPush("unavailable");
     if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
       return setPush("unsupported");
@@ -143,7 +144,9 @@ export function NotificationSettings() {
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-2 rounded-xl border border-muted/30 p-4">
         <h2 className="text-lg font-medium">Push notifications on this device</h2>
-        {push === "app" ? (
+        {push === "app-on" ? (
+          <p className="text-sm text-foreground/60">Push notifications are on in this app. Turn the types you want on or off below.</p>
+        ) : push === "app" ? (
           <p className="text-sm text-foreground/60">Push notifications in the app are coming soon. The bell works without them.</p>
         ) : push === "unavailable" ? (
           <p className="text-sm text-foreground/60">Push notifications aren&apos;t available yet. The bell works without them.</p>

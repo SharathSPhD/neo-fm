@@ -11,3 +11,10 @@ describe("push bridge", () => {
     expect(await startNativePush()).toBe(false);
   });
 });
+
+describe("registered flag", () => {
+  it("is false when storage is unavailable", async () => {
+    const { nativePushRegistered } = await import("../../../lib/native/push-bridge");
+    expect(nativePushRegistered()).toBe(false);
+  });
+});
