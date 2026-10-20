@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import type { FunnelSummary } from "../../../lib/ops/funnel";
+import type { PullFunnel } from "../../../lib/ops/pull-funnel";
 import type { ErrorGroup } from "../../../lib/obs/group-errors";
 import type { AdReportRow } from "../../../lib/ops/ads-report";
 import type { StationHealth } from "../../../lib/ops/station-health";
@@ -23,6 +24,7 @@ export default function HealthPage() {
   const [trend, setTrend] = useState<TrendPoint[] | null>(null);
   const [trendDays, setTrendDays] = useState(7);
   const [funnel, setFunnel] = useState<FunnelSummary | null>(null);
+  const [pull, setPull] = useState<PullFunnel | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [station, setStation] = useState<StationHealth | null>(null);
   const [ads, setAds] = useState<AdReportRow[] | null>(null);
@@ -37,6 +39,8 @@ export default function HealthPage() {
       // Funnel is secondary: a missing migration should not hide the health numbers.
       const f = await fetch(`/api/admin/funnel?days=${Math.max(1, Math.round(h / 24))}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       setFunnel(f.ok ? await f.json() : null);
+      const pf = await fetch(`/api/admin/pull-funnel?days=${Math.min(30, Math.max(1, Math.round(h / 24)))}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
+      setPull(pf.ok ? await pf.json() : null);
       const t = await fetch(`/api/admin/health-trends?days=${td}`, { headers: { authorization: `Bearer ${s}` }, cache: "no-store" });
       setTrend(t.ok ? (await t.json()).points : null);
     } catch (e) {
@@ -157,6 +161,7 @@ export default function HealthPage() {
             ]} />
           )}
           {funnel && <LaunchFunnel funnel={funnel} />}
+          {pull && pull.by_language?.length > 0 && <LanguageActivation pull={pull} />}
           {ads && ads.length > 0 && (
             <Table title="House ads" head={["Ad", "Kind", "Languages", "On", "Starts", "Completes", "Taps", "Tap rate"]}
               rows={ads.map((a) => [a.headline, a.kind, a.languages.join(", ") || "any", a.active ? "yes" : "no", String(a.starts), String(a.completes), String(a.taps), pct(a.tapRate)])} />
@@ -291,5 +296,17 @@ function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
         />
       )}
     </>
+  );
+}
+
+/** Activated sign-ups by the language of their first play or song, with day-1 and day-7 return. */
+function LanguageActivation({ pull }: { pull: PullFunnel }) {
+  const rate = (r: { returned: number; eligible: number; rate: number | null }) => (r.eligible ? `${r.returned}/${r.eligible} (${pct(r.rate)})` : "-");
+  return (
+    <Table
+      title={`Activation and return by first language (${pull.window_days}d)`}
+      head={["Language", "Activated", "Back on day 1", "Back on day 7"]}
+      rows={pull.by_language.map((l) => [l.language, String(l.activated), rate(l.returned_d1), rate(l.returned_d7)])}
+    />
   );
 }

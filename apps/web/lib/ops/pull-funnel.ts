@@ -6,7 +6,17 @@
  */
 
 export interface CohortUser { id: string; created_at: string }
-export interface ActivityRow { user_id: string; created_at: string }
+/** `language` is the language of the track played or song made, when known. */
+export interface ActivityRow { user_id: string; created_at: string; language?: string | null }
+
+export interface ReturnRate { eligible: number; returned: number; rate: number | null }
+/** Activated users grouped by the language of their first activity, with how many came back. */
+export interface LanguageActivation {
+  language: string;
+  activated: number;
+  returned_d1: ReturnRate;
+  returned_d7: ReturnRate;
+}
 
 export interface PullFunnel {
   window_days: number;
@@ -16,8 +26,10 @@ export interface PullFunnel {
   signups: number;
   /** Signups who played a station track or finished a song, ever, since signing up. */
   activated: number;
-  returned_d1: { eligible: number; returned: number; rate: number | null };
-  returned_d7: { eligible: number; returned: number; rate: number | null };
+  returned_d1: ReturnRate;
+  returned_d7: ReturnRate;
+  /** Activated users by first-activity language, biggest first; "unknown" when no activity named a language. */
+  by_language: LanguageActivation[];
   rates: {
     visit_to_anon_play: number | null;
     visit_to_signup: number | null;
@@ -51,6 +63,7 @@ export function buildPullFunnel(
 ): PullFunnel {
   const days = new Map<string, Set<number>>();
   const firstActive = new Set<string>();
+  const firstLanguage = new Map<string, { at: string; language: string }>();
   const created = new Map(cohort.map((u) => [u.id, utcDay(u.created_at)]));
   for (const a of activity) {
     const signupDay = created.get(a.user_id);
@@ -59,7 +72,25 @@ export function buildPullFunnel(
     if (day < signupDay) continue; // activity before the account existed cannot happen; ignore clock skew
     (days.get(a.user_id) ?? days.set(a.user_id, new Set()).get(a.user_id)!).add(day);
     firstActive.add(a.user_id);
+    if (a.language) {
+      const seen = firstLanguage.get(a.user_id);
+      if (!seen || a.created_at < seen.at) firstLanguage.set(a.user_id, { at: a.created_at, language: a.language });
+    }
   }
+  const groups = new Map<string, CohortUser[]>();
+  for (const u of cohort) {
+    if (!firstActive.has(u.id)) continue;
+    const language = firstLanguage.get(u.id)?.language ?? "unknown";
+    (groups.get(language) ?? groups.set(language, []).get(language)!).push(u);
+  }
+  const byLanguage = [...groups]
+    .map(([language, users]) => ({
+      language,
+      activated: users.length,
+      returned_d1: returnStats(users, days, 1, now),
+      returned_d7: returnStats(users, days, 7, now),
+    }))
+    .sort((a, b) => b.activated - a.activated || a.language.localeCompare(b.language));
   return {
     window_days: windowDays,
     visits: counters.visits,
@@ -68,6 +99,7 @@ export function buildPullFunnel(
     activated: firstActive.size,
     returned_d1: returnStats(cohort, days, 1, now),
     returned_d7: returnStats(cohort, days, 7, now),
+    by_language: byLanguage,
     rates: {
       visit_to_anon_play: ratio(counters.anonStationPlays, counters.visits),
       visit_to_signup: ratio(cohort.length, counters.visits),
