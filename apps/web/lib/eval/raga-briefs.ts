@@ -19,6 +19,11 @@ export const RAGA_BRIEFS: EvalBrief[] = [
   { id: "raga-bn-desh-monsoon", language: "Bengali", style: "bn-rabindrasangeet", text: "A Rabindrasangeet-style monsoon song, rain on the window (raga Desh)" },
   { id: "raga-mr-bhoopali-abhang", language: "Marathi", style: "mr-abhang", text: "A Varkari abhang with taal and mridanga, group refrain (raga Bhoopali)" },
   { id: "raga-mr-bhimpalasi-bhavgeet", language: "Marathi", style: "mr-bhavgeet", text: "A bhavgeet about an afternoon in a grandmother's courtyard (raga Bhimpalasi)" },
+  { id: "raga-kn-hamsadhwani-dasara", language: "Kannada", style: "kn-dasara-padagalu", text: "A Purandara Dasa-style pada at sunrise in plain Kannada, tambura and cymbals (raga Hamsadhwani)" },
+  { id: "raga-kn-kalyani-bhavageethe", language: "Kannada", style: "kn-bhavageethe", text: "A bhavageethe at lamp-lighting time, soft and warm, about evening in the village (raga Kalyani)" },
+  { id: "raga-kn-shankarabharana-keerthane", language: "Kannada", style: "kn-dasara-padagalu", text: "A bright morning devotional keerthane to Krishna, violin and mridanga (raga Shankarabharana)" },
+  { id: "raga-hi-bageshri-thumri", language: "Hindi", style: "hindustani-thumri", text: "A thumri of waiting at midnight for someone who promised to come, harmonium and tabla (raga Bageshri)" },
+  { id: "raga-hi-bhimpalasi-bhajan", language: "Hindi", style: "bhajan-hindi", text: "A gentle afternoon-to-evening bhajan, harmonium and dholak, simple refrain (raga Bhimpalasi)" },
 ];
 
 /** Item id -> raga, for tagging after admission. */
@@ -38,4 +43,9 @@ export const RAGA_OF: Record<string, string> = {
   "raga-bn-desh-monsoon": "Desh",
   "raga-mr-bhoopali-abhang": "Bhoopali",
   "raga-mr-bhimpalasi-bhavgeet": "Bhimpalasi",
+  "raga-kn-hamsadhwani-dasara": "Hamsadhwani",
+  "raga-kn-kalyani-bhavageethe": "Kalyani",
+  "raga-kn-shankarabharana-keerthane": "Shankarabharana",
+  "raga-hi-bageshri-thumri": "Bageshri",
+  "raga-hi-bhimpalasi-bhajan": "Bhimpalasi",
 };
