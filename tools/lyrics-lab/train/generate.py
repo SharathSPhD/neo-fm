@@ -16,12 +16,13 @@ FastLanguageModel.for_inference(model); tok.padding_side = "left"
 out = {}
 for b in briefs:
     msgs = [{"role": "user", "content": common.song_prompt(b["lang"], b["style"], b["brief"])}]
-    ids = tok.apply_chat_template(msgs, add_generation_prompt=True, return_tensors="pt", return_dict=True).to("cuda")
+    T = getattr(tok, "tokenizer", tok)  # Gemma3 returns a processor; use its text tokenizer
+    ids = T(T.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True), return_tensors="pt", add_special_tokens=False).to("cuda")
     cands = []
     while len(cands) < a.n:
         k = min(a.batch, a.n - len(cands))
         g = model.generate(**ids, max_new_tokens=300, do_sample=True, temperature=a.temp, top_p=0.95, num_return_sequences=k)
-        cands += [tok.decode(x[ids["input_ids"].shape[1]:], skip_special_tokens=True).strip() for x in g]
+        cands += [T.decode(x[ids["input_ids"].shape[1]:], skip_special_tokens=True).strip() for x in g]
     out[b["id"]] = cands[0] if a.n == 1 else {"brief": b, "cands": cands}
     print(b["id"], flush=True)
 json.dump(out, open(a.out, "w"), ensure_ascii=False, indent=1)
