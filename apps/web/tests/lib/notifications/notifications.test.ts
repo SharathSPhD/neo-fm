@@ -52,11 +52,13 @@ describe("renderNotification", () => {
 });
 
 describe("web push", () => {
+  // getPrivateKey() drops leading zero bytes (about 1 in 256 keys), but a VAPID private key is a fixed 32-byte scalar.
+  const padScalar = (d: Buffer) => Buffer.concat([Buffer.alloc(32 - d.length), d]);
   const env = (o: Record<string, string>) => o as unknown as NodeJS.ProcessEnv;
   const keys = (() => {
     const e = createECDH("prime256v1");
     e.generateKeys();
-    return { publicKey: b64uEncode(e.getPublicKey()), privateKey: b64uEncode(e.getPrivateKey()) };
+    return { publicKey: b64uEncode(e.getPublicKey()), privateKey: b64uEncode(padScalar(e.getPrivateKey())) };
   })();
 
   it("is off unless the flag and all VAPID values are set", () => {

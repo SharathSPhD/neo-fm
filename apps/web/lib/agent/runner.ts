@@ -60,6 +60,8 @@ export interface Brief {
   intent?: IntentSpec;
   /** Routed style notes (PCE_STYLES): form and metre only, no intent text. */
   styleNote?: string;
+  /** PCE_PROSODY_SELECT: the engine selects among candidates with a metre and rhyme term and caps K at 4. */
+  prosodySelect?: boolean;
 }
 
 export const RUBRIC = `# neo-fm song rubric - starter, tune the criteria
@@ -90,6 +92,7 @@ export function briefText(b: Brief): string {
     ...(b.tasteCard ? [b.tasteCard] : []),
     ...(b.intent ? [intentBlock(b.intent)] : []),
     ...(b.styleNote ? [b.styleNote] : []),
+    ...(b.prosodySelect ? ["Prosody select: yes"] : []),
     ...(b.engine ? [`Engine mode: yes. EMBED_URL=${b.engine.url}`, `EMBED_TOKEN=${b.engine.token}`] : []),
   ].join("\n");
 }

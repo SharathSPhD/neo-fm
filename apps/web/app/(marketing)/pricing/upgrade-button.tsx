@@ -116,3 +116,19 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
     </div>
   );
 }
+
+/** Signed-out "Upgrade to X" entry: in the app shell it must not read as a purchase call to action. */
+export function UpgradeSignInLink({ label }: { label: string }) {
+  const shell = useAppShell();
+  if (shell) {
+    return <p className="text-xs text-foreground/60">Plans and packs are managed on neo-fm.com with this same account.</p>;
+  }
+  return (
+    <a
+      href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
+      className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
+    >
+      {label}
+    </a>
+  );
+}

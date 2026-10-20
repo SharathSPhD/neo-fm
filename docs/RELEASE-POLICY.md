@@ -8,4 +8,4 @@ Mobile (Android, iOS) syncs with web on every **major** release for now; later o
 
 Tie-break: if a user can do something today they could not yesterday, or the shell binary changes, it is major.
 
-Process: the PR description says MAJOR or MINOR. After a major prod deploy, Launch QA runs the full pass on web, Android and iOS. Web tags are dated; mobile tags are `mobile-v<semver>` and a tag builds the beta APK and attaches it to a GitHub Release.
+Process: the PR description says MAJOR or MINOR. After a major prod deploy, Launch QA runs the full pass on web, Android and iOS. Web tags are dated; mobile tags are `mobile-v<semver>` and a `mobile-v*` tag, or the workflow run manually with `release_tag`, builds the beta APK and attaches it to a GitHub Release.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { parseAppShell } from "@/lib/native/app-shell";
 
 const DISMISS_KEY = "neo-fm:install-dismissed-at";
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -17,6 +18,16 @@ function isStandalone(): boolean {
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true
   );
+}
+
+/** Inside the store app or Telegram there is nothing to install, so the banner never applies. */
+function inHostedApp(): boolean {
+  return parseAppShell(navigator.userAgent) !== null || Boolean((window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram?.WebApp?.initData);
+}
+
+/** iPhone, iPod and iPad, including iPadOS which reports a Mac user agent. */
+function isIosDevice(): boolean {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 }
 
 function snoozed(): boolean {
@@ -42,7 +53,7 @@ export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: numb
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
-    if (isStandalone() || snoozed()) return;
+    if (isStandalone() || snoozed() || inHostedApp()) return;
     const onPrompt = (e: Event) => {
       e.preventDefault();
       // Chromium can re-fire this after "Not now"; the snooze must win.
@@ -53,7 +64,7 @@ export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: numb
     const onInstalled = () => setHidden(true);
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
-    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    if (isIosDevice()) {
       setIos(true);
       setHidden(false);
     }

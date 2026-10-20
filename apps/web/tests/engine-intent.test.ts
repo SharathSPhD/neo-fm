@@ -233,3 +233,19 @@ describe("Marathi, Punjabi and Gujarati paths", () => {
     for (const code of ["mr", "pa", "gu"]) expect(dictionHintsFor(code, { DICTION_HINTS_LAUNCH: "1" }), code).not.toBe("");
   });
 });
+
+describe("per-language craft notes (PCE_LANG_NOTES)", () => {
+  it("has a Marathi note that names Marathi forms and no other language gets one", async () => {
+    const { languageNote } = await import("../lib/engine/lang-notes");
+    const mr = languageNote("mr");
+    expect(mr).toContain("आहे");
+    expect(mr).toContain("ळ");
+    expect(mr.length).toBeLessThan(1200);
+    for (const code of ["hi", "kn", "ta", "te", "bn", "en", "pa", "gu"]) expect(languageNote(code), code).toBe("");
+  });
+  it("the Marathi eval briefs are frozen, unique and Marathi", async () => {
+    const { MARATHI_BRIEFS } = await import("../lib/eval/marathi-briefs");
+    expect(new Set(MARATHI_BRIEFS.map((b) => b.id)).size).toBe(MARATHI_BRIEFS.length);
+    for (const b of MARATHI_BRIEFS) expect(b.code).toBe("mr");
+  });
+});

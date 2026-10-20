@@ -6,6 +6,11 @@ on:
   pull_request:
     paths: ["apps/mobile/**", ".github/workflows/mobile-android.yml"]
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Publish a GitHub prerelease with this tag (e.g. mobile-v0.1.0); leave empty to only build"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -45,7 +50,7 @@ jobs:
 
   release:
     name: attach APK to the GitHub Release
-    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    if: startsWith(github.ref, 'refs/tags/mobile-v') || github.event.inputs.release_tag != ''
     needs: [apk, emulator-smoke]
     runs-on: ubuntu-latest
     permissions:
@@ -58,15 +63,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
         run: |
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --prerelease --title "neo-fm beta $GITHUB_REF_NAME" --notes "Beta APK for sideloading (debug-signed). Allow 'install unknown apps' for your browser, then open the file."
-          gh release upload "$GITHUB_REF_NAME" neo-fm-beta.apk --clobber
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "neo-fm beta $TAG" --notes "Beta APK for sideloading (debug-signed). Allow 'install unknown apps' for your browser, then open the file."
+          gh release upload "$TAG" neo-fm-beta.apk --clobber
 
   emulator-smoke:
     name: emulator smoke
     needs: apk
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: actions/download-artifact@v4
         with:
           name: neo-fm-beta-apk
@@ -76,20 +86,12 @@ jobs:
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
       - uses: reactivecircus/android-emulator-runner@c9c93e6ba9c4194322e114c40970d5983d9a07cc # v2.38.0
         with:
-          api-level: 34
+          api-level: 35
           arch: x86_64
-          script: |
-            adb install neo-fm-beta.apk
-            adb shell am start -n com.neofm.app/.MainActivity
-            sleep 25
-            adb shell dumpsys activity activities | grep -q com.neofm.app
-            adb shell input keyevent KEYCODE_HOME
-            sleep 3
-            adb shell pidof com.neofm.app
-            adb exec-out screencap -p > launch.png
+          script: bash apps/mobile/scripts/emulator-smoke.sh neo-fm-beta.apk smoke-out
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emulator-launch
-          path: launch.png
+          name: emulator-smoke-evidence
+          path: smoke-out/
           if-no-files-found: ignore

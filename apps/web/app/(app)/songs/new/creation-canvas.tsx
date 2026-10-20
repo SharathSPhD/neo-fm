@@ -335,6 +335,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
         | { reason?: string }
         | null;
       const reason = body?.reason ?? "quota";
+      setStatus(null);
       setError(
         reason === "storage_bytes"
           ? t("prompt.errStorage")
@@ -344,11 +345,13 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
     }
     const policy = await policyErrorMessage(res, t);
     if (policy) {
+      setStatus(null);
       setError(policy);
       return;
     }
     if (!res.ok) {
       const body = await res.text();
+      setStatus(null);
       setError(t("create.errServer", { status: res.status, body: body || t("create.noBody") }));
       return;
     }

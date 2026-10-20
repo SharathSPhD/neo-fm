@@ -109,3 +109,32 @@ test.describe("station (signed out)", () => {
     }
   });
 });
+
+// STATION_DEDICATE=1 is set in the local smoke env (tests/smoke/env.mjs); a preview without the flag skips these.
+test.describe("dedicate this hour", () => {
+  test("a dedicated link greets the listener with a cleaned name", async ({ page }) => {
+    await page.goto("/station?s=raat&for=Meera");
+    const banner = page.getByRole("status").filter({ hasText: /meera/i });
+    test.skip(REMOTE && (await banner.count()) === 0, "preview does not have STATION_DEDICATE on");
+    await expect(banner).toContainText("This hour is for Meera");
+  });
+
+  test("markup and links in the name never reach the page", async ({ page }) => {
+    await page.goto("/station?for=" + encodeURIComponent("<img src=x onerror=alert(1)> http://evil.example"));
+    await expect(page.locator("img[src='x']")).toHaveCount(0);
+    await expect(page.locator("main")).not.toContainText("evil.example");
+  });
+
+  test("the station offers Dedicate this hour and builds a WhatsApp link", async ({ page }) => {
+    test.skip(REMOTE, "needs the local flag");
+    await page.addInitScript(() => { window.open = ((u?: string | URL) => { (window as unknown as { __opened: string }).__opened = String(u); return null; }) as typeof window.open; });
+    await startStation(page);
+    await page.getByRole("button", { name: "Dedicate this hour" }).click();
+    await page.getByPlaceholder("Who is this hour for?").fill("Asha");
+    await page.getByRole("button", { name: "Dedicate this hour" }).click();
+    const url = decodeURIComponent(await page.evaluate(() => (window as unknown as { __opened: string }).__opened));
+    expect(url).toContain("wa.me");
+    expect(url).toContain("for=Asha");
+    expect(url).toContain("utm_campaign=dedicate");
+  });
+});

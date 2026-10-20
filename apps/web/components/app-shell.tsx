@@ -79,7 +79,7 @@ export function AppShell({
 async function TopNav({ user }: { user: NavUser }) {
   const { t } = await serverI18n();
   return (
-    <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
+    <header className="glass sticky top-[env(safe-area-inset-top)] z-30 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <BrandMark />

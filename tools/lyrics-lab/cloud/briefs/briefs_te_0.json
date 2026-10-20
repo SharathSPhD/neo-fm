@@ -1,0 +1,242 @@
+[
+ {
+  "id": "te-c120",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A tender song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A tender song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c121",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A playful song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A playful song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c122",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A devotional song about dancers rehearsing before a show",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A devotional song about dancers rehearsing before a show. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c123",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A bittersweet song about a birthday for a child who loves kites",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A bittersweet song about a birthday for a child who loves kites. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c124",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A wistful song about a lost childhood home",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A wistful song about a lost childhood home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c125",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A wistful song about a mother's lullaby on a hot summer night",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A wistful song about a mother's lullaby on a hot summer night. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c126",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A playful song about a rainy bus ride home",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A playful song about a rainy bus ride home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c127",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A wistful song about an old teacher remembered by a former student",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A wistful song about an old teacher remembered by a former student. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c128",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A devotional song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A devotional song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c129",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A wistful song about a morning prayer in a small shrine",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A wistful song about a morning prayer in a small shrine. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c130",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A devotional song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A devotional song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c131",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A tender song about a birthday for a child who loves kites",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A tender song about a birthday for a child who loves kites. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c132",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A wistful song about a fishing village at dawn",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A wistful song about a fishing village at dawn. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c133",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A bittersweet song about a mother's lullaby on a hot summer night",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A bittersweet song about a mother's lullaby on a hot summer night. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c134",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A bittersweet song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A bittersweet song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c135",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A devotional song about the first day of school",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A devotional song about the first day of school. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c136",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A tender song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A tender song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c137",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A bittersweet song about an old teacher remembered by a former student",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A bittersweet song about an old teacher remembered by a former student. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c138",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A bittersweet song about a lost childhood home",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A bittersweet song about a lost childhood home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c139",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A joyful song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A joyful song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c140",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A devotional song about a festival of lamps",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A devotional song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c141",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A playful song about a farmer praying for harvest",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A playful song about a farmer praying for harvest. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c142",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A playful song about a wedding procession",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A playful song about a wedding procession. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c143",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A bittersweet song about a fishing village at dawn",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A bittersweet song about a fishing village at dawn. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c144",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-folk",
+  "brief": "A tender song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-folk\". Brief: A tender song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c145",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-keerthana",
+  "brief": "A bittersweet song about spring blossoms and a new beginning",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-keerthana\". Brief: A bittersweet song about spring blossoms and a new beginning. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c146",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-pop",
+  "brief": "A tender song about friends parting at a railway station",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-pop\". Brief: A tender song about friends parting at a railway station. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c147",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A devotional song about a grandmother's stories at twilight",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A devotional song about a grandmother's stories at twilight. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c148",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A tender song about an old teacher remembered by a former student",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A tender song about an old teacher remembered by a former student. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ },
+ {
+  "id": "te-c149",
+  "lang": "te",
+  "language": "Telugu",
+  "style": "telugu-light",
+  "brief": "A joyful song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Telugu (native script only, no transliteration, no translation) in the style family \"telugu-light\". Brief: A joyful song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Telugu: prasa between paired lines, equal matra counts, spoken-literary register. Output only the lyrics."
+ }
+]

@@ -8,11 +8,16 @@ const config: CapacitorConfig = {
   appId: "com.neofm.app",
   appName: "neo-fm",
   webDir: "www",
-  // Read by the web app (lib/native/app-shell.ts) to hide purchase UI inside the stores' apps.
-  appendUserAgent: "NeoFmApp/0.1.0",
   server: { url, cleartext: false, errorPath: "index.html", allowNavigation: ["www.neo-fm.com", "neo-fm.com", "*.supabase.co"] },
-  android: { allowMixedContent: false },
-  plugins: { SplashScreen: { launchAutoHide: true, backgroundColor: "#0a0612" } },
+  // appendUserAgent is read by the web app (lib/native/app-shell.ts) to hide purchase UI inside the stores' apps; it only
+  // takes effect under the platform sections.
+  android: { allowMixedContent: false, appendUserAgent: "NeoFmApp/0.1.0 (android)" },
+  ios: { appendUserAgent: "NeoFmApp/0.1.0 (ios)" },
+  plugins: {
+    // Android 15+ draws edge to edge; MainActivity pads the WebView itself so the page never sits under the system bars.
+    SystemBars: { insetsHandling: "disable", style: "DARK" },
+    SplashScreen: { launchAutoHide: true, backgroundColor: "#0a0612" },
+  },
 };
 
 export default config;

@@ -1,5 +1,6 @@
-/** OG card for /t/[id]: title and language on the shared share-card renderer; a generic card when the id does not resolve. */
+/** OG card for /t/[id]: native-script title and language name shaped by the share-card renderer; a generic card when the id does not resolve. */
 import { renderShareCard } from "@/lib/share/card-image";
+import { trackCardContent } from "@/lib/share/track-card";
 import { loadPoolTrack } from "@/lib/station/pool";
 import { isTrackId } from "@/lib/station/share";
 
@@ -12,10 +13,6 @@ export const contentType = "image/png";
 export default async function OgImage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   const track = isTrackId(id) ? await loadPoolTrack(id) : null;
-  return renderShareCard({
-    title: track?.title ?? "neo-fm",
-    subtitle: track ? "AI-made music on neo-fm" : "Your personal FM",
-    excerpt: [],
-    seed: id,
-  });
+  if (!track) return renderShareCard({ title: "neo-fm", subtitle: "Your personal FM", excerpt: [], seed: id });
+  return renderShareCard({ ...trackCardContent(track), seed: id });
 }
