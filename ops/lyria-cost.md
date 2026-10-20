@@ -18,6 +18,7 @@ Refused renders (moderation, Lyria 400, no audio part) are not counted. Long tra
 | 2026-10-19 | 30 s Flash clips (te, kn, ta, hi; stored PCE lyrics cut to 4 lines) | 34 | 1.70 | 24 | S tapped 40 clips for GBP 2 at 09:09Z; first 8 clips (GBP 0.40) all rejected because the gate scored the whole lyric (fixed in #321); then 26 renders: te 11, kn 5, ta 5, hi 3 admitted, 2 rejected, 6 refused by moderation |
 | 2026-10-19 | high-energy male-lead wave (kn, ta) | 12 | 3.00 | 12 | S tapped GBP 6.25 at 07:59Z 2026-10-19; kn 8 and ta 4 admitted; rest of the plan paused by the launch budget rule |
 | 2026-10-20 | long 150 s indie/lofi night tracks (kn 3, te 3, ta 2; stored PCE lyrics) | 8 | 2.00 | 8 | S tapped 8 tracks for GBP 2 at 07:09Z; all admitted (diction 85-100), 147-153 s, energy low, daypart night |
+| 2026-10-20 | gap top-up (hi, te, kn, ta; stored fullC lyrics) | 10 | 2.50 | 10 | S tapped 10 tracks for GBP 2.50 at 07:36Z; night indie/lofi 5, high-energy male film 3, devotional 2 (tagged dawn, not dusk); 120-157 s, diction 84-97, 0 refused |
 | 2026-10-18 | Lyria language A/B (ta/te/kn/bn, not pooled) | 16 | 4.00 | n/a | scored only, see pool/lyria-lang-ab.md |
 
 Pool renders: GBP 25.00 of the GBP 26 approved, then GBP 14.00 of the extra GBP 15 (the GBP 2.50 occasion samples came from the earlier GBP 3 test budget). Pool: 149 admitted, 24 retired duplicates, 23 rejected by the diction gate.
