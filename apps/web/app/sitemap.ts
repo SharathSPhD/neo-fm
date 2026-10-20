@@ -2,7 +2,9 @@ import type { MetadataRoute } from "next";
 
 import { articlePath } from "@/lib/seo/language-articles";
 import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
+import { poolTracksIndexable, trackIndexable } from "@/lib/seo/pool-tracks";
 import { PUBLIC_PATHS, siteUrl } from "@/lib/seo/site";
+import { loadPool } from "@/lib/station/pool";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 // Public songs change constantly; regenerate hourly rather than per request.
@@ -10,6 +12,7 @@ export const revalidate = 3600;
 
 const MAX_SONGS = 1000;
 const MAX_PROFILES = 500;
+const MAX_TRACKS = 1000;
 
 /** hreflang cluster as absolute URLs; every member of the cluster carries the same map. */
 function hreflangUrls(base: string): Record<string, string> {
@@ -61,6 +64,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   } catch {
     /* pages only */
+  }
+
+  // Station pool tracks in the launch languages, only while SEO_POOL_TRACKS is on (see lib/seo/pool-tracks.ts).
+  if (poolTracksIndexable()) {
+    try {
+      for (const t of (await loadPool()).filter((x) => trackIndexable(x.language)).slice(0, MAX_TRACKS)) {
+        pages.push({ url: `${base}/t/${t.id}`, changeFrequency: "monthly", priority: 0.4 });
+      }
+    } catch {
+      /* the other pages still list */
+    }
   }
 
   // Creator profiles that have at least one public song (empty profiles are noindex).
