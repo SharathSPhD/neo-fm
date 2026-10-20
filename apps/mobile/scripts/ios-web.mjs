@@ -13,12 +13,12 @@ const trackPath = sitemap.match(/\/t\/[0-9a-f-]{36}/i)?.[0];
 check("sitemap lists a public track for the listen-together check", !!trackPath, String(trackPath));
 const browser = await webkit.launch();
 if (trackPath) {
-  // WebKit's first audio load on a fresh runner spends minutes initialising GStreamer (iPhone SE, first in line, read currentTime 0
-  // after a 7 minute stall in both runs); warm it up once so the per-device checks measure the page, not the runner.
+  // WebKit's first audio playback on a fresh runner stalls for minutes (iPhone SE, first in line, read currentTime 0
+  // after a 6 minute stall in every run, loading metadata alone did not help); play a second of it once so the per-device checks measure the page, not the runner.
   const warm = await (await browser.newContext()).newPage();
   const t0 = Date.now();
   await warm.goto(ORIGIN + trackPath, { waitUntil: "networkidle" });
-  await warm.evaluate(() => new Promise((res) => { const a = document.querySelector("audio"); if (!a) return res(); a.addEventListener("loadedmetadata", res, { once: true }); a.addEventListener("error", res, { once: true }); a.load(); setTimeout(res, 600000); })).catch(() => {});
+  await warm.evaluate(() => new Promise((res) => { const a = document.querySelector("audio"); if (!a) return res(); a.muted = true; a.addEventListener("timeupdate", () => { if (a.currentTime > 1) res(); }); a.addEventListener("error", res, { once: true }); a.play().catch(res); setTimeout(res, 600000); })).catch(() => {});
   console.log(`audio warm-up took ${Math.round((Date.now() - t0) / 1000)}s`);
   await warm.context().close();
 }
