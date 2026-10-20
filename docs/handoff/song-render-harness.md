@@ -67,3 +67,6 @@ Why English: CLAP and the Lyria style prompt both read English style text far be
 
 ## E5 result (2026-10-20): Claude-written romanization (Tamil, Telugu)
 Sending Lyria only Claude-written, phonetically natural Latin lyrics (3 renders per language, one brief each), scored by sung-word match against the native text: Tamil 95/97/100, Telugu 97/100/93, against about 65 for the current native-plus-ITRANS input (Tamil 64/75, Telugu 64/67; hints off 63-67). Small sample, one brief per language, AI-judged, accent/naturalness not yet judged. Next: confirm on more briefs and judge naturalness before wiring a Claude romanization step.
+
+## E6 confirmation (2026-10-20): Kannada holds, Tamil/Telugu refused by the screen
+Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native-plus-ITRANS input (2 renders each). The two new Tamil (occ-ta-3) and Telugu (occ-te-3) briefs were refused by moderation on both attempts (not billed; cause unknown, not worked around), so Tamil/Telugu stay at the E5 evidence (one brief each). A Gemini flash single-listen naturalness rating scored every render 5/5, including 60%-diction stock, so it does not discriminate; accent and naturalness remain unjudged.
