@@ -36,6 +36,12 @@ jobs:
           java-version: 21
       - run: pnpm install --frozen-lockfile=false
       - run: pnpm --filter @neo-fm/mobile typecheck
+      - name: Add the Firebase config (when its secret exists)
+        env:
+          GS_B64: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_B64 }}
+        run: |
+          if [ -z "$GS_B64" ]; then echo "no Firebase config: native push stays off"; exit 0; fi
+          echo "$GS_B64" | base64 -d > apps/mobile/android/app/google-services.json
       - name: Sync and build
         working-directory: apps/mobile
         run: |

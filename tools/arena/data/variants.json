@@ -1,0 +1,33 @@
+{
+ "lab-g0-oneshot": {
+  "kind": "lyrics",
+  "label": "G0 one-shot (live-style)",
+  "owner": "lyrics-lab"
+ },
+ "lab-g1-plan": {
+  "kind": "lyrics",
+  "label": "G1 plan then write",
+  "owner": "lyrics-lab"
+ },
+ "lab-g2-bo6-rerank": {
+  "kind": "lyrics",
+  "label": "G2 best-of-6 + det rerank",
+  "owner": "lyrics-lab"
+ },
+ "lab-g3-repair": {
+  "kind": "lyrics",
+  "label": "G3 plan + checker repair",
+  "owner": "lyrics-lab"
+ },
+ "prod-haiku6-pce-sonnet-polish": {
+  "kind": "lyrics",
+  "label": "Production (6 Haiku, PCE pick, Sonnet polish)",
+  "owner": "pce",
+  "reference": true
+ },
+ "harness-refs": {
+  "kind": "lyrics",
+  "label": "exemplars + craft notes in Sonnet polish (harness arm refs)",
+  "owner": "lyrics-harness"
+ }
+}

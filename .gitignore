@@ -113,3 +113,8 @@ apps/web/tests/e2e/.share-state.json
 apps/web/tests/smoke/.output/
 apps/web/tests/smoke/.report/
 apps/web/tests/e2e/.screens/
+
+# visual regression: baselines (tests/visual/baselines) are tracked; run output is not
+apps/web/tests/visual/.output/
+apps/web/tests/visual/.report/
+apps/web/tests/visual/.auth/

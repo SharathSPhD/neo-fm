@@ -1,0 +1,578 @@
+[
+ {
+  "id": "kn-1",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "scene",
+  "style": "kannada-folk",
+  "brief": "Farmers waiting for the first rain; call-and-response chorus"
+ },
+ {
+  "id": "kn-2",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "scene",
+  "style": "bhavageete",
+  "brief": "A daughter leaving home after marriage, remembering the courtyard and her mother's lullabies"
+ },
+ {
+  "id": "kn-3",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "name",
+  "style": "kannada-pop",
+  "brief": "A birthday song for Ananya, who loves the sea and her grandfather's stories"
+ },
+ {
+  "id": "kn-4",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "name",
+  "style": "kannada-light-classical",
+  "brief": "An anniversary song for Ravi and Shruti, thirty years together, a coffee estate in Coorg"
+ },
+ {
+  "id": "kn-5",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "occasion",
+  "style": "kannada-devotional",
+  "brief": "Ugadi morning: neem and jaggery, new beginnings, family around the doorway"
+ },
+ {
+  "id": "kn-6",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "occasion",
+  "style": "kannada-folk",
+  "brief": "Dasara procession in Mysuru, drums and lamps, pride and joy"
+ },
+ {
+  "id": "kn-7",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "form",
+  "style": "vachana-inspired",
+  "brief": "A short free-verse devotional in the spirit of the vachana tradition about body as temple, new words only"
+ },
+ {
+  "id": "kn-8",
+  "lang": "kn",
+  "language": "Kannada",
+  "tier": "form",
+  "style": "devaranama-inspired",
+  "brief": "A pallavi-anupallavi-charana devotional about surrender at dawn, new words only"
+ },
+ {
+  "id": "hi-1",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "scene",
+  "style": "bollywood-ballad",
+  "brief": "Old train journeys and a letter that was never sent"
+ },
+ {
+  "id": "hi-2",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "scene",
+  "style": "hindustani",
+  "brief": "The first rain after a long summer, memory and distance"
+ },
+ {
+  "id": "hi-3",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "name",
+  "style": "hindi-pop",
+  "brief": "A birthday song for Kabir, nine years old, who wants to be an astronaut"
+ },
+ {
+  "id": "hi-4",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "name",
+  "style": "bollywood-ballad",
+  "brief": "A wedding song for Neha and Arjun, two families meeting in Lucknow"
+ },
+ {
+  "id": "hi-5",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "occasion",
+  "style": "hindi-folk",
+  "brief": "Diwali night: diyas on every ledge, a sister coming home"
+ },
+ {
+  "id": "hi-6",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "occasion",
+  "style": "hindi-folk",
+  "brief": "Holi morning in a small town, colour and forgiveness"
+ },
+ {
+  "id": "hi-7",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "form",
+  "style": "doha-inspired",
+  "brief": "Two original dohas (13+11 matra) on patience, new words only, then a refrain"
+ },
+ {
+  "id": "hi-8",
+  "lang": "hi",
+  "language": "Hindi",
+  "tier": "form",
+  "style": "ghazal-inspired",
+  "brief": "A short ghazal-style song: radif and qafia, longing for a home town, new words only"
+ },
+ {
+  "id": "te-1",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "scene",
+  "style": "telugu-folk",
+  "brief": "A song of longing for the monsoon in a drought-struck village"
+ },
+ {
+  "id": "te-2",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "scene",
+  "style": "telugu-keerthana",
+  "brief": "A devotional welcoming dawn at a temple by the river, surrender and gratitude"
+ },
+ {
+  "id": "te-3",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "name",
+  "style": "telugu-pop",
+  "brief": "A birthday song for Meghana, who dances in the rain"
+ },
+ {
+  "id": "te-4",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "name",
+  "style": "telugu-light",
+  "brief": "A wedding song for Karthik and Sravani, mango leaf toranam and turmeric"
+ },
+ {
+  "id": "te-5",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "occasion",
+  "style": "telugu-folk",
+  "brief": "Sankranti: bhogi fire, kites, rangoli and Gobbemmalu"
+ },
+ {
+  "id": "te-6",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "occasion",
+  "style": "telugu-folk",
+  "brief": "Bathukamma festival, flowers stacked and sung by women at dusk"
+ },
+ {
+  "id": "te-7",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "form",
+  "style": "padyam-inspired",
+  "brief": "A four-line devotional verse with prasa between lines, new words only, then a refrain"
+ },
+ {
+  "id": "te-8",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "form",
+  "style": "keerthana-inspired",
+  "brief": "A pallavi-anupallavi-charanam about gratitude to a teacher, new words only"
+ },
+ {
+  "id": "ta-1",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "scene",
+  "style": "tamil-folk",
+  "brief": "A fisherman's wife watching the sea at dusk, waiting for the boats"
+ },
+ {
+  "id": "ta-2",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "scene",
+  "style": "tamil-light-classical",
+  "brief": "A quiet temple morning, bells, camphor and a mother's prayer"
+ },
+ {
+  "id": "ta-3",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "name",
+  "style": "tamil-pop",
+  "brief": "A birthday song for Kavin, who fixes bicycles and dreams of Chennai"
+ },
+ {
+  "id": "ta-4",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "name",
+  "style": "tamil-light",
+  "brief": "A wedding song for Priya and Siva, kolam at the doorway and a banana-leaf feast"
+ },
+ {
+  "id": "ta-5",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "occasion",
+  "style": "tamil-folk",
+  "brief": "Pongal morning: boiling pot, sugarcane, kolam and a grandmother's blessing"
+ },
+ {
+  "id": "ta-6",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "occasion",
+  "style": "tamil-folk",
+  "brief": "Karthigai deepam: rows of lamps on a hill and a family reunited"
+ },
+ {
+  "id": "ta-7",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "form",
+  "style": "sangam-inspired",
+  "brief": "A short akam-style love poem (landscape as feeling: monsoon hills, waiting), new words only, with a refrain"
+ },
+ {
+  "id": "ta-8",
+  "lang": "ta",
+  "language": "Tamil",
+  "tier": "form",
+  "style": "bhakti-inspired",
+  "brief": "A pallavi-anupallavi-charanam devotional for a dawn lamp, edugai/monai between lines, new words only"
+ },
+ {
+  "id": "mr-1",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "scene",
+  "style": "marathi-folk",
+  "brief": "Farmers sowing at the start of the monsoon, bullocks and wet earth"
+ },
+ {
+  "id": "mr-2",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "scene",
+  "style": "bhavgeet",
+  "brief": "A mother's lullaby and a village at night"
+ },
+ {
+  "id": "mr-3",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "name",
+  "style": "marathi-pop",
+  "brief": "A birthday song for Aditi, who sings on the terrace at sunset"
+ },
+ {
+  "id": "mr-4",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "name",
+  "style": "marathi-light",
+  "brief": "An anniversary song for Sanjay and Mugdha, a Pune monsoon and a shared umbrella"
+ },
+ {
+  "id": "mr-5",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "occasion",
+  "style": "marathi-folk",
+  "brief": "Ganeshotsav: dhol-tasha, modak and the farewell procession"
+ },
+ {
+  "id": "mr-6",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "occasion",
+  "style": "marathi-folk",
+  "brief": "Gudi Padwa morning: gudi raised, new year wishes, family"
+ },
+ {
+  "id": "mr-7",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "form",
+  "style": "abhang-inspired",
+  "brief": "A short abhang-style devotional about waiting for the Vitthal pilgrimage (wari), new words only"
+ },
+ {
+  "id": "mr-8",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "form",
+  "style": "lavani-inspired",
+  "brief": "A playful lavani-style song with a dholki beat about a market evening, new words only"
+ },
+ {
+  "id": "bn-1",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "scene",
+  "style": "rabindrasangeet-inspired",
+  "brief": "The first monsoon clouds over the Padma, a river-town evening"
+ },
+ {
+  "id": "bn-2",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "scene",
+  "style": "bengali-folk",
+  "brief": "Fishermen at dawn on the Hooghly, boat songs and mist"
+ },
+ {
+  "id": "bn-3",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "name",
+  "style": "bengali-pop",
+  "brief": "A birthday song for Riya, eight years old, who loves painting"
+ },
+ {
+  "id": "bn-4",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "name",
+  "style": "bengali-ballad",
+  "brief": "A wedding song for Subhankar and Mitali, two families meeting in Kolkata"
+ },
+ {
+  "id": "bn-5",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "occasion",
+  "style": "bengali-folk",
+  "brief": "Durga Puja evening: dhak beats, pandal lights, a daughter coming home"
+ },
+ {
+  "id": "bn-6",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "occasion",
+  "style": "bengali-folk",
+  "brief": "Poila Boishakh morning, new clothes and the first sweets of the year"
+ },
+ {
+  "id": "bn-7",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "form",
+  "style": "baul-inspired",
+  "brief": "A short Baul-style song on the wandering heart, new words only, with a refrain"
+ },
+ {
+  "id": "bn-8",
+  "lang": "bn",
+  "language": "Bengali",
+  "tier": "form",
+  "style": "adhunik-song",
+  "brief": "Two original rhymed quatrains (antyamil) on a rainy window, then a refrain"
+ },
+ {
+  "id": "te-f1",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Farmers sowing seed at the first monsoon showers, call-and-response chorus"
+ },
+ {
+  "id": "te-f2",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A birthday song for Lakshmi, who paints rangoli every morning and feeds the crows"
+ },
+ {
+  "id": "te-f3",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "An anniversary song for Venkat and Padma, twenty-five years, a rented house in Vijayawada"
+ },
+ {
+  "id": "te-f4",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Bonalu festival procession, women carrying pots, drums and turmeric"
+ },
+ {
+  "id": "te-f5",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-light-classical",
+  "brief": "A prayer at dusk with a lamp before the tulasi plant"
+ },
+ {
+  "id": "te-f6",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A farewell song for a brother going abroad, his old bicycle and mother's pulihora"
+ },
+ {
+  "id": "te-f7",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Sankranti kites over the terrace, bhogi fire and fresh sugarcane"
+ },
+ {
+  "id": "te-f8",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A song for a daughter's first day at school, a new bag and braided hair"
+ },
+ {
+  "id": "te-f9",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-light-classical",
+  "brief": "The Godavari at sunrise, boats and temple bells"
+ },
+ {
+  "id": "te-f10",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A friendship song about hostel nights, Maggi and exam fear in Hyderabad"
+ },
+ {
+  "id": "te-f11",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "A grandmother's lullaby under the neem tree on a summer night"
+ },
+ {
+  "id": "te-f12",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "Ugadi pachadi, six tastes of life, a new year with family"
+ },
+ {
+  "id": "mr-f1",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A song for the first rain on the Konkan coast, mango trees and red soil"
+ },
+ {
+  "id": "mr-f2",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "abhang-inspired",
+  "brief": "An abhang-style prayer to Vitthal on the road to Pandharpur"
+ },
+ {
+  "id": "mr-f3",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A birthday song for Aaji, who tells stories about the village well"
+ },
+ {
+  "id": "mr-f4",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "bollywood-ballad",
+  "brief": "A wedding song for Rohan and Sneha, haldi yellow and the mangalsutra"
+ },
+ {
+  "id": "mr-f5",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "Diwali morning in Pune, abhyanga snan, faral and rangoli"
+ },
+ {
+  "id": "mr-f6",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A farewell to a friend moving to Mumbai, the local train and vada pav"
+ },
+ {
+  "id": "mr-f7",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "abhang-inspired",
+  "brief": "Wari pilgrims walking in the rain, tal and mridang"
+ },
+ {
+  "id": "mr-f8",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A song for a father who wakes early to light the stove for chai"
+ },
+ {
+  "id": "mr-f9",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "bollywood-ballad",
+  "brief": "A long-distance love song, phone calls at midnight between Nashik and Nagpur"
+ },
+ {
+  "id": "mr-f10",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "Gudi Padwa, the new gudhi raised at the window, neem and jaggery"
+ },
+ {
+  "id": "mr-f11",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A school reunion song, the old bench and the teacher's blackboard"
+ },
+ {
+  "id": "mr-f12",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A lullaby for a baby by the Krishna river, moonlight on the water"
+ }
+]
