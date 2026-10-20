@@ -57,3 +57,8 @@ export async function claudeRomanize(
     return null;
   }
 }
+
+/** First n lyric lines of a romanized song, for the job trace (tags and blanks skipped). */
+export function romanSample(text: string, n = 2): string {
+  return text.split(/\r?\n/).map((l) => l.trim()).filter((l) => l !== "" && !isTag(l)).slice(0, n).join(" / ");
+}

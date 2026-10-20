@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRomanPrompt, claudeRomanLanguages, claudeRomanize, parseRoman } from "../lib/diction/claude-roman";
+import { buildRomanPrompt, claudeRomanLanguages, claudeRomanize, parseRoman, romanSample } from "../lib/diction/claude-roman";
 
 const TA = "## Hook\nவாழை இலை வளைவில்\nதாலி ஒளிரும்\n\n## Verse 1\nபெரியவர் கைகள்";
 
@@ -33,5 +33,9 @@ describe("claude romanization", () => {
     expect(await claudeRomanize("## Hook\nla la la", "Tamil", async () => { called = true; return "[]"; })).toBeNull();
     expect(called).toBe(false);
     expect(buildRomanPrompt("Tamil", ["a"])).toContain("1. a");
+  });
+
+  it("samples the first lyric lines for the trace", () => {
+    expect(romanSample("## Hook\nvaazhai ilai\n\nthaali olirum\n\n## Verse 1\nperiyavar")).toBe("vaazhai ilai / thaali olirum");
   });
 });

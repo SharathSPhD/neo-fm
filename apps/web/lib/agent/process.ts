@@ -27,7 +27,7 @@ import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { renderBestOf } from "../render/best-of";
-import { CLAUDE_ROMAN_MODEL, claudeRomanize, claudeRomanLanguages } from "../diction/claude-roman";
+import { CLAUDE_ROMAN_MODEL, claudeRomanize, claudeRomanLanguages, romanSample } from "../diction/claude-roman";
 import { bestOfEnabled, bestOfOptions } from "../render/config";
 import { dictionScorer } from "../render/scorers";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
@@ -259,7 +259,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           const res = await anthropicClient().messages.create({ model: CLAUDE_ROMAN_MODEL, max_tokens: 2000, messages: [{ role: "user", content: prompt }] });
           return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
         })) : null;
-        if (claudeRomanLanguages().has(doc.language)) log(`claude-roman ${claudeRoman ? "used" : "fallback"}`);
+        if (claudeRomanLanguages().has(doc.language)) log(claudeRoman ? `claude-roman used lang=${doc.language} sample=${romanSample(claudeRoman)}` : `claude-roman fallback lang=${doc.language}`);
         const sung = claudeRoman ?? (ss?.romanized ? ss.text : a.lyrics);
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
         const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
