@@ -361,6 +361,7 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
 
 /** Machine-readable failure code shown to users as friendly copy (components/job-progress.tsx); the raw reason stays in agent_runs.render_error. */
 export function failureCode(renderError?: string | null): string {
+  if (renderError && /^lyria 402/i.test(renderError)) return "creation_paused";
   if (renderError && /daily cap/i.test(renderError)) return "provider_busy";
   if (renderError && /spend cap/i.test(renderError)) return "allowance_reached";
   if (renderError && /content policy|safety/i.test(renderError)) return "content_policy";

@@ -109,6 +109,7 @@ export function JobProgress({ songId, initialStage = "queued", createdAt }: { so
 const FRIENDLY: Record<string, UiKey> = {
   allowance_reached: "job.err.allowance",
   provider_busy: "job.err.busy",
+  creation_paused: "job.err.paused",
   render_failed: "job.err.render",
   timed_out: "job.err.timeout",
   content_policy: "job.err.policy",

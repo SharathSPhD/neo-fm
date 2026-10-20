@@ -13,7 +13,11 @@ const config: CapacitorConfig = {
   // takes effect under the platform sections.
   android: { allowMixedContent: false, appendUserAgent: "NeoFmApp/0.1.0 (android)" },
   ios: { appendUserAgent: "NeoFmApp/0.1.0 (ios)" },
-  plugins: { SplashScreen: { launchAutoHide: true, backgroundColor: "#0a0612" } },
+  plugins: {
+    // Android 15+ draws edge to edge; MainActivity pads the WebView itself so the page never sits under the system bars.
+    SystemBars: { insetsHandling: "disable", style: "DARK" },
+    SplashScreen: { launchAutoHide: true, backgroundColor: "#0a0612" },
+  },
 };
 
 export default config;

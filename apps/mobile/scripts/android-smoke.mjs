@@ -73,6 +73,9 @@ const checkoutStatus = await evalJs(`fetch("/api/billing/checkout",{method:"POST
 check("checkout refused for the app (403)", checkoutStatus === 403, `status ${checkoutStatus}`);
 await goto("/sign-in");
 check("no Google sign-in in the app", !/continue with google/i.test(await evalJs("document.body.innerText")));
+const wm = /(\d+)x(\d+)/.exec(adb("shell", "wm", "size"));
+const viewportPx = await evalJs("Math.round(window.innerHeight * window.devicePixelRatio)");
+check("page sits inside the system bars (not drawn edge to edge)", !!wm && viewportPx < Number(wm[2]) - 40, `viewport ${viewportPx}px of ${wm?.[2]}px`);
 
 // 3. the station plays
 await goto("/station");

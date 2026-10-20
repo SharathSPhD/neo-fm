@@ -23,7 +23,7 @@ import type { UiKey } from "@/lib/i18n/ui-strings";
 import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
 
-import { UpgradeButton } from "./upgrade-button";
+import { UpgradeButton, UpgradeSignInLink } from "./upgrade-button";
 import { WaitlistButton } from "./waitlist-button";
 
 export const metadata: Metadata = {
@@ -195,12 +195,7 @@ export default async function PricingPage() {
                   ) : null}
                 </div>
               ) : billingEnabled ? (
-                <a
-                  href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
-                  className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
-                >
-                  {t("pricing.upgradeTo", { tier: tier.label })}
-                </a>
+                <UpgradeSignInLink label={t("pricing.upgradeTo", { tier: tier.label })} />
               ) : (
                 <WaitlistButton tier={tier.cta.tier} label={t(tier.cta.label)} />
               )}
