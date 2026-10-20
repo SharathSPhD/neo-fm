@@ -11,6 +11,9 @@ import { hostAdvance } from "../cascade/host-run";
 import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from "../cascade/host-io";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
+import { ARMS, refsContext } from "../lyrics/harness/harness";
+import { langCode } from "../lyrics/harness/exemplars";
+import { playbookFor } from "../lyrics/harness/playbook";
 import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
 import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
@@ -207,10 +210,17 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // The structured intent (PCE_INTENT) is extracted once per job; polish sees it as part of the brief and the judge reads against it.
         const savedIntent = brief.intent;
         const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${doc.document_json.metadata?.prompt ?? ""}\n${styled?.note || langNote}` : doc.document_json.metadata?.prompt ?? "";
+        // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
+        // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
+        const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+        const refs = refsLangs.includes(langCode(doc.language))
+          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language)).text
+          : "";
+        const finalPolishBrief = refs ? `${polishBrief}\n\n${refs}` : polishBrief;
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
-            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: polishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
+            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
             const v2 = await screenRequest(a.lyrics, "lyrics");
             if (!v2.allowed) throw new SafetyRefusal(v2.reason);
             await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
