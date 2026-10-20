@@ -11,7 +11,8 @@ ap.add_argument("--pairs", required=True); ap.add_argument("--adapter", required
 ap.add_argument("--beta", type=float, default=0.1); ap.add_argument("--epochs", type=float, default=1.0); ap.add_argument("--lr", type=float, default=5e-6)
 a = ap.parse_args()
 model, tok = FastLanguageModel.from_pretrained(a.adapter, max_seq_length=1024, load_in_4bit=True)
-model = FastLanguageModel.get_peft_model(model, r=16, lora_alpha=16, lora_dropout=0, target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"], use_gradient_checkpointing="unsloth")
+if not hasattr(model, "peft_config"):  # adapter dir already carries trainable LoRA
+    model = FastLanguageModel.get_peft_model(model, r=16, lora_alpha=16, lora_dropout=0, target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"], use_gradient_checkpointing="unsloth")
 rows = []
 for r in common.read_jsonl(a.pairs):
     p = tok.apply_chat_template([{"role": "user", "content": common.song_prompt(r["lang"], r["style"], r["brief"])}], tokenize=False, add_generation_prompt=True)
