@@ -8,6 +8,9 @@ const check = (name, ok, detail = "") => {
   results.push({ name, ok });
   console.log(`${ok ? "PASS" : "FAIL"} ${name}${detail ? ` (${detail})` : ""}`);
 };
+const sitemap = await (await fetch(ORIGIN + "/sitemap.xml")).text();
+const trackPath = sitemap.match(/\/t\/[0-9a-f-]{36}/i)?.[0];
+check("sitemap lists a public track for the listen-together check", !!trackPath, String(trackPath));
 const browser = await webkit.launch();
 for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
   const d = devices[name];
@@ -28,6 +31,20 @@ for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
       check(`${name}: checkout refused for the app (403)`, st === 403, `status ${st}`);
     }
     if (path === "/sign-in") check(`${name}: no Google sign-in in the app`, !/continue with google/i.test(await page.evaluate(() => document.body.innerText)));
+  }
+  if (trackPath) {
+    // listen together: a station share link carries the sender's playhead (at, seconds) and send time (ts, epoch ms)
+    await page.goto(`${ORIGIN}${trackPath}?at=20&ts=${Date.now() - 5000}`, { waitUntil: "networkidle" });
+    const banner = page.getByText(/a friend is listening to this right now/i);
+    await banner.waitFor({ timeout: 10000 }).catch(() => {});
+    check(`${name}: together banner shows on a fresh share link`, await banner.isVisible());
+    const fits = await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1);
+    check(`${name}: together banner fits the screen`, fits);
+    await page.getByRole("button", { name: /listen together/i }).click().catch(() => {});
+    const seeked = await page.evaluate(() => { const a = document.querySelector("audio"); return a ? a.currentTime : -1; });
+    check(`${name}: joining seeks to about the sender's playhead`, seeked >= 24 && seeked < 60, `currentTime ${seeked}`);
+    await page.goto(`${ORIGIN}${trackPath}?at=20&ts=${Date.now() - 3 * 3600_000}`, { waitUntil: "networkidle" });
+    check(`${name}: a stale share link is a plain player`, !(await page.getByText(/a friend is listening/i).isVisible()));
   }
   await ctx.close();
   // landscape

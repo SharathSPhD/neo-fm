@@ -133,6 +133,26 @@ await sleep(5000);
 const t2 = await audioTime();
 check("same session on return (no restart, audio still advancing)", t2 > t1, `${t1.toFixed(1)} -> ${t2.toFixed(1)}`);
 
+// 4b. listen together: a station share link opens in the app, shows the banner, and joining seeks to the sender's playhead
+const trackPath = (await (await fetch(ORIGIN + "/sitemap.xml")).text()).match(/\/t\/[0-9a-f-]{36}/i)?.[0];
+check("sitemap lists a public track", !!trackPath, String(trackPath));
+if (trackPath) {
+  await send("Page.navigate", { url: `${ORIGIN}${trackPath}?at=20&ts=${Date.now() - 5000}` });
+  let bannerUp = false;
+  for (let i = 0; i < 15 && !bannerUp; i++) { await sleep(2000); bannerUp = (await evalJs(`/a friend is listening to this right now/i.test(document.body.innerText)`)) === true; }
+  shot("together-banner");
+  const tp = JSON.parse(await evalJs(probe));
+  check("together link: banner shows and fits the screen", bannerUp && !tp.sideways && tp.out.length === 0, JSON.stringify({ bannerUp, out: tp.out }));
+  await evalJs(`(()=>{const b=[...document.querySelectorAll("button")].find(x=>/listen together/i.test(x.innerText));b&&b.click();return !!b})()`, true);
+  let at = -1;
+  for (let i = 0; i < 10 && at < 24; i++) { await sleep(1500); at = await evalJs(`(()=>{const a=document.querySelector("audio");return a?a.currentTime:-1})()`); }
+  check("together link: joining seeks to the sender's playhead", at >= 24 && at < 90, `currentTime ${at}`);
+  await evalJs(`document.querySelector("audio")?.pause()`);
+  await send("Page.navigate", { url: `${ORIGIN}${trackPath}?at=20&ts=${Date.now() - 3 * 3600_000}` });
+  await sleep(6000);
+  check("together link: a stale link is a plain player", (await evalJs(`/a friend is listening/i.test(document.body.innerText)`)) === false);
+}
+
 // 5. the app can be killed and reopened cleanly
 adb("shell", "am", "force-stop", PKG);
 adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
