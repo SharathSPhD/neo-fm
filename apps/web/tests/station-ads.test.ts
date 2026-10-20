@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AD_CAPS, TIER_CAPS, adHoldoutPct, inAdHoldout, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
 import { parseAdState } from "../lib/station/ads-server";
-import { summarizeAds } from "../lib/ops/ads-report";
+import { retentionGuardrail, summarizeAds } from "../lib/ops/ads-report";
 
 const NOW = Date.parse("2026-11-05T10:00:00Z");
 const slot = (o: Partial<AdSlot> = {}): AdSlot => ({
@@ -204,5 +204,39 @@ describe("ad holdout", () => {
     expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "0" } as unknown as NodeJS.ProcessEnv)).toBe(0);
     expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "90" } as unknown as NodeJS.ProcessEnv)).toBe(50);
     expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "x" } as unknown as NodeJS.ProcessEnv)).toBe(10);
+  });
+});
+
+describe("retention guardrail", () => {
+  const now = Date.parse("2026-11-20T00:00:00Z");
+  const D = 86_400_000;
+  const mk = (n: number, prefix: string, returnRate: number) => {
+    const users: { id: string; tier: string }[] = [];
+    const plays: { user_id: string; created_at: string }[] = [];
+    for (let i = 0; i < n; i++) {
+      const id = `${prefix}${i}`;
+      users.push({ id, tier: "free" });
+      const first = now - 5 * D;
+      plays.push({ user_id: id, created_at: new Date(first).toISOString() });
+      if (i < Math.round(n * returnRate)) plays.push({ user_id: id, created_at: new Date(first + D + 3_600_000).toISOString() });
+    }
+    return { users, plays };
+  };
+  it("flags a breach when ad listeners return more than 10% less than the holdout", () => {
+    const h = mk(40, "h", 0.5), e = mk(40, "e", 0.4);
+    const r = retentionGuardrail([...h.users, ...e.users], [...h.plays, ...e.plays], (id) => id.startsWith("h"), now);
+    expect(r.holdout.rate).toBe(0.5);
+    expect(r.exposed.rate).toBe(0.4);
+    expect(r.relativeDropPct).toBe(20);
+    expect(r.breach).toBe(true);
+  });
+  it("does not call a breach on small cohorts, paid users, or listeners under 48 h old", () => {
+    const h = mk(10, "h", 0.5), e = mk(10, "e", 0.1);
+    expect(retentionGuardrail([...h.users, ...e.users], [...h.plays, ...e.plays], (id) => id.startsWith("h"), now).breach).toBe(false);
+    const paid = mk(40, "e", 0.1).users.map((u) => ({ ...u, tier: "pro" }));
+    const h2 = mk(40, "h", 0.5);
+    const r = retentionGuardrail([...h2.users, ...paid], [...h2.plays, ...mk(40, "e", 0.1).plays], (id) => id.startsWith("h"), now);
+    expect(r.exposed.users).toBe(0);
+    expect(retentionGuardrail(h2.users, h2.plays, () => true, now - 4 * D).holdout.users).toBe(0);
   });
 });
