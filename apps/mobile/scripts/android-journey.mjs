@@ -234,6 +234,38 @@ const redirected = await evalJs("location.pathname + location.search");
 const ap = JSON.parse(await evalJs(probe));
 check("signed-out notifications link goes to sign-in and fits the screen", /^\/sign-in\?next=/.test(redirected) && !ap.err && !ap.sideways && ap.out.length === 0, redirected);
 
+// 4e. offline: with the network off, a page that was never visited falls back to the service worker's offline page
+// instead of the browser's error page, and the app recovers when the network is back.
+await goto("/");
+await evalJs(`navigator.serviceWorker.ready.then(()=>true)`);
+await sleep(2000);
+adb("shell", "cmd", "connectivity", "airplane-mode", "enable");
+await sleep(4000);
+await send("Page.navigate", { url: ORIGIN + "/never-visited-" + Date.now() });
+await sleep(6000);
+const offlineText = await evalJs(`document.body ? document.body.innerText.slice(0, 200) : ""`);
+check("offline: an uncached page shows the offline page", /offline/i.test(String(offlineText)), String(offlineText).replace(/\s+/g, " ").slice(0, 100));
+adb("shell", "cmd", "connectivity", "airplane-mode", "disable");
+await sleep(8000);
+await goto("/");
+check("offline: the app loads normally once the network is back", (await evalJs("location.pathname")) === "/" && (await evalJs("document.body.innerText.length")) > 80);
+
+// 4f. share sheet: report whether the WebView exposes the Web Share API and whether it opens the system chooser.
+const shareApi = await evalJs(`typeof navigator.share === "function"`);
+console.log("diag Web Share API in the WebView:", shareApi);
+if (shareApi) {
+  // Not awaited: the promise stays pending while the chooser is open.
+  await send("Runtime.evaluate", { expression: `navigator.share({ title: "neo-fm", text: "Listen on neo-fm", url: location.origin }).catch(()=>{}); true`, returnByValue: true, userGesture: true });
+  await sleep(3000);
+  const chooser = adb("shell", "dumpsys", "window").split("\n").filter((l) => /mCurrentFocus/.test(l)).join(" ");
+  console.log("diag focus after navigator.share:", chooser.trim().slice(0, 160));
+  adb("shell", "input", "keyevent", "KEYCODE_BACK");
+  await sleep(1500);
+  adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
+  await sleep(2500);
+  await attach();
+}
+
 // 5. the app can be killed and reopened cleanly
 adb("shell", "am", "force-stop", PKG);
 adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);

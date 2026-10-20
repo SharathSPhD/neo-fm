@@ -109,6 +109,7 @@ jobs:
       - uses: reactivecircus/android-emulator-runner@c9c93e6ba9c4194322e114c40970d5983d9a07cc # v2.38.0
         env:
           FCM_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON_B64 }}
+          GH_TOKEN: ${{ github.token }}
         with:
           api-level: 35
           arch: x86_64
