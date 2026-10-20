@@ -56,6 +56,8 @@ async function goto(path) {
 // 1. the shell loads the live site and identifies itself
 await goto("/station");
 check("loads live origin", (await evalJs("location.origin")) === ORIGIN);
+console.log("diag ua:", await evalJs("navigator.userAgent"));
+console.log("diag globals:", await evalJs(`Object.keys(window).filter(k=>/capac|android|native/i.test(k)).join(",")`));
 check("shell user agent", /NeoFmApp\/\S+ \(android\)/.test(await evalJs("navigator.userAgent")));
 check("capacitor bridge injected", (await evalJs("typeof window.Capacitor?.registerPlugin")) === "function");
 
