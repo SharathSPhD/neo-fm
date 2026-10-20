@@ -106,4 +106,4 @@ j = sp.choices["judge"]; j.add_argument("--a", required=True); j.add_argument("-
 g = sp.add_parser("gate"); g.add_argument("--arm", required=True); g.add_argument("--cases", required=True); g.add_argument("--name", required=True); g.add_argument("--max-usd", type=float, required=True)
 p = sp.add_parser("report"); p.add_argument("--name", required=True); p.add_argument("--inputs")
 a = ap.parse_args()
-{"distill": cmd_distill, "run": cmd_run, "judge": cmd_judge, "report": cmd_report}[a.cmd](a)
+{"distill": cmd_distill, "run": cmd_run, "judge": cmd_judge, "report": cmd_report, "gate": cmd_gate}[a.cmd](a)
