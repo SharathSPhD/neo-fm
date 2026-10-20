@@ -62,7 +62,7 @@ export async function runHarness(cfg: HarnessConfig, input: HarnessInput, deps: 
   const refine = async (first: string): Promise<string> => {
     let cur = first;
     for (let r = 0; r < cfg.rounds; r++) {
-      const crit = parseCritique(await deps.ask({ model: CRITIC_MODEL, prompt: critiquePrompt({ ...input, lyrics: cur, playbook }), maxTokens: 900 }));
+      const crit = parseCritique(await deps.ask({ model: CRITIC_MODEL, prompt: critiquePrompt({ ...input, lyrics: cur, playbook }), maxTokens: 2500 }));
       if (!crit || crit.verdict === "keep") { trace.push(`round ${r + 1}: ${crit ? "keep" : "unparseable critique"}`); break; }
       const revised = (await deps.ask({ model: CRITIC_MODEL, prompt: revisePrompt({ ...input, lyrics: cur, critique: crit, playbook }), maxTokens: 4000 })).trim();
       if (revised.length < 20) { trace.push(`round ${r + 1}: empty revision`); break; }

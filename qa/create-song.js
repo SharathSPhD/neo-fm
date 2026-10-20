@@ -1,4 +1,4 @@
-// Create-song flow on STAGING only: a signed-in prompt submission is accepted and queued, the song page opens, and a bad body is rejected.
+// Create-song flow on STAGING only: a signed-in prompt submission is accepted and queued, the song page shows it queued, and a bad body is rejected.
 // Staging has no music or lyrics provider keys and no worker, so the job is only queued; nothing is generated and nothing is spent.
 // Env: QA_STAGING_URL, QA_STAGING_EMAIL, QA_STAGING_PASSWORD. Refuses prod hosts.
 const { chromium } = require('playwright-core');
@@ -37,8 +37,8 @@ if (!email || !pw || /(^|\/\/)(www\.)?neo-fm\.com|neo-fm-web\.vercel\.app/.test(
   if ([200, 201, 202].includes(made.status) && made.j.job_id && id) {
     console.log('ok   song accepted and queued, status', made.j.status);
     const r = await p.goto(`${base}/songs/${id}`, { waitUntil: 'load', timeout: 60000 });
-    const h1 = await p.evaluate(() => (document.querySelector('h1') || {}).innerText || '');
-    r.status() === 200 && h1 ? console.log('ok   song page opens:', h1.slice(0, 40)) : (bad++, console.log('FAIL song page', r.status(), h1));
+    const t = await p.evaluate(() => (document.title || '') + ' | ' + (document.body.innerText || '').slice(0, 200).replace(/\s+/g, ' '));
+    r.status() === 200 && /queued|Warming up|Writing lyrics/i.test(t) ? console.log('ok   song page opens:', t.slice(0, 60)) : (bad++, console.log('FAIL song page', r.status(), t));
   } else if ([402, 403, 429].includes(made.status)) {
     console.log('info quota or plan limit reached for the QA user:', made.status, made.j.error || '');
   } else { bad++; console.log('FAIL create song', made.status, JSON.stringify(made.j).slice(0, 160)); }

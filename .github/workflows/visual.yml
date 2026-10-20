@@ -14,6 +14,11 @@ on:
     branches: [main, "claude/**"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      update_baselines:
+        description: "Re-render the baselines on the runner and commit them to the dispatched branch"
+        type: boolean
+        default: false
 
 concurrency:
   group: visual-${{ github.ref }}
@@ -27,6 +32,8 @@ jobs:
     continue-on-error: true
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -40,8 +47,18 @@ jobs:
       # Indic shaping depends on the system fonts: pin them so baselines are
       # reproducible. Devanagari, Tamil, Telugu, Kannada and Bengali are all in noto-core.
       - run: sudo apt-get update && sudo apt-get install -y fonts-noto-core
+      - name: re-render baselines and commit them (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch' && inputs.update_baselines
+        run: |
+          pnpm --filter @neo-fm/web test:visual:update
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/tests/visual/baselines
+          git diff --cached --quiet || git commit -m "visual: refresh baselines rendered on the CI runner"
+          git push
       - name: compare against baselines
         id: compare
+        if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.update_baselines) }}
         continue-on-error: true
         run: pnpm --filter @neo-fm/web test:visual # builds first, then compares
       - uses: actions/upload-artifact@v4
