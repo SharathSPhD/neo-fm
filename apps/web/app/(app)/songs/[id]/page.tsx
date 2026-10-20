@@ -280,7 +280,7 @@ export default async function SongDetailPage(
           { label: title },
         ]}
       />
-      <header className="flex flex-wrap items-end justify-between gap-3">
+      <header className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-3xl font-medium tracking-tight">{title}</h1>
           <p className="text-sm text-foreground/60">
@@ -307,7 +307,7 @@ export default async function SongDetailPage(
             </p>
           ) : null}
         </div>
-        <div className="flex flex-col items-end gap-2">
+        <div className="flex flex-wrap items-start gap-2">
           <ShareButton
             songId={data.id}
             initialVisibility={data.published_visibility}
@@ -343,7 +343,7 @@ export default async function SongDetailPage(
           ) : null}
           {data.status === "completed" ? <AddToCollectionButton jobId={data.id} /> : null}
           {data.status === "completed" ? (
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-wrap items-start gap-2">
               <VariationButton
                 songId={data.id}
                 styleFamily={doc?.style_family ?? "western"}
