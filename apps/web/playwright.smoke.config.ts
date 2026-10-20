@@ -12,7 +12,8 @@
  */
 import { defineConfig } from "@playwright/test";
 
-import { APP_PORT, FAKE_PORT, smokeEnv } from "./tests/smoke/env.mjs";
+import { APP_PORT } from "./tests/smoke/env.mjs";
+import { localServers } from "./tests/smoke/servers.mjs";
 
 // CI passes an empty string when the manual input is blank, so use `||`, not `??`.
 const REMOTE = process.env.SMOKE_BASE_URL || undefined;
@@ -38,20 +39,5 @@ export default defineConfig({
       proxy: proxy ? { server: proxy, bypass: "localhost,127.0.0.1" } : undefined,
     },
   },
-  webServer: REMOTE
-    ? undefined
-    : [
-        {
-          command: "node tests/smoke/fake-supabase.mjs",
-          url: `http://127.0.0.1:${FAKE_PORT}/__health`,
-          reuseExistingServer: false, // a stale server would silently test old code
-        },
-        {
-          command: `pnpm exec next start -p ${APP_PORT}`,
-          url: `http://localhost:${APP_PORT}/api/healthz`,
-          env: { ...smokeEnv, PORT: String(APP_PORT) } as Record<string, string>,
-          reuseExistingServer: false, // a stale server would silently test old code
-          timeout: 120_000,
-        },
-      ],
+  webServer: REMOTE ? undefined : localServers(),
 });

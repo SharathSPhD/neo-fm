@@ -14,6 +14,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:smoke": "node scripts/smoke-local.mjs",
+    "test:visual": "node scripts/visual-local.mjs",
+    "test:visual:update": "node scripts/visual-local.mjs --update-snapshots=all",
     "test:a11y": "node scripts/smoke-local.mjs a11y"
   },
   "dependencies": {
