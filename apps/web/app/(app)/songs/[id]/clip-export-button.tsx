@@ -9,7 +9,9 @@ import { useMemo, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { buildSharePayload } from "@/lib/share/card";
+import { useShareHandle } from "@/components/referral";
 import { withShareUtm } from "@/lib/share/attribution";
+import { clipBrandLine } from "@/lib/share/referral";
 import { pickClipWindow } from "@/lib/share/clip-plan";
 import { clipSupported, exportClip, type ExportedClip } from "@/lib/share/clip-export";
 import { buildLyricTimeline, parseLineTimings, type SyncSectionInput } from "@/lib/lyrics/sync";
@@ -41,6 +43,7 @@ export function ClipExportButton({
   shareUrl?: string | null;
 }) {
   const { t } = useUiLang();
+  const shareHandle = useShareHandle();
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +89,7 @@ export function ClipExportButton({
         occasion: occasion ?? null,
         message: message.trim() || null,
         seed: songId,
+        brand: clipBrandLine(shareHandle),
         audioContext,
         onProgress: setProgress,
         signal: abort.current.signal,
@@ -105,7 +109,7 @@ export function ClipExportButton({
     if (!clip) return;
     try {
       if (navigator.canShare?.({ files: [clip.file] })) {
-        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, withShareUtm(shareUrl, "clip", "clip")) : { title }) });
+        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, withShareUtm(shareUrl, "clip", "clip", shareHandle)) : { title }) });
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError(t("clip.failed"));

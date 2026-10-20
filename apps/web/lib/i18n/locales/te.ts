@@ -939,4 +939,7 @@ export const te: Dict = {
   "station.nudge.text": "స్టేషన్ నచ్చిందా? ఉచితంగా సైన్ అప్ అవ్వండి, నచ్చినవి సేవ్ చేసుకోండి, మీ అభిరుచికి తగ్గ సంగీతం పొందండి.",
   "station.nudge.signUp": "ఉచితంగా సైన్ అప్ అవ్వండి",
   "station.nudge.signIn": "సైన్ ఇన్",
+  "referral.sharedBy": "@{handle} స్టేషన్ నుంచి మీకు షేర్ చేసినది",
+  "referral.joined": "మీరు @{handle} లింక్ ద్వారా చేరారు",
+  "referral.count": "మీ షేర్ల ద్వారా {n} మంది చేరారు",
 };

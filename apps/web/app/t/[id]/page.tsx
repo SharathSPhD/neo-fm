@@ -8,7 +8,9 @@ import { notFound } from "next/navigation";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ReportButton } from "@/components/report-button";
+import { SharedBy } from "@/components/shared-by";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
+import { viewerHandle } from "@/lib/share/viewer-handle";
 import { trackIndexable } from "@/lib/seo/pool-tracks";
 import { siteUrl } from "@/lib/seo/site";
 import { prettyLanguage } from "@/lib/song/labels";
@@ -37,11 +39,13 @@ export async function generateMetadata(props: { params: Promise<{ id: string }> 
   };
 }
 
-export default async function TrackSharePage(props: { params: Promise<{ id: string }> }) {
+export default async function TrackSharePage(props: { params: Promise<{ id: string }>; searchParams: Promise<{ ref?: string | string[] }> }) {
   const { id } = await props.params;
+  const { ref } = await props.searchParams;
   const track = isTrackId(id) ? await loadPoolTrack(id) : null;
   if (!track) notFound();
 
+  const sharerHandle = await viewerHandle();
   const { data } = await createServiceRoleClient()
     .storage.from("tracks")
     .createSignedUrl(track.audioPath.replace(/^tracks\//, ""), SIGNED_URL_TTL_SECONDS);
@@ -62,6 +66,7 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
       {ld ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(ld) }} /> : null}
       {/* Counted with the visitor's share utm labels, so shared links show up per channel in the funnel. */}
       <FunnelBeacon event="share_view" />
+      <SharedBy refParam={ref} />
       <h1 className="text-2xl font-semibold">{track.title}</h1>
       <p className="text-sm text-foreground/70">AI-made {prettyLanguage(track.language)} music on neo-fm</p>
       {data?.signedUrl ? (
@@ -74,7 +79,7 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
           Tune in to your station
         </Link>
         <a
-          href={whatsappShareUrl(track.title, trackShareUrl(id))}
+          href={whatsappShareUrl(track.title, trackShareUrl(id), sharerHandle)}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded border px-4 py-2"

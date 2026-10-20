@@ -937,4 +937,7 @@ export const en = {
   "station.nudge.text": "Enjoying the station? Sign up free to save what you like and get music tuned to you.",
   "station.nudge.signUp": "Sign up free",
   "station.nudge.signIn": "Sign in",
+  "referral.sharedBy": "Shared with you from @{handle}'s station",
+  "referral.joined": "You joined from @{handle}'s link",
+  "referral.count": "{n} joined from your shares",
 } as const;

@@ -939,4 +939,7 @@ export const kn: Dict = {
   "station.nudge.text": "ಸ್ಟೇಷನ್ ಇಷ್ಟವಾಯಿತಾ? ಉಚಿತವಾಗಿ ಸೈನ್ ಅಪ್ ಮಾಡಿ, ಇಷ್ಟವಾದದ್ದನ್ನು ಉಳಿಸಿ, ನಿಮ್ಮ ಅಭಿರುಚಿಗೆ ತಕ್ಕ ಸಂಗೀತ ಪಡೆಯಿರಿ.",
   "station.nudge.signUp": "ಉಚಿತವಾಗಿ ಸೈನ್ ಅಪ್ ಮಾಡಿ",
   "station.nudge.signIn": "ಸೈನ್ ಇನ್",
+  "referral.sharedBy": "@{handle} ಅವರ ಸ್ಟೇಷನ್‌ನಿಂದ ನಿಮಗೆ ಹಂಚಿಕೊಳ್ಳಲಾಗಿದೆ",
+  "referral.joined": "ನೀವು @{handle} ಅವರ ಲಿಂಕ್ ಮೂಲಕ ಸೇರಿದ್ದೀರಿ",
+  "referral.count": "ನಿಮ್ಮ ಹಂಚಿಕೆಗಳಿಂದ {n} ಮಂದಿ ಸೇರಿದ್ದಾರೆ",
 };

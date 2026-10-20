@@ -24,6 +24,8 @@ export interface ClipFrameInput {
   cover: CanvasImageSource | null;
   /** Used to pick a deterministic gradient when there is no cover art. */
   seed: string;
+  /** Line under the progress bar; defaults to "neo.fm · AI-generated". The sharer's @handle goes here when they have one. */
+  brand?: string;
   fontFamily: string;
   /** Loudness 0..1 and beat pulse 0..1 at `t`; both 0 when the audio could not be analysed. */
   energy?: number;
@@ -163,7 +165,7 @@ export function drawClipFrame(ctx: CanvasRenderingContext2D, f: ClipFrameInput):
   ctx.fill();
   ctx.fillStyle = "rgba(255,255,255,0.6)";
   ctx.font = `500 34px ${f.fontFamily}`;
-  ctx.fillText("neo.fm · AI-generated", W / 2, H - 80);
+  ctx.fillText(f.brand ?? "neo.fm · AI-generated", W / 2, H - 80);
 
   ctx.restore();
 }

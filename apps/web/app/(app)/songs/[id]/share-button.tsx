@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { buildSharePayload } from "@/lib/share/card";
+import { useShareHandle } from "@/components/referral";
 import { withShareUtm } from "@/lib/share/attribution";
 import {
   DEDICATION_MESSAGE_MAX,
@@ -59,6 +60,7 @@ export function ShareButton({
   occasion,
 }: ShareButtonProps) {
   const { t } = useUiLang();
+  const shareHandle = useShareHandle();
   const [open, setOpen] = useState(false);
   const [visibility, setVisibility] = useState(initialVisibility);
   const [publicId, setPublicId] = useState<string | null>(initialPublicId);
@@ -168,13 +170,13 @@ export function ShareButton({
     // same copy-link path as the Copy button.
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share(buildSharePayload(title, withShareUtm(url, "native", "song")));
+        await navigator.share(buildSharePayload(title, withShareUtm(url, "native", "song", shareHandle)));
         return;
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    await copyToClipboard(withShareUtm(url, "copy", "song"));
+    await copyToClipboard(withShareUtm(url, "copy", "song", shareHandle));
   }
 
   if (!canShare) {
@@ -279,7 +281,7 @@ export function ShareButton({
                     </button>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(withShareUtm(publicUrl, "copy", "song"))}
+                      onClick={() => copyToClipboard(withShareUtm(publicUrl, "copy", "song", shareHandle))}
                       className="rounded-md border border-muted/30 px-3 py-2 text-xs hover:bg-muted/10"
                     >
                       {copyState === "copied"
@@ -341,7 +343,7 @@ export function ShareButton({
                         href={whatsappShareUrl({
                           to: dedTo,
                           title,
-                          url: withShareUtm(publicUrl, "whatsapp", "gift"),
+                          url: withShareUtm(publicUrl, "whatsapp", "gift", shareHandle),
                         })}
                         target="_blank"
                         rel="noopener noreferrer"

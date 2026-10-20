@@ -12,6 +12,7 @@ import { AppShell } from "@/components/app-shell";
 import { NetworkBanner } from "@/components/network-banner";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { PlayerProvider } from "@/components/player/player-provider";
+import { ReferralClaim } from "@/components/referral";
 import { safeNext } from "@/lib/auth/safe-next";
 import { fetchShellUser } from "@/lib/supabase/shell-user";
 
@@ -37,6 +38,7 @@ export default async function AppGroupLayout({
   return (
     <PlayerProvider>
       <NetworkBanner />
+      <ReferralClaim />
       <AppShell user={user}>
         {children}
       </AppShell>

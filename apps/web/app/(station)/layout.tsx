@@ -8,6 +8,7 @@ import { MarketingNav } from "@/components/marketing-nav";
 import { NetworkBanner } from "@/components/network-banner";
 import { MiniPlayer } from "@/components/player/mini-player";
 import { PlayerProvider } from "@/components/player/player-provider";
+import { ReferralClaim } from "@/components/referral";
 import { fetchShellUser } from "@/lib/supabase/shell-user";
 
 export default async function StationGroupLayout({ children }: { children: React.ReactNode }) {
@@ -23,6 +24,7 @@ export default async function StationGroupLayout({ children }: { children: React
   return (
     <PlayerProvider>
       <NetworkBanner />
+      <ReferralClaim />
       <AppShell user={user}>
         {children}
       </AppShell>
