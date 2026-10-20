@@ -18,7 +18,7 @@ import {
 } from "@/lib/seo/language-pages";
 import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
 import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
-import { poolTracksIndexable } from "@/lib/seo/pool-tracks";
+import { poolTracksIndexable, trackIndexable } from "@/lib/seo/pool-tracks";
 import { siteUrl } from "@/lib/seo/site";
 import { loadPool } from "@/lib/station/pool";
 import { loadTopSongs } from "@/lib/seo/top-songs";
@@ -54,7 +54,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
   const songs = await loadTopSongs(page.code, TOP_COUNT).catch(() => []);
   // Station tracks fill the page while community songs are few; listed only while SEO_POOL_TRACKS is on.
   const stationTracks = poolTracksIndexable()
-    ? (await loadPool().catch(() => [])).filter((t) => t.language === page.code && t.kind === "vocal").slice(0, TOP_COUNT)
+    ? (await loadPool().catch(() => [])).filter((t) => t.language === page.code && t.kind === "vocal" && trackIndexable(t.language)).slice(0, TOP_COUNT)
     : [];
   const ld = musicPlaylistLd({
     base: siteUrl(),
