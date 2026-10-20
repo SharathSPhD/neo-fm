@@ -109,12 +109,12 @@ def score(text, lang, target_lines=(4,9), target_syl=(8,18)):
     rhyme = st.mean(rs) if rs else 0
     rhyme_rate = st.mean([r>=0.6 for r in rs]) if rs else 0
     # 5 diversity: distinct word-level unigram ratio excluding deliberate hook repeats (dedupe identical lines first)
-    uniq=list(dict.fromkeys(ls)); words=[w for l in uniq for w in re.findall(r"[^\W\d_]+", l)]
+    uniq=list(dict.fromkeys(ls)); words=[w for l in uniq for w in re.findall(r"[\u0900-\u0dff]+", l)]
     ttr=len(set(words))/max(1,len(words))
     hook_repeat = 1 - len(uniq)/n
     # 6 english leakage
     lat=max(_latin_ratio(l) for l in ls)
     return {"valid":1,"lines":n,"mean_syl":round(st.mean(counts),1),"script":round(script,3),"structure":round(0.5*lc+0.5*inr,3),
             "meter":round(meter,3),"pair_within1":round(exact,3),"rhyme":round(rhyme,3),"rhyme_rate":round(rhyme_rate,3),
-            "diversity":round(min(1,ttr/0.8),3),"hook_repeat":round(hook_repeat,3),"latin_max":round(lat,3),
+            "diversity":round(min(1,ttr/0.8),3),"hook_repeat":round(hook_repeat,3),"uniq_lines":round(len(uniq)/n,3),"latin_max":round(lat,3),
             "det":round(100*(0.15*script+0.15*(0.5*lc+0.5*inr)+0.30*meter+0.25*rhyme+0.15*min(1,ttr/0.8)),1)}

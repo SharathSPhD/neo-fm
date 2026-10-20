@@ -4,7 +4,7 @@ Generated lyrics above MAX_RATIO must be rejected (GEMA v OpenAI risk: memorised
 import sys, json, re
 MAX_RATIO = 0.15
 def grams(text, n=4):
-    w = re.findall(r"[^\W\d_]+", text.lower())
+    w = re.findall(r"[\u0900-\u0dff]+", text.lower())  # whole Indic words: \w splits at combining vowel signs
     return {" ".join(w[i:i + n]) for i in range(len(w) - n + 1)}
 def load(path): return set(open(path, encoding="utf-8").read().split("\n"))
 def ratio(text, corpus_grams):

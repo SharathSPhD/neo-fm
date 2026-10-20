@@ -27,7 +27,7 @@ with open(a.out, "w", encoding="utf-8") as f:
         for t in v["cands"]:
             s = lm.score(t, b["lang"])
             if not s.get("valid") or s["script"] < 0.99 or overlap.ratio(t, corpus) > overlap.MAX_RATIO: continue
-            r = s["det"]
+            r = s["det"] - 40 * max(0.0, 0.6 - s["uniq_lines"])  # repetition is not content; hooks repeat, whole songs must not
             if a.judge == "gemini": r += 12 * (judge_score(b["language"], b["brief"], t) - 3)
             scored.append((r, t))
         if len(scored) < 2: continue
