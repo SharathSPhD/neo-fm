@@ -152,6 +152,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
         | { reason?: string }
         | null;
       const reason = body?.reason ?? "quota";
+      setStatus(null);
       setError(
         reason === "storage_bytes" ? t("prompt.errStorage") : t("prompt.errQuota"),
       );
@@ -159,10 +160,12 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
     }
     const policy = await policyErrorMessage(res, t);
     if (policy) {
+      setStatus(null);
       setError(policy);
       return;
     }
     if (!res.ok) {
+      setStatus(null);
       setError(t("prompt.errServer"));
       return;
     }
