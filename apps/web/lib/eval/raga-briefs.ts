@@ -1,6 +1,5 @@
 /**
- * Raga-led vocal songs for the pool (lab/raga-queue/items.json): hi, ta, te, kn, bn only, the languages the PCE lyric path covers.
- * Marathi, Punjabi and Gujarati items wait for the engine. Ids are frozen: `raga-<item id>`. Run with pce-eval `set=raga`.
+ * Raga-led vocal songs for the pool (lab/raga-queue/items.json): hi, ta, te, kn, bn and mr. Punjabi and Gujarati items wait for the engine. Ids are frozen: `raga-<item id>`. Run with pce-eval `set=raga`.
  */
 import type { EvalBrief } from "./briefs";
 
@@ -18,6 +17,8 @@ export const RAGA_BRIEFS: EvalBrief[] = [
   { id: "raga-kn-bhoopalam-bhavageethe", language: "Kannada", style: "kn-bhavageethe", text: "A bhavageethe about the first light of morning, poem-like (raga Bhoopalam)" },
   { id: "raga-bn-bhairavi-rabindra", language: "Bengali", style: "bn-rabindrasangeet", text: "A Rabindrasangeet-style song of an early autumn morning (raga Bhairavi)" },
   { id: "raga-bn-desh-monsoon", language: "Bengali", style: "bn-rabindrasangeet", text: "A Rabindrasangeet-style monsoon song, rain on the window (raga Desh)" },
+  { id: "raga-mr-bhoopali-abhang", language: "Marathi", style: "mr-abhang", text: "A Varkari abhang with taal and mridanga, group refrain (raga Bhoopali)" },
+  { id: "raga-mr-bhimpalasi-bhavgeet", language: "Marathi", style: "mr-bhavgeet", text: "A bhavgeet about an afternoon in a grandmother's courtyard (raga Bhimpalasi)" },
 ];
 
 /** Item id -> raga, for tagging after admission. */
@@ -35,4 +36,6 @@ export const RAGA_OF: Record<string, string> = {
   "raga-kn-bhoopalam-bhavageethe": "Bhoopalam",
   "raga-bn-bhairavi-rabindra": "Bhairavi",
   "raga-bn-desh-monsoon": "Desh",
+  "raga-mr-bhoopali-abhang": "Bhoopali",
+  "raga-mr-bhimpalasi-bhavgeet": "Bhimpalasi",
 };

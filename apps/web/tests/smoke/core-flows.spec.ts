@@ -88,7 +88,7 @@ test.describe("account page", () => {
     await page.goto("/account", { waitUntil: "commit" });
     // The fake delays the usage count by 3 s; everything else must be on screen well before that.
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 2_500 });
-    await expect(page.getByText("smoke@neo-fm.test").first()).toBeVisible({ timeout: 2_500 });
+    await expect(page.getByText("smoke@neo-fm.test").locator("visible=true").first()).toBeVisible({ timeout: 2_500 });
     expect(Date.now() - started).toBeLessThan(3_000);
     await expect(page.getByRole("heading", { name: /plan usage/i })).toBeVisible({ timeout: 10_000 });
   });
@@ -127,6 +127,8 @@ test.describe("public song page + report", () => {
     test.skip(REMOTE, "needs the seeded fake song; reporting writes");
     await page.goto(`/s/${PUBLIC_ID}`);
     await expect(page.getByText(/smoke test song/i).first()).toBeVisible();
+    // A first-time visitor gets one clear next step: a free station, no sign-up.
+    await expect(page.getByTestId("share-station-cta").getByRole("link", { name: /start my free station/i })).toHaveAttribute("href", "/station");
 
     await page.getByRole("button", { name: /report this song/i }).click();
     await page.getByRole("button", { name: /send report/i }).click();

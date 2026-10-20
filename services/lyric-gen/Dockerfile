@@ -9,7 +9,7 @@
 ARG STAGE=phase0
 
 # ----- phase0 (CI smoke) ---------------------------------------------------
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -32,7 +32,7 @@ EXPOSE 8090
 CMD ["uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "8090", "--log-level", "info"]
 
 # ----- dgx (DGX Spark runtime) ---------------------------------------------
-FROM nvcr.io/nvidia/pytorch:25.11-py3 AS dgx
+FROM nvcr.io/nvidia/pytorch:26.09-py3 AS dgx
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

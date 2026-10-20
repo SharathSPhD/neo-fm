@@ -23,6 +23,25 @@ const BATCH = 500;
 type PrefsRow = { user_id: string; prefs: Record<string, unknown> | null };
 type Sub = { id: string; user_id: string; endpoint: string; p256dh: string; auth: string };
 
+/** Language of each user's most recent song; no stored UI language exists server-side, and no migration is needed. */
+async function listenerLanguages(db: SupabaseClient, userIds: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  try {
+    const { data } = await db
+      .from("jobs")
+      .select("user_id, song_documents(language)")
+      .in("user_id", userIds)
+      .order("created_at", { ascending: false })
+      .limit(userIds.length * 3)
+      .returns<{ user_id: string; song_documents: { language: string } | { language: string }[] | null }[]>();
+    for (const j of data ?? []) {
+      const doc = Array.isArray(j.song_documents) ? j.song_documents[0] : j.song_documents;
+      if (doc?.language && !out.has(j.user_id)) out.set(j.user_id, doc.language);
+    }
+  } catch { /* copy falls back to English */ }
+  return out;
+}
+
 export async function runStationNudge(
   db: SupabaseClient,
   cfg: PushConfig,
@@ -56,11 +75,12 @@ export async function runStationNudge(
   const subsByUser = new Map<string, Sub[]>();
   for (const s of subRows ?? []) subsByUser.set(s.user_id, [...(subsByUser.get(s.user_id) ?? []), s]);
 
-  const msg = renderNotification({ type: "station_nudge", data: {}, count: 1 });
+  const langByUser = await listenerLanguages(db, due.map((r) => r.user_id));
   const dead = new Set<string>();
   for (const r of due) {
     const subs = subsByUser.get(r.user_id) ?? [];
     if (!subs.length) continue;
+    const msg = renderNotification({ type: "station_nudge", data: { lang: langByUser.get(r.user_id) }, count: 1 });
     const results: PushResult[] = [];
     for (const s of subs) {
       const res = await send(cfg, s, { title: msg.title, body: msg.body, url: msg.href, tag: "station-nudge" });

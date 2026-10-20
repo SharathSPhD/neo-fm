@@ -4,12 +4,14 @@ import { useState } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { useAppShell } from "@/lib/native/use-app-shell";
 
 /** "Continue with Google" via Supabase OAuth; lands on /auth/callback which exchanges the code. */
 export function GoogleButton({ next }: { next?: string }) {
   const { t } = useUiLang();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const shell = useAppShell();
 
   async function go() {
     setError(null);
@@ -22,6 +24,10 @@ export function GoogleButton({ next }: { next?: string }) {
       setError(/not enabled|unsupported provider/i.test(err.message) ? t("auth.google.unavailable") : err.message);
     }
   }
+
+  // Google refuses OAuth inside embedded WebViews. Until the system-browser return path exists (needs a Supabase redirect
+  // allowlist entry), the app offers email sign-in only; this also keeps Sign in with Apple (App Store 4.8) out of scope.
+  if (shell) return null;
 
   return (
     <div className="flex flex-col gap-2">

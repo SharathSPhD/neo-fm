@@ -13,5 +13,7 @@ export const smokeEnv = {
   ANTHROPIC_API_KEY: "",
   UPSTASH_REDIS_REST_URL: "",
   UPSTASH_REDIS_REST_TOKEN: "",
+  // Finished features that ship dark on prod are exercised here so their path stays covered.
+  STATION_DEDICATE: "1",
   NEXT_TELEMETRY_DISABLED: "1",
 };

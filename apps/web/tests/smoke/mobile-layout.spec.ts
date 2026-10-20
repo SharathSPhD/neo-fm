@@ -77,3 +77,14 @@ test.describe("touch targets", () => {
     });
   }
 });
+
+// Tracking utilities split Indic conjuncts, so the stylesheet resets letter-spacing under an Indic html lang.
+test("Indic UI languages reset letter-spacing, English keeps it", async ({ page, context, baseURL }) => {
+  const heading = () => page.locator("h1").first().evaluate((e) => getComputedStyle(e).letterSpacing);
+  await context.addCookies([{ name: "neo-fm-lang", value: "te", url: baseURL ?? "http://localhost:3000" }]);
+  await page.goto("/pricing");
+  expect(await heading()).toBe("normal");
+  await context.clearCookies();
+  await page.goto("/pricing");
+  expect(await heading()).not.toBe("normal");
+});

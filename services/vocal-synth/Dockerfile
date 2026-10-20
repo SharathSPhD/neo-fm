@@ -11,7 +11,7 @@
 ARG STAGE=phase0
 
 # ----- phase0 stage (CI smoke) -----------------------------------------------
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -25,7 +25,7 @@ RUN uv sync --frozen --no-dev || uv sync --no-dev
 COPY app ./app
 
 # ----- dgx stage (GPU prod) --------------------------------------------------
-FROM nvcr.io/nvidia/pytorch:25.11-py3 AS dgx
+FROM nvcr.io/nvidia/pytorch:26.09-py3 AS dgx
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \

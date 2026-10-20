@@ -101,7 +101,8 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
     constraint: words(plan.constraint || `${b.styleFamily} song in ${b.language}, about ${lines} short lines, singable`, 24),
     must_avoid: strs(plan.must_avoid, 6),
     aspects: strs(plan.aspects, 4),
-    K, seed: 0,
+    K: env.PCE_PROSODY_SELECT === "1" ? Math.min(K, 4) : K, seed: 0,
+    ...(env.PCE_PROSODY_SELECT === "1" ? { prosody_select: true } : {}),
   };
   const intent = await intentP;
   // PCE_STYLES: style routing without a model call or intent text; the full intent (PCE_INTENT) already carries the genre.

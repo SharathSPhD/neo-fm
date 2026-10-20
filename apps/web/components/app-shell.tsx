@@ -67,7 +67,7 @@ export function AppShell({
   return (
     <div className="relative min-h-screen text-foreground">
       <TopNav user={user} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-12 sm:pt-6">
         {children}
       </div>
       <MobileBottomNav />
@@ -79,7 +79,7 @@ export function AppShell({
 async function TopNav({ user }: { user: NavUser }) {
   const { t } = await serverI18n();
   return (
-    <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
+    <header className="glass sticky top-[env(safe-area-inset-top)] z-30 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <BrandMark />
