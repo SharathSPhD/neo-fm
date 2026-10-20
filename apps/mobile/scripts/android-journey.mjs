@@ -189,11 +189,38 @@ adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS");
 const fcm = await evalJs(`new Promise(async (res) => {
   const p = window.Capacitor.Plugins.PushNotifications;
   const t = setTimeout(() => res("timeout"), 20000);
-  await p.addListener("registration", (d) => { clearTimeout(t); res(d && d.value ? "token:" + d.value.length : "empty"); });
+  await p.addListener("registration", (d) => { clearTimeout(t); res(d && d.value ? "token:" + d.value : "empty"); });
   await p.addListener("registrationError", (e) => { clearTimeout(t); res("error:" + JSON.stringify(e)); });
   try { const perm = await p.requestPermissions(); if (perm.receive !== "granted") { clearTimeout(t); return res("permission:" + perm.receive); } await p.register(); } catch (e) { clearTimeout(t); res("throw:" + String(e)); }
 })`);
-console.log("diag FCM registration in the emulator:", fcm);
+const fcmToken = /^token:(.+)$/.exec(String(fcm))?.[1] ?? "";
+console.log("diag FCM registration in the emulator:", fcmToken ? `token of ${fcmToken.length} chars` : fcm);
+check("the emulator gets an FCM token from Firebase", fcmToken.length > 100, fcmToken ? "" : String(fcm));
+
+// Real delivery: with the Firebase service account (CI secret), send a notification straight to that token through FCM
+// HTTP v1 and wait for it to appear in the shade. Skipped where the secret is not available.
+async function sendFcm(token) {
+  const { createSign } = await import("node:crypto");
+  const sa = JSON.parse(Buffer.from(process.env.FCM_SERVICE_ACCOUNT_JSON_B64, "base64").toString("utf8"));
+  const b64u = (o) => Buffer.from(typeof o === "string" ? o : JSON.stringify(o)).toString("base64url");
+  const now = Math.floor(Date.now() / 1000);
+  const unsigned = `${b64u({ alg: "RS256", typ: "JWT" })}.${b64u({ iss: sa.client_email, scope: "https://www.googleapis.com/auth/firebase.messaging", aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3000 })}`;
+  const jwt = `${unsigned}.${createSign("RSA-SHA256").update(unsigned).sign(sa.private_key, "base64url")}`;
+  const tok = await (await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }) })).json();
+  const r = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, { method: "POST", headers: { authorization: `Bearer ${tok.access_token}`, "content-type": "application/json" }, body: JSON.stringify({ message: { token, notification: { title: "neo-fm e2e push", body: "delivered through FCM" }, data: { url: "/station" }, android: { priority: "HIGH" } } }) });
+  return r.status;
+}
+if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
+  try {
+    const status = await sendFcm(fcmToken);
+    check("FCM accepts a push to the emulator's token", status === 200, String(status));
+    let seen = false;
+    for (let i = 0; i < 20 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
+    check("the pushed notification shows up on the device", seen);
+  } catch (e) { check("push delivery through FCM", false, String(e).slice(0, 120)); }
+} else {
+  console.log("diag FCM delivery check skipped: no service account in this run");
+}
 await goto("/sign-in");
 await send("Page.navigate", { url: ORIGIN + "/account/notifications" });
 await sleep(6000);
