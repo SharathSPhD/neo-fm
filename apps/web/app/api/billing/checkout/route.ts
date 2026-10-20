@@ -41,6 +41,7 @@ import {
 } from "@/lib/billing/config";
 import { isLiveSubscriptionStatus, MANAGE_PLAN_URL } from "@/lib/billing/checkout-guard";
 import { getStripe } from "@/lib/billing/stripe";
+import { parseAppShell } from "@/lib/native/app-shell";
 import { requireUser } from "@/lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,10 @@ const BodySchema = z.union([
 ]);
 
 export async function POST(req: Request) {
+  // Store rules: no purchase flow inside the Android/iOS app shell; buy on the web, the account carries the entitlement.
+  if (parseAppShell(req.headers.get("user-agent"))) {
+    return NextResponse.json({ error: "purchases_on_web" }, { status: 403 });
+  }
   const cfg = getBillingConfigOrNull();
   if (!cfg) {
     return NextResponse.json(
