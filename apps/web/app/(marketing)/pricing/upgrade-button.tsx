@@ -32,6 +32,22 @@ type Props = { label: string; variant?: "primary" | "secondary" } & (
   | { pass: "station"; tier?: never; interval?: never; pack?: never }
 );
 
+/** Signed-out "Upgrade to ..." link to sign-in. Inside the store apps it is the same plain text as UpgradeButton (store rules). */
+export function SignInToUpgradeLink({ label, href }: { label: string; href: string }) {
+  const shell = useAppShell();
+  if (shell) {
+    return <p className="text-xs text-foreground/60">Plans and packs are managed on neo-fm.com with this same account.</p>;
+  }
+  return (
+    <a
+      href={href}
+      className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
+    >
+      {label}
+    </a>
+  );
+}
+
 export function UpgradeButton({ label, variant = "primary", ...target }: Props) {
   const { t } = useUiLang();
   const [pending, startTransition] = useTransition();
