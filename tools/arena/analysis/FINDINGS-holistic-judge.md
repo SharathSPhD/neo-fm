@@ -32,3 +32,14 @@ The judge uses only two values (3 and 4) on every field, so it has almost no res
 - In 4 of 5 pairs the judge picks the same slot in both orders, so its answer is mostly position, not content. Only the duet gave a consistent verdict, and it chose the render with 26% diction over 90%.
 - With the earlier 3 pairs: 8 pairs, 4 consistent verdicts, 0 of 4 agree with diction (Wilson 95% interval 0 to 49%); the other 4 are position-driven. Sung-word diction and this judge's preference look unrelated, and the judge is not usable as a selector without order-swapping, and then it decides only about half the time.
 - Caveat: one prompt wording, one flash-family model, 8 pairs. A prompt that names diction or asks for scores per axis could behave differently; that is a cheap follow-up before E2 spends Lyria money.
+
+## Per-axis test (diction / naturalness / style match, both orders)
+
+Same 5 m2 pairs, `gemini-3.5-flash`, temperature 0, one call per order (analysis/axes_m2_results.json, est. USD 0.059).
+
+- **The three axes collapse into one verdict.** In every pair and order the judge returned the same letter for diction, naturalness and style match. It gives a single holistic impression, not three measurements.
+- **Still position-driven.** 4 of 5 pairs flipped or went to a tie when the order was swapped (ballad, bhajan, folk: always "A"; duet: tie then "B"). Only qawwali held its side across both orders.
+- **Agreement with diction:** the one decisive pair (qawwali, diction 87 vs 77) picked the side diction prefers, so 1/1 decisive. That is too few to say anything; the real signal is that 4 of 5 are unusable.
+- Combined with the earlier 8-pair check (0 of 4 decisive verdicts agreed with diction), prompting per axis does not fix it.
+
+**Decision:** the render harness stays diction-only: diction is the veto and floor, and there is no judge-based holistic tiebreak yet. Revisit only with a different audio judge or a pairwise judge that is validated to be consistent across both orders first.

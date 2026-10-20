@@ -1,0 +1,135 @@
+{
+ "spent_usd_est": 0.0593,
+ "results": [
+  {
+   "pair": "hi-ballad-m",
+   "a_file": "hi-ballad-m-1.mp3",
+   "b_file": "hi-ballad-m-2.mp3",
+   "a_ref": 65,
+   "b_ref": 98,
+   "ref": "gemini sung-word diction match %",
+   "judge": null,
+   "orders": {
+    "ab": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    },
+    "ba": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    }
+   },
+   "pick": {
+    "diction": "split",
+    "naturalness": "split",
+    "style_match": "split"
+   }
+  },
+  {
+   "pair": "hi-bhajan-m",
+   "a_file": "hi-bhajan-m-1.mp3",
+   "b_file": "hi-bhajan-m-2.mp3",
+   "a_ref": 65,
+   "b_ref": 84,
+   "ref": "gemini sung-word diction match %",
+   "judge": null,
+   "orders": {
+    "ab": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    },
+    "ba": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    }
+   },
+   "pick": {
+    "diction": "split",
+    "naturalness": "split",
+    "style_match": "split"
+   }
+  },
+  {
+   "pair": "hi-duet-mf",
+   "a_file": "hi-duet-mf-1.mp3",
+   "b_file": "hi-duet-mf-2.mp3",
+   "a_ref": 26,
+   "b_ref": 90,
+   "ref": "gemini sung-word diction match %",
+   "judge": null,
+   "orders": {
+    "ab": {
+     "diction": "tie",
+     "naturalness": "tie",
+     "style_match": "tie"
+    },
+    "ba": {
+     "diction": "B",
+     "naturalness": "B",
+     "style_match": "B"
+    }
+   },
+   "pick": {
+    "diction": "split",
+    "naturalness": "split",
+    "style_match": "split"
+   }
+  },
+  {
+   "pair": "hi-folk-f",
+   "a_file": "hi-folk-f-1.mp3",
+   "b_file": "hi-folk-f-2.mp3",
+   "a_ref": 83,
+   "b_ref": 58,
+   "ref": "gemini sung-word diction match %",
+   "judge": null,
+   "orders": {
+    "ab": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    },
+    "ba": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    }
+   },
+   "pick": {
+    "diction": "split",
+    "naturalness": "split",
+    "style_match": "split"
+   }
+  },
+  {
+   "pair": "hi-qawwali-m",
+   "a_file": "hi-qawwali-m-1.mp3",
+   "b_file": "hi-qawwali-m-2.mp3",
+   "a_ref": 87,
+   "b_ref": 77,
+   "ref": "gemini sung-word diction match %",
+   "judge": null,
+   "orders": {
+    "ab": {
+     "diction": "A",
+     "naturalness": "A",
+     "style_match": "A"
+    },
+    "ba": {
+     "diction": "B",
+     "naturalness": "B",
+     "style_match": "B"
+    }
+   },
+   "pick": {
+    "diction": "a",
+    "naturalness": "a",
+    "style_match": "a"
+   }
+  }
+ ]
+}
