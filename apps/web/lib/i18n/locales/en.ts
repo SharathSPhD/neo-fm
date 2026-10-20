@@ -652,7 +652,7 @@ export const en = {
   "acct.export.btn": "Download .json",
   "acct.danger": "Danger zone",
   "acct.del.title": "Delete account",
-  "acct.del.sub": "Removes your sign-in. Songs you've published stay live but become anonymous.",
+  "acct.del.sub": "Permanently deletes your account, your songs and audio, and your payment customer record. This cannot be undone.",
   "acct.billing.noCustomer": "No Stripe customer is linked yet. Start a checkout from /pricing first.",
   "acct.billing.portalFail": "Couldn't open the portal. Try again in a minute.",
   "acct.billing.noUrl": "Portal returned no URL. Try again.",
