@@ -73,6 +73,10 @@ jobs:
     needs: apk
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - uses: actions/download-artifact@v4
         with:
           name: neo-fm-beta-apk
@@ -84,18 +88,10 @@ jobs:
         with:
           api-level: 34
           arch: x86_64
-          script: |
-            adb install neo-fm-beta.apk
-            adb shell am start -n com.neofm.app/.MainActivity
-            sleep 25
-            adb shell dumpsys activity activities | grep -q com.neofm.app
-            adb shell input keyevent KEYCODE_HOME
-            sleep 3
-            adb shell pidof com.neofm.app
-            adb exec-out screencap -p > launch.png
+          script: bash apps/mobile/scripts/emulator-smoke.sh neo-fm-beta.apk smoke-out
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emulator-launch
-          path: launch.png
+          name: emulator-smoke-evidence
+          path: smoke-out/
           if-no-files-found: ignore

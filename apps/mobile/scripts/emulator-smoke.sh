@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Runs inside the emulator job: install the APK, launch, drive it with android-smoke.mjs, keep evidence.
+set -uo pipefail
+APK="${1:?apk path}"
+OUT="${2:-smoke-out}"
+mkdir -p "$OUT"
+adb install -r "$APK"
+adb shell am start -n com.neofm.app/.MainActivity
+sleep 20
+adb shell dumpsys activity activities | grep -q com.neofm.app || { echo "app not in foreground"; exit 1; }
+adb exec-out screencap -p > "$OUT/launch.png"
+node "$(dirname "$0")/android-smoke.mjs" 2>&1 | tee "$OUT/smoke.log"
+status=${PIPESTATUS[0]}
+adb exec-out screencap -p > "$OUT/final.png" || true
+adb logcat -d -t 400 > "$OUT/logcat.txt" || true
+exit "$status"
