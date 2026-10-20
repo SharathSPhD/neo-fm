@@ -26,6 +26,7 @@ import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
+import { ShareStationCta } from "@/components/share-station-cta";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
@@ -464,6 +465,8 @@ export default async function PublicSongPage(
             : t("pub.noPreview")}
         </p>
       )}
+
+      {!currentUserId ? <ShareStationCta t={t} /> : null}
 
       {doc ? <SongMetadata doc={doc} t={t} /> : null}
 
