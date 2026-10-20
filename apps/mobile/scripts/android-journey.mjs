@@ -1,6 +1,7 @@
 // Whole-app journey in the installed APK: every public page, back button, rotation, and playback across background and return.
 // Drives the installed APK's WebView over the Chrome DevTools protocol, saves a screenshot per case and fails when a
 // button or link sticks out past the screen edge, the page scrolls sideways, or the last content hides under the nav bar.
+import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { inflateSync } from "node:zlib";
@@ -246,8 +247,19 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
 // where the staging URL or the test user's credentials are not provided. The app's own bridge does the registering: after
 // sign-in a fresh page load of the settings mounts <NativePush />, which sends the FCM token and records the flag.
 const STAGING = process.env.NEO_FM_STAGING_URL;
-const STAGING_EMAIL = process.env.QA_STAGING_EMAIL;
-const STAGING_PASSWORD = process.env.QA_STAGING_PASSWORD;
+// A test user: the QA login when its secrets are present, otherwise a throwaway account made through staging's public sign-up
+// (the publishable key is public by design; staging auto-confirms test addresses).
+let STAGING_EMAIL = process.env.QA_STAGING_EMAIL;
+let STAGING_PASSWORD = process.env.QA_STAGING_PASSWORD;
+if (STAGING && !(STAGING_EMAIL && STAGING_PASSWORD) && process.env.NEO_FM_STAGING_SUPABASE_URL && process.env.NEO_FM_STAGING_SUPABASE_KEY) {
+  const email = `ci-push-${Date.now()}@neo-fm.test`;
+  const password = `${randomUUID()}-Aa1!`;
+  try {
+    const r = await fetch(`${process.env.NEO_FM_STAGING_SUPABASE_URL}/auth/v1/signup`, { method: "POST", headers: { apikey: process.env.NEO_FM_STAGING_SUPABASE_KEY, "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
+    const j = await r.json();
+    if (j.access_token) { STAGING_EMAIL = email; STAGING_PASSWORD = password; } else console.log("diag staging throwaway sign-up gave no session:", r.status, String(j.msg ?? j.error_code ?? "").slice(0, 80));
+  } catch (e) { console.log("diag staging throwaway sign-up failed:", String(e).slice(0, 80)); }
+}
 if (!STAGING || !STAGING_EMAIL || !STAGING_PASSWORD) {
   console.log("diag signed-in push registration skipped: no staging URL or test user in this run");
 } else {

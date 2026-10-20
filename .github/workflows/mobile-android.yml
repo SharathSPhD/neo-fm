@@ -110,6 +110,8 @@ jobs:
         env:
           FCM_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON_B64 }}
           NEO_FM_STAGING_URL: https://neo-fm-staging.vercel.app
+          NEO_FM_STAGING_SUPABASE_URL: https://cjvwbyrarqgvxycrbgwx.supabase.co
+          NEO_FM_STAGING_SUPABASE_KEY: sb_publishable_Kjo66KGxyC-Jdb9szThMkw_Lwuzo954
           QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
           QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
         with:
