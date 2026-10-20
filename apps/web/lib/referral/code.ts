@@ -2,7 +2,6 @@
  * Referral attribution via shared songs (migration 0111, no rewards). A code is 8 lowercase base32 characters, one per user, never a handle or
  * an id. Everything here is behind REFERRAL_ENABLED=1.
  */
-import { randomBytes } from "node:crypto";
 
 export const REF_COOKIE = "nfm_ref";
 export const REF_COOKIE_MAX_AGE = 30 * 86_400;
@@ -15,7 +14,7 @@ export const cleanRef = (v: unknown): string | null => (typeof v === "string" &&
 
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz234567";
 
-export function newRefCode(bytes: Uint8Array = randomBytes(8)): string {
+export function newRefCode(bytes: Uint8Array = globalThis.crypto.getRandomValues(new Uint8Array(8))): string {
   return Array.from(bytes, (b) => ALPHABET[b & 31]).join("");
 }
 
