@@ -40,10 +40,11 @@ html {
 body {
   color: hsl(var(--foreground));
   min-height: 100vh;
-  /* viewport-fit=cover: in the Android/iOS shells the page runs edge to edge, so keep it clear of the status bar, cutout and side bars. env() is 0 in ordinary browsers. */
+  /* viewport-fit=cover: in the Android/iOS shells the page runs edge to edge, so keep it clear of the status bar, cutout, navigation bar and side bars. env() is 0 in ordinary browsers. */
   padding-top: env(safe-area-inset-top);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 body {
