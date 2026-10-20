@@ -58,12 +58,15 @@ await goto("/station");
 check("loads live origin", (await evalJs("location.origin")) === ORIGIN);
 console.log("diag ua:", await evalJs("navigator.userAgent"));
 console.log("diag globals:", await evalJs(`Object.keys(window).filter(k=>/capac|android|native/i.test(k)).join(",")`));
+console.log("diag Capacitor keys:", await evalJs("Object.keys(window.Capacitor||{}).join(',')"));
+console.log("diag Capacitor.Plugins:", await evalJs("Object.keys(window.Capacitor?.Plugins||{}).join(',')"));
 check("shell user agent", /NeoFmApp\/\S+ \(android\)/.test(await evalJs("navigator.userAgent")));
-check("capacitor bridge injected", (await evalJs("typeof window.Capacitor?.registerPlugin")) === "function");
+check("native media-session plugin reachable", (await evalJs("typeof window.Capacitor?.Plugins?.MediaSession?.setMetadata")) === "function");
 
 // 2. no purchase UI, and the server refuses checkout for the shell UA
 await goto("/pricing");
 const buyButtons = await evalJs(`[...document.querySelectorAll("button,a")].map(e=>e.innerText).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t.trim())).length`);
+console.log("diag pricing buttons:", await evalJs(`JSON.stringify([...document.querySelectorAll("button,a")].map(e=>e.innerText.trim()).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t)))`));
 check("no purchase buttons on /pricing", buyButtons === 0, `found ${buyButtons}`);
 const checkoutStatus = await evalJs(`fetch("/api/billing/checkout",{method:"POST",headers:{"content-type":"application/json"},body:"{}"}).then(r=>r.status)`);
 check("checkout refused for the app (403)", checkoutStatus === 403, `status ${checkoutStatus}`);
