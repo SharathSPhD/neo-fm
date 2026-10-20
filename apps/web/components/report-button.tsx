@@ -35,16 +35,16 @@ export function ReportButton({ publicId, trackId, compact }: { publicId?: string
       {!open ? (
         <button type="button" onClick={() => setOpen(true)} className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded">{compact ? t("station.report") : t("pub.report.open")}</button>
       ) : (
-        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="mt-2 flex max-w-md flex-col gap-2 rounded-md border border-muted/30 p-3">
-          <label className="flex flex-col gap-1">
+        <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="glass mt-2 flex max-w-md flex-col gap-3 rounded-2xl p-4">
+          <label className="flex flex-col gap-2">
             <span>{t("pub.report.why")}</span>
-            <select value={reason} onChange={(e) => setReason(e.target.value)} className="rounded border border-muted/40 bg-transparent px-2 py-1 text-sm">
+            <select value={reason} onChange={(e) => setReason(e.target.value)} className="rounded-xl border border-foreground/15 bg-foreground/5 px-3 py-2 text-sm">
               {REASONS.map((r) => <option key={r.value} value={r.value}>{t(r.label)}</option>)}
             </select>
           </label>
-          <label className="flex flex-col gap-1">
+          <label className="flex flex-col gap-2">
             <span>{t("pub.report.details")}</span>
-            <textarea value={details} onChange={(e) => setDetails(e.target.value)} maxLength={1000} rows={3} className="rounded border border-muted/40 bg-transparent px-2 py-1 text-sm" />
+            <textarea value={details} onChange={(e) => setDetails(e.target.value)} maxLength={1000} rows={3} className="rounded-xl border border-foreground/15 bg-foreground/5 px-3 py-2 text-sm" />
           </label>
           <div className="flex gap-2">
             <button type="submit" disabled={state === "sending"} className="rounded border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent disabled:opacity-50">{state === "sending" ? t("pub.report.sending") : t("pub.report.send")}</button>

@@ -53,6 +53,7 @@ export function UserMenu({ email, handle, plan }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-label={handle ? `@${handle}` : email}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -64,7 +65,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         >
           {initial}
         </span>
-        <span className="hidden truncate sm:inline-block max-w-[10rem]">
+        <span className="hidden truncate 2xl:inline-block max-w-[10rem]">
           {handle ? `@${handle}` : email}
         </span>
       </button>
