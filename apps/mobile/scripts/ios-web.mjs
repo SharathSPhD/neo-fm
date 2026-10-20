@@ -40,8 +40,12 @@ for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
     check(`${name}: together banner shows on a fresh share link`, await banner.isVisible());
     const fits = await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1);
     check(`${name}: together banner fits the screen`, fits);
-    await page.getByRole("button", { name: /listen together/i }).click().catch(() => {});
-    const seeked = await page.evaluate(() => { const a = document.querySelector("audio"); return a ? a.currentTime : -1; });
+    await page.getByRole("button", { name: /listen together/i }).click({ timeout: 15000 }).catch(() => {});
+    let seeked = -1;
+    for (let i = 0; i < 20 && seeked < 24; i++) {
+      await page.waitForTimeout(1000);
+      seeked = await page.evaluate(() => { const a = document.querySelector("audio"); return a ? a.currentTime : -1; });
+    }
     check(`${name}: joining seeks to about the sender's playhead`, seeked >= 24 && seeked < 60, `currentTime ${seeked}`);
     await page.goto(`${ORIGIN}${trackPath}?at=20&ts=${Date.now() - 3 * 3600_000}`, { waitUntil: "networkidle" });
     check(`${name}: a stale share link is a plain player`, !(await page.getByText(/a friend is listening/i).isVisible()));
