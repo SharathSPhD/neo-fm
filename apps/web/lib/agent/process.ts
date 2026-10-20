@@ -14,7 +14,7 @@ import { mergeLyrics } from "./lyrics-merge";
 import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
-import { livePolishTemplate, polishLyrics } from "../lyrics/polish";
+import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
@@ -224,7 +224,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
-            a = { ...a, lyrics: await timed("polish", async () => polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
+            a = { ...a, lyrics: await timed("polish", async () => (process.env.PCE_POLISH_EDITS === "1" ? polishLyricsEdits : polishLyrics)(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
             const v2 = await screenRequest(a.lyrics, "lyrics");
             if (!v2.allowed) throw new SafetyRefusal(v2.reason);
             await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
