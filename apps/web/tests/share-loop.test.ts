@@ -25,11 +25,15 @@ describe("share loop summary", () => {
 
 describe("pool track indexing", () => {
   afterEach(() => vi.unstubAllEnvs());
-  it("is off by default and limited to launch languages when on", () => {
+  it("is off by default, and when on covers launch plus LANG_REVIEWED languages", () => {
     expect(trackIndexable("hi")).toBe(false);
     vi.stubEnv("SEO_POOL_TRACKS", "1");
+    vi.stubEnv("LANG_REVIEWED", "");
     for (const l of LAUNCH_LANGUAGES) expect(trackIndexable(l)).toBe(true);
     expect(trackIndexable("bn")).toBe(false);
+    expect(trackIndexable("en")).toBe(false);
+    vi.stubEnv("LANG_REVIEWED", "mr, pa,ml,gu,bn");
+    for (const l of ["pa", "ml", "gu", "bn"]) expect(trackIndexable(l)).toBe(true);
     expect(trackIndexable("en")).toBe(false);
   });
   it("points the recording at /t/<id> and has no embed", () => {
