@@ -28,7 +28,7 @@ def main():
     rows = json.load(open(a.manifest)); models = {}; out = []
     for r in rows:
         sysname = pick.get(r["language"], pick["default"])
-        if sysname not in models: models[sysname] = WhisperModel(MODELS[sysname], device="cuda", compute_type="float16")
+        if sysname not in models: models[sysname] = WhisperModel(MODELS[sysname], device=os.environ.get("ASR_DEVICE", "cuda"), compute_type=os.environ.get("ASR_COMPUTE", "float16"))
         m = models[sysname]; t0 = time.time(); path = fetch(r["audio"])
         segs, _ = m.transcribe(path, language=LANG_CODE.get(r["language"]), vad_filter=True, beam_size=5)
         text = "\n".join(s.text.strip() for s in segs if s.text.strip())
