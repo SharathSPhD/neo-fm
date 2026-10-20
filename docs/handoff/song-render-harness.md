@@ -70,3 +70,6 @@ Sending Lyria only Claude-written, phonetically natural Latin lyrics (3 renders 
 
 ## E6 confirmation (2026-10-20): Kannada holds, Tamil/Telugu refused by the screen
 Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native-plus-ITRANS input (2 renders each). The two new Tamil (occ-ta-3) and Telugu (occ-te-3) briefs were refused by moderation on both attempts (not billed; cause unknown, not worked around), so Tamil/Telugu stay at the E5 evidence (one brief each). A Gemini flash single-listen naturalness rating scored every render 5/5, including 60%-diction stock, so it does not discriminate; accent and naturalness remain unjudged.
+
+## E7 (2026-10-20): Tamil and Telugu confirmed on a second brief
+occ-ta-2 and occ-te-2 with Claude-romanized lyrics, 2 renders each, sung-word match against native text: Tamil 93/98, Telugu 98/96. With E5, Tamil and Telugu are 93-100 over two briefs each, against about 65 for the current input; Kannada 97/99 (E6). AI-scored, small samples; accent and naturalness are unjudged (the Gemini flash single-listen rated everything 5/5).
