@@ -113,10 +113,17 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
 
   // 2. Draft / revision rounds: each needs-reply is answered by K parallel Haiku calls (one per engine prompt).
   const gens = { draft: [] as string[], revision: [] as string[] };
-  const write = (prompts: string[]) => Promise.all(prompts.map((p) => d.complete({
-    model: HOST_MODELS.draft, system: POET, maxTokens: 1500,
+  // A draft that comes back empty (lab: ~16%, Kannada 35%) is asked for once more with a larger token budget.
+  const draftOnce = (p: string, maxTokens: number) => d.complete({
+    model: HOST_MODELS.draft, system: POET, maxTokens,
     prompt: `${poetPrefix(b, lines, iBlock)}\n${p}`,
-  }).then(stripFences)));
+  }).then(stripFences);
+  const write = (prompts: string[]) => Promise.all(prompts.map(async (p) => {
+    const first = await draftOnce(p, 1500);
+    if (first.length > 0) return first;
+    d.log?.("draft empty, retrying once");
+    return draftOnce(p, 3000);
+  }));
   let reply: CascadeReply = await d.cascade({ brief, generations: gens, engine: b.engine });
   for (let round = 0; reply.status === "needs" && round < 3; round++) {
     const texts = (await write(reply.prompts)).filter((t) => t.length > 0);
