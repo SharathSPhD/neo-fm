@@ -159,9 +159,11 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
           label={t("account.plan")}
           value={
             <span className="inline-flex items-center gap-2">
-              <span className="rounded-full border border-accent/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
-                {plan}
-              </span>
+              {pass && plan === "Free" ? null : (
+                <span className="rounded-full border border-accent/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
+                  {plan}
+                </span>
+              )}
               {pass ? (
                 <span
                   data-testid="station-pass-badge"
