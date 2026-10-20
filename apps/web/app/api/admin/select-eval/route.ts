@@ -48,7 +48,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   if (action === "embed") {
     const texts = Array.isArray(body.texts) ? (body.texts as unknown[]).filter((t): t is string => typeof t === "string").slice(0, 64) : [];
-    const e = embedEngine("select-eval", 600);
+    // v1 token: the deployed embedder answered 401 to v2 scoped tokens.
+    const e = embedEngine(undefined, 600);
     if (!e) return NextResponse.json({ error: "embedder not configured" }, { status: 503 });
     const res = await fetch(`${e.url}/embed`, { method: "POST", headers: { authorization: `Bearer ${e.token}`, "content-type": "application/json" }, body: JSON.stringify({ texts, kind: "similarity" }) });
     if (!res.ok) return NextResponse.json({ error: `embedder ${res.status}` }, { status: 502 });
