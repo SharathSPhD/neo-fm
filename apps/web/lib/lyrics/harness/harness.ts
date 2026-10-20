@@ -19,6 +19,7 @@ export interface HarnessConfig {
 export const ARMS: Record<string, HarnessConfig> = {
   live: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1 },
   refs: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 1 },
+  refs6: { exemplars: 6, playbook: true, rounds: 0, guard: false, candidates: 1 },
   revise: { exemplars: 0, playbook: false, rounds: 1, guard: true, candidates: 1 },
   refs_revise: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 1 },
   pick3: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 3 },

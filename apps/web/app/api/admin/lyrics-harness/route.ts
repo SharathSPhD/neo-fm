@@ -4,6 +4,7 @@
  *   POST ?action=estimate  {arm, n}                                   Expected Claude USD for n songs. Spends nothing.
  *   POST ?action=run       {arm, cases:[{id,language,style,brief,drafts,playbook?}], max_usd}
  *                                                                     Final lyrics per case (drafts[0] is the engine's pick), trace and spend.
+ *   POST ?action=probe    {language, style, brief}                    No Claude. Reports PCE_HARNESS_REFS as this deployment reads it and whether the polish brief would get the refs block (same expression as lib/agent/process.ts).
  *   POST ?action=distill   {language, pairs:[{brief,chosen,rejected}], max_usd}
  *                                                                     One Claude call: craft-notes playbook for a language.
  *   POST ?action=gate     {arm, cases:[{id,language,style,brief,draft,baseline}], max_usd}
@@ -20,8 +21,9 @@ import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { meter } from "../../../../lib/eval/cost";
 import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
 import { estimateArmUsd } from "../../../../lib/lyrics/harness/cost";
-import { ARMS, runHarness } from "../../../../lib/lyrics/harness/harness";
-import { distillPrompt } from "../../../../lib/lyrics/harness/playbook";
+import { langCode } from "../../../../lib/lyrics/harness/exemplars";
+import { ARMS, refsContext, runHarness } from "../../../../lib/lyrics/harness/harness";
+import { distillPrompt, playbookFor } from "../../../../lib/lyrics/harness/playbook";
 import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
 import { livePolishTemplate, polishLyrics } from "../../../../lib/lyrics/polish";
 
@@ -57,6 +59,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const n = Math.max(1, Math.min(200, Number(body.n ?? 40)));
     const per = estimateArmUsd(cfg);
     return NextResponse.json({ arm: body.arm, config: cfg, per_song_usd: per, total_usd: Math.round(per * n * 100) / 100, n, note: "upper bound if every round runs; recalibrate from the spend block" });
+  }
+
+  if (action === "probe") {
+    const language = String(body.language ?? ""), style = String(body.style ?? ""), brief = String(body.brief ?? "");
+    const flag = process.env.PCE_HARNESS_REFS ?? "";
+    const enabled = flag.split(",").map((x) => x.trim()).filter(Boolean).includes(langCode(language));
+    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0 };
+    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
   }
 
   const client = anthropicClient();
