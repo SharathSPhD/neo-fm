@@ -1,0 +1,242 @@
+[
+ {
+  "id": "hi-c60",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A devotional song about a temple bell across the river",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A devotional song about a temple bell across the river. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c61",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A wistful song about a city worker dreaming of the village",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A wistful song about a city worker dreaming of the village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c62",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A playful song about a mother's lullaby on a hot summer night",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A playful song about a mother's lullaby on a hot summer night. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c63",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A playful song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A playful song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c64",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A wistful song about a river crossing in monsoon floods",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A wistful song about a river crossing in monsoon floods. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c65",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A devotional song about a rainy bus ride home",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A devotional song about a rainy bus ride home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c66",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A wistful song about a temple bell across the river",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A wistful song about a temple bell across the river. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c67",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A bittersweet song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A bittersweet song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c68",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A joyful song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A joyful song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c69",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A wistful song about friends parting at a railway station",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A wistful song about friends parting at a railway station. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c70",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A playful song about a festival of lamps",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A playful song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c71",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A wistful song about dancers rehearsing before a show",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A wistful song about dancers rehearsing before a show. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c72",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A bittersweet song about a fishing village at dawn",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A bittersweet song about a fishing village at dawn. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c73",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A joyful song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A joyful song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c74",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A wistful song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A wistful song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c75",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A bittersweet song about a mother's lullaby on a hot summer night",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A bittersweet song about a mother's lullaby on a hot summer night. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c76",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A joyful song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A joyful song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c77",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A playful song about a city worker dreaming of the village",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A playful song about a city worker dreaming of the village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c78",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A joyful song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A joyful song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c79",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "bollywood-ballad",
+  "brief": "A bittersweet song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"bollywood-ballad\". Brief: A bittersweet song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c80",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A devotional song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A devotional song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c81",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "bollywood-ballad",
+  "brief": "A tender song about an old teacher remembered by a former student",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"bollywood-ballad\". Brief: A tender song about an old teacher remembered by a former student. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c82",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-pop",
+  "brief": "A wistful song about a festival of lamps",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-pop\". Brief: A wistful song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c83",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "bollywood-ballad",
+  "brief": "A joyful song about a morning prayer in a small shrine",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"bollywood-ballad\". Brief: A joyful song about a morning prayer in a small shrine. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c84",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A devotional song about a lost childhood home",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A devotional song about a lost childhood home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c85",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "bollywood-ballad",
+  "brief": "A devotional song about a river crossing in monsoon floods",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"bollywood-ballad\". Brief: A devotional song about a river crossing in monsoon floods. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c86",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindi-folk",
+  "brief": "A playful song about a farmer praying for harvest",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindi-folk\". Brief: A playful song about a farmer praying for harvest. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c87",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "bollywood-ballad",
+  "brief": "A bittersweet song about a grandmother's stories at twilight",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"bollywood-ballad\". Brief: A bittersweet song about a grandmother's stories at twilight. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c88",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A wistful song about spring blossoms and a new beginning",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A wistful song about spring blossoms and a new beginning. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ },
+ {
+  "id": "hi-c89",
+  "lang": "hi",
+  "language": "Hindi",
+  "style": "hindustani",
+  "brief": "A devotional song about a wedding procession",
+  "prompt": "Write original song lyrics in Hindi (native script only, no transliteration, no translation) in the style family \"hindustani\". Brief: A devotional song about a wedding procession. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Hindi: one consistent register, antyaprasa on paired lines, no Hinglish. Output only the lyrics."
+ }
+]
