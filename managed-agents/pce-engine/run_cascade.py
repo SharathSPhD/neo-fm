@@ -65,6 +65,9 @@ def main(workdir: str) -> int:
         sys.modules["pce.operators.ananda"].PROSODY_SELECT = True  # (the package attribute `ananda` is the function)
         # Selection now sees metre and rhyme (lyric_form.py). Cost guard: never more than 4 candidates.
         K = min(K, 4)
+    # Ananda's spread across candidates is small next to the min-max apohana term, so with prosody select the ananda weight is raised
+    # (default 10 vs 2) to make metre and rhyme carry about as much as topic closeness; measured in tests/test_prosody_select.py.
+    lambda_a = float(brief.get("lambda_a", 10.0 if brief.get("prosody_select") else 2.0))
     cit_t = float(brief.get("cit_temperature", 1 / 3))  # 1/3 is the neutral point: exactly K candidates per pass
     try:
         state = run_cascade(
@@ -72,6 +75,7 @@ def main(workdir: str) -> int:
             aspects=brief.get("aspects") or None,
             retrieval_set=brief.get("retrieval_set") or None,
             cit_temperature=cit_t,
+            lambda_a=lambda_a,
             aspect_cosine_hit=hit,
             commit_policy=brief.get("commit_policy", "event_gated"),
             base_seed=int(brief.get("seed", 0)),

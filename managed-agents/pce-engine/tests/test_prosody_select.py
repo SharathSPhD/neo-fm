@@ -51,3 +51,16 @@ def test_driver_caps_candidates_at_four_when_prosody_select_is_set(tmp_path: Pat
     (tmp_path / "brief.json").write_text(json.dumps(brief))
     assert subprocess.run([sys.executable, str(ENGINE / "run_cascade.py"), str(tmp_path)], capture_output=True, text=True).returncode == 3
     assert json.loads((tmp_path / "needs.json").read_text())["need"] == 6
+
+
+def test_prosody_select_picks_the_metre_and_rhyme_winner_when_topic_closeness_is_equal(tmp_path: Path) -> None:
+    # Same words in every candidate (so topic closeness is equal); only the pairing of lines differs.
+    shuffled = ["सपनों की रात आई\nचाँदनी की छाँव में\nयादों की बात आई\nबारिश की चाल में\n",
+                "चाँदनी की छाँव में\nसपनों की रात आई\nबारिश की चाल में\nयादों की बात आई\n",
+                "बारिश की चाल में\nयादों की बात आई\nसपनों की रात आई\nचाँदनी की छाँव में\n"]
+    drafts = [shuffled[0], GOOD, shuffled[1], shuffled[2]]
+    brief = {"topic": "a rainy night", "constraint": "four lines, singable", "must_avoid": [], "aspects": [], "K": 4, "prosody_select": True}
+    (tmp_path / "brief.json").write_text(json.dumps(brief))
+    (tmp_path / "generations.json").write_text(json.dumps({"draft": drafts, "revision": drafts}))
+    assert subprocess.run([sys.executable, str(ENGINE / "run_cascade.py"), str(tmp_path)], capture_output=True, text=True).returncode == 0
+    assert json.loads((tmp_path / "result.json").read_text())["surface_draft"] == GOOD
