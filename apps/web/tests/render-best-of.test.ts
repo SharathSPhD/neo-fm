@@ -71,3 +71,14 @@ describe("dictionScorer", () => {
     expect(bad).toBeLessThanOrEqual(s.vetoAtOrBelow as number);
   });
 });
+
+describe("best-of config", () => {
+  it("is off unless RENDER_BEST_OF=1 and caps renders at 3", async () => {
+    const { bestOfEnabled, bestOfOptions } = await import("../lib/render/config");
+    expect(bestOfEnabled({})).toBe(false);
+    expect(bestOfEnabled({ RENDER_BEST_OF: "1" })).toBe(true);
+    expect(bestOfOptions(0.25, {}).maxRenders).toBe(2);
+    expect(bestOfOptions(0.25, { RENDER_BEST_OF_MAX: "9" })).toMatchObject({ maxRenders: 3, maxSpend: 0.75, acceptAt: 80 });
+    expect(bestOfOptions(0.25, { RENDER_BEST_OF_MAX: "x" }).maxRenders).toBe(2);
+  });
+});
