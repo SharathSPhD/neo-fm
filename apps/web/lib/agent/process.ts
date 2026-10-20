@@ -191,6 +191,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         engine: embedEngine(job.id),
         intent,
         styleNote: styled?.note || langNote || undefined,
+        prosodySelect: process.env.PCE_PROSODY_SELECT === "1" || undefined,
       };
       // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
       const store = runStore(db, plan.agent === "free" ? "free" : "pro");
