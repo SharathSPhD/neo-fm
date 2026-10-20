@@ -21,10 +21,10 @@ export async function MarketingNav({
 }) {
   const { t } = await serverI18n();
   return (
-    <header className="glass sticky top-0 z-30 rounded-none border-x-0 border-t-0">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-4 min-[400px]:px-4 sm:px-6 sm:py-5">
+    <header className="glass sticky top-[env(safe-area-inset-top)] z-30 rounded-none border-x-0 border-t-0">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-2 gap-y-2 px-3 py-4 min-[400px]:px-4 sm:px-6 sm:py-5">
         <BrandMark label={t("nav.home")} />
-        <nav aria-label="Primary" className="flex min-w-0 items-center gap-0.5 whitespace-nowrap min-[400px]:gap-1 text-sm sm:gap-3">
+        <nav aria-label="Primary" className="flex min-w-0 flex-wrap items-center justify-end gap-0.5 whitespace-nowrap min-[400px]:gap-1 text-sm sm:gap-3">
           {showSubLinks && (
             <>
               <Link
