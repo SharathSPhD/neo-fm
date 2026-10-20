@@ -13,5 +13,8 @@ adb exec-out screencap -p > "$OUT/launch.png"
 node "$(dirname "$0")/android-smoke.mjs" 2>&1 | tee "$OUT/smoke.log"
 status=${PIPESTATUS[0]}
 adb exec-out screencap -p > "$OUT/final.png" || true
+node "$(dirname "$0")/android-layout.mjs" "$OUT/layout" 2>&1 | tee "$OUT/layout.log"
+layout=${PIPESTATUS[0]}
+[ "$status" -eq 0 ] && status=$layout
 adb logcat -d -t 400 > "$OUT/logcat.txt" || true
 exit "$status"
