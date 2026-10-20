@@ -39,6 +39,22 @@ const VOICE_RUN_PENALTY = 1.5;
 /** Per unit of transition cost (lib/station/flow.ts): a devotional-to-dance clash (10) outweighs any daypart fit, a one-step energy change (1) barely registers. */
 const TRANSITION_WEIGHT = 0.7;
 
+/** 30 s clips (lyria-3-clip) are short features: at most this share of recent airtime, never back to back, so a language does not sound stuttery. */
+const CLIP_MAX_SECONDS = 45;
+const CLIP_AIRTIME_SHARE = 0.15;
+const UNKNOWN_SECONDS = 60;
+const secondsOf = (t: PoolTrack) => (typeof t.durationSeconds === "number" && t.durationSeconds > 0 ? t.durationSeconds : UNKNOWN_SECONDS);
+export const isClip = (t: PoolTrack) => typeof t.durationSeconds === "number" && t.durationSeconds > 0 && t.durationSeconds < CLIP_MAX_SECONDS;
+
+/** Whether `t` may play after `played` (oldest first): any full track; a clip only if the last one was not a clip and clips stay within their airtime share. */
+export function clipAllowed(t: PoolTrack, played: readonly PoolTrack[]): boolean {
+  if (!isClip(t)) return true;
+  if (played.length > 0 && isClip(played[played.length - 1]!)) return false;
+  let total = secondsOf(t), clips = secondsOf(t);
+  for (const p of played) { total += secondsOf(p); if (isClip(p)) clips += secondsOf(p); }
+  return clips / total <= CLIP_AIRTIME_SHARE;
+}
+
 const WHEEL: readonly Slot[] = ["opener", "familiar", "familiar", "exploration", "occasion", "repeat"];
 
 /** Fit of a tagger-assigned daypart set: a listed part is a strong match, an unlisted one a mild mismatch. */
@@ -121,14 +137,18 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
     const slot = WHEEL[((ctx.startSlot ?? 0) + out.length) % WHEEL.length]!;
     const prev = out[out.length - 1];
     // Energy arc: at peak hours, after a slow track prefer anything that is not slow (if anything is left).
-    const arcOk = PEAK.has(part) && prev && isSlow(prev) ? remaining.filter((t) => !isSlow(t)) : remaining;
-    const arcPool = arcOk.length > 0 ? arcOk : remaining;
+    // Clips come first: they are filtered out (when anything else is left) before any other rule runs.
+    const played = [...(ctx.rotation?.history ?? []), ...out];
+    const fullOnly = remaining.filter((t) => clipAllowed(t, played));
+    const eligible = fullOnly.length > 0 ? fullOnly : remaining;
+    const arcOk = PEAK.has(part) && prev && isSlow(prev) ? eligible.filter((t) => !isSlow(t)) : eligible;
+    const arcPool = arcOk.length > 0 ? arcOk : eligible;
     // Flow: drop candidates that clash with the previous track (devotional into dance, low energy into high) while any other exists.
     const before = lastPlayed();
     const smooth = arcPool.filter((t) => !clashes(before, t));
     const flowPool = smooth.length > 0 ? smooth : arcPool;
     // Rotation is stricter than the arc: relax the arc first, then the rotation rules one by one, never the dedupe.
-    const pool = pickPool(flowPool, remaining, rotation, out);
+    const pool = pickPool(flowPool, eligible, rotation, out);
 
     let pick: PoolTrack[];
     if (slot === "familiar" || slot === "repeat") pick = pool.filter((t) => ctx.familiar.has(t.id));
