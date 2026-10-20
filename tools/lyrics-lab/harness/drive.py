@@ -3,6 +3,7 @@
 subcommand needs --max-usd and refuses without it. Outputs go under --out (default <shared>/lyrics-lab/harness).
   distill --pairs pairs_r2.jsonl --lang kn --max-usd 0.6          -> out/playbooks.json (merged per language)
   run     --arm refs --inputs prod-40.json --max-usd 3            -> out/arm_<arm>.json  {brief_id: {lyrics, trace}}
+  drafts  --briefs briefs-fresh.json --inputs-out inputs-fresh.json --max-usd 0.5   -> one plain Haiku draft per fresh brief
   gate    --arm refs --cases gate-te.json --name te --max-usd 4          -> formal polish gate, merged across chunks
   judge   --a arm_refs.json --b arm_live.json --name refs_vs_live --max-usd 2 [--gemini]  -> out/judge_<name>.json
   report  --name refs_vs_live                                     -> win rates, sign test, dims (no spend)
@@ -36,6 +37,18 @@ def cmd_distill(a):
     pb = load(f"{OUT}/playbooks.json", {}); pb[a.lang] = r["playbook"]; save(f"{OUT}/playbooks.json", pb)
     print(a.lang, len(pairs), "pairs", r["spend"])
 
+def cmd_drafts(a):
+    """One plain Haiku draft per fresh brief via /api/admin/select-eval?action=drafts (the poet prompt production uses)."""
+    briefs = load(a.briefs); out = load(a.inputs_out, {}); todo = [b for b in briefs if b["id"] not in out]
+    for i in range(0, len(todo), 10):
+        bs = todo[i:i + 10]
+        req = urllib.request.Request(f"{BASE}/api/admin/select-eval?action=drafts", method="POST", data=json.dumps({"briefs": bs, "k": 1, "max_usd": a.max_usd}).encode(),
+            headers={"authorization": f"Bearer {os.environ['MA_PROD_ADMIN_SECRET']}", "content-type": "application/json"})
+        r = json.load(urllib.request.urlopen(req, timeout=290))
+        for x in r["results"]:
+            b = next(b for b in bs if b["id"] == x["id"])
+            out[x["id"]] = {"lang": b["lang"], "language": b["language"], "style": b["style"], "brief": b["text"], "drafts": [x["baseline"]], "pick": 0}
+        save(a.inputs_out, out); print(len(out), "drafted", r["spend"], flush=True)
 def cmd_gate(a):
     """Formal polish gate (runPolishGate) for one arm over a cases file: [{id,language,style,brief,draft,baseline}]. 5 cases per call."""
     cases = load(a.cases); path = f"{OUT}/gate_{a.arm}_{a.name}.json"; res = load(path, {"chunks": []}); spent = 0.0
@@ -52,7 +65,7 @@ def cmd_gate(a):
 
 def cmd_run(a):
     inputs = load(a.inputs); pb = load(f"{OUT}/playbooks.json", {})
-    path = f"{OUT}/arm_{a.arm}.json"; done = load(path, {}); spent = 0.0
+    path = f"{OUT}/arm_{a.arm}{a.tag}.json"; done = load(path, {}); spent = 0.0
     todo = [k for k in inputs if k not in done or done[k].get("lyrics") is None]
     if a.limit: todo = todo[:a.limit]
     for i in range(0, len(todo), a.chunk):
@@ -98,12 +111,13 @@ def cmd_report(a):
         print("   by language (W-L-T):", by)
 
 ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest="cmd", required=True)
+dr = sp.add_parser("drafts"); dr.add_argument("--briefs", required=True); dr.add_argument("--inputs-out", required=True); dr.add_argument("--max-usd", type=float, required=True)
 for name in ("distill", "run", "judge"):
     p = sp.add_parser(name); p.add_argument("--max-usd", type=float, required=True)
 d = sp.choices["distill"]; d.add_argument("--pairs", required=True); d.add_argument("--lang", required=True)
-r = sp.choices["run"]; r.add_argument("--arm", required=True); r.add_argument("--inputs", required=True); r.add_argument("--chunk", type=int, default=3); r.add_argument("--limit", type=int, default=0)
+r = sp.choices["run"]; r.add_argument("--arm", required=True); r.add_argument("--inputs", required=True); r.add_argument("--chunk", type=int, default=3); r.add_argument("--limit", type=int, default=0); r.add_argument("--tag", default="")
 j = sp.choices["judge"]; j.add_argument("--a", required=True); j.add_argument("--b", required=True); j.add_argument("--name", required=True); j.add_argument("--inputs", required=True); j.add_argument("--gemini", action="store_true")
 g = sp.add_parser("gate"); g.add_argument("--arm", required=True); g.add_argument("--cases", required=True); g.add_argument("--name", required=True); g.add_argument("--max-usd", type=float, required=True)
 p = sp.add_parser("report"); p.add_argument("--name", required=True); p.add_argument("--inputs")
 a = ap.parse_args()
-{"distill": cmd_distill, "run": cmd_run, "judge": cmd_judge, "report": cmd_report}[a.cmd](a)
+{"drafts": cmd_drafts, "distill": cmd_distill, "run": cmd_run, "judge": cmd_judge, "report": cmd_report, "gate": cmd_gate}[a.cmd](a)

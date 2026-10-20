@@ -89,3 +89,14 @@ describe("estimate", () => {
     expect(estimateArmUsd(ARMS.full!)).toBeGreaterThan(estimateArmUsd(ARMS.refs_revise!));
   });
 });
+
+import { refsContext } from "../lib/lyrics/harness/harness";
+import { playbookFor } from "../lib/lyrics/harness/playbook";
+describe("refsContext (PCE_HARNESS_REFS)", () => {
+  it("builds craft notes plus exemplars for Telugu and nothing for a language without data", () => {
+    const te = refsContext({ language: "Telugu", style: "telugu-folk", brief: "Farmers sowing seed at the first monsoon showers" }, 3, playbookFor("Telugu"));
+    expect(te.exemplars).toBe(3);
+    expect(te.text).toMatch(/CRAFT NOTES[\s\S]*QUALITY REFERENCES/);
+    expect(refsContext({ language: "Bengali", style: "bengali-folk", brief: "rain" }, 3, playbookFor("Bengali"))).toEqual({ text: "", exemplars: 0 });
+  });
+});
