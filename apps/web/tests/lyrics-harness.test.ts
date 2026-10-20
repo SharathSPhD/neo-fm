@@ -100,3 +100,23 @@ describe("refsContext (PCE_HARNESS_REFS)", () => {
     expect(refsContext({ language: "Bengali", style: "bengali-folk", brief: "rain" }, 3, playbookFor("Bengali"))).toEqual({ text: "", exemplars: 0 });
   });
 });
+
+import { parsePointwise, pointwisePrompt } from "../lib/lyrics/harness/pointwise";
+
+describe("pointwise corpus scoring", () => {
+  const ids = ["a", "b"];
+  it("parses valid entries, drops invalid and unknown ids", () => {
+    const txt = JSON.stringify({ scores: [
+      { id: "a", prosody: 4, diction: 5, imagery: 3, cultural: 4, originality: 3 },
+      { id: "b", prosody: 4, diction: 9, imagery: 3, cultural: 4, originality: 3 },
+      { id: "z", prosody: 4, diction: 4, imagery: 3, cultural: 4, originality: 3 },
+    ] });
+    const m = parsePointwise(`ok ${txt} done`, ids);
+    expect([...m.keys()]).toEqual(["a"]);
+    expect(m.get("a")!.mean).toBe(3.8);
+  });
+  it("returns nothing for garbage and numbers each lyric by id in the prompt", () => {
+    expect(parsePointwise("no json", ids).size).toBe(0);
+    expect(pointwisePrompt([{ id: "a", language: "Telugu", brief: "rain", lyrics: "x" }])).toContain("id=a");
+  });
+});

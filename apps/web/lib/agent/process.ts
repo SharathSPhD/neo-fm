@@ -4,7 +4,7 @@
  */
 import { anthropicClient, runStore, serviceClient, sessionApi, spendGuard } from "./adapters";
 import { lyriaBreaker } from "./circuit-breaker";
-import { generateMusic } from "./lyria";
+import { estimatedCostGbp, generateMusic } from "./lyria";
 import { dailyCap } from "../ops/provider-cap";
 import { advance, type AdvanceDeps } from "./runner";
 import { hostAdvance } from "../cascade/host-run";
@@ -15,7 +15,7 @@ import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
 import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
-import { auditDiction } from "../diction/gemini";
+import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
 import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
@@ -26,6 +26,10 @@ import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
 import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
+import { renderBestOf } from "../render/best-of";
+import { CLAUDE_ROMAN_MODEL, claudeRomanize, claudeRomanLanguages } from "../diction/claude-roman";
+import { bestOfEnabled, bestOfOptions } from "../render/config";
+import { dictionScorer } from "../render/scorers";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
 import { tagMp3 } from "../audio/id3-tag";
@@ -250,11 +254,25 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const frag = savedIntent ? lyriaFragment(savedIntent) : styled?.fragment ?? "";
         if (frag && !a.stylePrompt.includes(frag)) a = { ...a, stylePrompt: `${a.stylePrompt} ${frag}`.trim() };
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
-        const sung = ss?.romanized ? ss.text : a.lyrics;
+        // DICTION_CLAUDE_ROMAN (default off, per-language list): Latin-only lines written by Claude replace the native-plus-ITRANS script; null keeps the mechanical one.
+        const claudeRoman = claudeRomanLanguages().has(doc.language) ? await timed("claude_roman", () => claudeRomanize(a.lyrics, doc.language, async (prompt) => {
+          const res = await anthropicClient().messages.create({ model: CLAUDE_ROMAN_MODEL, max_tokens: 2000, messages: [{ role: "user", content: prompt }] });
+          return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
+        })) : null;
+        if (claudeRomanLanguages().has(doc.language)) log(`claude-roman ${claudeRoman ? "used" : "fallback"}`);
+        const sung = claudeRoman ?? (ss?.romanized ? ss.text : a.lyrics);
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
-        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
+        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
         // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
-        return timed("lyria", async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result);
+        const renderChecked = async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result;
+        // RENDER_BEST_OF (default off): re-render once when the first take sings the lyrics badly, keep the better. Retries go through the same spend guard.
+        if (bestOfEnabled()) {
+          const written = singableLines(a.lyrics).join("\n") || a.lyrics;
+          const picked = await timed("lyria", () => renderBestOf(renderChecked, [dictionScorer<Awaited<ReturnType<typeof render>>>(written, (r) => transcribeSung(r.audio, r.mimeType, doc.language, geminiKey))], bestOfOptions(estimatedCostGbp("full"))));
+          log(`best-of renders=${picked.all.length} stop=${picked.stoppedBecause} diction=${picked.all.map((x) => x.composite?.toFixed(0) ?? "?").join("/")}`);
+          return picked.winner.candidate;
+        }
+        return timed("lyria", renderChecked);
       };
       const saveAudio: AdvanceDeps["saveAudio"] = async (jobId, n, r) => {
         // The storage RLS policy keys on the FIRST folder being the job id (tracks_storage_select_via_job).

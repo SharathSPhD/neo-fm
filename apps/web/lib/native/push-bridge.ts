@@ -25,6 +25,26 @@ export function safeTapPath(url: unknown): string | null {
   return typeof url === "string" && /^\/(?!\/)/.test(url) ? url : null;
 }
 
+const FLAG = "neofm.nativePush";
+
+/** True once this device's token was accepted by the server (set by startNativePush, read by the notification settings). */
+export function nativePushRegistered(): boolean {
+  try {
+    return localStorage.getItem(FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function remember(on: boolean) {
+  try {
+    if (on) localStorage.setItem(FLAG, "1");
+    else localStorage.removeItem(FLAG);
+  } catch {
+    /* storage can be unavailable; the settings just keep saying "coming soon" */
+  }
+}
+
 let started = false;
 
 /** Registers this device for push and sends the FCM token to the server. Resolves true when the server took the token. */
@@ -42,7 +62,7 @@ export async function startNativePush(): Promise<boolean> {
     const ok = new Promise<boolean>((resolve) => {
       void p.addListener("registration", ((d: { value: string }) => {
         fetch("/api/notifications/push/native", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token: d.value, platform: "android" }) })
-          .then((r) => resolve(r.ok))
+          .then((r) => { remember(r.ok); resolve(r.ok); })
           .catch(() => resolve(false));
       }) as (d: never) => void);
       void p.addListener("registrationError", (() => resolve(false)) as (d: never) => void);
