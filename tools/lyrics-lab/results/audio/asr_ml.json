@@ -1,0 +1,393 @@
+{
+ "n_tracks": 13,
+ "systems": [
+  "whisper_v3",
+  "whisper_ml_ft"
+ ],
+ "errors": {},
+ "summary": {
+  "whisper_v3": {
+   "mean_ml_script_share": 0.0,
+   "mean_words_per_s": 0.157,
+   "mean_distinct_ratio": 0.653,
+   "empty_tracks": 4,
+   "lang_ml_rate": 0.923
+  },
+  "whisper_ml_ft": {
+   "mean_ml_script_share": 0.692,
+   "mean_words_per_s": 0.138,
+   "mean_distinct_ratio": 0.677,
+   "empty_tracks": 4,
+   "lang_ml_rate": 1.0
+  }
+ },
+ "mean_pairwise_cer": {
+  "whisper_v3|whisper_ml_ft": 0.539
+ },
+ "tracks": [
+  {
+   "id": "21cbbeb7-31ac-45e8-bdcd-6ac7db80e471",
+   "title": "ദീപാരാധന",
+   "dur": 65,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "श्री दीपं तेलिञ्यो साथिल पर्णू शेत्र मुट्टा",
+     "ml_script_share": 0.0,
+     "words": 7,
+     "words_per_s": 0.108,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.603
+    },
+    "whisper_ml_ft": {
+     "transcript": "ശ്രീ ദീപം തെഴിഞ്ഞോ സാറ്റിൽ പർന്നു, ക്ഷേത്ര മുറ്റ",
+     "ml_script_share": 1.0,
+     "words": 7,
+     "words_per_s": 0.108,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.961
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.658
+   }
+  },
+  {
+   "id": "0bc7a7f3-175c-43d2-ac32-e9248c4fabf7",
+   "title": "പുലരിയിൽ",
+   "dur": 65,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "पलमणी मुझंगी दीपं तेलिञ्यू मनसुनर्णू चंदनगंधं काटिलोजुगी धक्तिलैचु रुदयं अरिहरिना मनसिल्शान्ति निरक्का",
+     "ml_script_share": 0.0,
+     "words": 12,
+     "words_per_s": 0.185,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.66
+    },
+    "whisper_ml_ft": {
+     "transcript": "പല മണി മുഴങ്ങി, ദീപം തെളിഞ്ഞു മനസുണർന്നു, ചന്തനഘന്തം കാറ്റിലൽ ഒഴുകി ഭക്തിയിലെ ഇച്ചുർദ്ദയം അരിഹരിന മനസിൽ ശാന�",
+     "ml_script_share": 1.0,
+     "words": 14,
+     "words_per_s": 0.215,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.95
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.711
+   }
+  },
+  {
+   "id": "0f423661-bfe0-48c7-9f4e-23b6a7165762",
+   "title": "അമ്മേ ദേവി",
+   "dur": 66,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ta",
+     "lang_prob": 0.528
+    },
+    "whisper_ml_ft": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.802
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.0
+   }
+  },
+  {
+   "id": "ba8c13af-dbb4-420c-aa0a-547ce7a2731e",
+   "title": "തെങ്ങോലത്താളം",
+   "dur": 62,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "तिंगोलाकल् तालं पिडिचु काटिल् आडुन्नु",
+     "ml_script_share": 0.0,
+     "words": 5,
+     "words_per_s": 0.081,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.851
+    },
+    "whisper_ml_ft": {
+     "transcript": "ദിങ്ങോലകൾ താളം പിടിച്ചു കാറ്റിൽ ആടുന്നു.",
+     "ml_script_share": 1.0,
+     "words": 5,
+     "words_per_s": 0.081,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.989
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.71
+   }
+  },
+  {
+   "id": "214f1cc9-cbda-4b42-90cb-11560c5022b2",
+   "title": "വിട ചൊല്ലുമ്പോൾ",
+   "dur": 63,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "ਮੋਣੀ ਅਡੁਕੁਨ੍ਨੁ ਸਂਧ੍ਯ ਮੈਂਗੁਨ੍ਨੁ ਕੈ ਵੀਸੀ ਨੀਲ੍ਕੁਂ ਨੀਨੇ ਨੋਕੀ ਜਾਨ ਮਡਂਗੁਨ੍ਨੁ ਵਾਕੁਗਲ ਤੋਂਡੈਲ ਕੂਰੁਂਗੀ ਮੀਝਿਗਲ ਨੀਰਣ੍ਨੁ ਅਣੁਮੀਨ ਪਰਦੇਕ੍਷ ਮਾਤਰਂ ਕੂਟੀਨੁਂਡ ਵੀਡਾ ਚੋਲੁਂਬੋ ਵੀਡਾ ਚੋਲੁਂਬੋ",
+     "ml_script_share": 0.0,
+     "words": 24,
+     "words_per_s": 0.381,
+     "distinct_ratio": 0.917,
+     "lang_detected": "ml",
+     "lang_prob": 0.872
+    },
+    "whisper_ml_ft": {
+     "transcript": "പോണി അടുക്കുന്നു സന്ദ്യമയങ്ങുന്നു. കൈവേസി നിൽക്കും നിന്നെ നോക്കി ഞാൻ മടങ്ങുന്നു. വാക്കുകൾ തൊണ്ടയിൽ കൂ� മോർതെനില൰ുക്ക് നോക്കുകുക്ക് മോർത്തോ പ്രപുഺ നോക്ക്കി ട൯ക്ക കോരുനീ നോകോന്നി നോക്ക൒റ്കുക്കോ സ്വുട",
+     "ml_script_share": 1.0,
+     "words": 22,
+     "words_per_s": 0.349,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.99
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.819
+   }
+  },
+  {
+   "id": "dbd14f99-49d9-4732-abae-71a59060bbb9",
+   "title": "മഴയോർമ്മ",
+   "dur": 65,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "ਮੁਰਤੁ ਮੁਝਾ ਪੇਯੁ ਨੁ ਪਦੀਯ ਪਦੀਯ ਓਰਮਗਲ ਤੀਰੀਗ ਵਨ੍ਨ ਤੁਨੁ ਇਡ ਨੀਂਚੀਲ ਜਨਾਲ ਤੁਰਨ੍ ਨੀਆਂ ਨੋਕੀ ਨੀਨੁ ਮੀਝੀ ਨਨੀਂਚੁ ਤੁਲੀਗਲ ਕ",
+     "ml_script_share": 0.0,
+     "words": 21,
+     "words_per_s": 0.323,
+     "distinct_ratio": 0.952,
+     "lang_detected": "ml",
+     "lang_prob": 0.874
+    },
+    "whisper_ml_ft": {
+     "transcript": "പ്രത്തു മഴപെയുന്നു പതിയ പതിയ ഓർമ്മകൾ തിരികെ വന്നെത്തുന്നു ഇട നിംചിൽ. ജനാല തുറന്നു ഞാൻ നോക്കി നിന്നു മിഴി ന�",
+     "ml_script_share": 1.0,
+     "words": 16,
+     "words_per_s": 0.246,
+     "distinct_ratio": 0.938,
+     "lang_detected": "ml",
+     "lang_prob": 0.981
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.649
+   }
+  },
+  {
+   "id": "76fd1c37-2531-4551-a2e1-d5e2c39526dc",
+   "title": "ഓണസദ്യ",
+   "dur": 67,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "तूषनिलैल् विलंबि चोरुं परिपुन्नैयु, पपणं वज़ं पायसं चेर्णु निरण्यु इला।",
+     "ml_script_share": 0.0,
+     "words": 10,
+     "words_per_s": 0.149,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.821
+    },
+    "whisper_ml_ft": {
+     "transcript": "ദൂശനിലയിൽ വിളംഭി ചോറും പരിപ്പും നെയും, പപ്പടം, വഴം, പായസം ചേർന്നു നിരഞ്ഞുയില. അമ്മ വിളംഭി...",
+     "ml_script_share": 1.0,
+     "words": 12,
+     "words_per_s": 0.179,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.97
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.86
+   }
+  },
+  {
+   "id": "c07012f0-1d00-4436-a024-57ca8ec2a463",
+   "title": "കാവിലെ ഉത്സവം",
+   "dur": 63,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.645
+    },
+    "whisper_ml_ft": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.915
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.0
+   }
+  },
+  {
+   "id": "5636ff15-768c-4be1-87bf-f9bbcbcc138a",
+   "title": "നീ എഴുതിയ കത്ത്",
+   "dur": 63,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "ਮੁਦੀਯ ਕੱ੍ਤੁ ਨਾ ਵੇਂਡੁਂ ਤੁਰਨ੍ਨੁ ਵਾਈਚੁ ਮੁਸ਼ੀਲ ਪਡਰਨ ਵਰੀਗਲ਼ੀ ਨੀਂਡੇ ਗਂਧਂ ਤਙੀਲ ਆਗਲੇ ਆਣ ਇਂਗੀਲੁਂ ਅਰੀਗੀਲ ਨ ਪੋਲ ਤੋਨੀ ਮੁਦੀਯ ਕੱ੍ਤੁ ਨਾ ਵੇਂਡੁਂ ਤੁਰਨ੍ਨੁ ਵੇਂਡੀ",
+     "ml_script_share": 0.0,
+     "words": 25,
+     "words_per_s": 0.397,
+     "distinct_ratio": 0.8,
+     "lang_detected": "ml",
+     "lang_prob": 0.968
+    },
+    "whisper_ml_ft": {
+     "transcript": "മുതിയ കത്തുന്യ വേണ്ടും തുറന്നു വായിച്ചു. മഷീൽ പടർന്ന വരികളിൽ നിന്റെ ഗന്ധം തങ്ങി. അകലയാണെങ്കിലും അരികിലെന്�",
+     "ml_script_share": 1.0,
+     "words": 13,
+     "words_per_s": 0.206,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.997
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.658
+   }
+  },
+  {
+   "id": "2d3c74ca-8819-4500-85b0-cf55bdab13d9",
+   "title": "കലാലയ ദിനങ്ങൾ",
+   "dur": 63,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "परिषकालम् पंकिट्टु पलहालम् चिरिगल् दिरीलन्नु चोल्लि नम्मल् टाइकाल् चर्टु",
+     "ml_script_share": 0.0,
+     "words": 9,
+     "words_per_s": 0.143,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.646
+    },
+    "whisper_ml_ft": {
+     "transcript": "ഏറ്റികടന്നുച്ചെന്ന ആ പഴയ പ്രഭാതം കലനെയകെ. മരചോട്ടിൽ കൂടിയിരുന്നു മാടിയ കോട്ടുകാർ നമ്മൾ. ചട്ടിനമുമൾ. വരിഷക�",
+     "ml_script_share": 1.0,
+     "words": 12,
+     "words_per_s": 0.19,
+     "distinct_ratio": 1.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.93
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 1.175
+   }
+  },
+  {
+   "id": "a801553b-5b2d-4357-84c0-9023a3a7700c",
+   "title": "മൈലാഞ്ചി രാവ്",
+   "dur": 67,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.598
+    },
+    "whisper_ml_ft": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.88
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.0
+   }
+  },
+  {
+   "id": "d9a834e2-2bbf-4cdb-9b0c-fa83cad65b43",
+   "title": "തുളസിത്തറയിൽ",
+   "dur": 67,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.608
+    },
+    "whisper_ml_ft": {
+     "transcript": "",
+     "ml_script_share": 0.0,
+     "words": 0,
+     "words_per_s": 0.0,
+     "distinct_ratio": 0.0,
+     "lang_detected": "ml",
+     "lang_prob": 0.946
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.0
+   }
+  },
+  {
+   "id": "0f2f823c-fe8d-4021-8ef9-a8f770787a82",
+   "title": "പ്രണയ സന്ധ്യ",
+   "dur": 63,
+   "systems": {
+    "whisper_v3": {
+     "transcript": "ਮੁਝੀਗਲ ਮਰਨੁ ਗੋਈ ਮੋਲੁ ਮਦੁਰਮ ਕਨ੍ਨੋ ਮਨਸੀਲ ਮੈਲਵੀਲ੍ਲ ਪੁਂਝੀਰੀ ਮਦੀਂ ਇਜਨਨ ਨੀਰਾਯ੍ ਎ਂ ਪੁਂਝੀਰੀ ਮਦੀ ਇਜਨਨ ਨੀਰਾਯ੍",
+     "ml_script_share": 0.0,
+     "words": 17,
+     "words_per_s": 0.27,
+     "distinct_ratio": 0.824,
+     "lang_detected": "ml",
+     "lang_prob": 0.797
+    },
+    "whisper_ml_ft": {
+     "transcript": "സംത്യവിരിഞ്ഞ ഒരു പൂവായി നിയെ നരികിൽ വങ്ങുനിന്നോ. നും കഥകൾ പറഞ്ഞു മുഴികൾ മരന്നുപോയി. മുഴികൾ മരന്നുപോയി. മുഴി",
+     "ml_script_share": 1.0,
+     "words": 14,
+     "words_per_s": 0.222,
+     "distinct_ratio": 0.857,
+     "lang_detected": "ml",
+     "lang_prob": 0.968
+    }
+   },
+   "agreement_cer": {
+    "whisper_v3|whisper_ml_ft": 0.762
+   }
+  }
+ ]
+}
