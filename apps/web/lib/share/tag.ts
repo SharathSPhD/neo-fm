@@ -5,7 +5,7 @@
  * the caller has one, and a malformed value is dropped rather than sent.
  */
 export type ShareSource = "whatsapp" | "copy" | "shorts" | "instagram" | "sheet";
-export type ShareCampaign = "clip" | "station" | "gift";
+export type ShareCampaign = "clip" | "station" | "gift" | "together" | "dedicate";
 
 const REF_RE = /^[a-z2-7]{8}$/;
 

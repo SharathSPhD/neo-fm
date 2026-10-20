@@ -6,6 +6,8 @@ Run after every prod release (the "Prod release QA" scheduled task does this fro
 cd qa && npm install
 npm run public     # sweep.js, i18n.js, queue.js, playback.js against https://www.neo-fm.com (QA_BASE overrides)
 npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.vercel.app
+
+`npm run features` checks the dedicate-this-hour link (banner, name cleaning, WhatsApp link) and that the push opt-in endpoints respond, on prod, no login needed.
 ```
 
 - `sweep.js` prints only anomalies (non-200, overflow, console errors, missing h1) at desktop, 390 and 360px.

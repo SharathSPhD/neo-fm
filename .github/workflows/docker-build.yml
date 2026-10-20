@@ -28,12 +28,12 @@ jobs:
           - dgx-worker
           - vocal-synth
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: build image (no push)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: services/${{ matrix.service }}
           push: false
@@ -41,7 +41,7 @@ jobs:
           tags: neo-fm/${{ matrix.service }}:ci
 
       - name: trivy vulnerability scan
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: neo-fm/${{ matrix.service }}:ci
           format: table
@@ -60,7 +60,7 @@ jobs:
           syft "neo-fm/${{ matrix.service }}:ci" -o spdx-json > "sbom/${{ matrix.service }}.spdx.json"
 
       - name: upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sbom-${{ matrix.service }}
           path: sbom/${{ matrix.service }}.spdx.json

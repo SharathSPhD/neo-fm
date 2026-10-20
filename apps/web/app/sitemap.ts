@@ -7,8 +7,10 @@ import { PUBLIC_PATHS, siteUrl } from "@/lib/seo/site";
 import { loadPool } from "@/lib/station/pool";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-// Public songs change constantly; regenerate hourly rather than per request.
-export const revalidate = 3600;
+// Public songs change constantly, and a build-time render has no database to read: it baked in a pages-only sitemap
+// (no songs, no station tracks) that stayed live until the next revalidation. Render per request; the pool read is
+// cached per instance and crawlers fetch this rarely.
+export const dynamic = "force-dynamic";
 
 const MAX_SONGS = 1000;
 const MAX_PROFILES = 500;

@@ -1,0 +1,602 @@
+{
+ "j160": {
+  "reason": "A is mostly incoherent, with invented words (ಮಳೆಯದ, ತಣೆಯದ, ಮಂಜಮಲೈ) and no call-and-response. B has clear call/response labels, natural folk diction (ಬಿಟ್ಟೈತೆ, ಸಾಮಿ), steady rhyme and a clear rain theme, despite some filler and stock images.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j161": {
+  "reason": "A is coherent Kannada folk with clear call-and-response labels, rhyming couplets and a fitting rain-prayer theme, despite some stock phrasing. B is mostly invented or ungrammatical words, with Tamil-like forms, unclear meaning and no call-and-response.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "winner": "A"
+ },
+ "j057": {
+  "reason": "A is simple but coherent: pot, sugarcane, kolam, mother's blessing, with matching line endings. B has invented or ungrammatical words (கானினே, நேருலப், அருவேலத்) and incoherent imagery, and it omits the grandmother and sugarcane.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j031": {
+  "reason": "A has a repeated radif 'गाँव मेरा प्यारा', but its lines are stock, ungrammatical ('धूल सहनी थी') and uneven, with no true qafia. B has longer, ghazal-like couplets and richer imagery, though its radif and qafia are inconsistent and its Urdu terms are slightly misused. B is the more coherent and poetic.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j144": {
+  "reason": "B has clear couplet rhymes (झाली/आली, मातेला/आवताला, भुई/घाई), idiomatic folk diction (सर्जा-राजा, मृगाच्या धारा) and a repeated hook. A is incoherent, with invented words (नालाबांधली, बोळेती), weak rhyme and meter, and a mis-spelled आषाढ.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j211": {
+  "reason": "A is coherent, grammatical Tamil with clear temple imagery (bell, camphor, mother's tears) and consistent rhyme and meter. B is largely gibberish with invented words (தாளுவாய், விந்தகந்த, நீசும், கருசமை) and broken sense, so it fails on diction and brief.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j015": {
+  "reason": "Both lyrics are weak and contain invented or ungrammatical words. A has more coherent devotional vocabulary (ನಿಶ್ಚಲ ಮನ, ಶರಣು, ಭಕ್ತಿ ಬೆಳಗಿತು, ಜಗದೀಶ್ವರ) and some alliteration. B is largely gibberish (ತೇಮವು, ನೀನಾನೆ), with an unclear dawn image.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j108": {
+  "reason": "B is a real doha set with 13+11 matra lines, rhyming couplets, and concrete imagery like the seed in dust and the desert. A is ungrammatical, has no doha meter or rhyme, and uses invented or odd phrases such as 'निहार लगाएँ' and 'संवरण'.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j141": {
+  "reason": "A is coherent and akam-like: kurinji hills, kāntaḷ flowers, rain, a waiting heart, and a true refrain. Some lines are uneven, and 'சிலம்பின்' is odd. B has broken grammar, invented or garbled words ('மதியூளே', 'பொழிவோடு' repeated), muddled sense, and the monsoon is misplaced as 'கோடை'.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j023": {
+  "reason": "A is simple and coherent, with consistent end rhyme (प्यारा/सहारा) and clear brief coverage, though stock imagery. B has more local color but contains invented or ungrammatical phrases (\"खुशहाल का भेल\", \"मधुर-सुमन\") and weak meter.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 4,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "A"
+ },
+ "j061": {
+  "reason": "A is brief and has a refrain with some Sangam flavour (மலைச்சாரல், ஆற்றங்கரை), but several words are invented or incoherent (மடிதடிக், மெல்லிணை, தவிப்புடைத்தே). B has a clearer structure, but it uses the wrong season (கோடை), 'பொழிவோடு' is repeated as a forced rhyme, and 'மதியூளே' is ungrammatical. A is slightly more atmospheric.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j017": {
+  "reason": "A is cleaner and more coherent, though 'बेसुदूर' is invented and its rhyme is weak. B has invented or ungrammatical words ('नमना', 'सानी', 'सुहानी' for the plural 'लम्हे') and a muddled sense; its end-rhymes are neater but forced.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j107": {
+  "reason": "A is coherent, with a small-town Holi morning, dholak, gulal, hugging and forgiveness, plus a rhyming hook (होली/टोली) and a folk register. B contradicts the brief with 'साँझ ढली' (evening), uses invented or garbled words (साँग पीला, मोईया, घबराईया), and has forced rhyme and weak sense.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j111": {
+  "reason": "A keeps a consistent radif 'याद आया' with qafia (पुराना/आशियाना/हँसाना/ठिकाना), so it reads as a true ghazal with a steady meter. B has no consistent radif or qafia, awkward lines ('घूमता है बदन') and loose meter, though some imagery is decent.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j022": {
+  "reason": "A has awkward, ungrammatical lines ('हँसता-खुशहाल का भेल', 'मधुर-सुमन') and a wrong river image, though its hook is decent. B is cleaner, more coherent and singable, with consistent rhyme and the families present, though its imagery is generic (Ganga is misplaced for Lucknow, which sits on the Gomti).",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 2,
+   "diction_register": 4,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j009": {
+  "reason": "Both are weak. A has consistent rhythm and some rhyme with Ugadi imagery (neem, doorway, family), though several words are odd or invented (ಸಿರಗದ, ತೇಳು). B has a devotional tone and mentions neem and doorway, but its grammar is broken, its words are garbled (ಉಗಾಧಿ, ಚಿಂಚು, ನಮಸು), and its meaning is unclear.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j054": {
+  "reason": "A has real rhyme and wedding imagery (kolam) but includes odd words like 'புஜ்யா' and the pumpkin slice, and it omits the feast. B is repetitive and mistakes kolam for 'கொலு', with ungrammatical 'நிறைந்தி', though it mentions the banana leaf.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j129": {
+  "reason": "A is coherent and idiomatic: a colloquial fisher-wife voice, matching hook couplets with rhyme (சாய்ஞ்சிருச்சே/ஓய்ஞ்சிருச்சே) and a fitting image. B is largely nonsensical, with invented or ungrammatical phrases, and drifts from the brief.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "winner": "A"
+ },
+ "j014": {
+  "reason": "Both lyrics are largely incoherent, with invented or ungrammatical words. A keeps a consistent end-rhyme (-ನೆ, -ಲಿ, -ವು) and a dawn image. B has some better vocabulary (ಭಕ್ತಿಯು ಬೆಳಗಿತು, ಜಗದೀಶ್ವರ) but weaker rhyme and murkier meaning, though it is more devotional.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j149": {
+  "reason": "A is coherent and grammatical, with consistent rhyme (सूर/दूर, रंग/दंग) and a clear brief fit, despite the clichés and the 'अगाशी' spelling. B has nonsense words ('सुरांनांनी', 'होसुनी'), ungrammatical 'गगना', and a repeated 'खास', and it misses the sunset and terrace imagery.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j093": {
+  "reason": "A is coherent, idiomatic vachana-style Kannada with the body-as-temple imagery (bones as pillars, garbha-gudi, tirtha) and a Basavanna-like contrast with the outer temple. B has garbled, invented words (ಕಾಗುಹವುನ, ಹೂವವನು, ಕಾಯೆನ್ನಾರಿ) and is incoherent.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j024": {
+  "reason": "A is incoherent, uses invented words and misses the sister (says brother). B is cliched but coherent, rhymes, mentions sister and diyas, and is singable.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 4,
+   "imagery": 2,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j137": {
+  "reason": "A is coherent, idiomatic folk Tamil with a consistent end rhyme (தங்கமே/யோகமே), covering pot, kolam, sugarcane and the grandmother's blessing. It has small flaws, such as the stray 'சந்தனத்தைச் வெச்சாளே'. B is largely incoherent, with invented words and ungrammatical lines, and it omits the grandmother and the sugarcane.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 3,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j210": {
+  "reason": "A is riddled with invented or ungrammatical words (விந்தகந்த, நீசும், கருசமை, எம்பெய்யாய்) and nonsensical repetition, and it never mentions camphor. B is coherent and idiomatic, with consistent rhyme and a camphor-bell-mother scene, though its imagery leans on stock phrasing.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j018": {
+  "reason": "A has some imagery and rhyme attempts, but 'माया' and 'ज़माना सच्चाई' are forced or meaningless, and 'बयार माया' is awkward. B is simpler and more coherent, with petrichor imagery and a repeated hook, but 'छँहा' is an invented word and the lines are generic.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j012": {
+  "reason": "A is more coherent: body as temple, heart as flower, eyes as lamp, ego melting, though it has invented words (ಕಾಗುಹವುನ, ಅಭಿಮಾನು, ಕಾಯೆನ್ನಾರಿ). B is largely gibberish (ವಿನೋಡ, ಸವಡ, ರಾರಿಯದ, ಹರದಿ) with weak imagery, though its end rhymes are tidy.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j166": {
+  "reason": "A is riddled with invented or ungrammatical words (ತೇಲುಕ, ಜೊತಿದೀನಿ, ಬೋನದಲಿ, ಗುಡಿಸಿ ಕಾಯಿದೆ ಜೀವಿ) and mixes registers, and its lines are uneven with weak rhyme. B is coherent, with a consistent register, end rhyme, a Coorg setting and a pun on Ravi and Shruti, though its imagery is somewhat stock.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j101": {
+  "reason": "A names Kabir, has clear couplet rhymes (कबीर/तकदीर, आसमां/जहां) and a catchy hook, though it uses stock phrases. B never names Kabir, its hook is nonsensical ('सितारों के प्यारे'), and 'प्यारे' repeats weakly as the rhyme.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j038": {
+  "reason": "A is mostly intelligible, with coherent mango toranam and turmeric-kumkum imagery, though it misspells the bride's name (Sravani as Sravanthi) and contains invented words. B garbles the names (Karthikeya, Sravani) and uses nonsense words (దార్శని, రర్షని, పర్షం) for forced rhyme.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j082": {
+  "reason": "A is mostly incoherent: 'ಒಲವಿದ್ದಾಳೆ', 'ಸಾವುಂಟಾಳೆ' and 'ನೆನಪಿನೆನೊ' are ungrammatical or invented, and the lines don't cohere. B is understandable and on brief, with tulasi katte, mother's lullaby and tavaru, though some lines are awkward ('ಹನಿಗಳ ಬಟ್ಟೆ', 'ಬಾಲಿ').",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ }
+}

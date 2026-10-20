@@ -92,16 +92,36 @@ export async function loadPullFunnel(db: SupabaseClient, days: number): Promise<
   const sum = (event: string) => (counters.data ?? []).filter((r) => r.event === event).reduce((a, r) => a + Number(r.n), 0);
 
   const activity: ActivityRow[] = [];
+  const trackLanguage = new Map<string, string>();
+  const trackSeconds = new Map<string, number>();
   for (let i = 0; i < users.length && activity.length < ACTIVITY_CAP; i += CHUNK) {
     const ids = users.slice(i, i + CHUNK).map((u) => u.id);
     const [signals, jobs] = await Promise.all([
-      db.from("station_signals").select("user_id,created_at").in("user_id", ids).in("kind", ["play", "finish", "like"]).gte("created_at", sinceTs.toISOString()).limit(5000),
-      db.from("jobs").select("user_id,created_at").in("user_id", ids).gte("created_at", sinceTs.toISOString()).limit(5000),
+      db.from("station_signals").select("user_id,track_id,kind,position_ms,created_at").in("user_id", ids).in("kind", ["play", "finish", "like", "skip", "replay", "share"]).gte("created_at", sinceTs.toISOString()).limit(5000),
+      db.from("jobs").select("user_id,created_at,song_documents(language)").in("user_id", ids).gte("created_at", sinceTs.toISOString()).limit(5000),
     ]);
     // A missing station_signals table (older environments) just means song activity only.
     if (jobs.error) throw new OpsQueryError(jobs.error.message);
-    for (const r of [...(signals.error ? [] : (signals.data ?? [])), ...(jobs.data ?? [])]) {
-      activity.push({ user_id: String(r.user_id), created_at: String(r.created_at) });
+    const signalRows = (signals.error ? [] : (signals.data ?? [])) as { user_id: string; track_id: string; kind: string; position_ms: number | null; created_at: string }[];
+    // Track languages and lengths come from the pool; a failed read leaves those rows without them.
+    const unseen = [...new Set(signalRows.map((r) => String(r.track_id)))].filter((t) => !trackLanguage.has(t));
+    for (let j = 0; j < unseen.length; j += CHUNK) {
+      const { data } = await db.from("pool_tracks").select("id,language,duration_seconds").in("id", unseen.slice(j, j + CHUNK));
+      for (const t of data ?? []) {
+        trackLanguage.set(String(t.id), String(t.language));
+        trackSeconds.set(String(t.id), Number(t.duration_seconds) || 0);
+      }
+    }
+    for (const r of signalRows) {
+      const listen_ms = r.kind === "finish" ? (trackSeconds.get(String(r.track_id)) ?? 0) * 1000 : r.kind === "skip" || r.kind === "replay" ? Math.max(0, Number(r.position_ms) || 0) : 0;
+      activity.push({
+        user_id: String(r.user_id), created_at: String(r.created_at), language: trackLanguage.get(String(r.track_id)) ?? null,
+        listen_ms, shared: r.kind === "share",
+      });
+    }
+    for (const r of (jobs.data ?? []) as unknown as { user_id: string; created_at: string; song_documents: { language: string } | { language: string }[] | null }[]) {
+      const doc = Array.isArray(r.song_documents) ? r.song_documents[0] : r.song_documents;
+      activity.push({ user_id: String(r.user_id), created_at: String(r.created_at), language: doc?.language ?? null });
     }
   }
   return {

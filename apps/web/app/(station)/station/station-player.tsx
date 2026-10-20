@@ -16,7 +16,9 @@ import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { tagShareUrl } from "@/lib/share/tag";
-import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
+import { dedicateHourUrl } from "@/lib/station/dedicate";
+import { whatsappShareUrl } from "@/lib/station/share";
+import { togetherUrl } from "@/lib/station/together";
 import { takeFallback } from "@/lib/station/fallback";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
@@ -100,6 +102,27 @@ function AdSkip({ afterMs, onSkip }: { afterMs: number; onSkip: () => void }) {
   }, [afterMs]);
   return <button type="button" disabled={!ready} onClick={onSkip} className="rounded border px-3 py-2 disabled:opacity-50">Skip</button>;
 }
+/** Name field plus a WhatsApp send that dedicates the current station hour to someone (STATION_DEDICATE=1). */
+function DedicateHour({ onSend }: { onSend: (name: string) => void }) {
+  const { t } = useUiLang();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  if (!open) return <button type="button" onClick={() => setOpen(true)} className="chip py-2">{t("station.dedicate.button")}</button>;
+  return (
+    <form className="flex w-full flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); onSend(name); }}>
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        maxLength={24}
+        placeholder={t("station.dedicate.prompt")}
+        aria-label={t("station.dedicate.prompt")}
+        className="min-h-[44px] flex-1 rounded border px-3 py-2"
+      />
+      <button type="submit" disabled={!name.trim()} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95 disabled:opacity-50">{t("station.dedicate.button")}</button>
+    </form>
+  );
+}
+
 /** Ad seconds are counted over this window for the server's cap. */
 const AD_WINDOW_MS = 600_000;
 const AD_HOUR_MS = 3_600_000;
@@ -126,7 +149,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "" }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string }) {
+export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -426,7 +449,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   async function share() {
     if (!current) return;
     const text = t("station.shareText", { title: current.title });
-    const url = trackShareUrl(current.id, location.origin);
+    const url = togetherUrl(current.id, audioRef.current?.currentTime ?? 0, Date.now(), location.origin);
     try {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }
@@ -435,9 +458,17 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     } catch { /* share sheet dismissed */ }
   }
 
+  function dedicateHour(name: string) {
+    const url = dedicateHourUrl(station, name, location.origin);
+    if (!url) return;
+    const text = t("station.dedicate.banner", { name: name.trim() });
+    window.open(whatsappShareUrl(text, tagShareUrl(url, { source: "whatsapp", campaign: "dedicate" })), "_blank", "noopener,noreferrer");
+    sendFunnelEvent("whatsapp_click");
+  }
+
   function shareWhatsApp() {
     if (!current) return;
-    window.open(whatsappShareUrl(current.title, tagShareUrl(trackShareUrl(current.id, location.origin), { source: "whatsapp", campaign: "station" })), "_blank", "noopener,noreferrer");
+    window.open(whatsappShareUrl(current.title, tagShareUrl(togetherUrl(current.id, audioRef.current?.currentTime ?? 0, Date.now(), location.origin), { source: "whatsapp", campaign: "together" })), "_blank", "noopener,noreferrer");
     sendSignal(current.id, "share", audioRef.current);
     sendFunnelEvent("whatsapp_click");
   }
@@ -523,6 +554,9 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   return (
     <section aria-label={t("station.player.label")} className="flex flex-col gap-4">
       <InstallPrompt plays={plays} minPlays={2} />
+      {dedicatedTo ? (
+        <p className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium" role="status">{t("station.dedicate.banner", { name: dedicatedTo })}</p>
+      ) : null}
       {stationRow}
       {station ? (
         <p className="text-sm text-foreground/70">
@@ -647,6 +681,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
             <button type="button" onClick={() => advance("skip")} className="chip py-2">{t("station.skip")}</button>
             <button type="button" onClick={share} className="chip py-2">{t("station.share")}</button>
             <button type="button" onClick={shareWhatsApp} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95">Send on WhatsApp</button>
+            {dedicate && <DedicateHour onSend={dedicateHour} />}
           </div>
           )}
           {!isAd && !isVoice ? <ReportButton key={current.id} trackId={current.id} compact /> : null}
