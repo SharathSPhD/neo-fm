@@ -10,6 +10,8 @@
  *   POST ?action=gate       {cases:[{id,language,style,brief,draftLive,draftCand,baseline}], max_usd}
  *                                                        Polishes each arm's chosen draft with the live template and judges both blind
  *                                                        against the baseline, Claude and Gemini (runPolishGate). Same rule as the other gates.
+ *   POST ?action=polish    {cases:[{id,language,style,brief,draft}], max_usd}   Live polish template on given drafts (cost of the production polish step).
+ *   POST ?action=pairs     {cases:[{id,language,brief,a,b}], max_usd}           Blind Claude pairwise judge, both orders; "pce" = a won.
  * Nothing is promoted by this route: it only reports.
  */
 import { NextRequest, NextResponse } from "next/server";
@@ -94,6 +96,35 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     };
     const result = await runPolishGate(gcases, "prosody-select", deps, { maxUsd });
     return NextResponse.json({ ...result, arms: { live: "engine pick (embedding closeness), live polish", candidate: "prosody-aware engine pick, live polish" }, spend: meter.snapshot(), max_usd: maxUsd });
+  }
+
+  if (action === "polish") {
+    // Production polish step only (live template, plain brief) on drafts the caller already chose; reports spend per call.
+    const cases = (Array.isArray(body.cases) ? body.cases : []).slice(0, 10) as { id: string; language: string; style: string; brief: string; draft: string }[];
+    const template = await livePolishTemplate(serviceClient());
+    const out: { id: string; polished: string | null }[] = [];
+    for (let i = 0; i < cases.length; i += 5) {
+      if (meter.usd() >= maxUsd) break;
+      out.push(...(await Promise.all(cases.slice(i, i + 5).map(async (c) => {
+        try { return { id: c.id, polished: await polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template) }; }
+        catch { return { id: c.id, polished: null }; }
+      }))));
+    }
+    return NextResponse.json({ results: out, spend: meter.snapshot() });
+  }
+
+  if (action === "pairs") {
+    // Blind pairwise Claude judge, both orders (same judgePair as the gates). winner "pce" means the first lyric (a) won.
+    const cases = (Array.isArray(body.cases) ? body.cases : []).slice(0, 10) as { id: string; language: string; brief: string; a: string; b: string }[];
+    const out: { id: string; winner: string; detail: unknown }[] = [];
+    for (let i = 0; i < cases.length; i += 5) {
+      if (meter.usd() >= maxUsd) break;
+      out.push(...(await Promise.all(cases.slice(i, i + 5).map(async (c) => {
+        try { const r = await judgePair(client, c.language, c.brief, c.a, c.b); return { id: c.id, winner: r.winner, detail: r.detail }; }
+        catch { return { id: c.id, winner: "error", detail: null }; }
+      }))));
+    }
+    return NextResponse.json({ results: out, spend: meter.snapshot() });
   }
 
   return NextResponse.json({ error: "unknown action" }, { status: 400 });
