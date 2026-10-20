@@ -12,7 +12,7 @@ if (!email || !pw || /(^|\/\/)(www\.)?neo-fm\.com|neo-fm-web\.vercel\.app/.test(
   process.exit(2);
 }
 const EXPECTED = /\/collections|\/api\/station\/queue|\/api\/events/;
-const routes = ['/station', '/library', '/songs/new', '/account', '/pricing', '/gift', '/discover'];
+const routes = ['/station', '/library', '/songs/new', '/account', '/pricing', '/gift', '/discover', '/account/notifications'];
 
 (async () => {
   const b = await chromium.launch({ executablePath: chromiumPath() });
