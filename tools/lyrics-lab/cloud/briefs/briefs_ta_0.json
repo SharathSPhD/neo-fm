@@ -1,0 +1,242 @@
+[
+ {
+  "id": "ta-c180",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A tender song about dancers rehearsing before a show",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A tender song about dancers rehearsing before a show. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c181",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-pop",
+  "brief": "A wistful song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-pop\". Brief: A wistful song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c182",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A wistful song about the first day of school",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A wistful song about the first day of school. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c183",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A bittersweet song about a lost childhood home",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A bittersweet song about a lost childhood home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c184",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-pop",
+  "brief": "A joyful song about a wedding procession",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-pop\". Brief: A joyful song about a wedding procession. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c185",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A wistful song about a lost childhood home",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A wistful song about a lost childhood home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c186",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A bittersweet song about a festival of lamps",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A bittersweet song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c187",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A joyful song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A joyful song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c188",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A playful song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A playful song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c189",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-pop",
+  "brief": "A playful song about spring blossoms and a new beginning",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-pop\". Brief: A playful song about spring blossoms and a new beginning. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c190",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A bittersweet song about a rainy bus ride home",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A bittersweet song about a rainy bus ride home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c191",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-pop",
+  "brief": "A devotional song about a grandmother's stories at twilight",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-pop\". Brief: A devotional song about a grandmother's stories at twilight. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c192",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A tender song about a birthday for a child who loves kites",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A tender song about a birthday for a child who loves kites. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c193",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A joyful song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A joyful song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c194",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A joyful song about a river crossing in monsoon floods",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A joyful song about a river crossing in monsoon floods. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c195",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A tender song about a city worker dreaming of the village",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A tender song about a city worker dreaming of the village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c196",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A bittersweet song about a temple bell across the river",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A bittersweet song about a temple bell across the river. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c197",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A devotional song about the first day of school",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A devotional song about the first day of school. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c198",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A bittersweet song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A bittersweet song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c199",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-pop",
+  "brief": "A tender song about the first day of school",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-pop\". Brief: A tender song about the first day of school. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c200",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A tender song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A tender song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c201",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A joyful song about dancers rehearsing before a show",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A joyful song about dancers rehearsing before a show. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c202",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A bittersweet song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A bittersweet song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c203",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A devotional song about spring blossoms and a new beginning",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A devotional song about spring blossoms and a new beginning. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c204",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A tender song about a temple bell across the river",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A tender song about a temple bell across the river. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c205",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A devotional song about a rainy bus ride home",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A devotional song about a rainy bus ride home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c206",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A tender song about a farmer praying for harvest",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A tender song about a farmer praying for harvest. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c207",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "bhakti-inspired",
+  "brief": "A bittersweet song about the sea at night and a sailor's longing",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"bhakti-inspired\". Brief: A bittersweet song about the sea at night and a sailor's longing. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c208",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-light-classical",
+  "brief": "A joyful song about a morning prayer in a small shrine",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-light-classical\". Brief: A joyful song about a morning prayer in a small shrine. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ },
+ {
+  "id": "ta-c209",
+  "lang": "ta",
+  "language": "Tamil",
+  "style": "tamil-folk",
+  "brief": "A tender song about friends parting at a railway station",
+  "prompt": "Write original song lyrics in Tamil (native script only, no transliteration, no translation) in the style family \"tamil-folk\". Brief: A tender song about friends parting at a railway station. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Tamil: edugai/monai echo across paired lines, no Sanskrit padding. Output only the lyrics."
+ }
+]

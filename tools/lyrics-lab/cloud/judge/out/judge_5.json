@@ -1,0 +1,602 @@
+{
+ "j042": {
+  "reason": "A is in Telugu script with some folk flavour (సంధ్య, పూల దొంతరి), though many lines are ungrammatical and unclear. B is romanised, not native script, and its lines are mostly gibberish. A mentions neither Bathukamma by name nor the women's singing clearly, but it still fits the brief better than B.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j198": {
+  "reason": "A is incoherent: it garbles the names (Karthik becomes 'కార్తీక రాణి', Sravani becomes 'స్రవంతి') and uses invented words ('మనగలి', 'సిరిమరగె', 'జెంతె'). B has matched line lengths, internal rhyme, a clear wedding setting and both names (Sravani written as Shravani). B is clearly stronger.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j131": {
+  "reason": "A is coherent, idiomatic Tamil with fitting temple imagery (bells, camphor, sanctum lamp, mother's prayer) and clear rhyme. B is full of invented, ungrammatical words (தாளுவாய், விந்தகந்த, நீசும், கருசமை, எம்பெய்யாய்) and is barely meaningful.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j195": {
+  "reason": "A is coherent and idiomatic, with consistent end-rhyme (ప్రభాతం/మంగళం, నామం/ప్రణామం) and a clear devotional frame. B has awkward, nonsensical phrases (ఒడ్డునై కాంతి, సవళించె, తోడించుటకు) and weak meter and diction.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j234": {
+  "reason": "B has concrete Gudi Padwa imagery (sugar garland, neem, copper kalash), clear end rhyme and a singable beat. A is vague and ungrammatical (\"उगवला नवी पालवी\", \"जमणी\", \"आजचे भान\"), with weak rhyme and meter.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j155": {
+  "reason": "A is coherent, with a steady beat, clear couplet rhyme (न्यारी/दारी) and concrete Gudi Padwa imagery (copper kalash, silk cloth, sakharganthi, neem). B has garbled phrasing ('उगवला नवी', 'जमणी'), weak rhyme and vague images, so it reads as invented and unidiomatic.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j073": {
+  "reason": "A mixes Latin script and Devanagari (\"dhol\", \"Procession\", \"immersion\"), which is a serious register and spelling failure, and some words are invented (\"विजर\", \"पुंकार\"). B is also flawed (\"ताशाया\", \"गंजलेला गंजला\", \"जग मनाली\") but stays in Devanagari, rhymes consistently and has a few real images.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j114": {
+  "reason": "B follows the keerthana form with pallavi, anupallavi and charanams, in an apt devotional register with temple and river imagery and surrender. A has awkward, partly meaningless phrases ('ఒడ్డునై కాంతి', 'సాటి శాంతి', 'తోడించుటకు') and weak imagery.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j087": {
+  "reason": "A is coherent, with a clear hook, a Coorg coffee setting, and the pun on Ravi (sun) and Shruti (tune). Its flaws are 'ಹಿಮ' and loose rhyme. B is riddled with invented or ungrammatical words ('ತೇಲುಕ', 'ಜೊತಿದೀನಿ', 'ಬೋನ') and has broken meter.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 1,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j126": {
+  "reason": "A is largely incoherent, with invented or ungrammatical words (గురువులారమ్మా, నడిపించెనేను, వందలము తలసాగు) and no anupallavi. B follows the pallavi-anupallavi-charanam structure and reads coherently, though its meter is loose and its imagery is somewhat stock.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j134": {
+  "reason": "B covers the brief: kolam at the doorway, banana-leaf feast, wedding pandal, with consistent rhyme and a clear register. A has odd words ('புஜ்யா', 'பூசணக் கீற்றிலே'), no banana leaf, and a weaker, incoherent register.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j167": {
+  "reason": "A is coherent, grammatical Kannada with consistent end rhyme, Coorg and coffee imagery, and a Ravi–Shruti wordplay. B has invented or ungrammatical words (ತೇಲುಕ, ಜೊತಿದೀನಿ, ಕೋರಗೋಡು, ಬೋನದಲಿ), uneven lines and a weak brief fit.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j207": {
+  "reason": "A is grammatical, coherent Telugu with the full pallavi–anupallavi–charanam structure, though its imagery is stock and it ends in loose rhyme. B is garbled, with invented words, broken syntax, no anupallavi, and incoherent meaning.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j020": {
+  "reason": "A is short and repetitive; its hook is awkward ('सितारों के प्यारे' is meaningless) and it skips Kabir's name. B has the name misspelled as 'कबवीर' and some cliché, but its imagery (counting stars in sleep), rhyme and brief fit are stronger.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j062": {
+  "reason": "A follows the pallavi-anupallavi-charanam structure and has some edugai/monai, but its dusk imagery contradicts the dawn brief and several phrases are ungrammatical. B is purely repetitive, with no structure or imagery, though it is cleaner and keeps the lamp theme.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 3,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j190": {
+  "reason": "B keeps a consistent radif ('मुझको बहुत याद आता है') and qafia (-आँ: मकाँ, जहाँ, समाँ, निशाँ), as a ghazal needs. A has no real radif or qafia, and its lines are uneven and clumsy ('घूमता है बदन'). B's imagery is somewhat stock, but it is coherent.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 5,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j063": {
+  "reason": "A is mechanical repetition of single words, with no real pallavi-anupallavi structure or imagery. B has the proper section structure and some edugai/monai and devotional content, though it is flawed (it mentions dusk instead of dawn, and some phrasing is awkward). B is clearly better.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 1,
+   "imagery": 1,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j076": {
+  "reason": "A has broken diction: 'क्रॉस' is an English word, 'होडे' and 'कास्' are meaningless, and 'पायांचे वारी लागले' is ungrammatical. B is simpler and repetitive with a clumsy 'होई' rhyme and 'वासना', but it stays coherent, devotional and closer to the wari theme.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j092": {
+  "reason": "B is coherent, idiomatic Kannada with concrete temple-body imagery (bones as pillars, blood as tirtha, heart as sanctum) and vachana spirit. A has invented or ungrammatical words (ಕಾಗುಹವುನ, ಅಭಿಮಾನು, ಕಾಯೆನ್ನಾರಿ) and is largely incoherent.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j116": {
+  "reason": "B uses the name Meghana, rain and dance imagery with a wordplay on Megha (clouds), and has a more natural pop register. A is short and repetitive, with awkward phrases like 'నీట ముంచెయ్యి' and 'నింపెయి', weak rhyme, and little dance imagery.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j206": {
+  "reason": "A is largely incoherent, with ungrammatical and invented words (గురువులారమ్మా, కర్తవునాయెను, వందలము తలసాగు) and no anupallavi. B has a proper pallavi-anupallavi-charanam structure, clear devotional diction and parallel meter. Its imagery is stock, but it is coherent and fits the brief.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j119": {
+  "reason": "A is coherent, idiomatic Telugu with the right names, toranam, turmeric and the saptapadi, and its long paired lines mostly balance. B garbles the names (Sravani becomes Sravanthi), uses invented or ungrammatical words ('మనగలి', 'సిరిమరగె', 'జెంతె') and has weak meaning.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j080": {
+  "reason": "A is mostly gibberish, with invented words, broken grammar and no call-and-response. B is clear, idiomatic Kannada with a leader/chorus structure, rhyme and farming imagery (plough, sowing, Mother Earth), though it leans on cliché.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j109": {
+  "reason": "A follows the doha form with a refrain, mostly matching 13+11 matras, with rhymes (धार/पतवार, पीर/नीर) and a seed-to-tree image. Its flaws are the odd 'धरन' and some meter slips. B is not in doha form, its lines are uneven, and it has ungrammatical phrases ('निहार लगाएँ', 'संवरण') and abstract imagery.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j136": {
+  "reason": "B is coherent, with rhyming couplets, real Pongal imagery (pot, kolam, sugarcane, grandmother's blessing) and a natural folk register. A is largely nonsensical, with invented words, ungrammatical lines, and little of the brief's imagery.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j191": {
+  "reason": "A keeps a true ghazal structure: qafia (मकाँ/जहाँ/समाँ/निशाँ) and radif 'मुझको बहुत याद आता है', with fairly even meter. It leans on stock images. B has no consistent radif or qafia, uneven lines, and awkward phrasing ('घूमता है बदन', 'मज़हर').",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 5,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 1,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j127": {
+  "reason": "A is coherent, grammatical Telugu with a proper pallavi-anupallavi-charanam structure and a clear gratitude theme, though its lines are long and its imagery is stock. B is largely ungrammatical, with invented words, no anupallavi and weak meaning.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j052": {
+  "reason": "A is short with odd phrases ('பந்தல் முத்துக்கள்', 'கூடும் சைக்கிள் மிதித்து ஓடு') and mixed register, but has rhyming couplets and fits the brief. B is more colloquial, concrete and singable, though it uses English 'ஸ்பார்க்லிங்' and has weaker rhyme.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j158": {
+  "reason": "B is idiomatic, flirtatious in true lavani voice with concrete market imagery and clean rhyme. A relies on invented or garbled words, incoherent lines and uneven meter.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j208": {
+  "reason": "B fits the brief with a fisherman's wife waiting at dusk, using kattamaram, machan and a sea-goddess prayer, plus rhyming lines and a folk tone. A is incoherent, with nonsensical phrases and no clear waiting wife, and its rhyme is weak.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 3,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ }
+}
