@@ -382,5 +382,197 @@
   "tier": "form",
   "style": "adhunik-song",
   "brief": "Two original rhymed quatrains (antyamil) on a rainy window, then a refrain"
+ },
+ {
+  "id": "te-f1",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Farmers sowing seed at the first monsoon showers, call-and-response chorus"
+ },
+ {
+  "id": "te-f2",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A birthday song for Lakshmi, who paints rangoli every morning and feeds the crows"
+ },
+ {
+  "id": "te-f3",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "An anniversary song for Venkat and Padma, twenty-five years, a rented house in Vijayawada"
+ },
+ {
+  "id": "te-f4",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Bonalu festival procession, women carrying pots, drums and turmeric"
+ },
+ {
+  "id": "te-f5",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-light-classical",
+  "brief": "A prayer at dusk with a lamp before the tulasi plant"
+ },
+ {
+  "id": "te-f6",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A farewell song for a brother going abroad, his old bicycle and mother's pulihora"
+ },
+ {
+  "id": "te-f7",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "Sankranti kites over the terrace, bhogi fire and fresh sugarcane"
+ },
+ {
+  "id": "te-f8",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A song for a daughter's first day at school, a new bag and braided hair"
+ },
+ {
+  "id": "te-f9",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-light-classical",
+  "brief": "The Godavari at sunrise, boats and temple bells"
+ },
+ {
+  "id": "te-f10",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "A friendship song about hostel nights, Maggi and exam fear in Hyderabad"
+ },
+ {
+  "id": "te-f11",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-folk",
+  "brief": "A grandmother's lullaby under the neem tree on a summer night"
+ },
+ {
+  "id": "te-f12",
+  "lang": "te",
+  "language": "Telugu",
+  "tier": "fresh",
+  "style": "telugu-pop",
+  "brief": "Ugadi pachadi, six tastes of life, a new year with family"
+ },
+ {
+  "id": "mr-f1",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A song for the first rain on the Konkan coast, mango trees and red soil"
+ },
+ {
+  "id": "mr-f2",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "abhang-inspired",
+  "brief": "An abhang-style prayer to Vitthal on the road to Pandharpur"
+ },
+ {
+  "id": "mr-f3",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A birthday song for Aaji, who tells stories about the village well"
+ },
+ {
+  "id": "mr-f4",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "bollywood-ballad",
+  "brief": "A wedding song for Rohan and Sneha, haldi yellow and the mangalsutra"
+ },
+ {
+  "id": "mr-f5",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "Diwali morning in Pune, abhyanga snan, faral and rangoli"
+ },
+ {
+  "id": "mr-f6",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A farewell to a friend moving to Mumbai, the local train and vada pav"
+ },
+ {
+  "id": "mr-f7",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "abhang-inspired",
+  "brief": "Wari pilgrims walking in the rain, tal and mridang"
+ },
+ {
+  "id": "mr-f8",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A song for a father who wakes early to light the stove for chai"
+ },
+ {
+  "id": "mr-f9",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "bollywood-ballad",
+  "brief": "A long-distance love song, phone calls at midnight between Nashik and Nagpur"
+ },
+ {
+  "id": "mr-f10",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "Gudi Padwa, the new gudhi raised at the window, neem and jaggery"
+ },
+ {
+  "id": "mr-f11",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A school reunion song, the old bench and the teacher's blackboard"
+ },
+ {
+  "id": "mr-f12",
+  "lang": "mr",
+  "language": "Marathi",
+  "tier": "fresh",
+  "style": "marathi-pop",
+  "brief": "A lullaby for a baby by the Krishna river, moonlight on the water"
  }
 ]

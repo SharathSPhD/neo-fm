@@ -6,6 +6,9 @@
  *                                                                     Final lyrics per case (drafts[0] is the engine's pick), trace and spend.
  *   POST ?action=distill   {language, pairs:[{brief,chosen,rejected}], max_usd}
  *                                                                     One Claude call: craft-notes playbook for a language.
+ *   POST ?action=gate     {arm, cases:[{id,language,style,brief,draft,baseline}], max_usd}
+ *                                                                     The formal polish gate (runPolishGate): the arm's polish vs the live polish of the same draft, both judged blind
+ *                                                                     against the same baseline by Claude and Gemini. Reports only; nothing is promoted.
  *   POST ?action=judge     {cases:[{id,language,brief,a,b}], gemini?, max_usd}
  *                                                                     Blind pairwise judge, both orders; Claude, plus Gemini when gemini=true. "pce" = a won.
  * Arms are defined in lib/lyrics/harness/harness.ts. Hard stop: max_usd (capped at 4).
@@ -19,6 +22,7 @@ import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
 import { estimateArmUsd } from "../../../../lib/lyrics/harness/cost";
 import { ARMS, runHarness } from "../../../../lib/lyrics/harness/harness";
 import { distillPrompt } from "../../../../lib/lyrics/harness/playbook";
+import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
 import { livePolishTemplate, polishLyrics } from "../../../../lib/lyrics/polish";
 
 export const dynamic = "force-dynamic";
@@ -89,6 +93,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       } catch (e) { out.push({ id: c.id, lyrics: null, trace: [], error: (e as Error).message.slice(0, 120) }); }
     }));
     return NextResponse.json({ arm: body.arm, results: out, spend: meter.snapshot(), max_usd: maxUsd });
+  }
+
+  if (action === "gate") {
+    const cfg = ARMS[String(body.arm)];
+    if (!cfg) return NextResponse.json({ error: "unknown arm", arms: Object.keys(ARMS) }, { status: 400 });
+    const cases = (Array.isArray(body.cases) ? body.cases : []).slice(0, 10) as { id: string; language: string; style: string; brief: string; draft: string; baseline: string }[];
+    const gkey = process.env.GEMINI_API_KEY;
+    const template = await livePolishTemplate(serviceClient());
+    const gcases: GateCase[] = cases.map((c) => ({ set: "occasion", id: c.id, language: c.language, style: c.style, brief: c.brief, draft: c.draft, baseline: c.baseline }));
+    const deps: GateDeps = {
+      // template === null is the live arm; otherwise the harness arm on the same draft.
+      polish: async (t, c) => t === null
+        ? polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template)
+        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => polishLyrics(client, a, template), ask, prefers: async () => true })).lyrics,
+      judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
+      judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
+      spentUsd: () => meter.usd(),
+    };
+    const result = await runPolishGate(gcases, `harness-${body.arm}`, deps, { maxUsd });
+    return NextResponse.json({ ...result, arms: { live: "live polish of the draft", candidate: `harness arm ${body.arm} on the same draft` }, spend: meter.snapshot(), max_usd: maxUsd });
   }
 
   if (action === "judge") {
