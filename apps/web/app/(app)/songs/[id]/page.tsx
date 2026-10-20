@@ -306,6 +306,14 @@ export default async function SongDetailPage(
               )}
             </p>
           ) : null}
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-foreground/60">
+            <code className="font-mono">{data.id.slice(0, 8)}</code>
+            {data.finished_at ? (
+              <span>
+                {t("song.finished")} {new Date(data.finished_at).toLocaleString()}
+              </span>
+            ) : null}
+          </p>
         </div>
         <div className="flex flex-wrap items-start gap-2">
           <ShareButton
@@ -377,14 +385,6 @@ export default async function SongDetailPage(
                 language={doc?.language}
               />
             </div>
-          ) : null}
-          <code className="font-mono text-[11px] text-foreground/50">
-            {data.id.slice(0, 8)}
-          </code>
-          {data.finished_at ? (
-            <span className="text-[10px] text-foreground/40">
-              {t("song.finished")} {new Date(data.finished_at).toLocaleString()}
-            </span>
           ) : null}
         </div>
       </header>
