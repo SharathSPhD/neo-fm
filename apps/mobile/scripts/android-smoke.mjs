@@ -89,7 +89,7 @@ check("station audio plays", playing);
 
 // 4. media notification and session while playing
 // The live site may predate the web-side bridge, so drive the native plugin directly: this tests the shell itself.
-await evalJs(`(async()=>{const m=window.Capacitor.Plugins.MediaSession;await m.setMetadata({title:"neo-fm smoke",artist:"neo-fm",album:"station"});await m.setPlaybackState({playbackState:"playing"});return true})().catch(e=>String(e))`);
+evalJs(`(async()=>{const m=window.Capacitor.Plugins.MediaSession;await m.setMetadata({title:"neo-fm smoke",artist:"neo-fm",album:"station"});await m.setPlaybackState({playbackState:"playing"});return true})().catch(e=>String(e))`).catch(() => {});
 await new Promise((r) => setTimeout(r, 3000));
 const notif = adb("shell", "dumpsys", "notification", "--noredact");
 const ctx = (text, needle, n) => text.split("\n").map((l, i, a) => (l.includes(needle) ? a.slice(i, i + n).join("\n") : null)).filter(Boolean).slice(0, 2).join("\n---\n");
