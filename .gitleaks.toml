@@ -5,6 +5,10 @@ useDefault = true
 
 [allowlist]
 description = "Test fixtures and lockfiles carry fake or public values"
+regexes = [
+  # Staging Supabase publishable (public by design) key used by the emulator e2e.
+  '''sb_publishable_Kjo66KGxyC-Jdb9szThMkw_Lwuzo954''',
+]
 paths = [
   '''pnpm-lock\.yaml$''',
   '''uv\.lock$''',
