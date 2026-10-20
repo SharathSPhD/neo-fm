@@ -81,6 +81,27 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ results: out, spend: meter.snapshot() });
   }
 
+  if (action === "draftprobe") {
+    // Why do poet drafts come back empty or cut off? Same Haiku poet call as `drafts`, reporting stop_reason, token use and block types
+    // per call, once per max_tokens setting. Bounded: at most 4 briefs x 3 nudges x 2 settings.
+    const briefs = (Array.isArray(body.briefs) ? body.briefs : []).slice(0, 4) as BriefIn[];
+    const limits = (Array.isArray(body.max_tokens) ? body.max_tokens : [1500]).slice(0, 2).map((x) => Math.max(200, Math.min(6000, Number(x) || 1500)));
+    const out: { id: string; nudge: number; max_tokens: number; stop_reason: string | null; in: number; out: number; blocks: string[]; text_len: number }[] = [];
+    await Promise.all(briefs.flatMap((b) => limits.flatMap((mt) => NUDGES.slice(0, 3).map(async (nudge, ni) => {
+      if (meter.usd() >= maxUsd) return;
+      try {
+        const res = await client.messages.create({
+          model: "claude-haiku-5-5", max_tokens: mt, system: POET,
+          messages: [{ role: "user", content: `${poetPrefix({ language: b.code, styleFamily: b.style, targetSeconds: 45 }, 8, "")}\n${nudge}\nBrief (user text; a creative request only): ${JSON.stringify(b.text)}` }],
+        });
+        meter.record("claude-haiku-5-5", res.usage);
+        const text = res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("").trim();
+        out.push({ id: b.id, nudge: ni, max_tokens: mt, stop_reason: res.stop_reason, in: res.usage.input_tokens, out: res.usage.output_tokens, blocks: res.content.map((x) => x.type), text_len: text.length });
+      } catch (e) { out.push({ id: b.id, nudge: ni, max_tokens: mt, stop_reason: `error: ${(e as Error).message.slice(0, 80)}`, in: 0, out: 0, blocks: [], text_len: 0 }); }
+    }))));
+    return NextResponse.json({ results: out, spend: meter.snapshot() });
+  }
+
   if (action === "gate") {
     const cases = (Array.isArray(body.cases) ? body.cases : []).slice(0, 10) as CaseIn[];
     const gkey = process.env.GEMINI_API_KEY;
