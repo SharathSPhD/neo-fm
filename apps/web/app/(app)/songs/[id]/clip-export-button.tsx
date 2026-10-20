@@ -9,9 +9,9 @@ import { useMemo, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { buildSharePayload } from "@/lib/share/card";
-import { withShareUtm } from "@/lib/share/attribution";
 import { pickClipWindow } from "@/lib/share/clip-plan";
 import { clipSupported, exportClip, type ExportedClip } from "@/lib/share/clip-export";
+import { tagShareUrl } from "@/lib/share/tag";
 import { buildLyricTimeline, parseLineTimings, type SyncSectionInput } from "@/lib/lyrics/sync";
 
 export interface ClipSource {
@@ -45,6 +45,7 @@ export function ClipExportButton({
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [clip, setClip] = useState<{ file: File; url: string; safe: boolean } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const abort = useRef<AbortController | null>(null);
 
   const lines = useMemo(
@@ -105,10 +106,21 @@ export function ClipExportButton({
     if (!clip) return;
     try {
       if (navigator.canShare?.({ files: [clip.file] })) {
-        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, withShareUtm(shareUrl, "clip", "clip")) : { title }) });
+        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, tagShareUrl(shareUrl, { source: "sheet", campaign: "clip" })) : { title }) });
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError(t("clip.failed"));
+    }
+  }
+
+  async function copyDescriptionLink() {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(tagShareUrl(shareUrl, { source: "shorts", campaign: "clip" }));
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      setError(t("clip.failed"));
     }
   }
 
@@ -166,6 +178,15 @@ export function ClipExportButton({
             >
               {t("clip.download")}
             </a>
+            {shareUrl ? (
+              <button
+                type="button"
+                onClick={copyDescriptionLink}
+                className="rounded-md border border-muted/30 px-3 py-1.5 text-xs hover:bg-muted/10"
+              >
+                {linkCopied ? t("clip.linkCopied") : t("clip.copyLink")}
+              </button>
+            ) : null}
           </>
         ) : null}
       </div>

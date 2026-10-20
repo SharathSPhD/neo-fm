@@ -6,7 +6,7 @@
 
 export interface LanguagePage {
   /** Language code stored on song documents and used as hreflang. */
-  code: "hi" | "ta" | "te" | "kn" | "bn" | "mr";
+  code: "hi" | "ta" | "te" | "kn" | "bn";
   slug: string;
   /** Name in English, for the English-language admin and sitemap surfaces. */
   english: string;
@@ -128,27 +128,6 @@ export const LANGUAGE_PAGES: readonly LanguagePage[] = [
     songsHeading: "বাংলায় কমিউনিটির গান শুনুন",
     empty: "শীঘ্রই এখানে বাংলা গান দেখা যাবে। প্রথম গানটি আপনিই তৈরি করুন।",
     play: "▶ শুনুন",
-  },
-  {
-    code: "mr",
-    slug: "marathi",
-    english: "Marathi",
-    native: "मराठी",
-    title: "मराठीत AI गाणी बनवा | neo-fm",
-    h1: "मराठीत तुमचं स्वतःचं गाणं बनवा",
-    intro:
-      "तुमचा मूड, प्रसंग आणि शैली सांगा. neo-fm मराठीतच थेट गीत लिहितं, भाषांतर करत नाही, आणि मग ते गायकाच्या आवाजात ऐकवतं.",
-    points: [
-      "थेट मराठीत लिहिलेले शब्द",
-      "अनेक मसुद्यांतून सर्वोत्तम निवडला जातो",
-      "उच्चार तपासणी: गायकाने तुमचे शब्द किती अचूक गायले ते ऐकून दाखवतो",
-      "प्रत्येक गाणं AI-निर्मित म्हणून स्पष्टपणे चिन्हांकित",
-    ],
-    cta: "तुमचं गाणं बनवा",
-    browse: "सगळी गाणी पाहा",
-    songsHeading: "मराठीतली समुदायाची गाणी ऐका",
-    empty: "लवकरच इथे मराठी गाणी दिसतील. पहिलं गाणं तुम्हीच बनवा.",
-    play: "▶ ऐका",
   },
 ];
 

@@ -13,6 +13,7 @@ import { trackIndexable } from "@/lib/seo/pool-tracks";
 import { siteUrl } from "@/lib/seo/site";
 import { prettyLanguage } from "@/lib/song/labels";
 import { loadPoolTrack } from "@/lib/station/pool";
+import { tagShareUrl } from "@/lib/share/tag";
 import { isTrackId, trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -74,7 +75,7 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
           Tune in to your station
         </Link>
         <a
-          href={whatsappShareUrl(track.title, trackShareUrl(id))}
+          href={whatsappShareUrl(track.title, tagShareUrl(trackShareUrl(id), { source: "whatsapp", campaign: "station" }))}
           target="_blank"
           rel="noopener noreferrer"
           className="rounded border px-4 py-2"

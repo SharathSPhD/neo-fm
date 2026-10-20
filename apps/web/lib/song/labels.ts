@@ -48,8 +48,6 @@ export function prettyLanguage(lang: string): string {
       return "Bengali";
     case "te":
       return "Telugu";
-    case "mr":
-      return "Marathi";
     case "sa":
       return "Sanskrit";
     default:
