@@ -106,6 +106,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('social_posts',          'service', null,      null, 'video publish queue; service role only'),
   ('user_social_accounts',  'service', 'user_id',     null, 'listener-connected social tokens, sealed; service role only'),
   ('user_social_apps',      'service', 'user_id',     null, 'listener own-app credentials, sealed; service role only'),
+  ('referrals',            'service', 'referee_id',  null, 'who a listener joined from, recognition only; service role only'),
   ('health_snapshots',      'service', null,      null, null),
   ('job_assignments',       'service', null,      null, null),
   ('job_telemetry',         'service', null,      null, null),
@@ -165,6 +166,7 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('track_stems',            'kind',         '''master'''),
   ('waitlist',               'tier',         '''creator'''),
   ('preference_pairs',       'loser_track_id',  'gen_random_uuid()'),   -- must differ from winner_track_id
+  ('referrals',              'referrer_id',  '''bbbbbbbb-0000-4000-8000-00000000000b'''), -- referee <> referrer
   ('follows',                'followee_id',  '''bbbbbbbb-0000-4000-8000-00000000000b'''); -- follower <> followee
 
 -- ----------------------------------------------------------------------------- 1. completeness
