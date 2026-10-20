@@ -227,6 +227,13 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
       if (!seen) console.log(`diag FCM attempt ${attempt}: not in the shade after 30s`);
     }
     check("FCM accepts a push to the emulator's token", accepted > 0, `${accepted} of the sends were accepted`);
+    if (!seen) {
+      // Evidence for a missing push: is the app allowed to post, is it stopped, and what did Firebase/GCM log.
+      console.log("diag POST_NOTIFICATIONS:", adb("shell", "cmd", "appops", "get", PKG, "POST_NOTIFICATION").trim());
+      console.log("diag package state:", adb("shell", "dumpsys", "package", PKG).split("\n").filter((l) => /stopped=|enabled=|notificationsEnabled|POST_NOTIFICATIONS/.test(l)).join(" | ").slice(0, 300));
+      console.log("diag notification dump for the app:", adb("shell", "dumpsys", "notification", "--noredact").split("\n").filter((l) => l.includes(PKG)).slice(0, 12).join(" | ").slice(0, 600));
+      console.log("diag firebase/gcm log:", adb("logcat", "-d", "-t", "400", "-s", "FirebaseMessaging:*", "FCM:*", "GCM:*", "GoogleApiManager:*", "NotificationManager:*").split("\n").slice(-25).join(" | ").slice(0, 1500));
+    }
     check("the pushed notification shows up on the device", seen);
     adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
     await sleep(4000);
