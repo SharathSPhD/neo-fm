@@ -127,5 +127,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ results: out, spend: meter.snapshot() });
   }
 
+  if (action === "gpairs") {
+    // Same pairs as `pairs`, judged by Gemini (both orders) as the cross-family check. Bounded by max_pairs.
+    const gkey = process.env.GEMINI_API_KEY;
+    if (!gkey) return NextResponse.json({ error: "no gemini key" }, { status: 503 });
+    const cases = (Array.isArray(body.cases) ? body.cases : []).slice(0, Math.min(10, Number(body.max_pairs ?? 10))) as { id: string; language: string; brief: string; a: string; b: string }[];
+    const out: { id: string; winner: string }[] = [];
+    for (let i = 0; i < cases.length; i += 5) {
+      out.push(...(await Promise.all(cases.slice(i, i + 5).map(async (c) => {
+        try { const r = await judgePairGemini(c.language, c.brief, c.a, c.b, gkey); return { id: c.id, winner: r.winner as string }; }
+        catch { return { id: c.id, winner: "error" }; }
+      }))));
+    }
+    return NextResponse.json({ results: out });
+  }
+
   return NextResponse.json({ error: "unknown action" }, { status: 400 });
 }
