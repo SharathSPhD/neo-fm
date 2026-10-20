@@ -34,6 +34,31 @@ const { chromiumPath, base } = require('./common');
     const key = await pg.request.get(`${base}/api/notifications/push/key`);
     (r.status() < 500 && key.status() < 500)
       ? ok(`${name} push pages respond (${r.status()}, key ${key.status()})`) : fail(`${name} push opt-in 5xx`);
+
+    // Station steering chips, share button, shared track page and listen-together link.
+    await pg.goto(`${base}/station`, { waitUntil: 'domcontentloaded' });
+    await pg.waitForTimeout(2500);
+    const calmer = pg.getByRole('button', { name: 'Calmer', exact: true });
+    if (await calmer.count()) {
+      await calmer.click();
+      (await calmer.getAttribute('aria-pressed')) === 'true' ? ok(`${name} steering chip toggles`) : fail(`${name} Calmer chip did not become active`);
+    } else fail(`${name} no Calmer steering chip`);
+    const q = await (await pg.request.get(`${base}/api/station/queue?lang=ta&hour=17&vn=1`)).json();
+    const tid = q.tracks && q.tracks.find((t) => t.id && !t.type)?.id;
+    if (!tid) fail(`${name} queue gave no track to share`);
+    else {
+      const shared = await pg.goto(`${base}/t/${tid}`, { waitUntil: 'domcontentloaded' });
+      shared.status() === 200 ? ok(`${name} shared track page 200`) : fail(`${name} /t/${tid} ${shared.status()}`);
+      const tg = await pg.goto(`${base}/t/${tid}?at=20&ts=${Date.now()}`, { waitUntil: 'domcontentloaded' });
+      await pg.waitForTimeout(2500);
+      const seek = await pg.evaluate(() => { const a = document.querySelector('audio'); return a ? a.currentTime : -1; });
+      tg.status() === 200 && seek !== -1 ? ok(`${name} listen-together link loads (audio at ${Math.round(seek)}s)`) : fail(`${name} listen-together link ${tg.status()} audio ${seek}`);
+    }
+    // Bengali station page.
+    await ctx.addCookies([{ name: 'neo-fm-lang', value: 'bn', url: base }]);
+    await pg.goto(`${base}/station`, { waitUntil: 'domcontentloaded' });
+    const bn = await pg.evaluate(() => (document.querySelector('h1') || {}).innerText || '');
+    /[ঀ-৿]/.test(bn) ? ok(`${name} Bengali station heading`) : fail(`${name} Bengali heading not Bengali: ${bn.slice(0, 30)}`);
     await ctx.close();
   }
   await b.close();
