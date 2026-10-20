@@ -153,6 +153,8 @@ export const kn: Dict = {
   "pricing.pass.perMonth": "ತಿಂಗಳಿಗೆ",
   "pricing.pass.desc": "ನಿಮ್ಮ ಇಷ್ಟಕ್ಕೆ ತಕ್ಕಂತೆ ನಿಮ್ಮದೇ 24/7 ಸ್ಟೇಷನ್. ಟೆಸ್ಟ್ ಮೋಡ್: ಇನ್ನೂ ನಿಜವಾದ ಶುಲ್ಕವಿಲ್ಲ.",
   "pricing.pass.cta": "ಪಾಸ್ ಶುರು ಮಾಡಿ",
+  "pricing.pass.owned": "ನಿಮಗೆ ಸ್ಟೇಷನ್ ಪಾಸ್ ಇದೆ.",
+  "pricing.pass.manage": "ಪಾಸ್ ನಿರ್ವಹಿಸಿ",
   "pricing.pass.note": "ಪ್ರತಿ ತಿಂಗಳು ಬಿಲ್. ಯಾವಾಗ ಬೇಕಾದರೂ ರದ್ದು ಮಾಡಿ.",
   "pricing.pass.perks": "ಜಾಹೀರಾತು ವಿರಾಮಗಳಿಲ್ಲ, ತಿಂಗಳಿಗೆ {n} ವರೆಗೆ ವೈಯಕ್ತಿಕ ಹಾಡುಗಳು.",
   "discover.title": "ಸಮುದಾಯದ ಹಾಡುಗಳು",

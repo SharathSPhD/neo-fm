@@ -153,6 +153,8 @@ export const hi: Dict = {
   "pricing.pass.perMonth": "प्रति माह",
   "pricing.pass.desc": "आपका अपना 24/7 स्टेशन, आपकी पसंद के हिसाब से। टेस्ट मोड: अभी कोई असली शुल्क नहीं।",
   "pricing.pass.cta": "पास शुरू करें",
+  "pricing.pass.owned": "आपके पास स्टेशन पास है।",
+  "pricing.pass.manage": "अपना पास मैनेज करें",
   "pricing.pass.note": "हर महीने बिल। कभी भी रद्द करें।",
   "pricing.pass.perks": "कोई विज्ञापन ब्रेक नहीं, और हर महीने {n} तक निजी गाने।",
   "discover.title": "समुदाय के गीत",
