@@ -1,549 +1,5 @@
 [
 {
-"id": "kn-t2",
-"lang": "kn",
-"style": "devaranama-inspired",
-"brief": "A devotional song about a rainy bus ride home",
-"text": "[ಪಲ್ಲವಿ]\nಕಾರುಣ್ಯದ ಮಳೆಯು ಸುರಿವ ತವಕದಿ\nದಾರಿ ತೋರಿಸು ಕೃಷ್ಣ ಮನೆಗೆ ಪಯಣದಿ\n\n[ಚರಣ ೧]\nನೀರ ಮುಸುಕಲಿ ಬಸ್ಸು ಸಾಗುತಿರಲು\nದೂರದೂರಿನ ದೇವ ಜಪವೇ ನನಗಿರಲು\n\n[ಚರಣ ೨]\nಚಿಂತೆಗಳನೆಲ್ಲ ನಿನಗೆ ಒಪ್ಪಿಸುವೆನು\nಶಾಂತಿಯಿಂದಲಿ ಮನೆಗೆ ತಲುಪಿ ತಣಿಯುವೆನು",
-"judge": 3.5
-},
-{
-"id": "kn-t7",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A wistful song about a wedding procession",
-"text": "[Pallavi / Hook]\nತೇರೊಂದು ಸಾಗುತಿದೆ ಮೆರವಣಿಗೆಯಲಿ,\nನೀರೊಂದು ತುಂಬಿದೆ ತಾಯಿಯ ಕಣ್ಣಲಿ.\n\n[Charana 1]\nಬಾಳಿನ ಹೊಸ ಹಾದಿ ಹಿಡಿದಳು ಮಗಳು,\nಬೀಳ್ಕೊಡುವ ತವರಿನ ಸಿಹಿ ಮುತ್ತುಗಳು.\n\n[Charana 2]\nಹೂವಿನ ಹಂದರದಿ ಹೆಜ್ಜೆಯಿಡುತಿರಲು,\nನೋವಿನ ಮುಗುಳುನಗು ಎದೆಯಲಿ ಮೂಡಲು.",
-"judge": 4.17
-},
-{
-"id": "kn-t11",
-"lang": "kn",
-"style": "devaranama-inspired",
-"brief": "A playful song about dancers rehearsing before a show",
-"text": "[ಪಲ್ಲವಿ]\nನಾಟ್ಯವನ್ನಾಡುವಾ ನರ್ತಕರ ಗುಂಪು,\nಕಾಲ್ಗೆಜ್ಜೆ ನಾದವೇ ಕಿವಿಗೆಷ್ಟು ಇಂಪು!\n\n[ಚರಣ ೧]\nತಾಳಕೆ ತಕ್ಕಂತೆಜ್ಜೆ ಹಾಕುತಿಹರೆಲ್ಲ,\nಮೇಲಾಟದಲಿ ಕಾಲ ಜಾರಿದ್ದು ತಿಳಿಯಲ್ಲ!\n\n[ಚರಣ ೨]\nಅರಂಗೇಟ್ರಂ ಸಂಭ್ರಮವು ಹತ್ತಿರದಿ ಬಂದಿದೆ,\nರಂಗೇರೊ ರಂಗಸ್ಥಲವು ಕಾಯುತಲಿ ನಿಂತಿದೆ!",
-"judge": 3.5
-},
-{
-"id": "kn-t14",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A bittersweet song about a river crossing in monsoon floods",
-"text": "[ಸ್ಟಾಯಿ / Hook]\nಉಕ್ಕಿ ಹರಿವ ಹೊಳೆಯ ದಂಡೆ ಮೇಲೆ ನಿಂತು ನೋಡಿದೆ,\nಸಿಕ್ಕುಬಿದ್ದ ಪಯಣದಾಸೆ ನೀರಿನಲ್ಲಿ ಮುಳುಗಿದೆ.\n\n[ನುಡಿ ೧ / Verse 1]\nಗಿರಿಗಳೆಲ್ಲ ಮಳೆಯ ಸುರಿದು ಹಳ್ಳ ಕೊಳ್ಳ ತುಂಬಿದೆ,\nಮನೆಯ ತಲುಪೊ ಹಂಬಲವಿದು ನದಿಯ ನಡುವೆ ನಿಂತಿದೆ.\n\n[ನುಡಿ ೨ / Verse 2]\nತಂದೆ ತಾಯಿ ಕಾಯುತಿಹರು ಊರ ಆಚೆ ಕರೆಯಲ್ಲಿ,\nಬಂದ ನೆರೆಗೆ ಹೆದರಿ ದೋಣಿ ನಿಂತಿದೆಯೊ ದಂಡೆಯಲ್ಲಿ.",
-"judge": 4.0
-},
-{
-"id": "kn-t15",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A wistful song about a love letter read aloud",
-"text": "[Hook]\nಓದಿದೆ ಅನುದಿನ ನಿನ್ನಯ ಓಲೆ,\nಕಾದಿದೆ ಮನವಿದು ಕಾಣದೆ ನಾಳೆ.\n\n[Verse 1]\nಮೌನದ ಮಾತನು ಬರೆದಿಹ ಸಾಲು,\nಭಾವದ ಕಡಲನು ತಂದಿದೆ ಪೋಲು.\n\n[Verse 2]\nಕೇಳಿದೆ ಧ್ವನಿಯದು ಗಾಳಿಯ ನಡುವೆ,\nಬಾಳಿನ ದಾರಿಗೆ ನೆನಪನು ಕೊಡುವೆ.\n\n[Hook]\nಓದಿದೆ ಅನುದಿನ ನಿನ್ನಯ ಓಲೆ,\nಕಾದಿದೆ ಮನವಿದು ಕಾಣದೆ ನಾಳೆ.",
-"judge": 3.67
-},
-{
-"id": "kn-t18",
-"lang": "kn",
-"style": "devaranama-inspired",
-"brief": "A joyful song about a morning prayer in a small shrine",
-"text": "[ಪಲ್ಲವಿ]\nಬೆಳಗಿನ ಶುಭ ವೇಳೆಯಲಿ\nತೊಳಗುವ ಹರಿ ಮೂರ್ತಿಯಲಿ\n\n[ಚರಣ ೧]\nಸಣ್ಣ ಗುಡಿಯ ದೀಪವಿದು\nಕಣ್ಣಿಗೆ ಬಲು ಹಬ್ಬವಿದು\n\n[ಚರಣ ೨]\nಅರಳಿದ ಮಲ್ಲಿಗೆ ಮುಡಿಸಿ\nಶರಣರ ಮನವನು ತಣಿಸಿ",
-"judge": 3.67
-},
-{
-"id": "kn-t22",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A playful song about a farmer praying for harvest",
-"text": "[Hook]\nಬಾರೋ ಬಾರೋ ಮಳೆರಾಯ,\nತಾರೋ ತಾರೋ ಸಿಹಿಮಾಯ!\n\n[Verse 1]\nಹಸಿರು ಪೈರು ನಗುತಿದೆ,\nಮನಸು ಕುಣಿದು ಹಾಡಿದೆ.\n\n[Verse 2]\nಬೆಳೆಯು ಚಿನ್ನವಾಗಲಿ,\nಖುಷಿಯು ಮನೆಗೆ ಸಾಲಲಿ!\n\n[Hook]\nಬಾರೋ ಬಾರೋ ಮಳೆರಾಯ,\nತಾರೋ ತಾರೋ ಸಿಹಿಮಾಯ!",
-"judge": 3.67
-},
-{
-"id": "kn-t24",
-"lang": "kn",
-"style": "bhavageete",
-"brief": "A joyful song about a rainy bus ride home",
-"text": "[ಪಲ್ಲವಿ]\nಮುಗಿಲ ತೇರು ಇಳಿದು ಬಂತು ಹನಿಯ ಹಬ್ಬವ ತಂದು,\nಮನೆಗೆ ಸಾಗೊ ಬಸ್ಸಿನಲ್ಲಿ ನಗುತಿದೆ ಮನ ಇಂದು.\n\n[ಚರಣ 1]\nಕಿಟಕಿಯಂಚಿನ ಹನಿಯ ನಡುವೆ ತಂಪಿನಾ ಗಾಳಿಯಿದೆ,\nಹಸಿರು ಹಾದಿಯ ಬೆಳಕಿನಲ್ಲಿ ಹಕ್ಕಿ ಹಾಡಾಗುತ್ತಿದೆ.\n\n[ಚರಣ 2]\nಚಕ್ರ ತಿರುಗುವ ಸದ್ದಿನೊಡನೆ ಎದೆಯು ಕುಣಿಯುತ್ತಲಿದೆ,\nನೆಚ್ಚಿನೂರನು ತಲುಪುವಾಸೆ ಬೇಗ ನೆರವೇರುತಿದೆ.",
-"judge": 3.67
-},
-{
-"id": "kn-t27",
-"lang": "kn",
-"style": "bhavageete",
-"brief": "A tender song about a river crossing in monsoon floods",
-"text": "[ಪಲ್ಲವಿ]\nತುಂಬಿದಾ ಹೊಳೆಯಲಿ ದೋಣಿಯು ತೇಲಿದೆ,\nಅಂಬಿಗನ ಕಣ್ಣಲಿ ಬಾನೇ ಮುಳುಗಿದೆ.\n\n[ಚರಣ ೧]\nಕಾರ್ಮುಗಿಲ ನೆರಳಲಿ ಕಾಲ್ದಾರಿ ಮರೆತಿದೆ,\nಈ ದಾಟುವ ತವಕದಿ ಜೀವವು ಮಿಡಿದಿದೆ.\n\n[ಚರಣ ೨]\nನಾಚುವ ತಂಬೆಲರು ಕಿವಿಯಲಿ ಹಾಡಿದೆ,\nಆ ದಂಡೆಯ ಕಾಣುವ ಆಸೆಯು ಹೆಚ್ಚಿದೆ.",
-"judge": 3.83
-},
-{
-"id": "kn-t28",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A joyful song about the first day of school",
-"text": "[Hook]\nಚಂದಾದ ಶಾಲೆಗೆ ಹೆಜ್ಜೆ ಹಾಡೋಣು\nಖುಷಿಯಿಂದ ಪುಸ್ತಕ ಚೀಲ ತರೋಣು\n\n[Verse 1]\nಹೊಸದಾದ ಬಟ್ಟೆಯ ತೊಟ್ಟು ನೋಡೋಣು\nಗೆಳೆಯರ ಬಳಗವ ಕಂಡು ನಗೋಣು\n\n[Verse 2]\nಕಲಿಯುವ ಪಾಠವ ಆಟ ಮಾಡೋಣು\nಗುರುಗಳ ಪಾದಕೆ ನಮಿಸಿ ಬಾಳೋಣು",
-"judge": 3.5
-},
-{
-"id": "kn-t30",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A bittersweet song about the sea at night and a sailor's longing",
-"text": "[Hook]\nಅಲೆಯ ಮೇಲೆ ತೇಲೋ ಆಸೆಯು,\nಮಿಂಚೋ ತಾರೆಯೊಂದೇ ದಾರಿಯು.\n\n[Verse 1]\nಕಡಲ ತೀರದಲ್ಲಿ ಕತ್ತಲು,\nನೆನಪು ಹಕ್ಕಿಯಾಗಿ ಹಾರಲು.\n\n[Verse 2]\nಕನಸ ದೋಣಿಯಾಯ್ತು ಪಯಣವು,\nಮನಸ ತುಂಬಿದೆಲ್ಲಾ ಮೌನವು.\n\n[Hook]\nಅಲೆಯ ಮೇಲೆ ತೇಲೋ ಆಸೆಯು,\nಮಿಂಚೋ ತಾರೆಯೊಂದೇ ದಾರಿಯು.",
-"judge": 3.67
-},
-{
-"id": "kn-t31",
-"lang": "kn",
-"style": "devaranama-inspired",
-"brief": "A joyful song about a river crossing in monsoon floods",
-"text": "[ಪಲ್ಲವಿ]\nತುಂಗೆಯ ಹರಿವನು ನೋಡೆಲೆ ರಂಗ,\nಮಂಗಳದೀಯುವ ಕರುಣದ ಸಾಂಗ!\n\n[ಚರಣ ೧]\nನೆರೆಯಲಿ ತೇಲುವ ದೋಣಿಯ ಪಯಣ,\nಹರಿಯನು ನೆನೆಯುತ ಸಾಗುವ ಪಯಣ!\n\n[ಚರಣ ೨]\nಅಲೆಯಲಿ ಕುಣಿಯುವ ಆನಂದವೇನು,\nಸಲಹುವ ಸ್ವಾಮಿಯ ಕೃಪೆಯಿದು ಏನು!",
-"judge": 3.67
-},
-{
-"id": "kn-t32",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A devotional song about dancers rehearsing before a show",
-"text": "[Hook]\nನಾಟ್ಯರಂಗದ ಪೂಜೆ ಮಾಡೋಣ\nಕಾಲ್ಗೆಜ್ಜೆಯ ಗಾನ ಹಾಡೋಣ\n\n[Verse 1]\nಹೆಜ್ಜೆಯಲ್ಲಿದೆ ದೈವಭಾವವು\nಗೆಜ್ಜೆಯಲ್ಲಿದೆ ಬಣ್ಣಜೀವವು\n\n[Verse 2]\nಶ್ರದ್ಧೆಯಿಂದಲಿ ಕುಣಿದು ತಣಿಯುವ\nಬುದ್ಧಿಶಕ್ತಿಯ ದೇವಿ ಒಲಿಯುವ",
-"judge": 3.5
-},
-{
-"id": "kn-t34",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A devotional song about a harvest-moon night with folk drums",
-"text": "[Hook]\nಸುಗ್ಗಿ ರಾತ್ರಿಯಲಿ ಜಗವು ಹೊಳೆಯುತ್ತಿದೆ\nತಮಟೆಯ ಸದ್ದಿಗೆ ಮನವು ಕುಣಿಯುತ್ತಿದೆ\n\n[Verse 1]\nಬೆಣ್ಣೆ ಬೆಳಕಲಿ ತಾಯಿ ಕೃಪೆ ಸುರಿಯಲಿ\nತೆನೆಗಳ ಸಾಲಲಿ ಹರುಷ ತುಂಬಿರಲಿ\n\n[Verse 2]\nತಂಬೂರಿ ನಾದಕೆ ಧಾನ್ಯ ಮನೆಗೆ ಬರಲಿ\nಅಂಬರದ ಚಂದಿರ ದೀವಿಗೆಯ ಬೆಳಗಲಿ",
-"judge": 3.5
-},
-{
-"id": "kn-t35",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A joyful song about a love letter read aloud",
-"text": "[Hook]\nಓಲೆಯಂತ ಬಂದೈತೋ ಪ್ರೀತಿಯಾ ಸಂದೇಶ!\nಕೇಳುವಂತ ತಂದೈತೋ ನಗುವಿನಾ ಹಬ್ಬೇಶ!\n\n[Verse 1]\nಬಾಲೆಯಂತ ನಾಚುತ ಓದಿದೆನು ಕಾಗದ!\nನಾಳೆಯಂತ ಹೂವಾಯ್ತು ಪ್ರೇಮದಾ ರಾಗದ!\n\n[Verse 2]\nಗಾಳಿಯಂತೆ ತೂರಿತು ಹಕ್ಕಿಯಂತೆ ಮನಸು!\nಬಾಳಿನಲ್ಲಿ ನನಸಾಯ್ತು ಒಲವಿನಾ ಕನಸು!",
-"judge": 3.67
-},
-{
-"id": "kn-t37",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A bittersweet song about a love letter read aloud",
-"text": "[Hook]\nಓದಿದಷ್ಟೂ ಕಣ್ಣು ತುಂಬಿ ತುಳುಕುತಿದೆ,\nಕಾಡಿದಷ್ಟೂ ಪ್ರೀತಿ ಇನ್ನೂ ಮಿನುಗುತಿದೆ.\n\n[Verse 1]\nಬರೆದ ಮಾತು ಕಿವಿಯ ಮೇಲೆ ಬೀಳುತಿರಲು,\nಹಳೆಯ ನೆನಪು ಮತ್ತೆ ಎದೆಯ ಸೀಳುತಿರಲು.\n\n[Verse 2]\nಅಂದು ನೀನು ತಂದ ಓಲೆ ಕೈಲಿ ಹಿಡಿದು,\nಸತ್ಯ ಹೇಳಲಾಗದೆನ್ನ ಜೀವ ತಡೆದು.",
-"judge": 3.67
-},
-{
-"id": "kn-t39",
-"lang": "kn",
-"style": "bhavageete",
-"brief": "A tender song about a wedding procession",
-"text": "[Hook]\nಮೆಲ್ಲಗೆ ನಡೆ ಸಖಿ ಕಲ್ಯಾಣದ ಹಾದಿಯಲಿ,\nಚೆಲ್ಲಿದೆ ಹೂವಿನ ಹಂದರ ಕಣ್ಣಿನಲಿ.\n\n[Verse 1]\nಮಿಂಚುವ ವಧುವಿನ ಚಂದದ ವೈಯಾರ,\nಹೆಚ್ಚಿಸೆ ತಂದಿದೆ ಮದುವೆಯ ಶೃಂಗಾರ.\n\n[Verse 2]\nಮಂಗಳ ವಾದ್ಯದ ನಾದವು ತೇಲುತಿದೆ,\nಅಂತರಂಗದಲಿ ಆಸೆಯು ಅರಳುತಿದೆ.\n\n[Hook]\nಮೆಲ್ಲಗೆ ನಡೆ ಸಖಿ ಕಲ್ಯಾಣದ ಹಾದಿಯಲಿ,\nಚೆಲ್ಲಿದೆ ಹೂವಿನ ಹಂದರ ಕಣ್ಣಿನಲಿ.",
-"judge": 3.83
-},
-{
-"id": "kn-t41",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A bittersweet song about a farmer praying for harvest",
-"text": "[Hook]\nಬಾನ ನೋಡಿ ಕಾದೆವು ಬರಿದಾಗಿದೆ ಕಣ್ಣು,\nಧ್ಯಾನ ಮಾಡಿ ಬೇಡುವೆವು ಕಾಯೊ ತಾಯಿ ಮಣ್ಣು.\n\n[Verse 1]\nಬೆವರ ಹನಿ ಬಿದ್ದಾಯ್ತು ಕಾಯುತಿದೆ ಪೈರು,\nದೇವ ನೀನು ಕರುಣಿಸೋ ಒಂದೇ ಹನಿ ನೀರು.\n\n[Verse 2]\nಸಾ ಸಾಲದ ಹೊರೆಯಿಂದು ಬಾಗಿತಲ್ಲ ಬೆನ್ನು,\nಆಸೆಯಿಟ್ಟು ಕಾಯುವೆವು ಕೊಡು ಕೊಂಚ ಹೊನ್ನು.",
-"judge": 3.67
-},
-{
-"id": "kn-t43",
-"lang": "kn",
-"style": "kannada-folk",
-"brief": "A devotional song about a farmer praying for harvest",
-"text": "[Hook]\nಬಾರೋ ಬಾರೋ ಮಳೆರಾಯ ಕಾಯೋ ನಮ್ಮನಯ್ಯ,\nಭೂಮಿತಾಯ ಮಡಿಲಿಗೆ ನೀರೆರೆಯೋ ತಂದೆಯ್ಯ.\n\n[Verse 1]\nಬೆವರ ಹರಿಸಿ ಬಿತ್ತಿದೆವು ಬಂಗಾರದ ತೆನೆಗೆ,\nಸೇವೆಯ ಮಾಡಿ ಕಾಯುತಿವೆವು ನಿನ್ನಯ ಕೃಪೆಗೆ.\n\n[Verse 2]\nಹಸನು ಮಾಡಿ ಹೊಲವನೆಲ್ಲ ಕಾಯುತಿವೆವು ನಾವೂ,\nಹಸುರು ಪೈರು ನಗೆಯ ಬೀರ ತೀರುವುದು ನೋವೂ.",
-"judge": 3.5
-},
-{
-"id": "kn-t46",
-"lang": "kn",
-"style": "kannada-pop",
-"brief": "A tender song about a city worker dreaming of the village",
-"text": "[Hook]\nಕಾಡಿದೆ ಊರ ನೆನಪು,\nತಂದಿದೆ ಮನಸಿಗೆ ತಂಪು.\n\n[Verse 1]\nನಗರದ ಗದ್ದಲದ ನಡುವೆ,\nಹಳ್ಳಿಯ ಹಸುರನ್ನು ಹುಡುಕುವೆ.\n\n[Verse 2]\nಕಾಂಕ್ರೀಟ್ ದಾರಿಯ ಮೇಲೆ,\nಬೀಸುತಿದೆ ತಾಯಿಯ ಒಲೆ.\n\n[Hook]\nಕಾಡಿದೆ ಊರ ನೆನಪು,\nತಂದಿದೆ ಮನಸಿಗೆ ತಂಪು.",
-"judge": 3.67
-},
-{
-"id": "kn-t47",
-"lang": "kn",
-"style": "bhavageete",
-"brief": "A wistful song about a street singer in a crowded market",
-"text": "[ಪಲ್ಲವಿ - Hook]\nಸಂತೆಯಾ ಜಂಗುಳಿಯ ಸಂಜೆಯೀ ವೇಳೆಗೆ\nಚಿಂತೆಯಾ ಮರೆಸುವೆನು ತಂತಿಯ ಮೀಟುತ!\n\n[ಚರಣ ೧ - Verse 1]\nನೂರು ದಾರಿಗಳಿಲ್ಲಿ ಮೂರು ಕ್ಷಣ ನಿಲ್ಲದೆ,\nಯಾರೋ ಕಾಣದ ಕಣ್ಣು ನೀರು ಜಾರಿಸುತಿದೆ.\n\n[ಚರಣ ೨ - Verse 2]\nಕಾಸು ನೀಡುವ ಕೈಗೆ ಗಾನಧಾರೆಯನೆರೆವೆ,\nಬೀದಿ ಬದಿಯಲಿ ನಿಂತು ಬದುಕನ್ನೇ ಪಾಡುವೆ.",
-"judge": 4.17
-},
-{
-"id": "kn-t49",
-"lang": "kn",
-"style": "devaranama-inspired",
-"brief": "A tender song about a mountain village waiting for snow-melt",
-"text": "[ಪಲ್ಲವಿ]\nಬೆಟ್ಟದ ಗಿರಿಯಲ್ಲಿ ಹಿಮವು ಕರಗಲಿ,\nಹುಟ್ಟಿದ ತೊರೆಯಲ್ಲಿ ಜೀವ ಹರಿಯಲಿ.\n\n[ಚರಣ ೧]\nತಣ್ಣನೆ ತಂಗಾಳಿ ತಂಪ ತರಲಿ,\nಬಣ್ಣದ ತೋಟದಲಿ ಹೂವು ಅರಳಲಿ.\n\n[ಚರಣ ೨]\nಮಂಜಿನ ಮರೆಯಿಂದ ಬಿಸಿಲು ಮೂಡಲಿ,\nಸಂಜೆಯ ವೇಳೆಗೆ ಹಸುವು ಗೂಡಲಿ.\n\n[ಅನುಪಲ್ಲವಿ]\nಬೆಟ್ಟದ ಗಿರಿಯಲ್ಲಿ ಹಿಮವು ಕರಗಲಿ,\nಹುಟ್ಟಿದ ತೊರೆಯಲ್ಲಿ ಜೀವ ಹರಿಯಲಿ.",
-"judge": 3.67
-},
-{
-"id": "hi-t100",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A playful song about an old teacher remembered by a former student",
-"text": "[Verse 1]\nचश्मा नाक पर, हाथ में छड़ी,\nडांट में उनकी मिठास थी बड़ी।\n\n[Hook]\nयाद आते हैं मास्टर जी आज भी,\nचुपके से हंसाते हैं वो राज भी।\n\n[Verse 2]\nचौक की धूल में सपने बुने,\nकिस्से वो हमने हंसकर सुने।\n\n[Hook]\nयाद आते हैं मास्टर जी आज भी,\nचुपके से हंसाते हैं वो राज भी।",
-"judge": 3.83
-},
-{
-"id": "hi-t101",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A joyful song about a lost childhood home",
-"text": "[Hook]\nवो नीम की छाँव, वो मिट्टी का आँगन,\nफिर याद आया मुझे बचपन का सावन।\n\n[Verse 1]\nकागज़ की कश्ती, वो बारिश का पानी,\nमुस्कुराती थी जहाँ हर एक कहानी।\n\n[Verse 2]\nदहलीज पुरानी पुकारे मुझे आज,\nगलियों में गूँजे वही मीठे साज़।",
-"judge": 4.17
-},
-{
-"id": "hi-t102",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A wistful song about a morning prayer in a small shrine",
-"text": "[Hook]\nछोटे से शिवाला में भोर भई आज,\nघंटी बाजे रुनझुन, जागे मोर काज।\n\n[Verse 1]\nदीया बाती सुलगे, धुआँ उड़े मंद,\nमाटी की मूरत में महके मकरंद।\n\n[Verse 2]\nमाँगूँ कछू नाही, बस जोड़ूँ दोउ हाथ,\nभोर की पवनिया में छू ले तेरा साथ।",
-"judge": 4.0
-},
-{
-"id": "hi-t103",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A tender song about a bride's farewell to her village",
-"text": "[Hook]\nये गलियाँ ये आँगन छूट चले,\nमिट्टी के सब बंधन टूट चले।\n\n[Verse 1]\nबाबुल के खेत और पीपल की छाँव,\nपीछे कहीं रह गया मेरा गाँव।\n\n[Verse 2]\nपलकों में सपने नए सजते हैं,\nयादों के पंछी मगर रोते हैं।\n\n[Hook]\nये गलियाँ ये आँगन छूट चले,\nमिट्टी के सब बंधन टूट चले।",
-"judge": 3.83
-},
-{
-"id": "hi-t104",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A joyful song about a harvest-moon night with folk drums",
-"text": "[Hook]\nशरद पूनम की उजली रात,\nढोल बजे जब ढोलक के साथ।\n\n[Verse 1]\nखेतों से आई मीठी सी महक,\nपायल की छम-छम में जागी चहक।\n\n[Verse 2]\nचाँदनी रात में झूमे जहान,\nगाए खुशी से ये पूरा मकान।\n\n[Hook]\nशरद पूनम की उजली रात,\nढोल बजे जब ढोलक के साथ।",
-"judge": 4.17
-},
-{
-"id": "hi-t105",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A bittersweet song about a river crossing in monsoon floods",
-"text": "[Hook]\nचढ़ती नदी का वेग डराए,\nसावन का यह पार रुलाए।\n\n[Verse 1]\nनाव पुरानी, लहरें गहरी,\nछूट रही है यादों की नगरी।\n\n[Verse 2]\nभीगा आँचल, बहता पानी,\nअधूरी रह गई प्रीत कहानी।",
-"judge": 4.0
-},
-{
-"id": "hi-t106",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A playful song about dancers rehearsing before a show",
-"text": "[मुखड़ा]\nथिरक-थिरक पाँव, छम-छम ये ताल,\nमंच सजेगा अब, झूम ले फ़िलहाल।\n\n[अंतरा १]\nघुँघरू बँधे हैं, ले लो सँभाल,\nबिगड़े जो चक्कर, सध जाए ताल।\n\n[अंतरा २]\nपायल की झनकार, नटखट धमाल,\nपरदे से पहले, दिखा दो कमाल।",
-"judge": 4.0
-},
-{
-"id": "hi-t107",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A devotional song about dancers rehearsing before a show",
-"text": "[Verse 1]\nपायल की झनकार में कान्हा, तेरा नाम पुकारें,\nमंच सजेगा साँझ ढले जब, रूप तेरा शृंगारें।\n\n[Hook]\nसाँसों में ताल बजी, थिरकन में प्रीत जगी,\nतेरे ही चरणन में, नटवर! यह रात लगी।\n\n[Verse 2]\nअंग-अंग में घूँघर बाजे, मन मंदिर हर्षाए,\nनाच-नाच के रीझें हम सब, भक्ति की धुन छाए।",
-"judge": 4.0
-},
-{
-"id": "hi-t108",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A playful song about a bride's farewell to her village",
-"text": "[Hook]\nगाँव छूटो, छूटो री अमवा की छैयाँ,\nमोहे ले गयो बालम थाम के बइयाँ।\n\n[Verse 1]\nसखियाँ पुकारे मुझे पनघट के पार री,\nसैयाँ जी खिंचे मोरी चुनरी का तार री।\n\n[Verse 2]\nमाई रोवे कोने में, मैं हँसती जाऊँ री,\nससुराल जाके नई दुनिया बसाऊँ री।",
-"judge": 4.17
-},
-{
-"id": "hi-t109",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A tender song about friends parting at a railway station",
-"text": "[मुखड़ा]\nसिटी बजी और छूट चली यह रेल सुहानी,\nआँखों में तैर गई अपनी हर बात पुरानी।\n\n[अंतरः १]\nहाथ छुड़ा के हाथ से यूँ तू दूर न जाना,\nमुड़ के मुझे तू देखना और मुस्कुराना।\n\n[अंतरः २]\nपटरियों पे बहती हुई यादों की डगर है,\nबिछड़ रहे हैं आज पर मीठा यह सफ़र है।",
-"judge": 4.0
-},
-{
-"id": "hi-t110",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A wistful song about the first day of school",
-"text": "[Hook]\nकांधे बस्ता, भीगी पलकें, छूटा घर का आँगन आज,\nपिया म्हारो गाँव री माटी, रोवे मन को पाखी आज।\n\n[Verse 1]\nचिड़ियों का वो चहकना छूटा, छूटी पीपल छाँव,\nअनजाने रस्तों पर निकले, नन्हे-नन्हे पाँव।\n\n[Verse 2]\nपाटी-कलम थमा के मैया, मोहे दिया दुलार,\nकच्ची उम्र में भारी लागे, विद्या को उपहार।",
-"judge": 3.5
-},
-{
-"id": "hi-t111",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A wistful song about a bride's farewell to her village",
-"text": "[Hook]\nछूट चला रे बाबुल का अँगना,\nरुनझुन रोवे हाथ का कँगना।\n\n[Verse 1]\nपनघट की वो ठंडी छइयां,\nछोड़ चली मैं आज नगरिया।\n\n[Verse 2]\nपीहर की गलियाँ छूटीं रे,\nआँखों से नदियाँ फूटीं रे।",
-"judge": 4.0
-},
-{
-"id": "hi-t112",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A devotional song about a harvest-moon night with folk drums",
-"text": "[मुखड़ा]\nशरद पूनमी चंदा चमके, गूँजे ढोल-नगाड़ा,\nराधा-मोहन के चरणों में, नाचे गाँव-अखाड़ा।\n\n[अंतरा १]\nपकी फ़सल का भोग लगाएँ, धान्य ढेरी सजाई,\nअंबर से अमृत की बूँदें, धरती पर ढल आई।\n\n[अंतरा २]\nवंशी की धुन सुन-सुन नाचे, मन ये भोर-सवेरा,\nकृपा तुम्हारी बरसे कान्हा, छूटे जग का फेरा।",
-"judge": 4.17
-},
-{
-"id": "hi-t113",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A bittersweet song about a mountain village waiting for snow-melt",
-"text": "[Hook]\nपिघलेगी जब बर्फ पहाड़ों से यहाँ,\nलौट आएगा फिर वो भूला कारवां।\n\n[Verse 1]\nठंडी हवाओं में घुली है आस सी,\nबूढ़ी ढलानों को लगी है प्यास सी।\n\n[Verse 2]\nछाएगी हर शाख पे रंगीन घटा,\nभीगी जमीं पर मुस्कुराएगी सबा।\n\n[Hook]\nपिघलेगी जब बर्फ पहाड़ों से यहाँ,\nलौट आएगा फिर वो भूला कारवां।",
-"judge": 4.0
-},
-{
-"id": "hi-t114",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A tender song about a fishing village at dawn",
-"text": "[Hook]\nधुंधले किनारे, धीमा सा पानी,\nभोर सुनाए सोई कहानी।\n\n[Verse 1]\nजाल उठाए कश्ती रवां है,\nसांसों में बहती ठंडी हवा है।\n\n[Verse 2]\nलहरों पे चमके सूरज का सोना,\nजागा समंदर का हर एक कोना।",
-"judge": 4.17
-},
-{
-"id": "hi-t115",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A tender song about a love letter read aloud",
-"text": "[Hook]\nकागज़ पे उतरी मया की कहानी,\nधीरे से पढ़ के सुनाये दीवानी।\n\n[Verse 1]\nअक्षरों में छुप के बुलावा है आया,\nमन का पपीहा ख़ुशी में कुहुकाया।\n\n[Verse 2]\nसाँसों की लय में घुली है तरुनाई,\nचिट्ठी ने प्रीत की मीठी धुन गाई।\n\n[Hook]\nकागज़ पे उतरी मया की कहानी,\nधीरे से पढ़ के सुनाये दीवानी।",
-"judge": 3.5
-},
-{
-"id": "hi-t116",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A tender song about a rainy bus ride home",
-"text": "[Hook]\nकाँच पर बूँदों के निशान बहते रहे,\nहम बिना बोले ही दिल की बात कहते रहे।\n\n[Verse 1]\nबस के चलने से ये भीगा शहर डोलता है,\nआज खामोशी में भी प्यार कुछ बोलता है।\n\n[Verse 2]\nतेरे कंधे पे रखा सर जो ये ढलती शाम में,\nघुल गई पूरी उम्र इस सुहाने नाम में।",
-"judge": 4.17
-},
-{
-"id": "hi-t117",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A devotional song about friends parting at a railway station",
-"text": "[Hook]\nरेल सीटी बजाए रे, संग छूटता जाए,\nहरि नाम की गठरी में, तेरा रूप समाए।\n\n[Verse 1]\nपटरी पे बिखरी हैं, बीते दिनों की छांव,\nअब तो गोविंद ले चले, हमको दूजे गांव।\n\n[Verse 2]\nअंसुअन जल से धो दिए, विरह के ये पांव,\nमाधव ही तारणहार हैं, माधव ही हैं नाव।",
-"judge": 4.0
-},
-{
-"id": "hi-t118",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A joyful song about a city worker dreaming of the village",
-"text": "[Hook]\nकाँच के शहर में ढूँढूँ मैं हवा,\nगाँव की सौंधी मिट्टी की दवा।\n\n[Verse 1]\nकच्ची सड़क पर भागे रे ये मन,\nखेतों की छाँव में नाचे ये जीवन।\n\n[Verse 2]\nपक्की दीवारों से दूर जाऊँगा,\nनीम के तले मैं सुकूँ पाऊँगा।",
-"judge": 3.83
-},
-{
-"id": "hi-t119",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A wistful song about the sea at night and a sailor's longing",
-"text": "[Verse 1]\nलहरों की सरगम गाती है ये रात,\nयादों में बहती कोई अनकही बात।\n\n[Hook]\nसाहिल से दूर ये टिमटिमाते चिराग,\nतूफान में ढूंढें तेरे इश्क़ का सुराग।\n\n[Verse 2]\nगहरे समंदर की ख़ामोश दूरियाँ,\nपलकों पे ठहरीं तेरी ही निशानियाँ।",
-"judge": 4.0
-},
-{
-"id": "hi-t120",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A playful song about the sea at night and a sailor's longing",
-"text": "[Chorus]\nलहरों पे चमके चंदा का नूर है,\nसाहिल पे बैठा माझी मजबूर है।\n\n[Verse 1]\nखोया है रात में ये चंचल समंदर,\nआजा कि तू ही बसा दिल के अंदर।\n\n[Verse 2]\nरात की ख़ामोशी दिल को सताए,\nतेरी ही यादों की सरगम बजाए।",
-"judge": 3.5
-},
-{
-"id": "hi-t121",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A playful song about a fishing village at dawn",
-"text": "[Hook]\nभोर भई, जागी रे मछुआरों की बस्ती,\nलहरों की ताल पे फिर शुरू हुई मस्ती।\n\n[Verse 1]\nचाँदी सी मछलियाँ जाल में समाएँ,\nठंडी-ठंडी हवाएँ भी मन को लुभाएँ।\n\n[Verse 2]\nसूरज की किरणें तो पानी में तैरें,\nमाझी के गीतों से खिल गए ये सवेरे।",
-"judge": 3.67
-},
-{
-"id": "hi-t122",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A bittersweet song about a street singer in a crowded market",
-"text": "[Mukhda]\nभीड़ के इस मेले में, अपनी तान सुनाता हूँ,\nहँसते-हँसते आँखों से, छुपके अश्क बहाता हूँ।\n\n[Verse 1]\nसिक्के फ़ेंक निकल जाते हैं, चेहरा कोई न देखे,\nरोटी की आस में गाता, हाथों के ख़ाली लेखे।\n\n[Verse 2]\nगूँज रही बाज़ार में धुन, कोई दर्द न जाने,\nबिकते हैं ख़्वाब यहाँ पर, क्या अपने क्या बेगाने।",
-"judge": 3.83
-},
-{
-"id": "hi-t123",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A playful song about a street singer in a crowded market",
-"text": "[Hook]\nसड़क किनारे जब मैं तान लगाऊँ,\nसारे बाज़ार को झूमना सिखाऊँ।\n\n[Verse 1]\nसब्ज़ी-तरकारी सब छोड़ के आएँ,\nदुकानदार भी अब ताल बजाएँ।\n\n[Verse 2]\nसिक्के गिरे जो इस पुराने कटोरे में,\nरौनक नई है आज हर एक छोर में।",
-"judge": 3.83
-},
-{
-"id": "hi-t124",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A devotional song about a bride's farewell to her village",
-"text": "[Hook]\nबाबुल की गलियां छूटीं, मैया का आंचल छूटा,\nगंगा जी के तट पे आज मोरा भाग फूटा।\n\n[Verse 1]\nबिछड़ीं री सखियां मेरी, सूना भयो रे अंगना,\nछन-छन कर रोए आज माटी का ये कंगना।\n\n[Verse 2]\nडोली संग छूटे रे द्वार, तुलसी की छैयां,\nराखो हे छठी मैया, पिया संग मोर नैया।",
-"judge": 3.67
-},
-{
-"id": "hi-t125",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A tender song about a river crossing in monsoon floods",
-"text": "[Hook]\nचढ़ती नदी का वेग डराए,\nतेरा सहारा पार लगाए।\n\n[Verse 1]\nगहरा पानी, तेज़ हवाएँ,\nहाथ थाम लो, साँस न जाए।\n\n[Verse 2]\nउफन रही है धारा काली,\nतुम बिन नाव लगे मतवाली।",
-"judge": 3.83
-},
-{
-"id": "hi-t126",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A bittersweet song about a festival of lamps",
-"text": "[स्थाई]\nजले दीप आँगन, सजे सब नज़ारे,\nमगर खो गए हैं कहीं दिन हमारे।\n\n[अंतरा १]\nउजाले ने घर तो सँवारा बहुत है,\nअंधेरा मगर दिल में गहरा बहुत है।\n\n[अंतरा २]\nहँसी की चमक में छुपे अश्क सारे,\nदिए बन गए याद के ये सितारे।",
-"judge": 4.33
-},
-{
-"id": "hi-t127",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A playful song about a harvest-moon night with folk drums",
-"text": "[Mukhda / Hook]\nशरद पूनम की उजली रतिया,\nडम-डम बाजे ढोल, ओ सखिया!\n\n[Antara 1 / Verse 1]\nचंदा संग नाचे अमराई,\nफसलों ने भी ली अंगड़ाई।\n\n[Antara 2 / Verse 2]\nछनक-छनक बाजे पैंजनिया,\nझूम उठे धरती की दुलहनिया।",
-"judge": 4.33
-},
-{
-"id": "hi-t128",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A wistful song about a fishing village at dawn",
-"text": "[Hook]\nसुबह की किरणें लहरों पे सोईं,\nमाझी की नावें क्षितिज में खोईं।\n\n[Verse 1]\nठंडी हवा में रेत का तराना,\nयादों का पंछी लगा टिमटिमाना।\n\n[Verse 2]\nजालों में सिमटा समंदर का पानी,\nकहती हैं लहरें पुरानी कहानी।",
-"judge": 3.67
-},
-{
-"id": "hi-t129",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A wistful song about a rainy bus ride home",
-"text": "[Verse 1]\nभीगी खिड़की से दिखता है धुंधला सा शहर,\nतेरी यादों में कटता है बारिश का सफ़र।\n\n[Hook]\nबस की रफ़्तार में ठहरा है ये दिल मेरा,\nकाश मिल जाए फिर से वही शाम-ओ-सवेरा।\n\n[Verse 2]\nतन्हा बूंदों का कांच पे लिखा फ़साना,\nढूंढता है दिल पुराना वही एक ठिकाना।",
-"judge": 4.0
-},
-{
-"id": "hi-t130",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A devotional song about spring blossoms and a new beginning",
-"text": "[Hook]\nचैत्र की भोर में खिल गए हैं फूल,\nप्रभु तेरे द्वार पर मिट गई है धूल।\n\n[Verse 1]\nऋतुराज संग आई ये नई तरंग,\nमन मेरा रंग गया तेरे ही रंग।\n\n[Verse 2]\nकलियों की साँसों में नया विश्वास है,\nहर एक पत्ती में तेरा ही वास है।",
-"judge": 3.83
-},
-{
-"id": "hi-t132",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A bittersweet song about friends parting at a railway station",
-"text": "[Hook]\nपटरी पे बिखरी हैं यादें पुरानी,\nछूट रही हाथों से अपनी कहानी।\n\n[Verse 1]\nसिटी बज उठी और दिल ये रो दिया,\nधुएँ के गुबार में तुझको खो दिया।\n\n[Verse 2]\nचल पड़ी गाड़ी मगर ठहरे कदम हैं,\nमुस्कुराते लब पे बिछड़ने का गम है।",
-"judge": 3.83
-},
-{
-"id": "hi-t134",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A joyful song about dancers rehearsing before a show",
-"text": "[Hook]\nघूँघरू की छमछम में दिल मुस्कुराए,\nसपनों के संग आज कदम डगमगाए।\n\n[Verse 1]\nरौशनी से पहले ये महफ़िल सजाएँ,\nधड़कन की ताल पर ख़ुशी को नचाएँ।\n\n[Verse 2]\nतैयारी का ये पल सुहाना हुआ है,\nगूँजेगी सरगम, समां बावरा हुआ है।\n\n[Hook]\nघूँघरू की छमछम में दिल मुस्कुराए,\nसपनों के संग आज कदम डगमगाए।",
-"judge": 3.5
-},
-{
-"id": "hi-t135",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A joyful song about a grandmother's stories at twilight",
-"text": "[Hook]\nसंध्या के रंगों में घुलती हैं बातें,\nदादी की परियों से सजती हैं रातें।\n\n[Verse 1]\nदीये की लौ में वो किस्से सुनाएं,\nबचपन की गलियों में हमको घुमाएं।\n\n[Verse 2]\nमीठी सी बातों का जादू चलाएं,\nमुस्कानों से सारा आंगन सजाएं।\n\n[Hook]\nसंध्या के रंगों में घुलती हैं बातें,\nदादी की परियों से सजती हैं रातें।",
-"judge": 3.83
-},
-{
-"id": "hi-t136",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A devotional song about the first day of school",
-"text": "[Hook]\nविद्या की देवी, करूँ मैं नमन,\nपावन बना दो मेरा यह मन।\n\n[Verse 1]\nज्ञान का पहला दीप जलाऊँ,\nतेरे ही द्वार पर आज मैं आऊँ।\n\n[Verse 2]\nअंधियारा हर लो, दो वरदान,\nसत्य के पथ का दो मुझे ज्ञान।",
-"judge": 4.0
-},
-{
-"id": "hi-t137",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A devotional song about an anniversary after thirty years",
-"text": "[Hook]\nतीस बरस की अटूट प्रीत से, सजी आज यह शाम,\nराम-सिया के पावन चरणों में, करते हम प्रणाम।\n\n[Verse 1]\nदीपक संग बाती जैसी, निभ गई यह संगति री,\nतुम्हरी कृपा से द्वार हमारे, आई सुख-संपत्ति री।\n\n[Verse 2]\nहाथों में अब भी वही लगन है, आँखों में अनुराग,\nयुग-युग तक यह ज्योत जलेगी, जागे री सब भाग।",
-"judge": 4.33
-},
-{
-"id": "hi-t138",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A tender song about the first day of school",
-"text": "[Hook]\nकाचली सी धूप खिली, बगिया मुस्काई,\nनन्हे-नन्हे पाँव चली, खुशियाँ घर आई।\n\n[Verse 1]\nकंधे पे बस्ता सजा, रेशम का डोरा,\nअँखियों में सपना नया, जागे जिउ मोरा।\n\n[Verse 2]\nपाटी पे खींची लकीर, सीखे रे ककहरा,\nछोटा सा मुन्ना चला, लिखने को सवेरा।",
-"judge": 3.83
-},
-{
-"id": "hi-t139",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A tender song about a mountain village waiting for snow-melt",
-"text": "[स्थायी]\nरुकी हवा में छनती धूप,\nबर्फ पिघलने का यह रूप।\n\n[अंतरा १]\nसोए पर्वत जाग उठेंगे,\nझरने मीठे गीत बुनेंगे।\n\n[अंतरा २]\nहर आँगन में आस जगी है,\nसोंधी मिट्टी महक उठी है।",
-"judge": 3.83
-},
-{
-"id": "hi-t140",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A joyful song about spring blossoms and a new beginning",
-"text": "[Hook]\nखिल उठे हैं फ़िज़ा में हसीन मँज़र,\nझूम उठी है उमँगों की नई सहर।\n\n[Verse 1]\nडाली-डाली पे महकी नई बहार है,\nचाहतों का मिला अब हसीं खुमार है।\n\n[Verse 2]\nरंग नए ख़्वाबों के बिखरने लगे,\nरास्तों के दिए भी निखरने लगे।\n\n[Hook]\nखिल उठे हैं फ़िज़ा में हसीन मँज़र,\nझूम उठी है उमँगों की नई सहर।",
-"judge": 3.83
-},
-{
-"id": "hi-t141",
-"lang": "hi",
-"style": "hindi-pop",
-"brief": "A playful song about a mountain village waiting for snow-melt",
-"text": "[Hook]\nरूठी बर्फ़ पिघलने वाली,\nआएगी अब धूप सुहानी।\n\n[Verse 1]\nराह तके ये गाँव हमारा,\nकब बीतेगा जाड़ा सारा।\n\n[Verse 2]\nझरनों का सङ्गीत बजेगा,\nफिर पत्तों का रूप सजेगा।\n\n[Hook]\nरूठी बर्फ़ पिघलने वाली,\nआएगी अब धूप सुहानी।",
-"judge": 3.67
-},
-{
-"id": "hi-t142",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A playful song about a city worker dreaming of the village",
-"text": "[Hook]\nये शहर का चक्कर, काम का मेला,\nगाँव में झूमे मन ये अकेला।\n\n[Verse 1]\nसाहब की फ़ाइल से जी उकताया,\nपीपल की छाँव ने मुझको बुलाया।\n\n[Verse 2]\nमिट्टी की ख़ुशबू औ माखन की मटकी,\nयाद में देहात की जान अटकी।",
-"judge": 3.83
-},
-{
-"id": "hi-t143",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A bittersweet song about a wedding procession",
-"text": "[Hook]\nशहनाई बजाए शहनाई,\nआज पिया घर हुई पराई।\n\n[Verse 1]\nबाबुल का यह आँगन छूटा,\nदिल हाँसी की आड़ में टूटा।\n\n[Verse 2]\nडोली संग-संग अश्क बहे हैं,\nमीठे-कड़वे बोल रहे हैं।",
-"judge": 3.5
-},
-{
-"id": "hi-t144",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A wistful song about a birthday for a child who loves kites",
-"text": "[Hook]\nकागज़ के पर लगा के उड़ीं ख़्वाहिशें तमाम,\nतेरे जनम पे पतंगों ने लिखा तेरा नाम।\n\n[Verse 1]\nडोर थामे हाथ तेरे, आसमां झुक जाए,\nहर एक रंग ख़ुशी का हवा में मुस्कुराए।\n\n[Verse 2]\nउड़ती रहे तू यूँ ही, छू ले तू हर सितारा,\nतेरी हँसी से रोशन रहे यह जहाँ हमारा।",
-"judge": 3.83
-},
-{
-"id": "hi-t146",
-"lang": "hi",
-"style": "hindustani",
-"brief": "A devotional song about a lost childhood home",
-"text": "[Mukhda / Hook]\nतू ही बता दे ऐ मेरे मौला, वो घर पुराना कहाँ गया,\nजिस आँगन में बीता बचपन, वो ज़माना कहाँ गया।\n\n[Antara 1 / Verse 1]\nमिट्टी की वो सोंधी ख़ुशबू, वो पीपल की ठंडी छाँव,\nछूट गया क्यों पीछे मुझसे, मेरे अपने दिल का गाँव।\n\n[Antara 2 / Verse 2]\nटूटी सी वो छत बेचारी, अब यादों में सिसकती है,\nतेरे दर पे आके दाता, आँख ये मेरी तरसती है।",
-"judge": 4.0
-},
-{
-"id": "hi-t148",
-"lang": "hi",
-"style": "bollywood-ballad",
-"brief": "A devotional song about a temple bell across the river",
-"text": "[Hook]\nनदी किनारे गूँजे घंटी, मन पावन हो जाए,\nदूर बने उस मंदिर से अब, बुलावा सा आए।\n\n[Verse 1]\nलहरों पर बहती आए यह, भक्ती की शहनाई,\nदीपक की इस पावन लौ ने, राह नई दिखलाई।\n\n[Verse 2]\nछोड़ के सारे जग के बंधन, उस पार चला जाऊँ,\nचैन मिले चरणों में जाके, प्रभु के दर्शन पाऊँ।",
-"judge": 4.0
-},
-{
-"id": "hi-t149",
-"lang": "hi",
-"style": "hindi-folk",
-"brief": "A playful song about a river crossing in monsoon floods",
-"text": "[Hook]\nसावण री नदियाँ उफनत जाए जी,\nनाव पुरानी खेवै, जीव घबराए जी।\n\n[Verse 1]\nछम-छम बरसे बदरा, लहर बुलावै,\nपार खड़े छलिया जी, मंद मुस्कावै।\n\n[Verse 2]\nभीगी चुनरिया मोरी, पतवार छूटे,\nमाटी का घटवा आज बीच भँवर टूटे।",
-"judge": 3.5
-},
-{
 "id": "te-t200",
 "lang": "te",
 "style": "telugu-pop",
@@ -792,603 +248,1011 @@
 "judge": 4.0
 },
 {
-"id": "ta-t300",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A devotional song about a love letter read aloud",
-"text": "[Hook]\nநெஞ்சின் ஓலை தந்து விட்டேன்\nதஞ்சமென்று வந்து விட்டேன்\n\n[Verse 1]\nஎழுதும் வரிகள் உனைச்சேரும்\nதொழும் கை உரசி உயிரீரும்\n\n[Verse 2]\nபடிக்கும் ஒலியில் உருகின்றேன்\nஅடிக்கும் புயலில் கரைகின்றேன்\n\n[Hook]\nநெஞ்சின் ஓலை தந்து விட்டேன்\nதஞ்சமென்று வந்து விட்டேன்",
-"judge": 3.67
+"id": "hi-cf18332833",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A tender song about a farmer praying for a good harvest",
+"text": "## मुखड़ा\nधरती माँ, आँचल खोलो, बोए हैं मैंने दाने,\nअंबर बाबा, मेह बरसाओ, सुन लो मेरे गाने।\n\n## अंतरा 1\nहल की लीक पे सौंपी मैंने अपनी आस,\nहरी-भरी हो बाली-बाली, यही अरदास।\n\n## अंतरा 2\nमाटी से बस इतना माँगूँ, रह जाए मेरा मान,\nहर दाने में दूध भरे, सोने जैसा धान।",
+"judge": 4.2
 },
 {
-"id": "ta-t301",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A joyful song about a birthday for a child who loves kites",
-"text": "[Hook]\nவானில் பறக்கும் வண்ணக் காற்றாடியே!\nதேனில் இனிக்கும் சின்னக் கண்மணியே!\n\n[Verse 1]\nவிண்ணை உரசி விளங்கும் நாளே,\nகண்ணை மகிழ்விக்கும் பிறந்த நாளே!\n\n[Verse 2]\nநூலின் அசைவில் நடனம் ஆடு,\nகாலின் சுவடினில் கவிதை பாடு!",
-"judge": 3.5
+"id": "hi-5f8c250078",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a temple bell heard from across the river",
+"text": "## Hook\nनदी चुप है, मैं चुप हूँ, शाम ढली बहकर।\nघंटी बोली उस पार से, नाम तेरा लेकर।\n\n## Verse 1\nदूर किनारे दीप जले, धुआँ उठा आरती का,\nइस तट कोई नाव न आई, सूना रहा घाट नदी का।\n\n## Verse 2\nबरसों से इस तट पे बैठी, लहरें गिनती हूँ पल-पल,\nकब लौटेगी वो घंटी-धुन, जिसे बहा ले गया जल।",
+"judge": 4
 },
 {
-"id": "ta-t302",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A wistful song about a temple bell across the river",
-"text": "[பல்லவி]\nஆற்றுப் பெருக்கின் அக்கரையில் கேட்குதடி\nகாற்றினில் மிதக்கும் கோவில் மணி யோசை!\n\n[சரணம் 1]\nகூப்பிய கரங்கள் நீரின் மேலே மிதக்க\nபார்க்கும் விழிகளில் பக்தியும் பெருக!\n\n[சரணம் 2]\nஓடும் அலையில் ஒளிவிளக்கு அசைய\nதேடும் மனத்தில் திருவருள் நிறைய!",
-"judge": 3.5
-},
-{
-"id": "ta-t303",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A devotional song about a mother's lullaby on a hot summer night",
-"text": "[Hook]\nஅக்கினி வெயிலின் தாக்கம் குறைய\nமுக்கனி அமுதே உறங்கு மெல்ல\n\n[Verse 1]\nகாற்றாய் வீசும் அன்னையின் நேசம்\nவேர்வை தீர்க்கும் நிலவின் வெளிச்சம்\n\n[Verse 2]\nதாயின் தாலாட்டுத் தணலை மாற்றும்\nசேயின் உறக்கம் அமைதி போற்றும்",
-"judge": 3.5
-},
-{
-"id": "ta-t304",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A playful song about a rainy bus ride home",
-"text": "[பல்லவி]\nமழைமேகம் பொழியுதடி முகிலெல்லாம் கூடி,\nவழிமீது சாமிதந்த வண்டியிது ஓடி.\n\n[சரணம் 1]\nகூரைத் துளி சிந்தினாலும் கூடவரு பக்தி,\nஊரை நோக்கிப் போகுதடி உமையவளின் சக்தி.\n\n[சரணம் 2]\nகாற்றுவந்து கூத்தாடக் கரையெல்லாம் ஏரி,\nபாட்டுப்பாடி நாமும் செல்வோம் பஸ்ஸினில் ஏறி.",
-"judge": 3.67
-},
-{
-"id": "ta-t305",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A tender song about an anniversary after thirty years",
-"text": "[Hook]\nமுப்பது ஆண்டுகள் உன்னோடு நடந்தேன்\nஅன்பென்னும் கூட்டினில் முத்தாக இருந்தேன்\n\n[Verse 1]\nகூந்தலில் வெள்ளி கோலங்கள் போட்டாயே\nவார்த்தையில் என்றும் தேனாக நின்றாயே\n\n[Verse 2]\nகாலங்கள் ஓடினும் காதல் குறையவில்லை\nநீ தந்த சொந்தம்போல் வேறொன்றும் அமையவில்லை",
-"judge": 3.5
-},
-{
-"id": "ta-t306",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A bittersweet song about the first day of school",
-"text": "[பல்லவி]\nதாயே நின் திருவடி தொழுகின்றேன்,\nசேயே உன் தொடக்கத்தை வாழ்த்துகின்றேன்.\n\n[சரணம் 1]\nகூட்டுக் கிளி இன்று சிறகடிக்குதே,\nவீட்டு விழி வழிநீராய்க் கசிந்திடுதே.\n\n[சரணம் 2]\nஞானச் சுடரினை நீயும் நாடுவாய்,\nமோன அமைதியில் தாயும் வாடுவாள்.",
-"judge": 4.17
-},
-{
-"id": "ta-t307",
-"lang": "ta",
-"style": "tamil-folk",
-"brief": "A devotional song about a birthday for a child who loves kites",
-"text": "[பல்லவி]\nகாத்தாடிப் பையனுக்குக் காவலுறு சாமியே,\nகூத்தாடிப் பொறந்தநாளு கொண்டாடு வோமையே!\n\n[சரண - 1]\nகாத்துலதான் நூலவிட்டு வானத்தையேத் தொடுறான்,\nகூத்துலதான் கால்கட்டி வேண்டிநின்னு பாடறான்.\n\n[சரண - 2]\nபாசமுள்ள சாமியிவன் ஆயுசத் தான் தருவான்,\nதேசமெல்லாம் பறக்கவச்சுச் சிரிக்கத்தான் வைப்பான்!",
-"judge": 3.67
-},
-{
-"id": "ta-t308",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A devotional song about a grandmother's stories at twilight",
-"text": "[பல்லவி]\nஅந்திக் காலத்தில் ஆச்சி சொன்ன கதை,\nகந்தன் அருளை நெஞ்சில் சேர்க்கும் விதை.\n\n[சரணம் 1]\nவிளக்கேற்றும் வேளையில் தெய்வக் கதை பேசினாள்,\nதுளசி வாசத்துடன் பக்தியை ஊட்டினாள்.\n\n[சரணம் 2]\nமடியில் சாய்ந்தபடி மாலவனின் சீர் கேட்டோம்,\nஅடியார் கூட்டத்தில் அமைதியைத் தேடினோம்.",
-"judge": 4.17
-},
-{
-"id": "ta-t309",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A tender song about a mother's lullaby on a hot summer night",
-"text": "[Verse 1]\nவேர்வை சிந்தும் கோடை இரவில்\nதாலாட்டுப் பாடும் தாயின் நிழலில்\n\n[Hook]\nதென்றல் வந்து கண்ணை மூடும்\nஎன் செல்லக் குட்டி தூங்கும் நேரம்\n\n[Verse 2]\nசந்தனக் காற்று மெல்ல வீசும்\nசிந்தனை யாவும் தூங்கிப்போகும்",
-"judge": 3.83
-},
-{
-"id": "ta-t310",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A wistful song about a river crossing in monsoon floods",
-"text": "[Hook]\nமழைநீரில் பாயும் நதியே\nமனதோடு பேசும் வழியே\n\n[Verse 1]\nகரைதாண்டும் வெள்ளப் பெருக்கில்\nகாத்திருக்கும் படகின் நிழலில்\n\n[Verse 2]\nஅலைபாயும் நெஞ்சின் ஓரம்\nஅழைக்கின்ற காலம் தூரம்",
-"judge": 3.67
-},
-{
-"id": "ta-t312",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A playful song about the sea at night and a sailor's longing",
-"text": "[Hook]\nஅலைகளின் நடுவே நிலவின் ஆட்டம்,\nஅவளின் நினைவில் இரவின் வாட்டம்.\n\n[Verse 1]\nகாரிருள் கடலில் மிதக்கும் பாய்மரம்,\nகாரிகைக் கண்கள் தேடும் என்மனம்.\n\n[Verse 2]\nகாற்றின் மொழியில் அவளது பெயர்,\nநேற்றின் கனவில் மிதந்தது உயிர்.",
-"judge": 3.83
-},
-{
-"id": "ta-t313",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A devotional song about a temple bell across the river",
-"text": "[Hook]\nநதியின் கரையில் ஒலிக்கும் மணித் தெளிவே\nவிதியின் வழியில் தெளிக்கும் ஒளிச் சுடரே\n\n[Verse 1]\nஅலைகள் தாண்டி வரும் அந்த நாதமே\nதலைவன் பாதம் சேர்க்கும் வேதமே\n\n[Verse 2]\nஆற்றின் ஓரம் கேட்கும் தூய ஓசையே\nகாற்றின் மீதே மிதக்கும் தெய்வ ஆசையே",
-"judge": 4.0
-},
-{
-"id": "ta-t314",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A tender song about a harvest-moon night with folk drums",
-"text": "[Hook]\nபொன்னேர் நிலவு பூக்கும் நேரம்\nபறையிசை நெஞ்சில் பாயும் ஈரம்\n\n[Verse 1]\nமுத்தான நெல்லின் வாசம் வீசும்\nமுத்தாரக் காற்றில் ஆசை பேசும்\n\n[Verse 2]\nசெந்நெல் கதிரில் சிந்திடும் தேனே\nசின்னக் குயிலே நிலவே மானே",
-"judge": 3.83
-},
-{
-"id": "ta-t315",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A joyful song about a harvest-moon night with folk drums",
-"text": "[Hook]\nபொன்னான நிலவொளில பறைமேளம் துள்ளுதடி!\nதன்னானே பாட்டெடுத்து பொங்கலூரு துள்ளுதடி!\n\n[Verse 1]\nகொத்து கொத்தா நெல்மணிகள் கொப்பரையில காயுதே,\nமுத்து முத்தா தாரகைகள் முன்றானையில ஆடுதே!\n\n[Verse 2]\nஆலமரத்து நிழலினிலே ஆட்டங்களும் கூடுதே,\nகாலமெல்லாம் இன்பமின்னும் காத்துலதான் மிதக்குதே!",
-"judge": 4.0
-},
-{
-"id": "ta-t316",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A joyful song about an old teacher remembered by a former student",
-"text": "[Hook]\nசொன்ன கதைகள் நெஞ்சில் வாழும்!\nபொன்னான சிரிப்பும் என்றும் ஆளும்!\n\n[Verse 1]\nகரும்பலகை மேலே கவிதை வரைந்தாய்,\nஅரும்பான மனதை விரியச் செய்தாய்!\n\n[Verse 2]\nபாடம் தாண்டிப் பாசம் தந்தாய்,\nதேடிப் பார்த்தும் நீயே எந்தாய்!",
-"judge": 3.83
-},
-{
-"id": "ta-t317",
-"lang": "ta",
-"style": "tamil-folk",
-"brief": "A bittersweet song about a mother's lullaby on a hot summer night",
-"text": "[பல்லவி]\nவேப்பமர நிழலெல்லாம் வெந்துபோன ராத்திரியில\nதாலாட்டுப் பாடிடுறேன் தங்கம் உன்னை மடியில...\n\n[சரணம் 1]\nகாய்ஞ்சுபோன கஞ்சியில கண்ணீரு உப்பிருக்கும்\nதூங்கிடுடா என் கண்ணே தூக்கம் தான் பசிப்போக்கும்...\n\n[சரணம் 2]\nகாற்றடிக்க வில்லையடா கைகாத்து வீசுறேனே\nவேர்க்கிற உன் உடம்புக்கு என் மூச்சு விசிறிதானே...",
-"judge": 3.5
-},
-{
-"id": "ta-t318",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A playful song about an old teacher remembered by a former student",
-"text": "[Hook]\nகண்ணாடி மூக்கில் ஊசலாடும்,\nமுன்னாள் வாத்தியார் நினைவு தாக்கும்!\n\n[Verse 1]\nசுண்ணக்கட்டி தூக்கி என்னை அடிப்பார்,\nகண்ணடிச்சுப் பாடம் சொல்லி முடிப்பார்!\n\n[Verse 2]\nபெஞ்சின் மேலே நின்ற காலம் போச்சே,\nநெஞ்சில் அவர் அன்பின் வாசமாச்சே!",
-"judge": 4.17
-},
-{
-"id": "ta-t319",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A wistful song about a rainy bus ride home",
-"text": "[Hook]\nமழைக் கால வீதியில் வழியும் நினைவே\nதொலைத் தூரப் பயணத்தில் தொடரும் கனவே\n\n[Verse 1]\nசாரல் வீசும் சாளரம் கதைகள் பேசுதே\nஈரக் காற்றில் என் மனம் கரையக் கூடுதே\n\n[Verse 2]\nகூடு திரும்பும் பறவையின் அமைதி கேட்குதே\nவீடு சேரும் பாதையில் ஏக்கம் வாட்டுதே\n\n[Hook]\nமழைக் கால வீதியில் வழியும் நினைவே\nதொலைத் தூரப் பயணத்தில் தொடரும் கனவே",
-"judge": 3.83
-},
-{
-"id": "ta-t322",
-"lang": "ta",
-"style": "tamil-folk",
-"brief": "A tender song about an old teacher remembered by a former student",
-"text": "[Hook]\nபச்சைமலைப் பாதையிலே ஓலைச்சுவடி தந்தவரே\nஅச்சமின்றி வாழும் வழி அன்பால் எனக்குச் சொன்னவரே\n\n[Verse 1]\nமண்ணில் நான் வரைந்த கோடு மாறாமல் காத்தவரே\nகண்ணின் மணி போல என்னைக் கரையேற்றி விட்டவரே\n\n[Verse 2]\nகூரை நடுக் கூடத்திலே கூப்பிட்ட குரல் கேட்குதய்யா\nஆரத் தழுவும் கை இரண்டும் அடையாளமாக நிற்குதய்யா",
-"judge": 3.83
-},
-{
-"id": "ta-t323",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A devotional song about an old teacher remembered by a former student",
-"text": "[Hook]\nஅகரத்தின் சோதியே ஆசானே போற்றி\nசிகரத்தின் பாதையைச் செதுக்கியே ஏற்றினாய்\n\n[Verse 1]\nஎழுதிய விரல்களில் ஈரமும் வீசுது\nவிழுந்த என் வாழ்வுக்கு வெளிச்சமும் பேசுது\n\n[Verse 2]\nகாலங்கள் ஓடினும் கருணை குறையல\nகோலங்கள் மாறினும் குருவே மறக்கல",
-"judge": 3.83
-},
-{
-"id": "ta-t325",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A bittersweet song about a river crossing in monsoon floods",
-"text": "[Hook]\nபெருக்கெடுக்கும் ஆற்று வெள்ளம் நெஞ்சில் பாயுதே,\nகரை கடக்கும் பாய்மரமும் தள்ளாடுதே!\n\n[Verse 1]\nமழைத் துளியும் கன்னத்திலே கண்ணீராய் மாறுதே,\nஉனைப் பிரிந்தப் பாதைகளும் நீரில் மூழ்குதே.\n\n[Verse 2]\nஓடமதும் ஓடிடாமல் சுழலில் மாட்டுதே,\nபழைய நினைவின் ஈரமட்டும் நெஞ்சில் ஒட்டுதே!",
-"judge": 4.17
-},
-{
-"id": "ta-t326",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A bittersweet song about a bride's farewell to her village",
-"text": "[Hook]\nஅல்லி மலரும் அருவிக் கரையை விட்டு\nமெல்லப் பிரியும் மேகத்தைப் போலே போகின்றேன்\n\n[Verse 1]\nதாழை மணக்கும் தாயின் வீட்டுக் கூரையைத் தாண்டி\nவாழை மரத்தின் வழியெல்லாம் கண்ணீர் சிந்துதே\n\n[Verse 2]\nபாசக் குயிலே பாட்டுச் சொன்ன சோலையைப் பிரிந்து\nநேச நதியாய் புதிய நிலத்தை அடைகின்றேன்",
-"judge": 4.0
-},
-{
-"id": "ta-t327",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A tender song about a morning prayer in a small shrine",
-"text": "[பல்லவி]\nகாலை நறுமலரைக் கையில் ஏந்தி,\nசின்னச் சிற்றம்பலம் சேர்கின்றேனே.\n\n[சரணம் 1]\nவிடியும் பொழுதினில் விளக்கேற்றித்\nதுடியாய் உன்நாமம் தொழுகின்றேனே.\n\n[சரணம் 2]\nநெஞ்சின் குறைகளெல்லாம் நீங்கவே,\nதஞ்சமென உன்அடி தாழ்கின்றேனே.",
-"judge": 4.17
-},
-{
-"id": "ta-t328",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A wistful song about a festival of lamps",
-"text": "[Hook]\nகாரிருள் அகற்றும் கார்த்திகை விளக்கே\nஊரெல்லாம் ஒளிரும் உன்னத அழகே\n\n[Verse 1]\nதீபத்தின் சுடரில் பழநினைவு விழிக்கும்\nஈர நெஞ்சினில் ஏக்கம் நிலைக்கும்\n\n[Verse 2]\nவீட்டு வாசலில் மாக்கோலம் சிரிக்கும்\nகூட்டுப் பறவைகள் வழியெல்லாம் தேடும்",
-"judge": 4.0
-},
-{
-"id": "ta-t329",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A tender song about a river crossing in monsoon floods",
-"text": "[பல்லவி]\nகாரிருள் வானில் கசிந்திடும் மழையே\nநீரிடைப் படகை நகர்த்திடும் அலையே\n\n[சரணம் 1]\nவெள்ளப்பெருக்கில் கலங்கிடும் நதியும்\nதுள்ளும் மனதின் துணிவில் நடக்கும்\n\n[சரணம் 2]\nஅக்கரை சேரத் துடிக்கும் விழியும்\nஇக்கரை நின்றே இயங்கும் வழியும்",
-"judge": 3.5
-},
-{
-"id": "ta-t330",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A playful song about a wedding procession",
-"text": "[பல்லவி]\nமுத்து மணிப் பல்லக்கில் மாப்பிள்ளை வந்தானா?\nகொத்து மலர் தூவிக்கூத்துகள் கண்டானா?\n\n[சரணம் 1]\nவெள்ளிச் சிலம்பொலிக்க மெல்ல நடப்பவளே!\nகிள்ளை மொழி பேசி நின்ற சிறுமயிலே!\n\n[சரணம் 2]\nசின்னச் சிரிப்பாலே சிந்தை கவர்பவனே!\nவண்ணக் குடையோடு வாசல் வருபவனே!",
-"judge": 4.0
-},
-{
-"id": "ta-t331",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A tender song about a street singer in a crowded market",
-"text": "[Hook]\nசந்தையின் சந்தடியில் பாடுகின்றேன்\nசிந்தையின் பாரமெல்லாம் வீசுகின்றேன்\n\n[Verse 1]\nகூச்சல் நடுவினிலே கூடும் இசை\nமூச்சில் கலந்துவிடும் மெல்லிய ஆசை\n\n[Verse 2]\nசில்லறை சத்தத்திலே ஜீவன் உண்டு\nஎல்லாரும் கேட்கையிலே இன்பம் உண்டு",
-"judge": 4.0
-},
-{
-"id": "ta-t332",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A wistful song about a morning prayer in a small shrine",
-"text": "[Hook]\nகாலைச் சுடரில் விளக்கேற்றிப் பாடினேன்\nநாளைத் துயரம் விலகென்று வேண்டினேன்\n\n[Verse 1]\nசிறிய கோவில் தெருவினில் ஓரமாய்\nஅறியா மனமும் அமர்ந்திடும் அமைதியாய்\n\n[Verse 2]\nபூவின் மணமும் புன்னகை தேடுதே\nதேவனின் அருளும் தேடிட ஓடுதே\n\n[Hook]\nகாலைச் சுடரில் விளக்கேற்றிப் பாடினேன்\nநாளைத் துயரம் விலகென்று வேண்டினேன்",
-"judge": 3.67
-},
-{
-"id": "ta-t333",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A wistful song about a farmer praying for harvest",
-"text": "[பல்லவி]\nவானம் பார்த்த பூமியிலே வாழும் ஏழை நானையா,\nமேகம் வந்து பூமழையை பெய்ய வைப்பாய் ஈசையா!\n\n[சரணம் 1]\nவிதைத்த விதை முளைக்கவே விழிநீரில் கேட்கின்றேன்,\nகதிர் அறுக்கும் நாளுக்காக கையேந்தி நிற்கின்றேன்.\n\n[சரணம் 2]\nவாடி நிற்கும் பயிரெல்லாம் செழித்தோங்க வேண்டுமையா,\nதேடி வரும் பசியெல்லாம் தீர்த்து வைப்பாய் ஆண்டவனே!",
-"judge": 3.83
-},
-{
-"id": "ta-t335",
-"lang": "ta",
-"style": "bhakti-inspired",
+"id": "hi-57897f6370",
+"lang": "hi",
+"style": "bollywood-ballad",
 "brief": "A bittersweet song about a mountain village waiting for snow-melt",
-"text": "[பல்லவி]\nவெள்ளி மலை உச்சியிலே வேலவனே காத்திருக்கோம்,\nதுள்ளி வரும் பனிநீரு தோன்றுமய்யா பார்த்திருக்கோம்.\n\n[சரணம் 1]\nவாடை பட்டு வாடுதய்யா வள்ளிக் கூரைச் சிற்றூரு,\nஓடை வந்து சேரும் வரை உள்ளமெல்லாம் பேராறு.\n\n[சரணம் 2]\nகல்லும் கரைந்தே அலை காவடியாய் வந்திடுமோ,\nசொல்லும் பனி உருகிச் சொந்தமாய் மாறிடுமோ.",
-"judge": 3.83
+"text": "**[Hook]**\nपिघलेगी बर्फ़ तो लौटेगी धार,\nसूने पनघट पर फिर बजेगी झंकार।\n\n**[Verse 1]**\nदादी के चूल्हे पर उबले इंतज़ार,\nहर साँझ गिनती सूनी-सी कतार।\n\n**[Verse 2]**\nढलते उजालों में टपका है इक ख़्वाब,\nपर बर्फ़ ने न लिखा कोई जवाब।",
+"judge": 4
 },
 {
-"id": "ta-t336",
-"lang": "ta",
-"style": "tamil-folk",
-"brief": "A wistful song about a lost childhood home",
-"text": "[Hook]\nமண்ணு வெளையாடி மறைஞ்ச சிறுவீடு\nஎண்ணி அழுகுதய்யா ஏழை மனக்கூடு\n\n[Verse 1]\nகூரை ஒழுகினாலும் கூட இருந்தோமே\nஈர நிலத்தில்தான் இன்பம் அறிந்தோமே\n\n[Verse 2]\nஆல மரத்து நிழல் ஆசைகாட்டிப் போச்சுதே\nகால நதியினிலே சொந்தமெல்லாம் ஆச்சுதே",
-"judge": 3.67
+"id": "hi-562b517785",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "[पल्लवी]\nआँगन की तुलसी पुकारे, बिटिया ना जा दूर\nगाँव की गलियाँ रोएँ, डोली है मजबूर\n\n[चरणम्]\nबाबुल की उँगली छूटी, माँ की ओढ़नी गीली\nनीम तले का झूला सूना, सूनी सखियों की टोली\n\n[चरणम्]\nकुएँ की मुंडेर कहे, लौट आना इक बार\nचौखट पर माँ की आँखें, करती हैं इंतज़ार",
+"judge": 4
 },
 {
-"id": "ta-t337",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A wistful song about the sea at night and a sailor's longing",
-"text": "[Hook]\nஅலைகள் உரங்கும் இரவினிலே\nதொலைவில் மிதக்கும் நினைவினிலே\n\n[Verse 1]\nகாரிருள் வானில் வெள்ளி மீன் மின்ன\nவேரிலா மனமோ கரையினைத் தேட\n\n[Verse 2]\nபாயொடு காற்றும் பயணத்தைப் பேச\nசேயிழை உன்னை நெஞ்சமும் பாட",
-"judge": 3.5
+"id": "hi-3dddab2e0b",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A tender song about the quiet pride of a soldier's family",
+"text": "**[Mukhda]**\nदीये की लौ में आज भी उसका नाम जलता है,\nघर के सूने आँगन में गर्व चुपके से पलता है।\n\n**[Antara 1]**\nमाँ रोज़ सहेजती है उसकी वर्दी की हर सिलवट,\nबहन की आँखों में ठहरी है लौटने की आहट।\n\n**[Antara 2]**\nचिट्ठी आती है तो सीने से लगाई जाती है,\nहर दुआ में सरहद भी धीरे से मुस्कुराती है।",
+"judge": 3.8
 },
 {
-"id": "ta-t338",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A bittersweet song about a farmer praying for harvest",
-"text": "[Hook]\nமண்ணை நம்பி விதையை விதைச்சேன்\nவிண்ணை பார்த்து விழியை வளர்த்தேன்\n\n[Verse 1]\nகாயும் வயலில் கண்ணீர் சிந்தி\nபாயும் மழையை கேட்கும் நெஞ்சம்\n\n[Verse 2]\nவாடும் பயிரும் சிரிக்குமா இங்கே\nதேடும் கைகள் நிறைந்திடுமா அங்கே\n\n[Hook]\nமண்ணை நம்பி விதையை விதைச்சேன்\nவிண்ணை பார்த்து விழியை வளர்த்தேன்",
-"judge": 3.83
-},
-{
-"id": "ta-t339",
-"lang": "ta",
-"style": "tamil-light-classical",
-"brief": "A bittersweet song about a birthday for a child who loves kites",
-"text": "[பல்லவி]\nபட்டாடைக் காற்றினிலே பட்டங்கள் ஆடுதடி,\nவி்ட்டாடும் செல்லத்திற்குப் பிறந்தநாளுமாகுதடி.\n\n[சரணம் 1]\nநூல்பிடித்து நீபறக்க வானமெல்லாம் சிரித்திருக்க,\nமார்பணைத்து நான்மகிழக் கண்ணீரும் துளிர்த்திருக்க!\n\n[சரணம் 2]\nஉயரப்பறக்கும் பட்டம் உன்னைக்கொண்டு போகுமோ,\nஅயராது வாழ்த்திநிற்கும் தாயுள்ளம் ஏங்குமோ?",
-"judge": 4.0
-},
-{
-"id": "ta-t340",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A playful song about a love letter read aloud",
-"text": "[Hook]\nமஞ்சள் தாளில் நெஞ்சைக் கண்டேன்,\nகொஞ்சம் சிரித்து உரக்கப் படித்தேன்!\n\n[Verse 1]\nகண்ணே உன்னைக் கவிதையில் வரைந்தான்,\nபெண்ணே என்மேல் பித்தனைப் பிறந்தான்.\n\n[Verse 2]\nவார்த்தை எல்லாம் தேனாய் இனிக்கும்,\nபார்க்கும் போதே நாணம் பெருக்கும்!\n\n[Hook]\nமஞ்சள் தாளில் நெஞ்சைக் கண்டேன்,\nகொஞ்சம் சிரித்து உரக்கப் படித்தேன்!",
-"judge": 3.67
-},
-{
-"id": "ta-t341",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A joyful song about an anniversary after thirty years",
-"text": "[பல்லவி]\nமுப்பதாண்டு வாழ்கவென முரசு கொட்டவே,\nசெப்பமான அன்பினிலே சிவமும் சொக்கவே!\n\n[சரணம் 1]\nகூடிவாழும் நாளெல்லாம் கோவில் போலுமே,\nதேடிவந்த இன்பமெல்லாம் தேனில் ஊறுமே.\n\n[சரணம் 2]\nபாடிநிற்கும் நெஞ்சினிலே பக்தி மேவுதே,\nஆடிவரும் சொந்தமெல்லாம் ஆசி கூறுதே!",
-"judge": 4.0
-},
-{
-"id": "ta-t342",
-"lang": "ta",
-"style": "tamil-folk",
-"brief": "A devotional song about the sea at night and a sailor's longing",
-"text": "[Hook]\nஅலையடிக்கும் ஆழியிலே இருளு வந்து சூழுதே\nமலையளவு ஆசையெல்லாம் கண்ணீரா மாறுதே\n\n[Verse 1]\nகாரிருட்டு வானத்திலே கார்த்திகையும் மின்னுதே\nஊரிலிருக்கும் பெண்ணினவ நினைப்பிலென்னைத் தின்னுதே\n\n[Verse 2]\nஆழக்கடலில் வாழ்பவனுக்குக் காத்தேதான் சொந்தமய்யா\nமீளும் வழியைத் தேடி நின்னே காலமும் போகுதைய்யா",
-"judge": 3.67
-},
-{
-"id": "ta-t343",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A joyful song about a festival of lamps",
-"text": "[பல்லவி]\nசுடரொளி பொங்கும் கார்த்திகை தீபம்\nஇடரெலாம் நீக்கும் மங்கல தீபம்\n\n[சரணம் 1]\nவீடெல்லாம் மின்னும் பொன்னொளி மாலை\nநாடெல்லாம் துள்ளும் இன்பத்தின் காலை\n\n[சரணம் 2]\nஅகல்விளக்கேற்றும் அன்புறும் நெஞ்சம்\nசெகமெலாம் போற்றும் தெய்வத்தின் தஞ்சம்",
-"judge": 4.0
-},
-{
-"id": "ta-t344",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A bittersweet song about spring blossoms and a new beginning",
-"text": "[Hook]\nபூக்கும் காலம் வந்ததே\nபோகும் வழியும் மாறுதே\n\n[Verse 1]\nவாசம் வீசும் சோலையில்\nவீசும் புதிய காற்றிலே\n\n[Verse 2]\nபழைய நினைவை மூடுவோம்\nபுதிய கனவை ஏந்துவோம்\n\n[Hook]\nபூக்கும் காலம் வந்ததே\nபோகும் வழியும் மாறுதே",
-"judge": 3.67
-},
-{
-"id": "ta-t345",
-"lang": "ta",
-"style": "tamil-pop",
-"brief": "A wistful song about a street singer in a crowded market",
-"text": "[Chorus]\nசந்தையின் கூட்டத்தில் என் பாட்டு கரையுதே,\nசிந்தையின் பாரமெல்லாம் காற்றில் பறக்குதே!\n\n[Verse 1]\nகூச்சல்கள் நடுவே இசைக்கும் குழல்தான்,\nபேச்செல்லாம் மறந்து சிரிக்கும் மனம்தான்!\n\n[Verse 2]\nசில்லறை சத்தத்தில் சிலிர்க்கும் என் ராகம்,\nஇல்லாமை நீக்கும் இந்த கான தாகம்!\n\n[Chorus]\nசந்தையின் கூட்டத்தில் என் பாட்டு கரையுதே,\nசிந்தையின் பாரமெல்லாம் காற்றில் பறக்குதே!",
-"judge": 3.67
-},
-{
-"id": "ta-t348",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A devotional song about spring blossoms and a new beginning",
-"text": "[பல்லவி]\nபூக்கும் பூவில் சிவனைக் கண்டேன்\nகாக்கும் காற்றில் அருளைக் கொண்டேன்\n\n[சரணம் 1]\nவசந்தக் காலை வழியைத் திறக்கும்\nபசுமைச் சோலை வினையை அறுக்கும்\n\n[சரணம் 2]\nபுதிய மலராய் நெஞ்சம் மலரும்\nஅரனின் பதத்தில் அன்பும் பெருகும்",
-"judge": 4.0
-},
-{
-"id": "ta-t349",
-"lang": "ta",
-"style": "bhakti-inspired",
-"brief": "A bittersweet song about a city worker dreaming of the village",
-"text": "[பல்லவி]\nஊரெல்லாம் விளக்கெரியும் ஊரின் நினைவிருக்கும்!\nமாரியம்மன் திருவிழா என் மனக்கண்ணில் ஒளிரும்!\n\n[சரணம் 1]\nகூரை வீடு காத்திருக்கக் கூலியைத் தேடி நின்றேன்!\nஊரை விட்டே வந்தபோதும் தெய்வத்தை நெஞ்சில் வைத்தேன்!\n\n[சரணம் 2]\nசெங்கல் மேலே நகருள்ளே சிறகும் முறிந்ததுவே!\nமண்ணின் வாசம் பெறவே மனமும் ஏங்குதுவே!",
-"judge": 3.5
-},
-{
-"id": "mr-t400",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A tender song about an old teacher remembered by a former student",
-"text": "[अभंग - ध्रुवपद]\nपाटीवरचा ओनामा, धरी अजून हा हात।\nगुरुराया तुझी कृपा, प्रकाशाची गती गात॥\n\n[चरण १]\nतुझ्या प्रेमाची ती शाळा, मनातच अजून दाटे।\nमायेच्या त्या शब्दांनी, जीवन हे सोपे वाटे॥\n\n[चरण २]\nकाळी पाटी, पांढरा खडू, मार्ग दावी अंधारात।\nमस्तकी तो तुझा हात, अजूनही या विश्वात॥",
-"judge": 3.5
-},
-{
-"id": "mr-t401",
-"lang": "mr",
-"style": "marathi-pop",
+"id": "hi-bfa79291f1",
+"lang": "hi",
+"style": "hindi-folk",
 "brief": "A playful song about a river crossing in monsoon floods",
-"text": "[Hook]\nपाऊस हा पडला मोठा, नदीला आला पूर,\nपार करायचीय ही वाट, चला जाऊया दूर!\n\n[Verse 1]\nधो-धो वाहे पाणी खाली, वरती नाचे मन,\nहात धरून हास जरा, विसरू या हे भान.\n\n[Verse 2]\nउड्या मारू लाटांवरती, चिखलाचा हा खेळ,\nगावाकडच्या पुलावरती जमली आपली वेळ!\n\n[Hook]\nपाऊस हा पडला मोठा, नदीला आला पूर,\nपार करायचीय ही वाट, चला जाऊया दूर!",
-"judge": 3.67
+"text": "[पल्लवी]\nबाढ़ का पानी, नदी की धार,\nकूदो सखियो, चलो उस पार!\n\n[चरणम्]\nनाव नहीं तो क्या, छाता बने पतवार,\nबादल गरजे, हँस के बोले, \"भीगे सब संसार!\"\n\n[चरणम्]\nचप्पल हाथ में, चुनरी उड़े बयार,\nमेंढक गाए, झींगुर नाचे, छेड़े मेघ-मल्हार।",
+"judge": 3.8
 },
 {
-"id": "mr-t402",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A tender song about a street singer in a crowded market",
-"text": "[अभंग - ध्रुवपद]\nपेठेतल्या गदींत गातो मी अभंग,\nविठ्ठल नामात मनाचा हा रंग.\n\n[चरण १]\nहातात हा एक तुणतुणे वाजे,\nरुप हे सावळ्या पांडुरंगा साजे.\n\n[चरण २]\nमागणे न काही, कुणाचे ना देणे,\nसुरांचे हे दान, हेच माझे जिणे.",
-"judge": 3.83
+"id": "hi-079645aa94",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A tender song about a mother's lullaby on a hot summer night",
+"text": "# उमस भरी लोरी\n\n[Hook]\nउमस भरी इस रात में, पंखा झलूँ धीमे-धीमे\nसो जा मेरे नन्हे लाल, गाऊँ लोरी हौले-हौले\n\n[Verse 1]\nभीगा आँचल, भीगा माथा, फिर भी लोरी न रुके\nथपकी देते हाथ मेरे, थककर भी न झुके\n\n[Verse 2]\nखुली खिड़की, राह तके मन, ठंडी हवा कब आए\nसो जा, सपनों के आँगन चाँद उतर आए",
+"judge": 3.8
 },
 {
-"id": "mr-t403",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A joyful song about dancers rehearsing before a show",
-"text": "[अभंग / धृपद]\nटाळ-मृदंगाच्या तालावरी,\nनृत्याचा रंग चढला भारी.\n\n[कडवे १]\nपायात बांधून आज घुंगुर,\nसाजतो मंचावर रूप सुंदर.\n\n[कडवे २]\nसाधना रंगते ताल-सुरात,\nआनंद ओसंडे गाभारा-मनात.\n\n[अभंग / धृपद]\nटाळ-मृदंगाच्या तालावरी,\nनृत्याचा रंग चढला भारी.",
-"judge": 3.67
+"id": "hi-2c0bb94cc6",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A devotional song about an exhausted city worker dreaming of the village",
+"text": "[Hook]\nईंट-पत्थर के जंगल में साँझ ढली\nमुझको याद आई तुलसी वाली गली\n\n[Verse]\nहरि, मेरी थकी साँसों को छाँव दो\nसपनों को गाँव की ओर नाँव दो\n\n[Verse]\nरोटी के पहिये पर दौड़ता दिन\nतेरे नाम की डोर बँधा मेरा मन\n\n[Verse]\nकिसी रात मैं लौटूँ उसी आँगन में\nसो जाऊँ तेरे चरण-दामन में",
+"judge": 3.8
 },
 {
-"id": "mr-t405",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A bittersweet song about dancers rehearsing before a show",
-"text": "[अभंग]\nनूपुरांचे बोल छेडिती ही राती,\nघाम नि अश्रू मातीत मिसळती.\n\n[कडवे १]\nथकले शरीर रंगमंचाच्या दारी,\nओठांवर हास्य, मनी आस भारी.\n\n[कडवे २]\nपायांत वेदना, जीवात हा ध्यास,\nघडी ही सुखाची, निरोपाचा श्वास.\n\n[अभंग]\nनूपुरांचे बोल छेडिती ही राती,\nघाम नि अश्रू मातीत मिसळती.",
-"judge": 3.83
+"id": "hi-f1226bf5e9",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a street singer at a crowded market",
+"text": "[पल्लवी]\nभीड़ भरे बाज़ार में गाता है वो गीत,\nसुर में बसी है एक अधूरी सी प्रीत।\n\n[चरणम]\nरेशमी दुपट्टों में खो जाती है आवाज़,\nठहरे कोई पल भर, तो जाग उठे साज़।\n\n[चरणम]\nसिक्कों की खनक में दबते हैं सपने,\nहर तान में लौटें बिछड़े हुए अपने।",
+"judge": 3.8
 },
 {
-"id": "mr-t407",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A wistful song about the sea at night and a sailor's longing",
-"text": "[Hook]\nकाळोख्या या सागराला चांदण्याची आस रे,\nलाटांमध्ये गुंफलेला तुझाच ग भास रे.\n\n[Verse 1]\nहोडी माझी वाहते या अथांग अंधारात,\nशोधतो मी रूप तुझे या शांत वाऱ्यात.\n\n[Verse 2]\nकिनारा हा दूर गेला, आठवणी जागल्या,\nरात्रीच्या या एकांतात डोळ्यांतून वाहिल्या.",
-"judge": 4.0
+"id": "hi-5476cc422a",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "**मुखड़ा (विदाई में आँगन की पुकार)**\nआँगन की मिट्टी ने थामे थे मेरे पाँव\nमुड़-मुड़ देखूँ, धुँधला लगता गाँव\n\n**अंतरा 1 (सखियों और अम्मा की याद)**\nकुएँ की जगत पर रह गई सखियों की हँसी\nनीम तले अम्मा की दुआ, बस यादों में बसी\n\n**अंतरा 2 (डोली, बाबा की नज़र, छूटा बचपन)**\nडोली के पर्दे से झाँके बाबा की नम नज़र\nपीछे छूटी पगडंडी, बचपन का हर पहर",
+"judge": 3.8
 },
 {
-"id": "mr-t408",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A playful song about a mother's lullaby on a hot summer night",
-"text": "[अभंग - ध्रुवपद]\nउन्हाच्या झळांनी जीव हा कासावीस,\nगाते मी अंगाई बाळा तू नीज ॥१॥\n\n[कडवे १]\nवारा हा मंद मंद झुळूक आणील,\nपाखरांचे कूजन तुला झोपवील ॥२॥\n\n[कडवे २]\nचांदोबा येईल गंमत सांगायला,\nनिज रे माझ्या बाळा स्वप्नात खेळायला ॥३॥",
-"judge": 3.5
+"id": "hi-c7c896cdc4",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about dancers rehearsing before an evening show",
+"text": "**[Hook]**\nछम्मक-छम्म, घुंघरू बोले — आज रियाज़ जमके चले!\nशाम ढले जब मंच सजे, पैरों में जादू-सा पले!\n\n**[Verse 1]**\nएड़ी उलटी पड़ी, सखी ने ठहाका मारा,\n\"गिनती फिर से — एक, दो, तीन, ये मंच हमारा!\"\n\n**[Verse 2]**\nपल्लू उड़ा, पायल उलझी, ढोलक की थाप पे ताली,\nशाम ढले महफ़िल भी झूमे, हर ताल मतवाली!",
+"judge": 3.8
 },
 {
-"id": "mr-t411",
-"lang": "mr",
-"style": "marathi-folk",
-"brief": "A bittersweet song about a wedding procession",
-"text": "[Hook]\nवाजती गं सनई-चौघडे दारी,\nडोळ्यांत पाणी नि हसू गालांवारी.\n\n[Verse 1]\nबापाची बाहुली चालली सासरला,\nरेशमी सुताने जीव हा बांधला.\n\n[Verse 2]\nमाहेरची सावली सुटते गं आज,\nडोईवर चढला अक्षतांचा साज.",
-"judge": 4.0
+"id": "hi-6a3a6d9ba3",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about a river crossing in monsoon floods",
+"text": "# छपक-छपक\n\n[Hook]\nछपक-छपक चल भैया, नदी चढ़ी है भारी,\nडोले नाव, हँसे सब गाँव, वाह री बरखा प्यारी।\n\n[Verse 1]\nलंगोट बाँधो, टोकरी थामो, पैर जमा के धर,\nमल्लाह बोला \"हर-हर गंगे!\" और छलकी इक लहर।\n\n[Hook]\nछपक-छपक चल भैया, नदी चढ़ी है भारी,\nडोले नाव, हँसे सब गाँव, वाह री बरखा प्यारी।\n\n[Verse 2]\nबकरी बैठी नाव में, मैं पतवार चलाऊँ,\nभीगी चुनरी, सूखी मिठाई, गीत गुनगुनाऊँ।",
+"judge": 3.8
 },
 {
-"id": "mr-t412",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A joyful song about a mountain village waiting for snow-melt",
-"text": "[अभंग - ध्रुवपद]\nउंच गिरीवर वसले गाव,\nबर्फ वितळे, हरखे भाव.\n\n[कडवे १]\nउन्हाची लागता तप्त सावली,\nआनंदे न्हाली हिरवी माउली.\n\n[कडवे २]\nवाहती पाण्याचे खळखळ झरे,\nसजले शिवार आमुचे खरे.",
-"judge": 3.67
+"id": "hi-a2ee02820c",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a temple bell heard from across the river",
+"text": "## हुक (Hook)\nदूर नदी के पार बजे घंटी का स्वर\nमेरे सूने आँगन ठहरा हर पहर\n\n## अंतरा 1 (Verse 1)\nलहरों पर तैरे दीपक, घुलता साँझ का रंग\nतू भी सुनता होगा ना, ये घंटी मेरे संग\n\n## अंतरा 2 (Verse 2)\nपुल से उतरी घंटी-धुन पूछे मेरा हाल\nजिस पार है तू, अटका वहीं ख़याल",
+"judge": 3.8
 },
 {
-"id": "mr-t413",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A tender song about an anniversary after thirty years",
-"text": "[अभंग - ध्रुवपद]\nतीस वर्षे झाली सोबतीचा सण,\nविठुरायापरी जपले हे मन.\n\n[चरण १]\nसंसाराच्या वाटेवर हसलो - रडलो,\nउन्हातान्हामध्ये एकत्रच घडलो.\n\n[चरण २]\nकेसांतल्या चांदीत प्रीतीचीच भास,\nअजूनही वाटे तुझा गोड सहवास.",
-"judge": 4.0
+"id": "hi-419013b89d",
+"lang": "hi",
+"style": "bhajan-hindi",
+"brief": "An evening bhajan at lamp-lighting time, peaceful and warm (raga Bhoopali)",
+"text": "[Hook]\nसंध्या की बेला में जला दीप प्यारा,\nहरि नाम से महका घर-आँगन हमारा।\n\n[Verse 1]\nतुलसी चौरे दीप धरूँ, बाती में विश्वास,\nलौ कहे धीरे-धीरे, मिटे मन का त्रास।\n\n[Verse 2]\nसूरज लौटा घर को, पंछी लौटे नीड़,\nप्रभु, दीप जला मैं गाऊँ, हर लो मन की पीड़।",
+"judge": 3.6
 },
 {
-"id": "mr-t415",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A tender song about a mountain village waiting for snow-melt",
-"text": "[ध्रुव / Hook]\nबर्फ वितळे रानांत, सुटे वाऱ्याची गुणगुण,\nगावा वाट ही पाण्याची, आमुच्या डोंगरांगण.\n\n[कडवे १ / Verse 1]\nउन्हाची ही सोनेरी, पाहा पडली सावली,\nगार पाझराची वाट, आता शिवारात आली.\n\n[कडवे २ / Verse 2]\nमाती सुगंध सांगे, पिक येईल हासून,\nउभा डोंगर हा पाही, डोळे भरून भरून.",
-"judge": 3.5
+"id": "hi-d7587ec471",
+"lang": "hi",
+"style": "bhajan-hindi",
+"brief": "An evening bhajan at lamp-lighting time, peaceful and warm (raga Bhoopali)",
+"text": "[पल्लवी]\nदीप जले मंदिर में प्रभु के, साँझ सुहानी आई\nहर मन में उजियारा फैला, भक्ति की लौ लहराई\n\n[चरणम्]\nतुलसी के चौरे पर जलती, नन्ही-सी इक बाती\nनाम तुम्हारा गाते-गाते, बीते सारी रातीं\n\n[चरणम्]\nघंटी की मधु ध्वनि में घुलकर, मन हो जाए शांत\nकृपा तुम्हारी बरसे प्रभु जी, जीवन हो निश्चिंत",
+"judge": 3.6
 },
 {
-"id": "mr-t416",
+"id": "hi-b8176766ab",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wedding anniversary song for a couple of twenty-five years, tea on the balcony and the same old song on the radio",
+"text": "**[Hook]**\nपच्चीस बरस, वही बालकनी, वही चाय की प्याली,\nरेडियो पे फिर बजा वही पुराना गाना।\n\n**[Verse 1]**\nतेरी आदत है अब भी मेरी चीनी कम कर देना,\nइन्हीं सुरों में बसा है हमारा पूरा ज़माना।\n\n**[Verse 2]**\nझुर्रियों में भी छुपी है वो पहली मुलाक़ात,\nआज भी धड़कन कहे, \"ये तो कल की ही बात।\"",
+"judge": 3.6
+},
+{
+"id": "hi-5e4d6ecc47",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A joyful song about a harvest-moon night with folk drums",
+"text": "[Hook]\nपक गई फ़सल, आई पूनम की रात\nढोल बजे ढमाढम, नाचे गाँव साथ-साथ\n\n[Verse 1]\nखेतों में सोने-सी बाली, झूमे डाली-डाल\nढोलक बोले धिन-धिन-धा, गाए मन का हाल\n\n[Verse 2]\nबैलों की घंटी छनके, आँगन में मेला\nसखी-सहेली सब नाचें, हँसी का रेला\n\n[Hook]\nपक गई फ़सल, आई पूनम की रात\nढोल बजे ढमाढम, नाचे गाँव साथ-साथ",
+"judge": 3.6
+},
+{
+"id": "hi-5339b89f98",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about a festival of lamps in the neighbourhood",
+"text": "**[Hook]**\nदीये जले गली-गली, रौशन हर इक द्वार\nसूनी मेरी देहरी पर, ठहरा है इंतज़ार\n\n**[Verse 1]**\nबच्चों की हँसी से गूँजा, मोहल्ला सारा आज\nमिठाई बाँटी सबने, पर सूना मेरा साज\n\n**[Verse 2]**\nहर लौ में तेरा चेहरा, हर बाती में तेरा नाम\nजलता हूँ चुपचाप मैं, जैसे आख़िरी दीया हर शाम\n\n**[Hook]**\nदीये जले गली-गली, रौशन हर इक द्वार\nसूनी मेरी देहरी पर, ठहरा है इंतज़ार",
+"judge": 3.6
+},
+{
+"id": "hi-595ba8f265",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about a festival of lamps in the neighbourhood",
+"text": "[पल्लवी]\nदीये जले गलियों में, पर मन में अँधेरा है\nहँसी है होठों पर, पर दिल कहीं ठहरा है\n\n[चरण 1]\nवो आँगन, जहाँ बचपन रंगोली सजाता था\nआज उसी दहलीज़ पर इक दीया टिमटिमाता है\n\n[चरण 2]\nहर दीप में तेरी ही लौ झिलमिलाती है\nबुझकर भी ये रात तुझे गुनगुनाती है",
+"judge": 3.6
+},
+{
+"id": "hi-b2684abf4f",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about a river crossing in monsoon floods",
+"text": "# छपक-छपक\n\n[Hook]\nछपक-छपक चल भैया, नदी चढ़ी है भारी,\nडोले नैया, हँसे गाँव, अरे वाह री बरखा प्यारी।\n\n[Verse 1]\nधोती समेटो, टोकरी थामो, पैर जमाकर धर,\nमल्लाह बोला \"हर-हर गंगे\", छलकी लहर।\n\n[Hook]\nछपक-छपक चल भैया, नदी चढ़ी है भारी,\nडोले नैया, हँसे गाँव, अरे वाह री बरखा प्यारी।\n\n[Verse 2]\nबकरी बैठी नाव में, मैं पतवार चलाऊँ,\nभीगी चुनरी, सूखी मिठाई, गीत गुनगुनाऊँ।",
+"judge": 3.6
+},
+{
+"id": "hi-abf787afa2",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A joyful song about the first day of school for a child",
+"text": "## Hook (मुखड़ा)\n\nआज चले स्कूल हम, नया बस्ता डोले\nटिफ़िन खनके साथ-साथ, नए जूते बोले\n\n## Verse 1 (अंतरा)\n\nगुड़िया बोली \"चल संग\", भैया बोले \"आ जा\"\nतख़्ती थामे नन्हे हाथ, गीत नया गा जा\n\n## Verse 2 (अंतरा)\n\nटीचर जी मुस्काएँ, प्यार से पास बिठाएँ\n\"अ से अनार\" पढ़ाएँ, ताली सभी बजाएँ",
+"judge": 3.6
+},
+{
+"id": "hi-3daa7cc617",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a temple bell heard from across the river",
+"text": "[मुखड़ा]\nनदी पार से घंटी बोले, मन का हर कोना डोले\nउस घाट की भीगी शाम में, तेरा नाम कोई घोले\n\n[अंतरा 1]\nधुंधली लहरों पर तैरें, बीते दिनों के साये\nकौन लौटाए वो पल, जो दीयों संग बह जाए\n\n[अंतरा 2]\nमंदिर की उस घंटी में, तेरी ही आवाज़ है\nदूर किनारे बैठा दिल, अब भी तेरा हमराज़ है",
+"judge": 3.6
+},
+{
+"id": "hi-db0795f5da",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A devotional song about a lost childhood home, now sold",
+"text": "[पल्लवी]\nउस आँगन की मिट्टी में अब भी मेरा नाम है,\nप्रभु, जो घर बिक गया, उसमें भी तेरा धाम है।\n\n[चरणम्]\nदीवार पे खिंची लकीरें, माँ की हँसी के रंग,\nअब पराए सपनों में हैं, फिर भी तू है संग।\n\n[चरणम्]\nतुलसी का चौरा सूना, दीपक भी बुझ गया,\nहे नाथ, तू ही रखवाला, जो छूटा तुझमें समा गया।",
+"judge": 3.6
+},
+{
+"id": "hi-07e1d12c02",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A joyful song about a long-distance love letter read aloud",
+"text": "## हुक\nचिट्ठी आई दूर देस से, आँगन झूमे आज\nऊँचे सुर में पढ़ो सखी री, बजे सुरीला साज\n\n## अंतरा 1\nहर अक्षर में घुली मिठास, जैसे गुड़ की डली\nसुनकर हँसे पड़ोसी सारे, खिल गई हर गली\n\n## अंतरा 2\nझोले से डाकिया लाया, प्रीत भरी इक पाती\nपढ़ते-पढ़ते थिरके सबके पाँव, गाए संगी-साथी",
+"judge": 3.6
+},
+{
+"id": "hi-11706ed30d",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about a grandmother telling stories at twilight",
+"text": "[पल्लवी]\nदादी की कहानी, शाम ढले आँगन में,\nहर बात में बसता है बीता हुआ बचपन।\n\n[चरणम् 1]\nचूल्हे की आँच पे सपने पकते रहे,\nआँखें नम थीं, होंठ फिर भी हँसते रहे।\n\n[चरणम् 2]\nचाँद उतर आया, कथा अधूरी रह गई,\nदीये की लौ में यादें पूरी रह गईं।\n\n[पल्लवी]\nदादी की कहानी, शाम ढले आँगन में,\nहर बात में बसता है बीता हुआ बचपन।",
+"judge": 3.6
+},
+{
+"id": "hi-d4c0edd89b",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about an old teacher remembered by a former student",
+"text": "[पल्लवी]\nमास्टरजी की छड़ी भी प्यारी लगती थी,\nउनकी डाँट में भी मिठास बहती थी।\n\n[चरणम् १]\nखड़िया की धूल से सना रहता था कुर्ता,\nसवाल पूछो तो हँसकर दिखाते थे रस्ता।\n\n[चरणम् २]\nआज भी जब कोई सवाल उलझाए मुझे,\nमास्टरजी की मुस्कान याद आए मुझे।\n\n[पल्लवी]\nमास्टरजी की छड़ी भी प्यारी लगती थी,\nउनकी डाँट में भी मिठास बहती थी।",
+"judge": 3.6
+},
+{
+"id": "hi-85185dee00",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about the sea at night and a sailor's longing",
+"text": "# रात का समंदर\n\n**[Hook]**\nलहरें रात भर गातीं साहिल की कहानी\nबिछड़े मांझी की आँखों में ठहरा सा पानी\n\n**[Verse 1]**\nबंदरगाह की बत्ती अब भी राह तके\nहर मौज में गूँजे वो नाम, जो दिल में रहे\n\n**[Verse 2]**\nदूर देस की मिट्टी सौंधी याद दिलाए\nकैसे कहूँ लहरों से, घर कब लौट आए",
+"judge": 3.6
+},
+{
+"id": "hi-80c3f5553a",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about friends parting at a railway station",
+"text": "[पल्लवी]\nस्टेशन पे छूटे यार, रोके ना रुकती रेल,\nचाय के कुल्हड़ में घुल गए, सारे हँसी के खेल।\n\n[चरणम्]\nहाथ हिलाते, आँख मलते, बोले \"रुक जा ज़रा\",\nअगली बार मिलेंगे यारो, फिर से होगा मज़ा।\n\n[चरणम्]\nपीछे छूटा प्लेटफ़ॉर्म, आगे दौड़े सपने,\nयारों की वो बातें अब भी, हँसती हैं संग अपने।\n\n[पल्लवी]\nस्टेशन पे छूटे यार, रोके ना रुकती रेल,\nचाय के कुल्हड़ में घुल गए, सारे हँसी के खेल।",
+"judge": 3.6
+},
+{
+"id": "hi-b67babec63",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A joyful song about spring blossoms and a new beginning",
+"text": "[पल्लवी]\nखिले फूल चारों ओर, बसंत आया द्वार,\nनई सुबह ने छेड़ा मधुर राग का तार।\n\n[चरणम् 1]\nमहुआ महके आँगन में, कोयल गाए गीत,\nमन के सूने कोने में जागी नई प्रीत।\n\n[चरणम् 2]\nसरसों पीली लहराए, धरती ओढ़े रंग,\nचल सखी, नई राह पर, नए सपनों के संग।",
+"judge": 3.6
+},
+{
+"id": "hi-b9941d7d84",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A devotional song about a rainy bus ride back to the hometown",
+"text": "[पल्लवी]\nबारिश की बूँदों में भीगी, बस चली घर की ओर,\nहर मोड़ पे माँ की दुआ, हर साँस में प्रभु की डोर।\n\n[चरण]\nखिड़की से झाँकें खेत हरे, गुनगुनाए मन का तार,\nजैसे कोई दीप जलाकर, राह दिखाए बार-बार।\n\n[चरण]\nकच्ची सड़क, गीली मिट्टी, भजन बनी हर धार,\nहे गिरिधर, तेरी कृपा से पहुँचूँ अपने द्वार।",
+"judge": 3.6
+},
+{
+"id": "hi-698499d080",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about a festival of lamps in the neighbourhood",
+"text": "**[Hook]**\nदीये जले हैं गली-गली, रोशन हर इक द्वार\nपर मेरी देहरी पर अब भी, तेरा इंतज़ार\n\n**[Verse 1]**\nबच्चों की हँसी से गूँजा, मोहल्ला सारा आज\nमिठाई बाँटी सबने, पर सूना मेरा साज\n\n**[Verse 2]**\nहर लौ में तेरी सूरत, हर बाती में तेरा नाम\nजलता हूँ चुपचाप मैं, ज्यों इक दीया गुमनाम\n\n**[Hook]**\nदीये जले हैं गली-गली, रोशन हर इक द्वार\nपर मेरी देहरी पर अब भी, तेरा इंतज़ार",
+"judge": 3.6
+},
+{
+"id": "hi-4019e0e874",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about a river crossing in monsoon floods",
+"text": "## Hook\nहो नदी चढ़ी, बाढ़ आई, चल पार चलें,\nधोती उठा लो, छपाक मारो, हँस-हँस चलें।\n\n## Verse 1\nनाव डोले, पतवार टूटी, मन ना डोला,\nगाँव के सब बच्चों ने ढोल पीट के बोला।\n\n## Hook\nहो नदी चढ़ी, बाढ़ आई, चल पार चलें,\nधोती उठा लो, छपाक मारो, हँस-हँस चलें।\n\n## Verse 2\nजो गिरा सो हँसा, लहरें बजाएँ ताली,\nबाढ़ भी मेला लगे, जब हो यारों की टोली।",
+"judge": 3.6
+},
+{
+"id": "hi-9f048eb184",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A tender song about the quiet pride of a soldier's family",
+"text": "**[Mukhda]**\nदीये की लौ में आज भी उसका नाम जलता है,\nघर के सूने आँगन में गर्व चुपचाप पलता है।\n\n**[Antara 1]**\nमाँ रोज़ सहेजती है उसकी वर्दी की हर सिलवट,\nबहन की आँखों में ठहरी भरोसे की आहट।\n\n**[Antara 2]**\nचिट्ठी जब आती है तो सीने से लगाई जाती है,\nहर दुआ में सरहद भी हौले मुस्कुराती है।",
+"judge": 3.6
+},
+{
+"id": "hi-6e1396d2f5",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A wistful song about a temple bell heard from across the river",
+"text": "## Hook\nनदी चुप, मैं चुप, शाम गई बहकर।\nउस पार बजी घंटी, नाम तेरा लेकर।\n\n## Verse 1\nदूर किनारे दीप जले, उठा धुआँ आरती का,\nमेरी ओर न आया कोई, सूना रहा घाट नदी का।\n\n## Verse 2\nबरसों से इस तट बैठी, गिनूँ लहर-लहर,\nकब लौटेगी वो घंटी-धुन, जो डूबी बीच भँवर।",
+"judge": 3.6
+},
+{
+"id": "hi-5de9bd283b",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A joyful song about a long-distance love letter read aloud",
+"text": "## हुक\nचिट्ठी आई दूर देस से, आँगन झूमे आज\nऊँचे सुर में पढ़ो सखी, बाजे मीठा साज\n\n## अंतरा 1\nहर अक्षर में घुली मिठास, जैसे गुड़ की डली\nसुनकर हँसे पड़ोसी सारे, खिल उठी हर गली\n\n## अंतरा 2\nकोसों दूर से डाकिया लाया, प्रीत भरी इक पाती\nपढ़ते-पढ़ते थिरक उठे पाँव, गाएँ सब संगी-साथी",
+"judge": 3.6
+},
+{
+"id": "hi-6ad1684730",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A devotional song about a lost childhood home, now sold",
+"text": "**मुखड़ा**\nघर बिक गया, पर घंटी की गूँज साथ-साथ चलती है,\nमेरे भीतर की दीप-बाती हर साँझ में जलती है।\n\n**अंतरा 1**\nवो दहलीज़, वो तुलसी-चौरा, अब किसी और के नाम हैं,\nपर भजन की जो तान सीखी, वही मेरे चारों धाम हैं।\n\n**अंतरा 2**\nहे प्रभु, खोया आँगन दे दो, या इतना दो कि मन न डोले,\nजिस घर सोया बचपन मेरा, उसकी याद में तू बोले।",
+"judge": 3.6
+},
+{
+"id": "hi-f0e9091444",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A tender song about a devotional morning prayer in a small shrine",
+"text": "**मुखड़ा**\nसुबह की पहली किरण आई, छोटा-सा शिवाला\nजोत जली है तुलसी तले, मन ने पहना उजाला\n\n**अंतरा 1**\nशंख बजे, घंटी डोले, मैं चुप बैठा सुनता\nअपनी खाली झोली में प्रभु का नाम बुनता\n\n**अंतरा 2**\nजो भी दिया, जो भी लिया, सब तेरा ही माना\nमाँगूँ ना, बस शरण रहे, यही मेरा बाना",
+"judge": 3.6
+},
+{
+"id": "hi-fcc3377530",
+"lang": "hi",
+"style": "hindustani",
+"brief": "A devotional song about an exhausted city worker dreaming of the village",
+"text": "[Hook]\nईंट-पत्थर के जंगल में साँझ ढली\nतुलसी-चौरे की माटी, याद आई गली\n\n[Verse]\nहरि, मेरी थकी साँसों को छाँव दो\nसपनों में मुझे गाँव में ठाँव दो\n\n[Verse]\nरोटी के पहिये पर दौड़ता है दिन\nतेरे नाम की डोर से बँधा मेरा मन\n\n[Verse]\nकिसी रात मैं लौटूँ उसी आँगन में\nसो जाऊँ तेरे चरणों के दामन में",
+"judge": 3.6
+},
+{
+"id": "hi-be48ef8517",
+"lang": "hi",
+"style": "hindi-folk",
+"brief": "A playful song about dancers rehearsing before an evening show",
+"text": "**[Hook]**\nछम्मक-छम घुँघरू बोले, आज रियाज़ चले!\nशाम ढले जब मंच सजेगा, पैरों में जादू पले!\n\n**[Verse 1]**\nएड़ी मुड़ी, सखी ने ठहाका मारा,\nफिर गिनो — एक, दो, तीन, मंच हमारा!\n\n**[Verse 2]**\nपल्लू उड़ा, पायल उलझी, ढोलक ने ताली दी,\nशाम ढले महफ़िल भी इसी ताल पे झूमेगी!",
+"judge": 3.6
+},
+{
+"id": "hi-591d1aff93",
+"lang": "hi",
+"style": "bollywood-ballad",
+"brief": "A bittersweet song about a mountain village waiting for snow-melt",
+"text": "**[Hook]**\nपिघलेगी बर्फ़ तो लौटेगी धार,\nसूने पनघट पर बजेगी झंकार।\n\n**[Verse 1]**\nदादी के चूल्हे पर उबले इंतज़ार,\nहर साँझ गिनती है देवदार की कतार।\n\n**[Verse 2]**\nढलते उजालों में टपका है ख़्वाब,\nपर बर्फ़ ने दिया न कोई जवाब।",
+"judge": 3.6
+},
+{
+"id": "kn-d684b1d35e",
+"lang": "kn",
+"style": "carnatic",
+"brief": "A joyful song about a river crossing in monsoon floods",
+"text": "[ಪಲ್ಲವಿ]\nಮಳೆಯ ನದಿಯು ಹರಿದು ಬರಲಿ, ನಗುವೇ ದೋಣಿಯಾಗಲಿ\nಹಾಡಿ ದಾಟೋಣ ಬಾರೋ ಗೆಳೆಯ, ಕೈಯ ಹಿಡಿ\n\n[ಚರಣ]\nಆಕಾಶದ ಮೃದಂಗ ಗುಡುಗಿ ತಾಳ ಹಾಕಿದೆ\nಕೆಂಪು ಮಣ್ಣ ಹಾದಿ ಕೂಡ ಹೊಳೆಯ ಜೊತೆ ಕುಣಿದಿದೆ\n\n[ಚರಣ]\nಹಸಿರು ಬಳ್ಳಿ ತೂಗಿ ನಲಿದು ಸ್ವಾಗತ ಕೋರಿದೆ\nಹರಿವ ನೀರ ತಾಳಕೆ ಮನ ಹಾರಿ ಹಾಡಿದೆ",
+"judge": 4
+},
+{
+"id": "kn-5222c17d32",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A devotional song about a mother's lullaby on a hot summer night",
+"text": "[Pallavi]\nಜೋ ಜೋ ಕಂದ, ಅಮ್ಮನ ಜೋಗುಳ ತೇಲಿತು ಬೇಸಿಗೆ ರಾತ್ರಿಯಲಿ\nಮೆಲ್ಲನೆ ತಂಗಾಳಿ ಬೀಸಿತು ಹರಿಯ ನಾಮದ ಇಂಪಿನಲಿ\n\n[Charanam 1]\nಬೆವರಿನ ಬೇಗೆಯ ಆರಿಸಿ ಅಮ್ಮ ಬೀಸಿದಳು ಸೆರಗಿನಲಿ\nಮಲಗು ಕಂದ ಕೃಷ್ಣನ ನೆನೆದು ತಾಯಿಯ ಮೆತ್ತನೆ ಮಡಿಲಲಿ\n\n[Charanam 2]\nಮಲ್ಲಿಗೆ ಗಂಧ ಹರಡಿದೆ ಚಂದಿರ ತೂಗುತ ನಗುತಿರೆ\nಹರಿ ಹರಿ ಎನ್ನುತ ನಿದ್ರಿಸು ಕಂದ ಕನಸು ಬೆಳಗಿರೆ",
+"judge": 4
+},
+{
+"id": "kn-da7b067e91",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about a rainy bus ride back to the hometown",
+"text": "## ಪಲ್ಲವಿ (Hook)\nಮಳೆಯ ಹನಿ ಕಿಟಕಿ ಮೇಲೆ, ಬಸ್ಸು ಊರ ಕಡೆ ಓಡಿದೆ\nಹಳೆಯ ದಾರಿ ಕರೆದಂತೆ, ಮುಂದೆ ವೈಪರ್ ತಾಳ ಹಾಕಿದೆ\n\n## ಚರಣ 1 (Verse 1)\nಕೆಂಪು ಮಣ್ಣು ತೋಯ್ದಿರಲು, ಬೆಟ್ಟದ ಹಸಿರು ನಗುತಿದೆ\nದೂರ ಮನೆ ಹೊಗೆಯ ಕಂಡು, ಅಮ್ಮನ ನೆನಪು ಬರುತಿದೆ\n\n## ಚರಣ 2 (Verse 2)\nಚಾಲಕನ ಹಾಡು ಕೇಳಿ, ಹೊರಗೆ ಗಾಳಿ ಬೀಸಿದೆ\nಊರ ಹೊಳೆ ಕಾಣುವ ಮುನ್ನ, ಕಂಡಕ್ಟರ ಸೀಟಿ ಊದಿದೆ\n\n## ಪಲ್ಲವಿ (Reprise)\nಮಳೆಯ ಹನಿ ಕಿಟಕಿ ಮೇಲೆ, ಬಸ್ಸು ಊರ ಕಡೆ ಓಡಿದೆ\nಹಳೆಯ ದಾರಿ ಕರೆದಂತೆ, ಮುಂದೆ ವೈಪರ್ ತಾಳ ಹಾಕಿದೆ",
+"judge": 4
+},
+{
+"id": "kn-caede4e661",
+"lang": "kn",
+"style": "kn-bhavageethe",
+"brief": "A bhavageethe at lamp-lighting time, soft and warm, about evening in the village (raga Kalyani)",
+"text": "[ಪಲ್ಲವಿ]\nಸಂಜೆ ದೀಪ ಹಚ್ಚಿದೆ ಊರ ಬೀದಿ ಬೆಳಗಿದೆ\nಹಾಡು ಹಕ್ಕಿ ಮರಳಿ ಗೂಡಿಗೆ ಬಂದಿದೆ\n\n[ಚರಣ]\nತುಳಸಿ ಕಟ್ಟೆ ಮುಂದೆ ಮಣ್ಣ ದೀಪ ನಗುತಿದೆ\nಅಮ್ಮನ ಕೈ ತುತ್ತು ಮನೆಯ ಒಳಗೆ ಕರೆಯುತಿದೆ\n\n[ಚರಣ]\nಕೆರೆಯ ನೀರಲಿ ಚಂದ್ರ ಮೆಲ್ಲ ಇಳಿದು ಬರುತಿದೆ\nಇಳೆಯ ಮಡಿಲು ಶಾಂತಿ ಹಾಡು ಹಾಡುತಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-00f56497af",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a festival of lamps in the neighbourhood",
+"text": "[ಪಲ್ಲವಿ]\nದೀಪ ಹಚ್ಚಿದ ಬೀದಿಯಲ್ಲಿ ನೆನಪು ಮಿನುಗಿದೆ\nಹಳೆಯ ನಗೆಯ ನೆರಳು ಮತ್ತೆ ಕರೆಯುತ್ತಿದೆ\n\n[ಚರಣ ೧]\nಅಂಗಳದ ರಂಗೋಲಿ ಮಳೆಯಲ್ಲಿ ಕರಗಿದೆ\nಕಣ್ಣ ಹನಿಯ ಬೆಳಕು ಸಣ್ಣಗೆ ಉರಿದಿದೆ\n\n[ಚರಣ ೨]\nಎಲ್ಲರಿದ್ದರೂ ನೀನಿಲ್ಲದ ಹಬ್ಬ ಬರಿದಾಗಿದೆ\nಹಣತೆಯೊಳಗೆ ಬೆಚ್ಚನೆ ಕನಸು ಉಳಿದಿದೆ\n\n[ಪಲ್ಲವಿ]\nದೀಪ ಹಚ್ಚಿದ ಬೀದಿಯಲ್ಲಿ ನೆನಪು ಮಿನುಗಿದೆ\nಹಳೆಯ ನಗೆಯ ನೆರಳು ಮತ್ತೆ ಕರೆಯುತ್ತಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-1b927dd260",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a grandmother telling stories at twilight",
+"text": "[ಪಲ್ಲವಿ]\nಅಜ್ಜಿ ಹೇಳುವ ಕಥೆಯಲಿ ಸಂಜೆ ಕರಗಿ ಹೋಯಿತು\nನೆನಪಿನ ದೀಪ ಮೆಲ್ಲಗೆ ಮನದಲಿ ಹೊತ್ತಿ ಉರಿಯಿತು\n\n[ಚರಣ ೧]\nತುಳಸಿಕಟ್ಟೆಯ ಬಳಿಯಲಿ ಬಾಲ್ಯ ಮತ್ತೆ ಕರೆಯಿತು\nಸುಕ್ಕು ಕೈಯ ಲಾಲಿಯಲ್ಲಿ ಕಾಲ ಮೆಲ್ಲ ಮರೆಯಿತು\n\n[ಚರಣ ೨]\nಕತ್ತಲೆ ಕವಿದರೂ ಅವಳ ದನಿಯೇ ಬೆಳಕಾಯಿತು\nಇಂದು ಆ ಕಥೆ ನೆನೆದು ಕಣ್ಣು ತೇವವಾಯಿತು",
+"judge": 3.8
+},
+{
+"id": "kn-6b5d6c2de2",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about an exhausted city worker dreaming of the village",
+"text": "## ಪಲ್ಲವಿ (Hook)\nಪೇಟೆಯ ಬೆವರಲ್ಲಿ ದಣಿದ ಜೀವ,\nಕನಸಲಿ ಹಳ್ಳಿಗೆ ಹಾರಿತು ಭಾವ.\n\n## ಚರಣ 1 (Verse 1)\nಬೆಳಗಿನ ಬಸ್ಸಿನ ನೂಕು, ಕಣ್ಣಿಗೆ ನಿದ್ದೆ ಬೇಕು,\nಹೊಲದ ಮಣ್ಣಿನ ಘಮವೇ ತಂಪು, ನೆನಪೇ ಸಾಕು.\n\n## ಚರಣ 2 (Verse 2)\nಬೇಲಿಯ ಬಳಿ ಅಮ್ಮನ ಕರೆ, ಅಂಗಳದಲಿ ದೀಪ,\nಊರ ಮರದ ನೆರಳಲಿ ನಿಂತು, ಆರಿತು ತಾಪ.\n\n## ಪಲ್ಲವಿ (Hook, return)\nಪೇಟೆಯ ಬೆವರಲ್ಲಿ ದಣಿದ ಜೀವ,\nಕನಸಲಿ ಹಳ್ಳಿಗೆ ಹಾರಿತು ಭಾವ.",
+"judge": 3.8
+},
+{
+"id": "kn-fae4b27ab8",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a grandmother telling stories at twilight",
+"text": "## Hook\nಅಜ್ಜಿಯ ಕಥೆಗೆ ಸಂಜೆ ಕಿವಿಯಾಯಿತು\nಹಳೆಯ ಕನಸು ದೀಪದಿ ಉರಿಯಿತು\n\n## Verse 1\nಅಂಗಳದ ತುಳಸಿ ಮೌನದಲಿ ನಿಂತಿತು\nಕೊನೆಯ ಸಾಲು ಗಾಳಿಯಲಿ ಕರಗಿತು\n\n## Verse 2\nಇಂದೂ ಕತ್ತಲಾಗುವಾಗ ಆ ದನಿ ಕೇಳಿಸುತಿದೆ\nಅಜ್ಜಿಯಿಲ್ಲದ ಮನೆಯಲಿ ನೆರಳೇ ಉಳಿದಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-12ba73453f",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a bride's farewell to her village",
+"text": "## Hook\nಎತ್ತಿನ ಗಾಡಿ ಹೊರಟಿದೆ, ಊರ ದಾರಿ ದೂರವಾಗಿದೆ\nಮರದ ನೆರಳೇ, ಮರೆಯಬೇಡ, ಮಗಳ ಹೆಜ್ಜೆ ಇಲ್ಲಿದೆ\n\n## Verse 1\nಬಾವಿ ಕಟ್ಟೆಯ ಮೇಲೆ ಗೆಳತಿಯರ ನಗು ಕೇಳಿದೆ\nಸಂಜೆ ದೀಪ ಹಚ್ಚುವಾಗ ಅಮ್ಮನ ಹಾಡು ಕಾಡುತಿದೆ\n\n## Verse 2\nಹಸಿರು ಹೊಲದ ಗಾಳಿಯೇ, ಹೊಸ ಊರಿಗೆ ಬರುವೆಯಾ\nಕಣ್ಣ ಹನಿಯ ಒರೆಸುತ ನಿನ್ನ ನೆನಪ ಹೊತ್ತು ನಡೆವೆ",
+"judge": 3.8
+},
+{
+"id": "kn-a74507e4ff",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about a wedding procession arriving at the bride's home",
+"text": "[ಪಲ್ಲವಿ]\nಬಾರೆ ಬಾರೆ ಮದುಮಗಳೇ, ಹೂವಿನ ತೇರು ಬಂದಿದೆ\nಅರಿಶಿನ ಬೆಳಕು ನಿನ್ನ ಬಾಗಿಲ ಬಳಿ ಬಂದಿದೆ\n\n[ಚರಣ ೧]\nಡೋಲು ಮೆಲ್ಲನೆ ನುಡಿದಿದೆ, ಹೆಜ್ಜೆ ಹಗುರ ಸಾಗಿದೆ\nಅಮ್ಮನ ಕಣ್ಣಲಿ ನೀರು ತುಂಬಿ, ನಗುವೂ ಜೊತೆಗೆ ಅರಳಿದೆ\n\n[ಚರಣ ೨]\nತಂಗಾಳಿ ಮಲ್ಲಿಗೆ ಕಂಪ ತಂದಿದೆ, ಬಳೆಯ ಸದ್ದು ಬೆರೆತಿದೆ\nಹೊಸ ಬಾಳಿನ ಬಾಗಿಲು ತೆರೆಯಲು ಮನೆಯು ಕಾದು ನಿಂತಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-e8c757e3c6",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a bride's farewell to her village",
+"text": "[ಪಲ್ಲವಿ]\nಹೆಜ್ಜೆ ಭಾರ ಇಂದು ಹೊಳೆಯ ದಂಡೆಯ ಹಾದಿಯಲಿ,\nಅಗಲಿ ಹೋಗುವೆ ಊರನು ಕನಸು ತುಂಬಿದ ಕಣ್ಣಿನಲಿ.\n\n[ಚರಣ ೧]\nಅಮ್ಮನ ಅಂಗಳದ ತುಳಸಿ ಕಣ್ಣೀರ ಕೇಳುತಿದೆ,\nಬಾಗಿಲ ದೀಪ ಮೌನದಲಿ ನನ್ನ ಹೆಸರ ಕರೆಯುತಿದೆ.\n\n[ಚರಣ ೨]\nಕೈಯ ಬಳೆಗಳ ಸದ್ದು ಈಗ ಹಾಡಾಗಿ ಹರಿಯುತಿದೆ,\nಕಡಲ ಸೇರುವ ನದಿಯಂತೆ ಮನವು ಮುಂದೆ ಸಾಗುತಿದೆ.",
+"judge": 3.8
+},
+{
+"id": "kn-082772f2ad",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a grandmother telling stories at twilight",
+"text": "## Hook\nಅಜ್ಜಿ ಹೇಳುವ ಕಥೆಗೆ ಸಂಜೆ ಕಿವಿಯಾಗಿತ್ತು\nಹಳೆಯ ಕನಸು ಹಣತೆಯಲಿ ಮಿಣುಕುತ್ತಿತ್ತು\n\n## Verse 1\nಅಂಗಳದ ತುಳಸಿಕಟ್ಟೆ ಮೌನದಲ್ಲಿ ನಿಂತಿತ್ತು\nಅವಳ ದನಿಯ ಕೊನೆಯ ಸಾಲು ಗಾಳಿಗೆ ಕರಗಿತ್ತು\n\n## Verse 2\nಇಂದೂ ಕತ್ತಲಾಗುವಾಗ ಆ ದನಿ ಕೇಳಿಸುತ್ತದೆ\nಅಜ್ಜಿ ಇಲ್ಲದ ಮನೆಯಲಿ ನೆರಳು ಮಾತ್ರ ಉಳಿದಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-263e974a48",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a temple bell heard from across the river",
+"text": "# ದಡದಾಚೆ ಗಂಟೆ\n\n## Hook\nನದಿಯ ಆಚೆ ಗುಡಿಯ ಗಂಟೆ ಮೊಳಗಿತು\nಕೇಳಿ ಕಣ್ಣು ತುಂಬಿ ನಾನು ನಿಂತೆ ಇಲ್ಲಿಯೇ\n\n## Verse 1\nನೀರ ಮೇಲೆ ನಾದ ತೇಲಿ ಬಂದಿತು\nಹಳೆಯ ನೆನಪು ಹಣತೆಯಂತೆ ಉರಿದಿತು\n\n## Verse 2\nಅತ್ತ ನೀನು ಇತ್ತ ನಾನು ನಡುವೆ ನದಿಯು\nಮಾತು ಸೇರದೆ ಉಳಿದ ಹಾಡು ಗಂಟೆಯು",
+"judge": 3.8
+},
+{
+"id": "kn-4fc41bfafe",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a grandmother telling stories at twilight",
+"text": "## Hook\nಅಜ್ಜಿ ಹೇಳುವ ಕಥೆಗೆ ಸಂಜೆ ಕಿವಿಯಾಗಿತ್ತು\nಹಳೆಯ ಕನಸು ಮೆಲ್ಲಗೆ ದೀಪದಲ್ಲಿ ಉರಿಯಿತು\n\n## Verse 1\nಅಂಗಳದ ತುಳಸಿ ಕಟ್ಟೆ ಮೌನದಲ್ಲಿ ನಿಂತಿತ್ತು\nಅವಳ ಧ್ವನಿಯ ಕೊನೆಯ ಸಾಲು ಗಾಳಿಯಲ್ಲಿ ಕರಗಿತು\n\n## Verse 2\nಇಂದೂ ಕತ್ತಲಾಗುವಾಗ ಆ ಹಾಡು ಕೇಳಿಸುತ್ತದೆ\nಅಜ್ಜಿ ಇಲ್ಲದ ಮನೆಯಲ್ಲಿ ನೆರಳು ಮಾತ್ರ ಉಳಿದಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-6f70e755fe",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a bride's farewell to her village",
+"text": "## Hook\nಎತ್ತಿನ ಗಾಡಿ ಹೊರಟಿದೆ, ಊರ ದಾರಿ ದೂರಾಗಿದೆ\nಮರದ ನೆರಳೇ, ಮರೆಯಬೇಡ, ಮಗಳ ಹೆಜ್ಜೆ ನೆನಪಿರಲಿ\n\n## Verse 1\nಬಾವಿ ಕಟ್ಟೆಯ ಮೇಲೆ ಗೆಳತಿಯರ ನಗು ಕೇಳಿದೆ\nಸಂಜೆ ದೀಪ ಹಚ್ಚುವಾಗ ಅಮ್ಮನ ಹಾಡು ಜೊತೆಯಾಗಿದೆ\n\n## Verse 2\nಹಸಿರು ಹೊಲದ ಗಾಳಿಯೇ, ಹೊಸ ಊರಿಗೆ ನನ್ನೊಂದಿಗೆ ಬಾ\nಕಣ್ಣ ಹನಿಯ ಒರೆಸುತ ನಿನ್ನ ನೆನಪು ಹೊತ್ತು ನಡೆವೆ",
+"judge": 3.8
+},
+{
+"id": "kn-5518a664e5",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a grandmother telling stories at twilight",
+"text": "## Hook\nಅಜ್ಜಿ ಹೇಳುವ ಕಥೆ ಚಿಮಣಿ ಬೆಳಕಲ್ಲಿ\nನೆನಪು ಬೆಚ್ಚಗೆ ಉಳಿದಿದೆ ಎದೆಯಲ್ಲಿ\n\n## Verse 1\nಹಳೆಯ ಹಾಡನು ನೇಯ್ದ ಧ್ವನಿಯು ಇಳಿಯುತ್ತಿದೆ\nಕತ್ತಲ ಹೆಜ್ಜೆ ಕೇಳುತ ಮಗುವು ಕಾಯುತ್ತಿದೆ\n\n## Verse 2\nತುಳಸಿ ಕಟ್ಟೆಯ ದೀಪ ಆರದೆ ಉರಿಯುತ್ತಿದೆ\nಸಂಜೆ ಕರಗಿದರೂ ದನಿ ಹೊಳೆಯುತ್ತಿದೆ",
+"judge": 3.8
+},
+{
+"id": "kn-596bc9270c",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A wedding song for the bride's sendoff from her parents' home, with the mother's blessing and the sound of the nadaswaram",
+"text": "[ಪಲ್ಲವಿ]\nನಾದಸ್ವರ ಮೊಳಗಿದೆ, ಮಗಳೇ ಹೊರಡುವ ಹೊತ್ತು\nಅಮ್ಮನ ಆಶೀರ್ವಾದ ಕಣ್ಣಲ್ಲಿ ತುಂಬಿದ ಮುತ್ತು\n\n[ಚರಣ ೧]\nಹೊಸ್ತಿಲ ದಾಟಿ ಹೋಗು, ಹೊಸ ಮನೆಯಲಿ ಅರಳು\nತವರಿನ ಹಾರೈಕೆ ನಿನ್ನ ಬೆನ್ನಿಗೆ ನೆರಳು\n\n[ಚರಣ ೨]\nಬಳೆಯ ಕಿಣಿಕಿಣಿ ನಾದ ಜೊತೆಯಲಿ ಬರಲು\nಅಮ್ಮನ ಮಮತೆಯ ದೀಪ ದಾರಿಗೆ ಬೆಳಗಲು\n\n[ಪಲ್ಲವಿ]\nನಾದಸ್ವರ ಮೊಳಗಿದೆ, ಮಗಳೇ ಹೊರಡುವ ಹೊತ್ತು\nಅಮ್ಮನ ಆಶೀರ್ವಾದ ಕಣ್ಣಲ್ಲಿ ತುಂಬಿದ ಮುತ್ತು",
+"judge": 3.6
+},
+{
+"id": "kn-895b22a00b",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a temple bell heard from across the river",
+"text": "# ದಡದಾಚೆ ಗಂಟೆ\n\n## Hook\nನದಿಯಾಚೆ ಗುಡಿಯ ಗಂಟೆ ಮೊಳಗಿತು\nಈಚೆ ದಡದಿ ಕಂಬನಿ ತುಂಬಿ ನಿಂತೆನು\n\n## Verse 1\nನೀರಿನ ಮೇಲೆ ನಾದ ತೇಲಿ ಬಂದಿತು\nಹಳೆಯ ನೆನಪ ಹಣತೆ ಹಚ್ಚಿತು\n\n## Verse 2\nಅತ್ತ ನೀನು ಇತ್ತ ನಾನು ನಡುವೆ ನದಿಯು\nಮಾತು ಸೇರದೆ ಉಳಿದ ಹಾಡೇ ಆ ಗಂಟೆಯು",
+"judge": 3.6
+},
+{
+"id": "kn-75e078fe52",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about a lost childhood home, now sold",
+"text": "[Pallavi]\nಅಂಗಳದ ತುಳಸಿಕಟ್ಟೆ ನೆನಪಾಗಿದೆ\nಅಮ್ಮನ ಕರೆ ಇಂದು ಕೇಳದಾಗಿದೆ\n\n[Charanam 1]\nಆ ಮನೆ ಈಗ ಬೇರೆಯವರದು\nಬಾಗಿಲ ಮೇಲೆ ಯಾರದೋ ಹೆಸರು\n\n[Charanam 2]\nಕೈಗೆರೆ ಗೋಡೆಯಲ್ಲಿ ಉಳಿದಿದೆ\nಹೆಜ್ಜೆ ಗುರುತು ನನ್ನ ಜೊತೆ ಬಂದಿದೆ",
+"judge": 3.6
+},
+{
+"id": "kn-67bed08c2f",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a temple bell heard from across the river",
+"text": "[ಪಲ್ಲವಿ]\nನದಿಯ ಆಚೆ ಗಂಟೆ ನಾದ ಕೇಳಿ ಬಂದಿದೆ\nಮನದ ಬಾಗಿಲು ನಿನ್ನ ನೆನಪಿಗೆ ತೆರೆದಿದೆ\n\n[ಚರಣ]\nದೀಪದ ಬೆಳಕು ನೀರಲ್ಲಿ ನಡುಗಿ ಕರಗಿದೆ\nಹಳೆಯ ಹಾಡು ಗಾಳಿಯಲ್ಲಿ ಮೆಲ್ಲನೆ ತೇಲಿದೆ\n\n[ಚರಣ]\nಆ ದಡದಲ್ಲಿ ನೀನು ನಿಂತಿರುವೆ ಎನಿಸಿದೆ\nಕಾಯುವ ಕಣ್ಣಲಿ ಮಳೆಯು ಸುರಿದಿದೆ",
+"judge": 3.6
+},
+{
+"id": "kn-cbad972a2e",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A devotional song about a devotional morning prayer in a small shrine",
+"text": "[ಪಲ್ಲವಿ]\nಬೆಳಗಿನ ಜಾವದ ಗಂಟೆ ಮೊಳಗಿದೆ ದೇಗುಲದಲ್ಲಿ\nಹಣತೆಯ ಬೆಳಕು ಹರಿದಿದೆ ಮನದ ಕತ್ತಲೆಯಲ್ಲಿ\n\n[ಚರಣ ೧]\nತುಳಸಿಯ ಗಂಧ ಹರಡಿದೆ ಅಂಗಳದ ಮೂಲೆಯಲ್ಲಿ\nನಿನ್ನ ನಾಮ ಸ್ಮರಿಸುತಿದೆ ಎದೆ ಭಕ್ತಿಯ ಹಾದಿಯಲ್ಲಿ\n\n[ಚರಣ ೨]\nಹೂವಿನ ದಳ ಅರ್ಪಿಸಿ ಹರಸೆಂದು ಬೇಡುವೆ\nಹೆಜ್ಜೆ ಹೆಜ್ಜೆಗೂ ನೀನೇ ಜೊತೆಯೆಂದು ನಂಬುವೆ",
+"judge": 3.6
+},
+{
+"id": "kn-3c9770dd79",
+"lang": "kn",
+"style": "carnatic",
+"brief": "A playful song about the first day of school for a child",
+"text": "[ಪಲ್ಲವಿ]\nಮೊದಲ ದಿನ ಶಾಲೆಗೆ ಹೋಗೋಣ ಬಾ ಚಿನ್ನ,\nಹೊಸ ಗೆಳೆಯರ ಜೊತೆ ನಗುತ ಆಡೋಣ ಬಾ ಚಿನ್ನ.\n\n[ಚರಣ ೧]\nಪುಟ್ಟ ಬ್ಯಾಗು ಬೆನ್ನ ಮೇಲೆ ತೂಗುತ್ತಾ ನಡೆಯೋಣ,\nಅಕ್ಷರಗಳ ಹಾಡು ಹಾಡಿ ಹೊಸ ಪಾಠ ಕಲಿಯೋಣ.\n\n[ಚರಣ ೨]\nಟೀಚರ್ ಹೇಳೋ ಕಥೆಯ ಕೇಳಿ ಕಣ್ಣು ಅರಳಿಸೋಣ,\nಡಬ್ಬಿ ಇಡ್ಲಿ ಹಂಚಿ ತಿಂದು ಖುಷಿಯಲಿ ಕುಣಿಯೋಣ.",
+"judge": 3.6
+},
+{
+"id": "kn-ae126d4d33",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a temple bell heard from across the river",
+"text": "[ಪಲ್ಲವಿ]\nನದಿಯ ಆಚೆ ದೂರದಲ್ಲಿ ಗಂಟೆ ನಾದ ಕೇಳಿದೆ\nಕರೆದಂತೆ ನನ್ನ ಹೆಸರ ಹಾಡು ಮೆಲ್ಲ ತೇಲಿದೆ\n\n[ಚರಣ]\nದೋಣಿ ಇಲ್ಲ, ದಾರಿ ಇಲ್ಲ, ಕಣ್ಣ ನೀರು ಹರಿದಿದೆ\nಹಳೆಯ ನೆನಪು ದೀಪದಂತೆ ನೀರಲೆಯಲಿ ಮಿನುಗಿದೆ\n\nಮತ್ತೆ ಮತ್ತೆ ಗಂಟೆ ಮೊಳಗಿ ನೋವ ಸಿಹಿಯ ಮಾಡಿದೆ\nಅಗಲಿದವರ ನೆನಪ ಹಣತೆ ತೀರದಲ್ಲಿ ಉರಿದಿದೆ",
+"judge": 3.6
+},
+{
+"id": "kn-36c06f81b4",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a street singer at a crowded market",
+"text": "[ಪಲ್ಲವಿ]\nಸಂತೆಯ ಗದ್ದಲದಲ್ಲಿ ಹಾಡು ನನ್ನದು, ಮೌನ ನಿನ್ನದು\nಎದೆಯ ನೋವಿನ ನಡುವೆಯೂ ರಾಗ ಸಿಹಿಯಾಗಿದೆ\n\n[ಚರಣ]\nಬೆಳಗಿನ ಬಿಸಿಲು ಬಳೆಗಳ ಸದ್ದಿನಲ್ಲಿ ಕರಗಿ ಹೋಯಿತು\nಚಿಲ್ಲರೆ ನಾಣ್ಯ ಬಿದ್ದ ಸಪ್ಪಳಕೆ ಹೃದಯ ಹಗುರಾಯಿತು\n\n[ಚರಣ]\nಕಣ್ಣ ಹನಿಯ ಯಾರೂ ಕಾಣದಂತೆ ಹಾಡಿನಲ್ಲಿ ಮರೆಸಿದೆ\nನಾಳೆಯ ಸಂತೆಗೆ ಮತ್ತೆ ಬರುವೆ, ಧ್ವನಿಯೇ ನನ್ನ ಸೇತುವೆ",
+"judge": 3.6
+},
+{
+"id": "kn-9b466115df",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about an exhausted city worker dreaming of the village",
+"text": "[ಪಲ್ಲವಿ]\nನಗರದ ಧೂಳಿನ ಬೀದಿಯಲ್ಲಿ ದಣಿದ ಮನವು ಬಾಡಿದೆ,\nಹಳ್ಳಿಯ ಹಸಿರ ಹೊಲದ ಗಾಳಿ ಕನಸಲಿ ಕರೆದಿದೆ.\n\n[ಚರಣ]\nಸಂಜೆಯ ಬಸ್ಸಿನ ಕೊನೆಯ ಸೀಟಲಿ ಕಣ್ಣು ಮುಚ್ಚಿದೆ,\nತಾಯ ಅಂಗಳದ ತುಳಸಿ ಗಂಧ ಎದೆಗೆ ತಾಕಿದೆ.\n\n[ಚರಣ]\nದುಡಿದು ಸವೆದ ಕೈಗಳಿಗೆ ನೆಲದ ತಂಪು ಬೇಕಿದೆ,\nಮರಳಿ ಊರಿಗೆ ಹೋಗುವ ಆಸೆ ಮನದಿ ಉಳಿದಿದೆ.",
+"judge": 3.6
+},
+{
+"id": "kn-b9230c87c5",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a mountain village waiting for snow-melt",
+"text": "## Hook\nಹಿಮ ಕರಗುವ ದಾರಿ ನೋಡುತಲಿ\nಕಾದಿದೆ ಮಲೆಯ ಹಳ್ಳಿ ಮೌನದಲಿ\n\n## Verse 1\nಬೆಟ್ಟದ ಮನೆಗಳ ಬಾಗಿಲು ತೆರೆದಿದೆ\nಕಣ್ಣು ಇಳಿಜಾರ ಹಾದಿ ಹುಡುಕಿದೆ\n\n## Verse 2\nಒಣಗಿದ ಹೊಳೆಯ ಕಲ್ಲಿನೆದೆಯಲಿ\nಒಂದು ಹಾಡು ನೀರಾಗಿ ಹರಿದು ಬರಲಿ",
+"judge": 3.6
+},
+{
+"id": "kn-78a017968c",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A wistful song about a mountain village waiting for snow-melt",
+"text": "[ಪಲ್ಲವಿ]\nಬೆಟ್ಟದ ಮೇಲೆ ಹಿಮ ಕರಗುವ ಹೊತ್ತಿಗೆ\nಕಾದಿದೆ ಹಳ್ಳಿ ಕಣ್ಣರಳಿಸಿ ಬೆಳಕಿಗೆ\n\n[ಚರಣ ೧]\nತೊರೆಯ ನೀರು ಹಾಡಿ ಬರುವ ದಾರಿಯಲಿ\nಹಸಿರು ಕನಸು ಕಟ್ಟಿ ಕಾದಿದೆ ಊರಲಿ\n\n[ಚರಣ ೨]\nದೂರದ ಕೊಳಲ ದನಿಯಂತೆ ನೆನಪು ಬಂದಿದೆ\nಬರುವೆನೆಂದ ಮಾತು ಮಂಜಿನಲ್ಲಿ ನಿಂತಿದೆ\n\n[ಪಲ್ಲವಿ]\nಬೆಟ್ಟದ ಮೇಲೆ ಹಿಮ ಕರಗುವ ಹೊತ್ತಿಗೆ\nಕಾದಿದೆ ಹಳ್ಳಿ ಕಣ್ಣರಳಿಸಿ ಬೆಳಕಿಗೆ",
+"judge": 3.6
+},
+{
+"id": "kn-dca382b759",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A devotional song about the quiet pride of a soldier's family",
+"text": "## Hook\nದೇವರೇ, ಕಾಯೋ ನಮ್ಮ ಯೋಧ ಮಗನ ಹೆಜ್ಜೆಯ\nಎದೆ ತುಂಬ ಹೆಮ್ಮೆ, ಕಣ್ಣಲಿ ಮೌನ ಪ್ರಾರ್ಥನೆಯ\n\n## Verse 1\nಅಪ್ಪನ ಬೆನ್ನು ನೆಟ್ಟಗೆ, ಅಮ್ಮನ ದೀಪ ಮಿನುಗಿದೆ\nಮನೆ ಮುಂದಿನ ತುಳಸಿ ಅವನ ಹೆಸರ ಹಾಡಿದೆ\n\n## Verse 2\nಊರು ಹೊಗಳದಿದ್ದರೂ ನಮ್ಮ ಹೆಮ್ಮೆ ಬೆಳಗಿದೆ\nಗಡಿಯ ಗಾಳಿ ಬೀಸುವಾಗ ಉಸಿರು ಕಾಯುತಿದೆ",
+"judge": 3.6
+},
+{
+"id": "kn-6f6e6a99e1",
+"lang": "kn",
+"style": "kannada-light-classical",
+"brief": "A bittersweet song about a bride's farewell to her village",
+"text": "## Hook\nಎತ್ತಿನ ಗಾಡಿ ಹೊರಟಿದೆ, ಊರ ದಾರಿ ದೂರವಾಗಿದೆ\nಮರದ ನೆರಳೇ, ಮರೆಯಬೇಡ, ಹೆಜ್ಜೆ ನೆನಪಿರಲಿ\n\n## Verse 1\nಬಾವಿ ಕಟ್ಟೆಯ ಮೇಲೆ ಗೆಳತಿಯರ ನಗು ಕೇಳಿಸಿದೆ\nಸಂಜೆ ದೀಪ ಹಚ್ಚುವಾಗ ಅಮ್ಮನ ಹಾಡು ಜೊತೆಗಿದೆ\n\n## Verse 2\nಹಸಿರು ಹೊಲದ ಗಾಳಿಯೇ, ಹೊಸ ಊರಿಗೆ ಬಾ ಜೊತೆಗೆ\nಸೆರಗಿನ ತುದಿಗೆ ಮಣ್ಣ ಘಮವ ಕಟ್ಟಿ ನಡೆವೆನು",
+"judge": 3.6
+},
+{
+"id": "kn-6125e47332",
+"lang": "kn",
+"style": "carnatic",
+"brief": "A joyful song about an old teacher remembered by a former student",
+"text": "**Title:** ಸರಿಗಮ ಗುರುವೇ\n\n[Hook]\nಸರಿಗಮ ಹಾಡಿದ ಗುರುವೇ, ನಗೆಹಬ್ಬ ನಿಮ್ಮದೇ\nನೆನೆದರೆ ಮನ ಕುಣಿದಿದೆ, ಹಾಡು ಮತ್ತೆ ಚಿಮ್ಮಿದೆ\n\n[Verse 1]\nಕಪ್ಪು ಹಲಗೆ ಮೇಲೆ ಅಕ್ಷರ ಬರೆದು ನಕ್ಕಿರಿ\nತಾಳ ತಟ್ಟಿ ಪಾಠ ಹೇಳಿ ಬಾಳಿಗೆ ರಾಗ ಕೊಟ್ಟಿರಿ\n\n[Verse 2]\nಹಳೆಯ ತರಗತಿ ಗಾಳಿಯಲ್ಲಿ ನಿಮ್ಮ ನಗೆ ಉಳಿದಿದೆ\nಶಿಷ್ಯನ ಮನದಿ ಹಬ್ಬವಾಗಿ ಗುರುವಿನ ಹಾಡು ಮೊಳಗಿದೆ",
+"judge": 3.6
+},
+{
+"id": "kn-baf3b3d2ea",
+"lang": "kn",
+"style": "kannada-folk",
+"brief": "A tender song about a lost childhood home, now sold",
+"text": "[Pallavi]\nಅಂಗಳದ ತುಳಸಿಕಟ್ಟೆ ಈಗ ನೆನಪಾಗಿದೆ\nಹೊಸ್ತಿಲ ಬಳಿ ಅಮ್ಮನ ಕರೆ ಕೇಳದಾಗಿದೆ\n\n[Charanam 1]\nನಮ್ಮ ಮನೆ ಈಗ ಬೇರೆಯವರದು\nಬಾಗಿಲ ಮೇಲೆ ಯಾರದೋ ಹೆಸರು\n\n[Charanam 2]\nಪುಟ್ಟ ಕೈಯ ಗುರುತು ಗೋಡೆಯಲ್ಲಿ ಉಳಿದಿದೆ\nಮಣ್ಣಿನ ಘಮ ಮಾತ್ರ ನನ್ನ ಜೊತೆ ಬಂದಿದೆ",
+"judge": 3.6
+},
+{
+"id": "mr-f6c39e1095",
 "lang": "mr",
 "style": "bhavgeet",
 "brief": "A playful song about a lost childhood home",
 "text": "[Hook]\nबालपणीचे घर माझे हे कुठे हरवले सांग,\nउनाड माझा जीव अजूनही शोधत सुटला माग.\n\n[Verse 1]\nकौलारू त्या छतावरती उनाड वारा हसे,\nउंबऱ्यावरती चिऊताईचा थवा असा अन् बसे.\n\n[Verse 2]\nभिंतीवरच्या चित्रांमधला अजून हसतो काळ,\nकधीतरी मग पायात वाजे पुन्हा पैंजणताळ.",
-"judge": 3.67
+"judge": 4
 },
 {
-"id": "mr-t417",
+"id": "mr-348ac61096",
 "lang": "mr",
-"style": "abhang-inspired",
-"brief": "A joyful song about friends parting at a railway station",
-"text": "[अभंग - ध्रुवपद]\nगाडी सुटे आगगाडी, निरोप हा गोड।\nमैत्रीची ही वेळ मोठी, प्रेमाची ही ओढ॥\n\n[चरण १]\nस्टेशनावर हास्य फुले, डोळ्यांमधले पाणी।\nनिरोपातही घुमे आज, आनंदाची गाणी॥\n\n[चरण २]\nवेगवेगळ्या वाटा आता, तरीही एक मन।\nपुन्हा भेटू याच वळणी, असा हा क्षण॥",
-"judge": 3.83
+"style": "mr-bhavgeet",
+"brief": "A bhavgeet about an afternoon in a grandmother's courtyard (raga Bhimpalasi)",
+"text": "# आजीचं अंगण (Aajiche Angan)\n*Bhavgeet · raga Bhimpalasi · mr-bhavgeet · ~30s*\n\n**[Hook]**\nआजीच्या अंगणात दुपार निवांत झोके घेई,\nभिमपलासीच्या सुरांत माझं बालपण परतून येई.\n\n**[Verse 1]**\nसुपात डाळ निवडीत आजी गुणगुणे भिमपलासी,\nचिमण्यांचा किलबिलाट सांडे अंगणात उन्हाच्या राशी.\n\n**[Verse 2]**\nतुळशीवरती हळद-उन्ह, माजघरी मंद वारा,\nआठवणींचा दिवा तेवे, आजी, तूच माझा निवारा.",
+"judge": 3.8
 },
 {
-"id": "mr-t418",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A devotional song about a festival of lamps",
-"text": "[Hook]\nदिव्यांचा हा सण आला दारी,\nमंगळदीप उजळले संसारी.\n\n[Verse 1]\nझगमगे हे रूप तेजाचे,\nगाऊ गाणे आज आनंदाचे.\n\n[Verse 2]\nतमाचा नाश उजेडाने झाला,\nभक्तीचा हा सोहळा सजला.\n\n[Hook]\nदिव्यांचा हा सण आला दारी,\nमंगळदीप उजळले संसारी.",
-"judge": 3.67
-},
-{
-"id": "mr-t419",
+"id": "mr-cab2f28bc2",
 "lang": "mr",
 "style": "marathi-pop",
 "brief": "A playful song about a wedding procession",
 "text": "[Hook]\nवाजवा ढोल अन् वाजवा ताशा,\nनवरीच्या गालावर लाजेची नशा!\n\n[Verse 1]\nवरबाप नाचतोय नोटा उडवून,\nनवरदेव हसतोय मिशी मुरडून!\n\n[Verse 2]\nबाराती चालले मारत गाजा,\nआज आमच्या मित्राचा वाजणार वाजा!",
-"judge": 4.0
+"judge": 3.8
 },
 {
-"id": "mr-t420",
+"id": "mr-9d059130a8",
 "lang": "mr",
 "style": "marathi-pop",
-"brief": "A wistful song about an old teacher remembered by a former student",
-"text": "[Hook]\nफळ्यावरचा तो जुना शब्द अजूनही आठवतो,\nतुमचा तो हळवा स्पर्श मनाला स्पर्शून जातो.\n\n[Verse 1]\nहातातल्या खडूचा तो पांढरासा वास,\nघडवला तुम्हीच माझ्या आयुष्याचा ध्यास.\n\n[Verse 2]\nशाळेची ती घंटा आता शांत झाली जरी,\nतुमचीच ती शिकवण वाजे माझ्या उरी.",
-"judge": 3.67
+"brief": "A devotional song about a farmer praying for harvest",
+"text": "[Hook]\nकाळ्या आईची ही सेवा, पाव आता तू विठ्ठला,\nपिकाची ही समृद्धी, देई आमच्या पदराला.\n\n[Verse 1]\nमेघ राजा येऊ दे रे, तहानलेल्या या शेतात,\nधान्याचे हे सोन्यासारखे, रूप हसू दे रानात.\n\n[Verse 2]\nउन्हातान्हात घाम गाळला, आस लागली जिवाला,\nकष्टाचे हे फळ मिळू दे, बळीराजाच्या घराला.",
+"judge": 3.8
 },
 {
-"id": "mr-t421",
+"id": "mr-6281aa26ac",
+"lang": "mr",
+"style": "marathi-pop",
+"brief": "A devotional song about a river crossing in monsoon floods",
+"text": "[Hook]\nगांजल्या जीवाचा हाच एक ध्यास,\nविठ्ठला, उरू दे पाईकत्वाचा श्वास.\n\n[Verse 1]\nगगनात मेघ अन् नदीला हा पूर,\nदर्शनासी आलो देवा, गाव माझा दूर.\n\n[Verse 2]\nलाटांच्या घेऱ्यात फुटे काळजाचा ठोका,\nतूच धर हात आता, टळेल हा धोका.",
+"judge": 3.8
+},
+{
+"id": "mr-6113d83c82",
+"lang": "mr",
+"style": "marathi-pop",
+"brief": "A playful song about a fishing village at dawn",
+"text": "[Hook]\nकिनाऱ्यावर आज झालीया सकाळ,\nकोळ्यांच्या वस्तीत उठलीया धांदल!\n\n[Verse 1]\nसोनेरी उन्हात लाटांचा हा खेळ,\nजालं फेकायची झाली आता वेळ.\n\n[Verse 2]\nताजी ताजी मासोळी पाटीत भरणार,\nआज पुन्हा बाजारात धिंगाणा होणार!",
+"judge": 3.6
+},
+{
+"id": "mr-53defbb95f",
 "lang": "mr",
 "style": "marathi-folk",
-"brief": "A devotional song about a city worker dreaming of the village",
-"text": "[Hook]\nमुंबईच्या गर्दीत जीव हा गुदमरतो,\nस्वप्नात माझ्या गाव माझा फुलतो.\n\n[Verse 1]\nसिमेंटच्या रानात राबतो गं दिवसरात्र,\nपंढरीच्या वाटेवर मन माझे धावे मात्र.\n\n[Verse 2]\nमातीचा सुगंध अन् विठूची ती माऊली,\nकधी मिळेल मला माझ्या शेताची सावली?",
-"judge": 4.33
+"brief": "A bittersweet song about a wedding procession",
+"text": "[Hook]\nवाजती गं सनई-चौघडे दारी,\nडोळ्यांत पाणी नि हसू गालांवारी.\n\n[Verse 1]\nबापाची बाहुली चालली सासरला,\nरेशमी सुताने जीव हा बांधला.\n\n[Verse 2]\nमाहेरची सावली सुटते गं आज,\nडोईवर चढला अक्षतांचा साज.",
+"judge": 3.6
 },
 {
-"id": "mr-t422",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A joyful song about a birthday for a child who loves kites",
-"text": "[Hook]\nआज तुझा वाढदिवस, उडूया पतंग,\nआभाळात भरूया आनंदाचे रंग!\n\n[Verse 1]\nगच्चीवर जाऊया, ढील आता देऊया,\nफुग्यांसोबत वाऱ्याशी गप्पा मारूया!\n\n[Verse 2]\nफिरकी धर हातात, कापूया पेच रे,\nगाणी गात साजरा करू वाढदिवस हा रे!",
-"judge": 4.33
-},
-{
-"id": "mr-t425",
-"lang": "mr",
-"style": "abhang-inspired",
-"brief": "A tender song about a river crossing in monsoon floods",
-"text": "[ध्रुवपद]\nपूर आला गं मायेचा, नदी भरून वाहे,\nपैलतीरी पांडुरंग, माझी वाट पाहे.\n\n[कडवे १]\nउचंबळे काळं पाणी, नाव डळमळे,\nभाव मनीं साठवून, पैलतीर कळे.\n\n[कडवे २]\nहाती धरूनीया हात, पार करी हरी,\nकृपेच्या या महापुरात, मिळे पैलतीरी.",
-"judge": 4.0
-},
-{
-"id": "mr-t426",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A bittersweet song about a farmer praying for harvest",
-"text": "[Hook]\nआभाळाची काळी माय, पाण्याबिन कोरडी जाय,\nमाझ्या वावराच्या उरी, आसू आणि आस हाय.\n\n[Verse 1]\nघेऊन घाम कष्टाचा, पेरला गव्हाचा दाणा,\nबरसू दे रे ढगा, आता सुगीचा हा सणा.\n\n[Verse 2]\nमाती झाली सोन्यावाणी, हिरवं स्वप्न फुलू दे,\nहातातील या कणसाला, थोडं तरी हसू दे.",
-"judge": 3.5
-},
-{
-"id": "mr-t427",
-"lang": "mr",
-"style": "marathi-folk",
-"brief": "A joyful song about an old teacher remembered by a former student",
-"text": "[Hook]\nगावाकडच्या शाळेतल्या गुरुजींची आठवण आली,\nतुमच्याच मुळे आज आमची पार उजळली सावली!\n\n[Verse 1]\nहातात काठी, डोळ्यांत माया, गणिताची ती गोडी,\nअक्षरांची खरी ओळख तुम्हीच आम्हाला जोडी.\n\n[Verse 2]\nमातीतल्या या पाखराला तुम्हीच दिले पंख,\nहसून शिकवला आम्हाला जीवनाचा हा अंक!",
-"judge": 3.5
-},
-{
-"id": "mr-t430",
-"lang": "mr",
-"style": "marathi-folk",
-"brief": "A tender song about a city worker dreaming of the village",
-"text": "[Hook]\nकामाच्या या गर्दीमंदी गाव माझं धावतंय,\nडोळ्यांमंदी पुन्हा एकदा पाखरागत उडतंय.\n\n[Verse 1]\nकच्च्या मातीचा गंध हा वाहतो ग वाऱ्यानं,\nआठवती शेतं-रानं, दाटून आलं मनानं.\n\n[Verse 2]\nसिमेंटच्या या जंगलात जीव माझा गुदमरतो,\nरात्रीच्या त्या स्वप्नात मी माझ्या गावीच फिरतो.",
-"judge": 3.83
-},
-{
-"id": "mr-t431",
-"lang": "mr",
-"style": "bhavgeet",
-"brief": "A devotional song about a morning prayer in a small shrine",
-"text": "[Hook]\nसडा-रांगोळी अंगणी, पहाट झाली आज\nछोट्याशा या मंदिरी, गातो तुझाच साज\n\n[Verse 1]\nमंद दिव्याची वात ही, उजळे तुझे रूप\nवाऱ्यासंगे दरवळे, सुगंधित हा धूप\n\n[Verse 2]\nजोडून दोन्ही हात मी, चरणी ठेवितो माथा\nतुझ्याच नामे सुरू होवो, माझी प्रभातगाथा",
-"judge": 4.33
-},
-{
-"id": "mr-t432",
-"lang": "mr",
-"style": "bhavgeet",
-"brief": "A joyful song about a festival of lamps",
-"text": "[Hook]\nतेजस्वी हे दीपजलोटी, अंगणी साजे आज,\nआनंदाचा सण आला हा, घेऊन नवा साज.\n\n[Verse 1]\nसोनेरी या वातींमधून, उजळे सारे रान,\nदारी हसते रांगोळी अन, गाते गोड गाण.\n\n[Verse 2]\nतम दूर करूनिया जाई, प्रकाशाची रेघ,\nहर्ष उरामध्ये मावेना, सुखाचा हा मेघ.",
-"judge": 3.5
-},
-{
-"id": "mr-t433",
-"lang": "mr",
-"style": "bhavgeet",
-"brief": "A tender song about the sea at night and a sailor's longing",
-"text": "[ध्रुवपद]\nरात शांत ही, रूपेरी हा सागर गातो गाणी,\nतुझ्या आठवणीत भिजले रे माझे लोचन-पाणी.\n\n[कडवे १]\nमंद वाऱ्यावर हेलकावे घेते माझी नाव,\nअथांग या पाण्यामध्ये शोधू कसा तुझा गाव?\n\n[कडवे २]\nचांदण्यात या एकाकी मी, दूर किनारा राही,\nतुझ्याविना या काळोखात दीप कुणाचा नाही.",
-"judge": 4.17
-},
-{
-"id": "mr-t434",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A devotional song about a grandmother's stories at twilight",
-"text": "[Hook]\nसंध्येच्या वेळात मंद दिव्याच्या उजेडात,\nआजी सांगते गोष्टी हळूच माझ्या कानात.\n\n[Verse 1]\nपंढरीच्या रायाची ती गोड रसाळ कहाणी,\nहृदयात जपून ठेवली तिची अमृताची वाणी.\n\n[Verse 2]\nहात जोडून मनोमनी नमन मी करतो,\nतिच्याच प्रेमाच्या रंगात रोज मी भिजतो.",
-"judge": 4.17
-},
-{
-"id": "mr-t436",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A devotional song about an anniversary after thirty years",
-"text": "[Hook]\nतीस वर्षांचा हा भक्तीचा प्रवास,\nतुझ्याच चरणी देवा हा आमचा विश्वास.\n\n[Verse 1]\nहातामध्ये हात धरून जोडली ही नाती,\nतुझ्याच कृपेने उजळली ही प्रीती.\n\n[Verse 2]\nसंसाराच्या वाटेवरती मिळो तुझा सांगात,\nअसाच राहो देवा हा प्रेमाचा सोहळा मनात.",
-"judge": 3.5
-},
-{
-"id": "mr-t437",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A bittersweet song about the sea at night and a sailor's longing",
-"text": "[Verse 1]\nरात निळी ही, शांत किनारा,\nघेऊन येतो आठव वारा.\n\n[Hook]\nलाटांमधली तुझीच गाणी,\nडोळ्यांमधले उरले पाणी.\n\n[Verse 2]\nजहाज माझे दूर किनाऱ्या,\nसोडून गेले दीप उताऱ्या.\n\n[Hook]\nलाटांमधली तुझीच गाणी,\nडोळ्यांमधले उरले पाणी.",
-"judge": 3.5
-},
-{
-"id": "mr-t440",
-"lang": "mr",
-"style": "marathi-pop",
-"brief": "A devotional song about the sea at night and a sailor's longing",
-"text": "[Hook]\nकाळोख्या लाटांवरती, तुझाच दिवा जळे,\nसागराच्या गूढ रूपात, तुझेच रूप मिळे.\n\n[Verse 1]\nनाव माझी दूर चाले, सोबतीला तूच देवा,\nअथांग या अंधारात, तुझाच एक आसरा हवा.\n\n[Verse 2]\nवारा सांगे कानात काही, ध्यास तुझाच लागला,\nकिनार्‍याच्या आशेने आज, जीव माझा आसवला.",
-"judge": 3.83
-},
-{
-"id": "mr-t441",
+"id": "mr-ec88d25698",
 "lang": "mr",
 "style": "marathi-folk",
 "brief": "A devotional song about a street singer in a crowded market",
 "text": "[Hook]\nहातात वीणा, ओठी तुझे नाव,\nगर्दीच्या बाजारात शोधतो मी ठाव.\n\n[Verse 1]\nखणखण नाणी, माणसांची घाई,\nमाझ्या या गाण्यात पांडुरंग आई.\n\n[Verse 2]\nमातीत उभा मी, भक्तिरसात न्हालो,\nतुझ्याच वाटेचा वारकरी झालो.",
-"judge": 4.17
+"judge": 3.6
 },
 {
-"id": "mr-t444",
-"lang": "mr",
-"style": "bhavgeet",
-"brief": "A bittersweet song about an anniversary after thirty years",
-"text": "[मुखडा]\nतिशीच्या वळणावर आज ही सांज हळवी झाली,\nअधुऱ्या त्या आठवणींची पुन्हा बरसात आली.\n\n[कडवे १]\nतुझ्याविना ही शांतता आता घरभर बोलते,\nमाझ्याच हसऱ्या चित्रात तुझी नजर शोधते.\n\n[कडवे २]\nहातातल्या त्या हातांची उरली फक्त सावली,\nतीस वर्षांची ही प्रीत आज पोरकी झाली.",
-"judge": 3.67
-},
-{
-"id": "mr-t445",
+"id": "mr-f6dd0f37a0",
 "lang": "mr",
 "style": "marathi-folk",
 "brief": "A playful song about a city worker dreaming of the village",
 "text": "[Hook]\nमुंबईच्या गर्दीत जीव माझा घुटमळतो,\nगावाकडचा गार वारा स्वप्नात भेटतो.\n\n[Verse 1]\nसाहेबाच्या फाईली अन् काँक्रीटचं रान,\nआठवून हिरवं शेत हरवतंय भान.\n\n[Verse 2]\nलोकलच्या धक्क्यामंधी सुटलाय हा घाम,\nकधी होईल देवा माझ्या गावाकडचं काम?",
-"judge": 3.83
+"judge": 3.6
+},
+{
+"id": "mr-1804ceedae",
+"lang": "mr",
+"style": "abhang-inspired",
+"brief": "A wistful song about a wedding procession",
+"text": "[अभंग रूप]\n\nताशा ढोल वाजे उगीच अंगणी\nआली रानोमाळ तुझीच वावणी\n\n[कडवे १]\nमाहेराची वाट वळणावरली\nबापाच्या डोळ्यांत आवंढ्यात बुडली\n\n[कडवे २]\nपालखी निघता वेध आभाळाचा\nबांधला गाठीत श्वास अंतराचा",
+"judge": 3.6
+},
+{
+"id": "mr-d60d397b46",
+"lang": "mr",
+"style": "abhang-inspired",
+"brief": "A bittersweet song about dancers rehearsing before a show",
+"text": "[अभंग/मुखडा]\nनूपुरांच्या ताली घुमे अंतरीचा ध्यास,\nथकल्या पायांत दाटे गोड हा प्रयास.\n\n[चरण १]\nरंगाच्या साक्षीनं उजळे रूप हे साजिरे,\nघामाच्या थेंबांतून मोहाचे क्षण पाझरे.\n\n[चरण २]\nपडद्याच्या आड लपे आसवांची गाथा,\nमंचावर टेकवितो नटराजा माथा.",
+"judge": 3.6
+},
+{
+"id": "mr-413880df97",
+"lang": "mr",
+"style": "marathi-folk",
+"brief": "A devotional song about a street singer in a crowded market",
+"text": "[Hook]\nपेठेतल्या गर्दीमधी विठू तुझा ध्यास,\nगातो तुझी गाथा बाबा, भुकेल्या पोटास!\n\n[Verse 1]\nहातात हा एकतारी, पायी तुझी वाट,\nमंजूळ या भजनाने भुलला हा घाट!\n\n[Verse 2]\nमागत नाही सोनं-नाणं, दे रे देवा माया,\nतुझ्याच या नामामध्ये विरून जावी काया!",
+"judge": 3.6
+},
+{
+"id": "mr-e3f29f2fca",
+"lang": "mr",
+"style": "marathi-folk",
+"brief": "A tender song about a morning prayer in a small shrine",
+"text": "[Hook]\nसडा शिंपिला अंगणी, झाली प्रभात ही सुंदर,\nउघडा दातारा देवा, छोट्या देवळाचं दार.\n\n[Verse 1]\nउठूनिया भल्या पहाटे, हाती दिव्याची ही वात,\nजोडूनिया दोन्ही हात, उभा रया तुझ्या दारात.\n\n[Verse 2]\nधूप-दीपाच्या वासाने, गंधाळली ही सकाळ,\nगोड नाम तुझे घेता, दूर होई सर्व काळ.",
+"judge": 3.6
+},
+{
+"id": "mr-5896854c6a",
+"lang": "mr",
+"style": "abhang-inspired",
+"brief": "A bittersweet song about a grandmother's stories at twilight",
+"text": "[Hook]\nकातरवेळी दिवा लावला\nआजीचा आवाज आठवला\n[Verse]\nएक होता राजा अशी साद\nआजही कानी घुमते नाद\n[Verse]\nदेवा, तिला तुझ्या पायी ठाव दे\nमाझ्या मनात तिचा गाव दे\n[Hook]\nकातरवेळी दिवा लावला\nआजीचा आवाज आठवला",
+"judge": 3.6
+},
+{
+"id": "mr-d8750edaf7",
+"lang": "mr",
+"style": "abhang-inspired",
+"brief": "A devotional song about a mother's lullaby on a hot summer night",
+"text": "[ध्रुवपद]\nउन्हाच्या झळांनी तापली ही रात,\nअंगाई गाते आई अंगणात.\n\n[कडवे १]\nवारा शांत झाला, मिटले गगन,\nबाळाच्या निद्रेत आईचे जीवन.\n\n[कडवे २]\nशीतल होवो रे सावलीची काया,\nविठूच्या नामात आईची ही माया.",
+"judge": 3.6
+},
+{
+"id": "ta-f4998d7ba2",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "**Hook (Pallavi)**\nபோய்வாரேன் ஊரே, போய்வாரேன் தாயே\nகூரைநிழல் விட்டுப் போறேன் நானே\n\n**Verse 1 (Charanam)**\nஆத்தங்கரைப் படித்துறை காலடி தேடுது\nகிணத்துக் கயிறோசை என் நெஞ்சில் பாடுது\n\n**Verse 2 (Charanam)**\nகொல்லை மல்லி வாசம் என் சேலையில் தங்குது\nகட்டித் தந்த சோத்துப் பொட்டலம் மணக்குது\n\n**Hook (Repeat)**\nபோய்வாரேன் ஊரே, போய்வாரேன் தாயே\nகூரைநிழல் விட்டுப் போறேன் நானே",
+"judge": 4.4
+},
+{
+"id": "ta-a667ef5c42",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "[Pallavi]\nவண்டி மணி ஒலிக்குது, வாசல் தாண்டிப் போறேனே\nஅம்மி குழவி கூட அசையாம நிக்குதே\n\n[Charanam]\nஆத்தங்கரை நாணலே, தலை சாய்ச்சு வாழ்த்திடு\nகோயில் மணியோசையே, கொஞ்சம் பொறு கேட்டிடு\nகூரை வீட்டுக் கதவ மெல்லத் தொட்டுப் பாக்குறேன்\nஊரு மண்ணை முந்தானையில முடிஞ்சு போறேன்",
+"judge": 4.2
+},
+{
+"id": "ta-ba28b9d18e",
+"lang": "ta",
+"style": "tamil-light-classical",
+"brief": "A playful song about friends parting at a railway station",
+"text": "## Hook\nரயில் வருது ரயில் வருது, கையை ஆட்டு நண்பா\nபெட்டி பை குடை எல்லாம் தூக்கிக்கோ, பாட்டுப் பாடு நண்பா\n\n## Verse 1\nவிசில் அடிக்குது பாரு, ஓடாதே, பாத்துக்கோ\nபுளிசாதப் பொட்டலம், மறக்காதே, எடுத்துக்கோ\n\n## Verse 2\nமீசையை முறுக்கிக்கோ, ஜன்னல்வழி கைகாட்டிக்கோ\nஒரு டீ சொல்லி வைக்கிறேன், நாளைக்கு வந்துக்கோ",
+"judge": 4
+},
+{
+"id": "ta-96c8b0250e",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "[Pallavi]\nவண்டிமணி ஆடுது, வாசல் தாண்டிப் போறேன்\nஅம்மி குழவி கூட, அமைதியா நிக்குது\n\n[Charanam]\nஆத்தங்கரை நாணலே, தலை சாச்சு வாழ்த்தி நில்லு\nகோயில் மணி ஓசையே, கொஞ்சம் பொறு, கேட்டுப் போறேன்\nகூரை வீட்டுக் கதவைத் தொட்டுப் பாக்குறேன்\nமுந்தானை முடிச்சுல ஊர்மண்ணைக் கட்டிப் போறேன்",
+"judge": 4
+},
+{
+"id": "ta-88d58a1c02",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "**Hook (Pallavi)**\nபோய்வாரேன் ஊரே, போய்வாரேன் தாயே\nகூரை நிழல் விட்டுப் போறேனே நான்\n\n**Verse 1 (Charanam)**\nஆத்தங்கரைப் படித்துறை காலடி தேடுது\nகிணத்துக் கயிறு கீச்சொலி காதுல கேக்குது\n\n**Verse 2 (Charanam)**\nகொல்லை மல்லி வாசம் சேலைமேல தங்குது\nகட்டித் தந்த சோற்றுப் பொட்டலம் மணக்குது\n\n**Hook (Repeat)**\nபோய்வாரேன் ஊரே, போய்வாரேன் தாயே\nகூரை நிழல் விட்டுப் போறேனே நான்",
+"judge": 4
+},
+{
+"id": "ta-29b2201290",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about a festival of lamps in the neighbourhood",
+"text": "# பல்லவி\n\nவாசல் தோறும் அகல் எரியுது, ஊரே ஒளிருது\nவீடு முழுக்க வெளிச்சம், உன் குரல் மட்டும் தொலைஞ்சுது\n\n# சரணம் 1\n\nபக்கத்து அக்கா கோலம் போட்டா, தாத்தா திரி திரிச்சார்\nஅம்மா சுட்ட அதிரச வாசம் காத்துல நிக்குதே\n\n# சரணம் 2\n\nசின்னப் புள்ளைங்க மத்தாப்பு கொளுத்த, ஊரே சிரிச்சிருக்கு\nஎங்க திண்ணையில் மட்டும் ஒரு அகல் அணைஞ்சிருக்கு",
+"judge": 4
+},
+{
+"id": "ta-6e2c67f8d4",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "[Pallavi]\nவண்டி மணி ஒலிக்குது, வாசல் விட்டுப் போறேன்\nஅம்மி குழவி கூட, அமைதியா நிக்குது\n\n[Charanam]\nஆற்றங்கரை நாணலே, தலை சாய்த்து வாழ்த்து சொல்லு\nகோயில் மணி ஓசையே, கொஞ்சம் பொறு கேளு\nகட்டிய கூரை வீடு, கதவைத் தொட்டுப் பார்க்கிறேன்\nஊரே உன் மண் வாசம், உயிரில் சுமந்து போறேன்",
+"judge": 4
+},
+{
+"id": "ta-3743940ed5",
+"lang": "ta",
+"style": "tamil-light-classical",
+"brief": "A joyful song about a long-distance love letter read aloud",
+"text": "[Hook]\nதூரதேசம் விட்டு வந்த நீலக் கடிதம்,\nஉன் கையெழுத்தே பாடுது, கேளு கண்மணி!\n\n[Verse 1]\nஒவ்வொரு சொல்லும் சிரித்தொலிக்குது,\nஅம்மா படிக்கையில் திண்ணை கூடுது.\n\n[Verse 2]\nகடல்தாண்டி வந்த மைவாசக் காகிதம்,\nஉரக்கப் படிக்கையில் உள்ளம் துள்ளுது.\n\n[Hook]\nதூரதேசம் விட்டு வந்த நீலக் கடிதம்,\nஉன் கையெழுத்தே பாடுது, கேளு கண்மணி!",
+"judge": 4
+},
+{
+"id": "ta-0018d25a81",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wedding song for the groom's procession arriving under a banana-leaf arch, with the thali and the elders' blessing",
+"text": "[Pallavi]\nவாழைத் தோரண வாசலில் மாப்பிள்ளை ராஜா வந்தானே\nமங்கல மேளம் முழங்கிட ஊரே மகிழ்ந்து நின்றதே\n\n[Charanam 1]\nபொன்தாலி கையில் ஏந்தி மணமகள் கழுத்தில் சூட்டுவான்\nபெரியோர் ஆசி பொழிந்திட அட்சதை மலராய்த் தூவுவார்\n\n[Charanam 2]\nமஞ்சளும் மல்லிகையும் மணக்க மணமேடை நிறைந்ததே\nஇருமனம் ஒன்றாகி நூறாண்டு வாழ்கவே என்போமே",
+"judge": 3.8
+},
+{
+"id": "ta-704cd18a7b",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about a farmer praying for a good harvest",
+"text": "[Hook]\nவயலெங்கும் பொன்னாக விளையட்டுமே\nஐயனே, உன் அருளாலே தழைக்கட்டுமே\n\n[Verse 1]\nஏரெடுத்து உழுதேன், வியர்வை விதைத்தேன்\nநீரும் நிலமும் நீயே என்று தொழுதேன்\n\n[Verse 2]\nகதிர் வணங்கும் காற்றில் பாடல் பிறக்குதே\nமண்மணக்கும் மழைக்கு நெஞ்சம் உருகுதே",
+"judge": 3.8
+},
+{
+"id": "ta-c65412baee",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A joyful harvest song about Pongal morning, kolam patterns and a grandmother's blessing",
+"text": "[hook]\nதை பிறந்தாச்சு, தை பிறந்தாச்சு, துள்ளுது நெஞ்சம்,\nவாசல் கோலம் பாடுது, பானை பொங்கிச் சிரிக்குது.\n\n[verse 1]\nபாட்டி கையால் நெற்றியில் திருநீறு பூசினாள்,\n\"நூறு வயசு வாழணும் கண்ணே\"ன்னு சொன்னாள்.\n\n[verse 2]\nகோலப் புள்ளி ஒவ்வொண்ணும் கொண்டாட்டக் குறியாச்சு,\nஅரிசி மாவில் மயிலும் ஆடிச் சிரிக்குது.",
+"judge": 3.8
+},
+{
+"id": "ta-95c1881750",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about an exhausted city worker dreaming of the village",
+"text": "[Pallavi]\nநகரச் சுமை தாங்கி நான் உறங்கும் வேளையிலே,\nநம்மூர்க் கோயில் மணியோசை கனவில் வருதே.\n\n[Anupallavi 1]\nவயல் வரப்பில் நடந்த பாதம் இன்றும் நினைவிலே,\nவாசல் அம்மன் சன்னிதி விளக்கே வழி காட்டுதே.\n\n[Anupallavi 2]\nஓய்வில்லா ஓட்டத்தில் உன் நாமம் ஒன்றே துணை,\nஊர் திரும்பும் நாள்வரை காப்பாய் ஐயனே.",
+"judge": 3.8
+},
+{
+"id": "ta-e92bcbe075",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about a grandmother telling stories at twilight",
+"text": "## Hook\nஅந்தி வெயில் சாயும் நேரம் பாட்டி கதை சொல்லுதே\nவிளக்கேற்றும் முற்றத்தினிலே காலம் நின்று கேட்குதே\n\n## Verse 1\nகதையின் நடுவில் பாட்டி கண்மூடிச் சிரிக்கையில்\nநிழல்கள் நீளும் சுவரில் நினைவு மெல்ல ஆடுதே\n\n## Verse 2\nசிறு கைகள் இன்று தூரம், அவள் குரல் மட்டும் இங்கே\nவாசல் விளக்கு அணையும் முன்னே கதை தொடருதே",
+"judge": 3.8
+},
+{
+"id": "ta-9f30b5911a",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about a grandmother telling stories at twilight",
+"text": "[Pallavi]\nஅந்தி மயங்கும் நேரத்திலே பாட்டி சொன்ன கதைகள்\nஆறிப்போன தேநீரிலும் இனிக்குது நினைவுகள்\n\n[Charanam]\nவெற்றிலைப் பெட்டியைத் திறந்து தாத்தா பேரைச் சொல்வாள்\nகண்ணோரம் ஈரம் மின்ன கதையைத் தொடர்வாள்\n\n[Charanam]\nமுற்றம் நிறைய நிலா வந்து கேட்குது கதையை\nமடியில் தூங்கிய நாட்கள் மீண்டும் வருமா",
+"judge": 3.8
+},
+{
+"id": "ta-a835c84a3b",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about the sea at night and a sailor's longing",
+"text": "**[Hook]**\nபடகேறிக் கடல் போறேன் மச்சான்\nபாய்மரம் கேக்குது ஊர்ப்பாட்டு\n\n**[Verse 1]**\nராத்திரி கடல் நீலம் பூசுது\nராசா உன் நெனப்பு சுடுது\n\n**[Verse 2]**\nகருவாடு காயுற கரையிலே\nகண்ணீர் உப்பா அம்மா காத்திருப்பா",
+"judge": 3.8
+},
+{
+"id": "ta-a0b96c6c95",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about a grandmother telling stories at twilight",
+"text": "## Hook\nஅந்தி வெயில் சாயும் நேரம் பாட்டி கதை சொல்லுதே\nவிளக்கு ஏற்றும் முற்றத்திலே காலம் நின்று கேட்குதே\n\n## Verse 1\nகதையின் நடுவில் பாட்டி கண்ணை மூடிச் சிரிக்குதே\nநிழல்கள் நீளும் சுவரில் நினைவு மெல்ல ஆடுதே\n\n## Verse 2\nசிறு கைகள் இன்று தூரம், அவள் குரல் மட்டும் இங்கே\nதிண்ணை விளக்கு அணையும் முன்னே கதை தொடருதே",
+"judge": 3.8
+},
+{
+"id": "ta-af090e5649",
+"lang": "ta",
+"style": "tamil-light-classical",
+"brief": "A playful song about an old teacher remembered by a former student",
+"text": "## பல்லவி\nவாத்தியார் ஐயா, உங்க சுண்ணாம்புக் கை சிரிக்குது,\nஇன்னும் நோட்டு ஓரத்துல உங்க குறும்பு சிரிக்குது!\n\n## சரணம் 1\nகடைசி பெஞ்சுல ஒளிஞ்ச எங்க குறும்பைக் கண்டுபிடிச்சீங்க,\nகண்ணாடி மேலே பார்த்துச் சிரிச்சு, கதை சொல்லி மன்னிச்சீங்க.\n\n## சரணம் 2\nசிவப்பு மையில கோலம் போட்டு பிழை திருத்தி வச்சீங்க,\nஇன்னைக்கும் காதுல உங்க குரல் பாடம் நடத்துதுங்க!",
+"judge": 3.8
+},
+{
+"id": "ta-a807637860",
+"lang": "ta",
+"style": "carnatic-kriti",
+"brief": "A bright devotional Carnatic kriti to Murugan, veena and mridangam (raga Mohanam)",
+"text": "**Pallavi**\nமுருகா முருகா வேலவா, மயிலில் வரும் குமரனே\nமோகனத்தில் பாடுவோம், நின் திருநாமம் போற்றுவோம்\n\n**Anupallavi**\nவீணை நாதம் பொங்கவே, விடியல் ஒளி மலரவே\nமிருதங்கம் தாளம் கூறவே, மனம் மகிழ்ந்து ஆடுமே\n\n**Charanam**\nகாலைச் சுடரில் கந்தனே, கனிவாய் அருள்வாய் நித்தமே\nவேல் தரித்த வேந்தனே, வினைகள் தீர்ப்பாய் ஐயனே\n\n**Pallavi (reprise)**\nமுருகா முருகா வேலவா, அருள் தருவாய் குமரனே\nமோகனத்தில் பாடுவோம், மங்களம் பாடுவோம்",
+"judge": 3.6
+},
+{
+"id": "ta-1480d4ca41",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about a wedding procession arriving at the bride's home",
+"text": "[Pallavi]\nமங்கள வாத்தியம் முழங்கிடுதே\nமணமகன் ஊர்வலம் வந்திடுதே\n\n[Charanam 1]\nநாதஸ்வர இசையில் நடைபோட்டுப் பெண்ணின் வாசல் நெருங்கிடுதே\nநறுமலர் மாலை மணந்திடவே பொன்தீபம் சுடர்விட்டு மின்னிடுதே\n\n[Charanam 2]\nகுங்குமம் சந்தனம் கோலத்தோடு வாசல் வரவேற்குதே\nஅம்பிகை அருளால் வாழ்த்திடவே ஆனந்தம் வீட்டில் பொங்கிடுதே",
+"judge": 3.6
+},
+{
+"id": "ta-4ad6349a56",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about the sea at night and a sailor's longing",
+"text": "[Pallavi]\nகடல் இரவில் பாடுது, நெஞ்சம் அலையாய் உருகுது\nதூரக் கரையில் ஒரு விளக்கு மட்டும் அசையுது\n\n[Charanam 1]\nநங்கூரம் இட்ட படகு கனவு காணுது\nஉப்புக் காற்று உன் பெயரை மெல்லச் சொல்லுது\n\n[Charanam 2]\nகரை சேரும் நாள் எதுவோ என்று நெஞ்சம் ஏங்குது\nஅலை தழுவும் நொடியில் மட்டும் உயிர் தங்குது",
+"judge": 3.6
+},
+{
+"id": "ta-0231aa17eb",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about a mother's lullaby on a hot summer night",
+"text": "[பல்லவி]\nஅம்மா பாடும் தாலாட்டு, இரவில் மெல்ல மிதக்குது,\nகோடை வெக்கை தணிந்து, கண்கள் தூங்கப் போகுது.\n\n[சரணம்]\nமுற்றத்து மல்லிகை வாசம் கலந்து வருது,\nவிசிறும் அவள் கைவளையில் நிலவு ஆடுது.\nதொட்டிலின் ஆட்டத்தில் கனவு பூக்குது,\n\"கண்ணே உறங்கு\" என்றவள் குரல் உருகுது.\n\n[சரணம்]\nநெற்றி வியர்வை துடைக்கும் விரலில் முத்தம் மலருது,\nஅன்பின் ராகம் ஒன்றே இரவை நிரப்புது.",
+"judge": 3.6
+},
+{
+"id": "ta-4e6837749f",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a bride's farewell to her village",
+"text": "[பல்லவி]\nஊர் முற்றம் விட்டுப் போகிறேன், அம்மா\nஆற்றங்கரைக் காற்றே, என்னை மறவாதே\n\n[சரணம் 1]\nமஞ்சள் பூசிய கையோடு செல்கிறேன்\nவாசல் விளக்கை அணையாமல் காத்திரு\n\n[சரணம் 2]\nதோட்டத்துப் பூக்களும் கண்ணீர் சிந்துதே\nதாய்மடி விட்டுப் பிரிகிறேன் நானே\n\n[பல்லவி]\nஊர் முற்றம் விட்டுப் போகிறேன், அம்மா\nஆற்றங்கரைக் காற்றே, என்னை மறவாதே",
+"judge": 3.6
+},
+{
+"id": "ta-8f6c54f893",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about a rainy bus ride back to the hometown",
+"text": "[பல்லவி]\nமழை நனைக்கும் பேருந்தில் ஊர் நோக்கிப் போகிறேன்\nஅம்மன் அருளே துணையென்று நெஞ்சில் கொள்கிறேன்\n\n[சரணம் 1]\nஜன்னலில் வழியும் துளிகள் கோலம் போடுது\nஊர்க்கோயில் மணியோசை நெஞ்சுக்குள் கேட்குது\n\n[சரணம் 2]\nமண்வாசம் வீசுது, தாய்மடி போலக் குளிருது\nவாசல் விளக்கு தூரத்தில் என்னை அழைக்குது",
+"judge": 3.6
+},
+{
+"id": "ta-48f4ca954f",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a fishing village at dawn",
+"text": "## Hook\nஆழிக் கரையில் சேவல் கூவுது, இருட்டு மெல்லக் கரையுது\nகரையில் காத்த பொண்ணு மனசு, படகை எண்ணி ஏங்கிடுது\n\n## Verse 1\nவலை உலர்ந்து கம்பில் ஆடுது, உப்புக் காத்து வீசுது\nவழியைப் பாத்துக் கண்ணு நோகுது, கரையில் நின்னு நனையுது\n\n## Verse 2\nபடகு வந்தா பாட்டுப் பாடுவேன், மீனுக் கூடை தலையில் சுமப்பேன்\nபாய்மரம் பாத்துப் பேரைச் சொல்வேன், அலைகிட்ட சொல்லி விடுவேன்",
+"judge": 3.6
+},
+{
+"id": "ta-a497fd929d",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about a lost childhood home, now sold",
+"text": "## பல்லவி\nசிறுவயது முற்றத்து விளக்கே, உன் ஒளி எங்கே?\nகோயில் மணி ஒலித்த வீடு இன்று பிறர் கையிலே\n\n## சரணம் 1\nஅம்மா கோலமிட்ட திண்ணையில் அமர்ந்தேன்,\nஇறைவா உன் பெயரால் கண்ணீர் துடைத்தேன்\n\n## சரணம் 2\nவிற்ற சுவர்கள் பேசாதிருக்கும் நாளில்,\nநீயே என் கூரை, நீயே என் வீடு ஐயா",
+"judge": 3.6
+},
+{
+"id": "ta-57ae35496c",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about the quiet pride of a soldier's family",
+"text": "**பல்லவி**\nமௌனத்தில் பெருமை பூக்கும் வீடு இது\nஎல்லை காக்கும் வீரன் நிழல் தங்கும் வாசல் இது\n\n**சரணம் 1**\nதீபம் ஏற்றும் அம்மா விழியில் நீர் மின்னும்\nவழி பார்க்கும் அப்பா மீசையில் பெருமை மிளிரும்\n\n**சரணம் 2**\nதம்பி கேட்கும் கதைகள் வானமாய் விரியும்\nநாளை வருவான் மகன் என்று காற்று சொல்லும்",
+"judge": 3.6
+},
+{
+"id": "ta-166c363bef",
+"lang": "ta",
+"style": "tamil-light-classical",
+"brief": "A joyful song about a harvest-moon night with folk drums",
+"text": "[Pallavi]\nவெண்ணிலா பொழியும் அறுவடை இரவில்\nபறையும் தப்பும் முழங்குது தெருவில்\n\n[Charanam 1]\nபொன்னிற நெல்மணி வயல்முழுக்க ஆடுது\nதெம்மாங்குப் பாட்டு காற்றிலே மிதக்குது\n\n[Charanam 2]\nகுலவை ஒலிக்குது, கும்மி தொடங்குது\nகூடியாடி மகிழ்வோம், நிலாவும் சிரிக்குது\n\n[Pallavi]\nவெண்ணிலா பொழியும் அறுவடை இரவில்\nபறையும் தப்பும் முழங்குது தெருவில்",
+"judge": 3.6
+},
+{
+"id": "ta-e5c2ba1f42",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about a lost childhood home, now sold",
+"text": "[Pallavi]\nஅம்மா கட்டிய வீடு இன்று யாரோ வசம் ஆனதே\nதிருவிளக்கு ஏற்றிய வாசல் மௌனமாய் நிற்குதே\n\n[Charanam 1]\nமுற்றத்துத் துளசி மாடம் கனவில் சிரிக்குதே\nபாட்டி பாடிய தாலாட்டு காற்றில் கரையுதே\n\n[Charanam 2]\nதெய்வமே, அந்த நினைவுகளை நீயே காத்திடு\nகண்ணீர்த் துளியில் உன் நாமம் சொல்வேன் இறைவா\n\n[Pallavi]\nஅம்மா கட்டிய வீடு இன்று யாரோ வசம் ஆனதே\nதிருவிளக்கு ஏற்றிய வாசல் மௌனமாய் நிற்குதே",
+"judge": 3.6
+},
+{
+"id": "ta-d980cff81c",
+"lang": "ta",
+"style": "tamil-light-classical",
+"brief": "A playful song about an old teacher remembered by a former student",
+"text": "## பல்லவி\nவாத்தியார் ஐயா, உங்க சுண்ணாம்புக் கோடும் குறும்புச் சிரிப்பும்,\nஇன்னும் சிரிக்குது நோட்டோரத்துல, கரும்பலகை நினைவுல!\n\n## சரணம் 1\nகடைசி பெஞ்சுல ஒளிஞ்சு நின்ன எங்க குறும்பெல்லாம் கண்டுபிடிச்சீங்க,\nகண்ணாடிக்கு மேல பார்த்துச் சிரிச்சு, கதை ஒண்ணு சொல்லி மன்னிச்சீங்க.\n\n## சரணம் 2\nசிவப்பு மையில கோலம் போட்டு பிழை திருத்தி வச்சீங்க,\nஇன்னைக்கும் என் காதுல உங்க குரல் வாய்ப்பாடு சொல்லுறீங்க!",
+"judge": 3.6
+},
+{
+"id": "ta-295194e8c9",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A joyful harvest song about Pongal morning, kolam patterns and a grandmother's blessing",
+"text": "[பல்லவி]\nபொங்கல் காலை பொன்னொளி பூக்கும்\nவாசல் தோறும் கோலம் சிரிக்கும்\n\n[சரணம் 1]\nபுள்ளி வைத்து வளைத்த கோலம்\nஅரிசி மாவில் அழகாய் மலரும்\n\n[சரணம் 2]\nபாட்டி தந்த ஆசி மழையில்\nபானை பொங்கி வீடே இனிக்கும்\n\n[முடிவு]\nபொங்கலோ பொங்கல்! என்று கூவுவோம்\nநெல்வயல் நன்றிப் பண்ணைப் பாடுவோம்",
+"judge": 3.6
+},
+{
+"id": "ta-4bfce0a1f0",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about an exhausted city worker dreaming of the village",
+"text": "[Pallavi]\nநகரத்து இரைச்சலில் சோர்ந்து போனேன் ஐயா,\nகிராமத்துக் காற்றில் கண் மூடுகிறேன் தெய்வமே.\n\n[Charanam]\nவயல் வரப்பும் ஆலமர நிழலும் கனவில் வந்து அழைக்குதே,\nஆற்றங்கரைப் படித்துறையில் உன் நாமம் கேட்குதே.\n\n[Charanam]\nஊர்க்கோயில் மணியோசை உள்ளம் தொட்டு உருக்குதே,\nஉன் திருவடி சேர்ந்தால் என் சுமை இறங்குதே.",
+"judge": 3.6
+},
+{
+"id": "ta-e39cc61a1e",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about a devotional morning prayer in a small shrine",
+"text": "[பல்லவி]\nகாலை ஒளி மெல்ல விழும் சிறு கோயிலிலே,\nதீபச் சுடரில் என் மனம் உன் பாதத்திலே.\n\n[சரணம் 1]\nமணி ஓசை கேட்டதும் பூக்கள் சிரிக்கும்,\nநாமம் சொல்லும் குரலில் நெஞ்சம் கரையும்.\n\n[சரணம் 2]\nசாம்பிராணி மணம் காற்றில் கலந்து வரும்,\nஅருள்மழை போல் அமைதி என்னுள் பொழியும்.\n\n[பல்லவி]\nகாலை ஒளி மெல்ல விழும் சிறு கோயிலிலே,\nதீபச் சுடரில் என் மனம் உன் பாதத்திலே.",
+"judge": 3.6
+},
+{
+"id": "ta-c61a0863fc",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a street singer at a crowded market",
+"text": "## Hook\nசந்தையின் சத்தத்தில் என் பாட்டு தொலையுது\nகூட்டத்தின் நடுவில என் குரல் தனியுது\n\n## Verse 1\nவெற்றிலை வாசம், மீன்கூடை ஓசை கலக்குது\nஒற்றைத் தம்புரா என்னைப் பார்த்து அழுகுது\n\n## Verse 2\nகாசு விழும் ஓசையில் நெஞ்சம் ஏங்குது\nஊரு போன பாதையை நினைச்சுப் பாடுது",
+"judge": 3.6
+},
+{
+"id": "ta-c4c6099ad0",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a street singer at a crowded market",
+"text": "## Hook\nசந்தையின் சத்தத்தில் என் பாட்டு தொலையுது\nகூட்டத்தின் நடுவிலே குரல் மட்டும் தனியுது\n\n## Verse 1\nவெற்றிலை வாசம், மீன் கூடை, ஓசை எல்லாம்\nஒற்றைத் தம்புரா மட்டும் என்னைப் பார்த்து அழுகுது\n\n## Verse 2\nகாசு விழும் ஓசையில் நெஞ்சு ஏங்குது\nஊரு போன பாதையை நினைச்சு பாடுது",
+"judge": 3.6
+},
+{
+"id": "ta-68b51b496d",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A bittersweet song about the sea at night and a sailor's longing",
+"text": "**[Hook]**\nபடகு ஏறி கடல் போறேன் மச்சான்\nபாய்மரம் கேக்குது ஊர்ப்பாட்டு\n\n**[Verse 1]**\nராத்திரி கடல் நீலம் பூசுது\nராசா உன் ஞாபகம் சுடுது\n\n**[Verse 2]**\nகருவாடு காயும் கரை அம்மா\nகண்ணீர் உப்பு காத்திருக்கு",
+"judge": 3.6
+},
+{
+"id": "ta-8dc6ec696c",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about a farmer praying for a good harvest",
+"text": "[Hook]\nவயல்நிறையப் பொன்னாக விளையட்டுமே\nஐயா, உன் அருளால் பயிர்தழைக்கட்டுமே\n\n[Verse 1]\nஏரெடுத்து உழுதேன், வியர்வை சிந்தினேனே\nநீரும் நிலமும் நீயே என்று நான் தொழுதேனே\n\n[Verse 2]\nகதிர் வணங்கும் காற்றில் பாடல் பிறக்குதே\nமுதல் மழைக்கு என் நெஞ்சம் உருகுதே",
+"judge": 3.6
+},
+{
+"id": "ta-18d400c97c",
+"lang": "ta",
+"style": "tamil-folk",
+"brief": "A wistful song about a fishing village at dawn",
+"text": "## Hook\nகடலோரம் சேவல் கூவுது, இருட்டு மெல்லக் கரையுது\nமனசு அலையாப் பொங்குது, படகு வருமா ஏங்குது\n\n## Verse 1\nவலை உலர்ந்து நிக்குது, உப்புக் காத்து தொட்டுப் போகுது\nவழியைப் பாத்துப் பாத்து நாளு போச்சு, கண்ணும் ஈரமாச்சு\n\n## Verse 2\nபடகு வந்தா பாட்டுப் பாடுவேன், மீனு கூடை சுமந்து வருவேன்\nவராத அவரு பேரைச் சொல்லி, விடிகாத்துல தூது அனுப்புவேன்",
+"judge": 3.6
+},
+{
+"id": "ta-b19130fdea",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about a lost childhood home, now sold",
+"text": "## பல்லவி\nசிறுவயது முற்றத்து விளக்கே, உன் ஒளி எங்கே?\nகோயில் மணி ஒலித்த வீடு இன்று பிறர் கையிலே\n\n## சரணம் 1\nஅம்மா கோலமிட்ட திண்ணையில் அமர்ந்தேன்,\nஇறைவா, துளசி முன் தீபம் ஏற்றினேன்\n\n## சரணம் 2\nவிற்ற சுவர்கள் பேசாதிருக்கும் நாளில்,\nநீயே என் கூரை, நீயே என் வீடு, ஐயா",
+"judge": 3.6
+},
+{
+"id": "ta-f94dc21861",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A devotional song about an exhausted city worker dreaming of the village",
+"text": "[Pallavi]\nநகரச் சுமை தாங்கி நான் துயிலும் வேளையில்,\nஊர்க்கோயில் மணியோசை கனவில் வருகுதே.\n\n[Anupallavi 1]\nவயல்வரப்பில் நடந்த பாதம் நினைவில் வாழுதே,\nஅம்மன் சன்னிதி அகல்விளக்கு என் வழி காட்டுதே.\n\n[Anupallavi 2]\nஓய்வில்லா ஓட்டத்தில் உன் நாமம் ஒன்றே துணையே,\nஊர் திரும்பும் நாள்வரை காத்தருள்வாய் ஐயனே.",
+"judge": 3.6
+},
+{
+"id": "ta-a10c0f69c7",
+"lang": "ta",
+"style": "carnatic",
+"brief": "A tender song about a devotional morning prayer in a small shrine",
+"text": "# காலை பூஜை (Morning Worship)\n\n## Pallavi\nவிடியலின் ஒளியில் விளக்கேற்றுவோம்\nசிறுகோயில் மணியோசை கேட்டு நிற்போம்\n\n## Charanam 1\nசாம்பிராணி புகை சுழலும் நேரம்\nஅடியார் மனமும் உன்னடி சேரும்\n\n## Charanam 2\nபனித்துளி பூவிதழில் ஆடும் காலை\nஈசனே உன்னருள் பொழிய வேண்டும்",
+"judge": 3.6
 }
 ]
