@@ -103,3 +103,26 @@ describe("tagger daypart and energy (migration 0096)", () => {
     for (let i = 1; i < q2.length; i++) expect(q2[i]!.tags.includes("slow") && q2[i - 1]!.tags.includes("slow")).toBe(false);
   });
 });
+
+describe("programQueue clips", () => {
+  const full = (id: string): PoolTrack => ({ id, language: "te", tags: [], durationSeconds: 60 });
+  const clip = (id: string): PoolTrack => ({ id, language: "te", tags: [], durationSeconds: 30 });
+
+  it("never plays two clips back to back while full tracks remain", () => {
+    const ranked = [clip("c1"), clip("c2"), full("f1"), full("f2"), full("f3")];
+    const q = programQueue(ranked, ctx({ limit: 4 })).map((x) => x.id);
+    for (let i = 1; i < q.length; i++) expect(q[i]!.startsWith("c") && q[i - 1]!.startsWith("c")).toBe(false);
+  });
+
+  it("keeps clips to about 15% of the airtime", () => {
+    const ranked = [clip("c1"), clip("c2"), clip("c3"), clip("c4"), ...Array.from({ length: 12 }, (_, i) => full(`f${i}`))];
+    const q = programQueue(ranked, ctx({ limit: 12 }));
+    const secs = q.reduce((a, x) => a + (x.durationSeconds ?? 60), 0);
+    const clips = q.filter((x) => x.id.startsWith("c")).reduce((a, x) => a + (x.durationSeconds ?? 0), 0);
+    expect(clips / secs).toBeLessThanOrEqual(0.15);
+  });
+
+  it("still plays clips when nothing else is left", () => {
+    expect(programQueue([clip("c1"), clip("c2")], ctx({ limit: 2 })).length).toBe(2);
+  });
+});

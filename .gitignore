@@ -97,6 +97,8 @@ playwright/.cache/
 # parent path component is also un-excluded.)
 docs/*
 !docs/HANDOFF.md
+!docs/MOBILE.md
+!docs/RELEASE-POLICY.md
 !docs/handoff/
 !docs/contracts/
 docs/contracts/*

@@ -19,6 +19,15 @@ export function optedOut(headers: { get(name: string): string | null }): boolean
 export interface FunnelRow { day: string; event: string; n: number }
 export interface CampaignRow { event: string; source: string; medium: string; campaign: string; content: string; n: number }
 export interface CampaignSummary { source: string; medium: string; campaign: string; events: Partial<Record<FunnelEvent, number>> }
+/** The share loop: visits that arrived on a tagged share link (utm_medium=share) and how many reached the sign-up screen. */
+export interface ShareLoop {
+  visits: number;
+  signup_views: number;
+  /** Sign-up screen views as a share of share visits; null with no visits. */
+  visit_to_signup_view: number | null;
+  by_channel: { channel: string; visits: number; signup_views: number }[];
+}
+
 export interface FunnelSummary {
   window_days: number;
   views: Record<FunnelEvent, number>;
@@ -43,6 +52,23 @@ export interface FunnelSummary {
   signups_by_day: Record<string, number>;
   /** Funnel counters per first-touch campaign (migration 0105), busiest first. Empty before it is applied. */
   by_campaign: CampaignSummary[];
+  /** Derived from by_campaign; zeros before migration 0105 is applied. */
+  share_loop: ShareLoop;
+}
+
+export function buildShareLoop(campaigns: CampaignSummary[]): ShareLoop {
+  const channels = new Map<string, { visits: number; signup_views: number }>();
+  for (const c of campaigns) {
+    if (c.medium !== "share") continue;
+    const row = channels.get(c.source) ?? { visits: 0, signup_views: 0 };
+    row.visits += c.events.share_view ?? 0;
+    row.signup_views += c.events.signup_view ?? 0;
+    channels.set(c.source, row);
+  }
+  const by_channel = [...channels].map(([channel, v]) => ({ channel, ...v })).sort((a, b) => b.visits - a.visits || a.channel.localeCompare(b.channel));
+  const visits = by_channel.reduce((n, c) => n + c.visits, 0);
+  const signup_views = by_channel.reduce((n, c) => n + c.signup_views, 0);
+  return { visits, signup_views, visit_to_signup_view: ratio(signup_views, visits), by_channel };
 }
 
 const ratio = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 1000) / 1000 : null);
@@ -67,6 +93,7 @@ export function buildFunnel(
     c.events[r.event] = (c.events[r.event] ?? 0) + Number(r.n);
     campaigns.set(key, c);
   }
+  const byCampaign = [...campaigns.values()];
   const total = (c: CampaignSummary) => Object.values(c.events).reduce((n, v) => n + (v ?? 0), 0);
   return {
     window_days: windowDays,
@@ -85,6 +112,7 @@ export function buildFunnel(
     },
     by_day: byDay,
     signups_by_day: signupsByDay,
-    by_campaign: [...campaigns.values()].sort((a, b) => total(b) - total(a) || a.campaign.localeCompare(b.campaign)),
+    by_campaign: byCampaign.sort((a, b) => total(b) - total(a) || a.campaign.localeCompare(b.campaign)),
+    share_loop: buildShareLoop(byCampaign),
   };
 }

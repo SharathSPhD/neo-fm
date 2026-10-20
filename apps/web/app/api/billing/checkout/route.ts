@@ -40,7 +40,9 @@ import {
   getPublicAppUrl,
 } from "@/lib/billing/config";
 import { isLiveSubscriptionStatus, MANAGE_PLAN_URL } from "@/lib/billing/checkout-guard";
+import { readOwnStationPass } from "@/lib/billing/pass";
 import { getStripe } from "@/lib/billing/stripe";
+import { parseAppShell } from "@/lib/native/app-shell";
 import { requireUser } from "@/lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +55,10 @@ const BodySchema = z.union([
 ]);
 
 export async function POST(req: Request) {
+  // Store rules: no purchase flow inside the Android/iOS app shell; buy on the web, the account carries the entitlement.
+  if (parseAppShell(req.headers.get("user-agent"))) {
+    return NextResponse.json({ error: "purchases_on_web" }, { status: 403 });
+  }
   const cfg = getBillingConfigOrNull();
   if (!cfg) {
     return NextResponse.json(
@@ -90,6 +96,13 @@ export async function POST(req: Request) {
     // Test mode only (see BillingConfig.stationPassPrice): a live key never gets a pass price.
     if (!cfg.stationPassPrice) {
       return NextResponse.json({ error: "pass_unavailable", details: "The station pass is not on sale yet." }, { status: 503 });
+    }
+    // A paid-up pass is already billing; a second Checkout would double-charge. Same predicate as has_station_pass.
+    if (await readOwnStationPass(supabase, user.id)) {
+      return NextResponse.json(
+        { error: "already_subscribed", details: "You already have the Station pass. Manage it from your account.", manage_url: MANAGE_PLAN_URL },
+        { status: 409 },
+      );
     }
     const { data: existing } = await supabase.from("user_billing").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
     try {

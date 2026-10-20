@@ -1,0 +1,52 @@
+name: mobile-ios
+
+on:
+  pull_request:
+    paths: ["apps/mobile/**", ".github/workflows/mobile-ios.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web-in-webkit:
+    name: shell behaviour and layout in WebKit (iPhone viewports)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i --no-save --prefix "$RUNNER_TEMP/pw" playwright-core@1.64.1
+      - run: npx --prefix "$RUNNER_TEMP/pw" playwright-core install --with-deps webkit
+      - run: cp apps/mobile/scripts/ios-web.mjs "$RUNNER_TEMP/pw/" && node "$RUNNER_TEMP/pw/ios-web.mjs"
+
+  simulator:
+    name: iOS simulator build and launch
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - name: Sync and build for the simulator (unsigned)
+        working-directory: apps/mobile
+        run: |
+          npx cap sync ios
+          xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tail -30
+      - name: Boot a simulator, launch, keep evidence
+        run: bash apps/mobile/scripts/ios-simulator.sh apps/mobile/build/Build/Products/Debug-iphonesimulator/App.app sim-out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-simulator-evidence
+          path: sim-out/
+          if-no-files-found: ignore

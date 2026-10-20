@@ -10,7 +10,7 @@
  * (drafted by Gemini text from the Hindi set) is used; it is machine copy, scored by Gemini rather than read by a native speaker.
  * Per daypart it takes the first --per (default 2) idents and host links. Safe to re-run: existing WAVs are skipped.
  */
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { createRequire } from "node:module";
 
@@ -48,7 +48,7 @@ if (langs.includes("kn") && !existsSync(knPath)) {
   writeFileSync(knPath, JSON.stringify(JSON.parse(r.output_text ?? "{}"), null, 1));
 }
 
-async function tts(text: string, wav: string): Promise<number | null> {
+async function tts(text: string, wav: string): Promise<boolean | null> {
   if (existsSync(wav)) return null;
   if (used >= reserved) throw new Error(`reserved ${reserved} requests spent`);
   used++;
@@ -66,7 +66,7 @@ async function tts(text: string, wav: string): Promise<number | null> {
   const buf = Buffer.from(b64, "base64");
   mkdirSync(dirname(wav), { recursive: true });
   writeFileSync(wav, buf);
-  return (buf.length - 44) / 48000;
+  return true;
 }
 
 for (const lang of langs) {
@@ -77,9 +77,12 @@ for (const lang of langs) {
       for (let n = 0; n < lines.length; n++) {
         const id = `${kind}/${lang}-${d}-${n + 1}`;
         const file = `audio/${id}.wav`;
-        const secs = await tts(lines[n]!, join(lab, file));
-        if (secs !== null || !manifest[id]) {
-          manifest[id] = { file, kind, lang, daypart: d, voice: VOICE, text: lines[n], seconds: Math.round((secs ?? 0) * 100) / 100, ai_label: true, native_review: "pending" };
+        const wav = join(lab, file);
+        const rendered = await tts(lines[n]!, wav);
+        if (rendered !== null || !manifest[id] || !manifest[id]!.seconds) {
+          // 24 kHz mono 16-bit WAV: 48000 bytes a second after the 44-byte header.
+          const secs = (statSync(wav).size - 44) / 48000;
+          manifest[id] = { file, kind, lang, daypart: d, voice: VOICE, text: lines[n], seconds: Math.round(secs * 100) / 100, ai_label: true, native_review: manifest[id]?.native_review ?? "pending" };
           writeFileSync(manifestPath, JSON.stringify(manifest, null, 1));
         }
       }

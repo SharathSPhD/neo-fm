@@ -124,7 +124,7 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 
 **E. Station pass (test mode only, #159)**
 8. Run `POST /api/admin/stripe-setup` (test key). Add `STRIPE_PRICE_STATION_PASS_ID` from `station_pass.inr` in Vercel, redeploy. /pricing then shows the pass at ₹149 a month for signed-in users. The variable is ignored under a live key. S sets the final price before live mode.
-9. Entitlement (#issue below): apply migration `0098_station_passes` when S names it. Until then the webhook acknowledges pass events without storing them and nobody gets pass perks. After applying it, resend the test-mode `customer.subscription.*` events for any pass bought earlier (Stripe dashboard > Developers > Events > Resend). Pass holders then get no ad breaks and a monthly allowance of personal tracks (default 4; set `STATION_PASS_MONTHLY_TRACKS` in Vercel to change it). The allowance is the per-user Lyria envelope (about 4 x 0.25 ledger GBP); the free tier's 3 songs a month row quota still applies on top.
+9. Entitlement (#issue below): apply migration `0098_station_passes` when S names it. Applied on prod 2026-10-18; the webhook stores the pass and S's 2026-10-19 test payment is entitled. If a pass was bought before it was applied, resend the test-mode `customer.subscription.*` events for any pass bought earlier (Stripe dashboard > Developers > Events > Resend). Pass holders then get no ad breaks and a monthly allowance of personal tracks (default 4; set `STATION_PASS_MONTHLY_TRACKS` in Vercel to change it). The allowance is the per-user Lyria envelope (about 4 x 0.25 ledger GBP); the free tier's 3 songs a month row quota still applies on top.
 
 **D. UPI AutoPay on subscriptions (flag, test mode only)**
 8. Needs step 5. In Vercel add `STRIPE_SUBSCRIPTION_UPI=1`; it has no effect with a live key. Redeploy. Creator/Pro checkout then lists UPI next to card.
@@ -132,10 +132,11 @@ Everything here is in **Test mode** (the "Test mode" toggle on, or `dashboard.st
 10. Not signed off for live mode: Stripe requires a pre-debit SMS or app notification at least 24 hours before each recurring charge with the exact amount, and a mandate cap (₹15,000 per Chargebee's docs). Claude has not verified Stripe sends the notification for you; check the AutoPay page in the Stripe docs before any live use.
 
 **F. House ads (off by default, #212)**
-1. Say which migration to apply: `0099_ad_slots` (creates `ad_slots` and `ad_events`, service role only, plus 12 inactive card-only house ads). Nothing is served before this, and the queue works without it.
-2. Have a native speaker read the Indic headlines in the seed rows. Then set `reviewed_by`, `reviewed_at` and `active = true` on the ones to run. Keep the two Station pass ads off until the pass is on sale (it is test mode only and has no entitlement yet).
-3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Paid tiers never hear ads; Station pass holders are not recognised yet because the webhook stores no pass.
-4. Phone test: a card-only spot leaves about 6 seconds without audio. The player drops it when the page is hidden (or ends it if the phone locks mid-card), but check on a locked phone that the next track starts by itself.
+1. Migration `0099_ad_slots` is applied on prod (`ad_slots`, `ad_events`, service role only, plus 12 inactive card-only house ads: gift song and Station pass, six languages). The queue works without it.
+2. Copy review is Gemini scoring, not a native reader (S, 2026-10-17). The 10 Indic headlines scored 4 to 5 on 2026-10-19 (`launch/drafts/house-ad-gemini-scores-2026-10-19.json` in the project files); the polished gift lines go in with the launch card. To run a slot: set `reviewed_by`, `reviewed_at` and `active = true` on it.
+3. In Vercel set `ADS_ENABLED=1` and redeploy. Unset it (or `active = false` on a slot) to turn everything off at once. Tiers follow `TIER_CAPS` in `lib/station/ads.ts`: Free and signed-out hear the most, Creator fewer, Pro the fewest and card-only, and a Station pass holder hears none (the pass beats every other tier).
+4. Roll out to Free first for 48 hours and watch next-day return against the no-ads group; if it drops more than 10 percent for two weeks, cut Free to the Creator row (strategy/ads-revenue.md section 12).
+5. Phone test: a card-only spot leaves about 6 seconds without audio. The player drops it when the page is hidden (or ends it if the phone locks mid-card), but check on a locked phone that the next track starts by itself.
 
 **G. Spoken station links (off by default)**
 1. Nothing to apply: the lines are static files under `apps/web/public/voice` and an index in `lib/station/voice-lines.json`, built by `node scripts/voice-lines-build.mjs` from the media lab TTS run. No migration, no spend.

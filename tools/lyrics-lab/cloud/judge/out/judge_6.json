@@ -1,0 +1,602 @@
+{
+ "j214": {
+  "reason": "A has garbled, invented phrases (புஜ்யா, பூசணக் கீற்றிலே) and omits the banana-leaf feast and the doorway kolam. B covers both brief items with clear end rhymes (நேரம்/ஆரம், கோலம்/கோலம், விருந்து/மருந்து), though the imagery is stock and 'கோலம்' is repeated.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j016": {
+  "reason": "A has invented or ungrammatical phrases (\"सुहानी\" with plural \"लम्हे\", \"पुरानी सानी\", \"नमना\", \"हमसा\") and weak rhyme. B is simpler and more coherent, with a repeated hook and mostly clean rhyme, though \"बेसुदूर\" is invented. B wins on diction and singability.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j140": {
+  "reason": "B keeps a true akam kurinji setting (clouds, hills, kāndhal, the hill-lord, waiting) with a clean refrain and idiomatic Tamil. A is muddled: 'பொழிவோடு' is repeated as rhyme, 'மதியூளே' is invented, it says summer rain, and the sense breaks down.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j231": {
+  "reason": "A is coherent, has the right names, rhyme and consistent register, though imagery is generic. B garbles the name (Sanjay becomes 'सांज सजन्या'), uses invented words ('वैकल्याचा', 'गाझा'), mixes English 'Monsoon', and has a muddled hook.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j095": {
+  "reason": "A is coherent Kannada with devaranama-style Vishnu epithets, dawn imagery and a clear surrender theme, though its lines are long and its rhyme is loose. B is largely ungrammatical or invented ('ತೇಮವು', 'ವರದನಸಿ', 'ತಂದೆನೆನು'), with unclear meaning and weak imagery.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j048": {
+  "reason": "A is mostly incoherent: 'தலை வாங்குவா தம்பி ஆனே' and 'தூறு தீர்க்கும் அண்ணியே' make no sense, and it ignores the waiting wife. B is coherent, with a dusk sky, boats returning and longing, and a rhyming pattern, though 'காடுமே' is odd and the diction is somewhat generic.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j163": {
+  "reason": "A is coherent and idiomatic, with tulasi katte, threshold and lullaby images and a clear theme, though conventional. B is largely ungrammatical or nonsensical (ಒಲವಿದ್ದಾಳೆ, ಸಾವುಂಟಾಳೆ, ನೆನಪಿನೆನೊ), with unclear imagery and weak brief fidelity.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j194": {
+  "reason": "B is coherent and idiomatic, with consistent end-rhyme (ప్రభాతం/నామం/ప్రణామం/జన్మం/జీవనం), a repeated pallavi and clear surrender and gratitude. A has awkward, invented phrasing (ఒడ్డునై కాంతి, సవళించె, తోడించుటకు) and weak meter.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j148": {
+  "reason": "A is riddled with errors (\"टेरणावर\", \"सुरांनांनी\", \"कोलाहळ\"), repeats \"खास\" as rhyme, never names Aditi, and lacks a sunset. B names Aditi, has sunset and terrace (spelling \"अगाशी\" is slightly off), and rhymes cleanly with सूर/दूर and रंग/दंग.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j026": {
+  "reason": "A has some imagery (gulal from rooftops, lanes) but its diction is shaky: 'साँग पीला', 'मोईया', 'सईया' and 'साँझ ढली' contradict the morning brief. B is repetitive and plain, with an invented 'दूखेरी', but it is consistent, singable, and on theme.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j046": {
+  "reason": "Both are weak, with ungrammatical and invented phrasing. B is more coherent, with clear repeated parallel structure and a readable gratitude message to the teacher. A is largely nonsensical ('గురువులారమ్మా', 'వందలము తలసాగు'), though it has some pallavi shape and imagery.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j174": {
+  "reason": "Lyric A is largely incoherent, with ungrammatical, invented words (ತಂದೆನೆನು, ವರದನಸಿ, ತೇಮವು) and no clear surrender. Lyric B is coherent and idiomatic, with clear surrender imagery, dawn, Hari and Ranga, and consistent end rhyme, though its images are somewhat stock.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j143": {
+  "reason": "A keeps the dawn-lamp theme with consistent edugai (புலரும்/இலங்கும், வைகறை/செய்கை, மஞ்சள்/நெஞ்சக்) and a full charanam, and its diction is mostly coherent despite some stiffness. B mentions dusk, has weak grammar, an incomplete charanam and loose rhyme.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j078": {
+  "reason": "A has invented or garbled words (रानूळला, गरास, भिर) and unclear sense, with uneven line lengths. B is simple and clean, with a steady meter, a proper hook and rhyming couplets. It is bland, and 'रंगपंचडी' is slightly off, but it is more coherent and singable.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 3,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "B"
+ },
+ "j146": {
+  "reason": "B has a proper lullaby refrain (जो जो रे), steady paired lines, consistent rhymes (रात/हात, गोड/ओढ) and a village lantern image. A is repetitive and has ungrammatical or invented words (झळाला, अंगणी used twice), a muddled hook and weak rhyme.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j030": {
+  "reason": "A has a ghazal-like couplet shape and a mostly coherent longing, though its radif and qafia are weak and 'मज़हर' is a mislabel. B has a repeated refrain but broken syntax, filler phrasing and an unclear structure. A reads more natural and polished.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j138": {
+  "reason": "A has invented or garbled words (கார்முகன், ஒளக்கம், தின்னச் சின்ன, சிரிச்சைய, பூப்போடோம்) and never names Karthigai or the hill. B is coherent and on-brief with a consistent rhyme and a folk tone, though its imagery is stock and its line lengths uneven.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j036": {
+  "reason": "A is cleaner and more grammatical, with the name spelled correctly and a rain-dance image, though it is simple and repeats 'నవ్వు'. B misspells the name as 'మెఘనా', uses invented words like 'మెరుంగున' and 'నింపున', and has awkward phrasing like 'జల్లుల రాసే'.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j222": {
+  "reason": "B has parallel lines, consistent second-letter edugai/monai (காலை-மாலை, விடியல்-அடியார், சிந்தையில்-விந்தைகள்), a unified devotional register and a dawn-lamp focus. A is incoherent, has weak meter, an 'அந்தி' (dusk) contradiction, and awkward or invented phrasing.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 5,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j074": {
+  "reason": "A is more coherent Marathi with some rhyme and the festival and family present, though a few phrases are awkward ('जमणी', 'उगवला नवी'). B has invented words ('मधुसूदर'), mixed-script 'family', and incoherent lines, which hurts its diction and cultural fit.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j034": {
+  "reason": "A is more coherent, with a pallavi-charanam structure, rhyming pairs and river-dawn imagery, though some phrasing is awkward. B has broken or invented words (విశ్వాళం, 'న.'), a stray quote, loose meter and weak rhyme, so A is better.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j142": {
+  "reason": "B stays on the dawn-lamp theme, has real edugai/monai (புலரும்/இலங்கும், வைகறை/செய்கை, மஞ்சள்/நெஞ்சக்) and a fuller charanam in a devotional register. A drifts to dusk, has broken grammar, weak rhyme, and a thin charanam.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j011": {
+  "reason": "Both are weak and partly incoherent. A has a consistent rhyme and a chant-like folk meter, though it uses invented words (ಬತ್ತೆ ಬೇಳೆ, ತೊಳತೊಳೆ). B is more ambitious, with Chamundi, tamate and rangoli, but its grammar is broken and its lines are long and uneven.",
+  "A": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j056": {
+  "reason": "A is mostly incoherent, with invented or garbled words (பொங்கலார் நெய்யோ, கானினே, நேருலப், அருவேலத்) and no grandmother or sugarcane. B is simple and somewhat generic, but coherent and covers the pot, sugarcane, kolam and mother's blessing, with a repeated hook and rhyming endings.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 1,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "B": {
+   "meter_singability": 3,
+   "rhyme_prasa": 3,
+   "imagery": 3,
+   "diction_register": 3,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "winner": "B"
+ },
+ "j235": {
+  "reason": "A is coherent and idiomatic, with Gudi Padwa imagery (sugar garland, neem, copper kalash) and consistent end rhymes (दारी/भारी, वरती/करती). B has a misspelled 'गुडी', ungrammatical lines, and vague, meaningless phrases like 'सापडावी जमणी', with weak rhyme and meter.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j237": {
+  "reason": "A is coherent, idiomatic Marathi with clean rhymes (जीवाला/रायाला, आस/ध्यास, मृदंग/रंग) and a steady beat, and it fits the wari waiting theme. B has broken grammar, invented words (होडे, कास्), the English 'क्रॉस', and incoherent imagery.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ },
+ "j209": {
+  "reason": "A is coherent: a fisherman's wife at dusk, boats awaited, sea-goddess invoked, with folk rhymes and idiom (மச்சான், கரையாண்டி). It has minor flaws like 'வார திசை'. B is largely incoherent, with nonsense phrases and no real waiting-wife theme.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 1
+  },
+  "winner": "A"
+ },
+ "j147": {
+  "reason": "A is coherent: it has a clear refrain, a steady meter, a proper lullaby 'जो जो रे' and village-night images (lantern, closed doors). B has repetitive 'अंगणी' rhyme, awkward phrases ('झळाला', 'सांज अशी रात झाली') and weak syntax.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 4
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 2,
+   "cultural_fit": 3,
+   "brief_fidelity": 3
+  },
+  "winner": "A"
+ },
+ "j216": {
+  "reason": "B is coherent, idiomatic Tamil folk with a refrain, the 'அடி' end-rhyme, and the pot, kolam, sugarcane and grandmother's blessing all present. A is largely nonsensical, with invented words (கானினே, நேருலப்), no grandmother or sugarcane, and weak meter.",
+  "A": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "B": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 4,
+   "diction_register": 4,
+   "cultural_fit": 5,
+   "brief_fidelity": 5
+  },
+  "winner": "B"
+ },
+ "j229": {
+  "reason": "A is coherent, uses 'गच्ची', names Aditi, has clear rhyme and the sunset image, though it is cliché and slightly uneven. B has broken or invented words ('सुरांनांनी', 'होसुनी'), a nonsensical 'सोफ्याच्या टेरणावर', repeated 'खास', and never names Aditi.",
+  "A": {
+   "meter_singability": 4,
+   "rhyme_prasa": 4,
+   "imagery": 3,
+   "diction_register": 4,
+   "cultural_fit": 4,
+   "brief_fidelity": 5
+  },
+  "B": {
+   "meter_singability": 2,
+   "rhyme_prasa": 2,
+   "imagery": 2,
+   "diction_register": 1,
+   "cultural_fit": 2,
+   "brief_fidelity": 2
+  },
+  "winner": "A"
+ }
+}

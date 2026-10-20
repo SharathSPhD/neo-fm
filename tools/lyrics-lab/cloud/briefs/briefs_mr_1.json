@@ -1,0 +1,242 @@
+[
+ {
+  "id": "mr-c270",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A devotional song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A devotional song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c271",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A playful song about an old teacher remembered by a former student",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A playful song about an old teacher remembered by a former student. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c272",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A wistful song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A wistful song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c273",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "bhavgeet",
+  "brief": "A bittersweet song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"bhavgeet\". Brief: A bittersweet song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c274",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A wistful song about a rainy bus ride home",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A wistful song about a rainy bus ride home. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c275",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A tender song about a fishing village at dawn",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A tender song about a fishing village at dawn. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c276",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A playful song about a harvest-moon night with folk drums",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A playful song about a harvest-moon night with folk drums. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c277",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A wistful song about a mother's lullaby on a hot summer night",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A wistful song about a mother's lullaby on a hot summer night. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c278",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A bittersweet song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A bittersweet song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c279",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A tender song about an anniversary after thirty years",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A tender song about an anniversary after thirty years. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c280",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "bhavgeet",
+  "brief": "A wistful song about a mountain village waiting for snow-melt",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"bhavgeet\". Brief: A wistful song about a mountain village waiting for snow-melt. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c281",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A devotional song about the sea at night and a sailor's longing",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A devotional song about the sea at night and a sailor's longing. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c282",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A tender song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A tender song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c283",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A playful song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A playful song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c284",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A tender song about a river crossing in monsoon floods",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A tender song about a river crossing in monsoon floods. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c285",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "bhavgeet",
+  "brief": "A devotional song about a festival of lamps",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"bhavgeet\". Brief: A devotional song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c286",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A bittersweet song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A bittersweet song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c287",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A devotional song about friends parting at a railway station",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A devotional song about friends parting at a railway station. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c288",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A bittersweet song about a morning prayer in a small shrine",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A bittersweet song about a morning prayer in a small shrine. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c289",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "bhavgeet",
+  "brief": "A joyful song about a wedding procession",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"bhavgeet\". Brief: A joyful song about a wedding procession. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c290",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A wistful song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A wistful song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c291",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A joyful song about a fishing village at dawn",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A joyful song about a fishing village at dawn. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c292",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A joyful song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A joyful song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c293",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A bittersweet song about a city worker dreaming of the village",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A bittersweet song about a city worker dreaming of the village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c294",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A devotional song about a love letter read aloud",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A devotional song about a love letter read aloud. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c295",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A wistful song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A wistful song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c296",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-pop",
+  "brief": "A tender song about a bride's farewell to her village",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-pop\". Brief: A tender song about a bride's farewell to her village. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c297",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A joyful song about a street singer in a crowded market",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A joyful song about a street singer in a crowded market. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c298",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "abhang-inspired",
+  "brief": "A playful song about a festival of lamps",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"abhang-inspired\". Brief: A playful song about a festival of lamps. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ },
+ {
+  "id": "mr-c299",
+  "lang": "mr",
+  "language": "Marathi",
+  "style": "marathi-folk",
+  "brief": "A joyful song about friends parting at a railway station",
+  "prompt": "Write original song lyrics in Marathi (native script only, no transliteration, no translation) in the style family \"marathi-folk\". Brief: A joyful song about friends parting at a railway station. This is a 30-second song: about 8 short lines in total (a 2-line hook plus two 2-line verses), roughly 40-70 words. Do not write more. Use section tags like [Hook]/[Verse] as fits the style. Marathi: natural spoken Marathi, antyaprasa on paired lines. Output only the lyrics."
+ }
+]
