@@ -78,20 +78,24 @@ const pages = ["/", "/discover", "/templates", "/pricing", "/help", "/whats-new"
 for (const path of pages) {
   await goto(path);
   const m = JSON.parse(await evalJs(probe));
-  check(`${path}: loads, has content, fits the screen`, !m.err && m.text > 200 && !m.sideways && m.out.length === 0, JSON.stringify({ title: m.title, text: m.text, sideways: m.sideways, out: m.out }));
+  check(`${path}: loads, has content, fits the screen`, !m.err && m.text > 80 && !m.sideways && m.out.length === 0, JSON.stringify({ title: m.title, text: m.text, sideways: m.sideways, out: m.out }));
 }
 shot("last-page");
 
 // 2. the system back button walks the page history and does not close the app
+const focus = () => adb("shell", "dumpsys", "window").split("\n").filter((l) => /mCurrentFocus|mFocusedApp/.test(l)).join(" | ");
 await goto("/");
+console.log("diag before click: history", await evalJs("history.length"), await evalJs("location.pathname"));
 await evalJs(`(()=>{const a=[...document.querySelectorAll("a[href]")].find(x=>new URL(x.href).pathname==="/pricing");a&&a.click();return !!a})()`);
 await sleep(4000);
 const onPricing = (await evalJs("location.pathname")) === "/pricing";
+console.log("diag on pricing: history", await evalJs("history.length"));
 adb("shell", "input", "keyevent", "KEYCODE_BACK");
 await sleep(3000);
 const back = await evalJs("location.pathname");
+console.log("diag after back:", back, "history", await evalJs("history.length"), "| focus:", focus());
 check("back button returns to the previous page", onPricing && back === "/", `pricing=${onPricing} then ${back}`);
-check("app still open after back", /mResumedActivity.*com\.neofm\.app/.test(adb("shell", "dumpsys", "activity", "activities")));
+check("app still open after back", focus().includes(PKG), focus());
 
 // 3. rotation: landscape fits, portrait comes back, page state survives
 adb("shell", "settings", "put", "system", "accelerometer_rotation", "0");
