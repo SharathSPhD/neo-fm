@@ -25,12 +25,15 @@ export async function renderShareCard({
   subtitle,
   excerpt: rawExcerpt,
   seed,
+  footer = ["composition-aware", "raga · tala · script"],
   baseFonts = [],
 }: {
   title: string;
   subtitle: string;
   excerpt: string[];
   seed: string;
+  /** Left and right footer lines. */
+  footer?: [string, string];
   /** Latin face for environments where next/og can't find its own (tests). */
   baseFonts?: CardFont[];
 }) {
@@ -162,8 +165,8 @@ export async function renderShareCard({
             letterSpacing: 1,
           }}
         >
-          <span>composition-aware</span>
-          <span>raga · tala · script</span>
+          <span>{footer[0]}</span>
+          <span>{footer[1]}</span>
         </div>
       </div>
     ),
