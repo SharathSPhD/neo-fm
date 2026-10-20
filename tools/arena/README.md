@@ -27,3 +27,6 @@ python3 -m unittest discover -s tests
 
 ## Spend protocol
 Judging a pair of variants over 40 briefs is 80 calls, ceiling about USD 0.75 at list price. Estimates beat the route meter, which undercounts. Ask S with a tap card naming the pair and the ceiling; run with a hard stop; log in `lab/spend.md`.
+
+## Judge validation
+`arena/validate.py` checks a judge against an independent signal (rank correlation, and pairwise agreement with an exact-style interval) before its verdicts are trusted. First use: `analysis/FINDINGS-holistic-judge.md` (Gemini holistic listen vs sung-word diction). The pool audio scores in `tools/lyrics-lab/results/audio/` are one render per song, so they cannot form battles; they serve as the scorer distribution (Audiobox PQ 7.9-8.2 in every language, CLAP about 0 on native-script tags) behind `data/song-weights.json`.
