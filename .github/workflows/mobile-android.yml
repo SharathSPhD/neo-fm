@@ -110,8 +110,8 @@ jobs:
         env:
           FCM_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON_B64 }}
           NEO_FM_STAGING_URL: https://neo-fm-staging.vercel.app
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
+          QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
         with:
           api-level: 35
           arch: x86_64
