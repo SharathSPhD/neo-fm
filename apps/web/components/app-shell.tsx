@@ -19,6 +19,7 @@ import type { UiKey } from "@/lib/i18n/ui-strings";
 import { BrandMark } from "./brand-mark";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
+import { NativePush } from "./native-push";
 import { NavLink } from "./nav-link";
 import { IconAccount, IconDiscover, IconLibrary, IconPlus, IconStation } from "./nav-icons";
 import { LanguageSwitcher } from "./language-switcher";
@@ -80,6 +81,7 @@ async function TopNav({ user }: { user: NavUser }) {
   const { t } = await serverI18n();
   return (
     <header className="glass sticky top-[env(safe-area-inset-top)] z-30 rounded-none border-x-0 border-t-0">
+      <NativePush />
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
           <BrandMark />

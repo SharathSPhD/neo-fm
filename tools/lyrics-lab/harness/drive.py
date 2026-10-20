@@ -3,6 +3,7 @@
 subcommand needs --max-usd and refuses without it. Outputs go under --out (default <shared>/lyrics-lab/harness).
   distill --pairs pairs_r2.jsonl --lang kn --max-usd 0.6          -> out/playbooks.json (merged per language)
   run     --arm refs --inputs prod-40.json --max-usd 3            -> out/arm_<arm>.json  {brief_id: {lyrics, trace}}
+  gate    --arm refs --cases gate-te.json --name te --max-usd 4          -> formal polish gate, merged across chunks
   judge   --a arm_refs.json --b arm_live.json --name refs_vs_live --max-usd 2 [--gemini]  -> out/judge_<name>.json
   report  --name refs_vs_live                                     -> win rates, sign test, dims (no spend)
 inputs file: {brief_id: {language, style, brief, drafts:[...], pick:int, polished:str}} (prod-40.json from the PCE thread)."""
@@ -34,6 +35,20 @@ def cmd_distill(a):
     r = post("distill", {"language": names[a.lang], "pairs": [{k: p[k] for k in ("brief", "chosen", "rejected")} for p in pairs], "max_usd": a.max_usd})
     pb = load(f"{OUT}/playbooks.json", {}); pb[a.lang] = r["playbook"]; save(f"{OUT}/playbooks.json", pb)
     print(a.lang, len(pairs), "pairs", r["spend"])
+
+def cmd_gate(a):
+    """Formal polish gate (runPolishGate) for one arm over a cases file: [{id,language,style,brief,draft,baseline}]. 5 cases per call."""
+    cases = load(a.cases); path = f"{OUT}/gate_{a.arm}_{a.name}.json"; res = load(path, {"chunks": []}); spent = 0.0
+    for i in range(len(res["chunks"]) * 5, len(cases), 5):
+        if spent >= a.max_usd: print("budget reached"); break
+        r = post("gate", {"arm": a.arm, "cases": cases[i:i + 5], "max_usd": min(a.max_usd - spent, 4)})
+        res["chunks"].append(r); spent += r["spend"]["claude_usd"]; save(path, res); print(f"{i + 5}/{len(cases)} claude~{spent:.2f}", flush=True)
+    tot = {"cand": [0, 0, 0], "live": [0, 0, 0], "gcand": [0, 0, 0], "glive": [0, 0, 0]}
+    for r in res["chunks"]:
+        for k, src in (("cand", r["candidate"]), ("live", r["live"]), ("gcand", r["gemini"]["candidate"]), ("glive", r["gemini"]["live"])):
+            for j, f in enumerate(("pce", "other", "tie")): tot[k][j] += src[f]
+    print("W-L-T vs baseline:", tot, "failed", sum(r["failed"] for r in res["chunks"]), "incomplete", any(r["incomplete"] for r in res["chunks"]))
+    print("rule: Claude cand wins >= live wins + 3 and Gemini >= +2; per-chunk dims in", path)
 
 def cmd_run(a):
     inputs = load(a.inputs); pb = load(f"{OUT}/playbooks.json", {})
@@ -88,6 +103,7 @@ for name in ("distill", "run", "judge"):
 d = sp.choices["distill"]; d.add_argument("--pairs", required=True); d.add_argument("--lang", required=True)
 r = sp.choices["run"]; r.add_argument("--arm", required=True); r.add_argument("--inputs", required=True); r.add_argument("--chunk", type=int, default=3); r.add_argument("--limit", type=int, default=0)
 j = sp.choices["judge"]; j.add_argument("--a", required=True); j.add_argument("--b", required=True); j.add_argument("--name", required=True); j.add_argument("--inputs", required=True); j.add_argument("--gemini", action="store_true")
+g = sp.add_parser("gate"); g.add_argument("--arm", required=True); g.add_argument("--cases", required=True); g.add_argument("--name", required=True); g.add_argument("--max-usd", type=float, required=True)
 p = sp.add_parser("report"); p.add_argument("--name", required=True); p.add_argument("--inputs")
 a = ap.parse_args()
 {"distill": cmd_distill, "run": cmd_run, "judge": cmd_judge, "report": cmd_report}[a.cmd](a)
