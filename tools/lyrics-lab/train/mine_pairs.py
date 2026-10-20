@@ -32,7 +32,6 @@ with open(a.out, "w", encoding="utf-8") as f:
         if len(scored) < 2: continue
         scored.sort(key=lambda x: -x[0])
         if scored[0][0] - scored[-1][0] < a.margin: continue
-        prompt = __import__("common").song_prompt(b["lang"], b["style"], b["brief"]) if False else None
         f.write(json.dumps({"id": bid, "lang": b["lang"], "style": b["style"], "brief": b["brief"], "chosen": scored[0][1], "rejected": scored[-1][1],
                             "margin": round(scored[0][0] - scored[-1][0], 1)}, ensure_ascii=False) + "\n"); pairs += 1
 print("pairs", pairs, "judge calls", n_judge)
