@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { claimReferral, ensureRefCode, rewardReferrer } from "../lib/referral/claim";
+import { claimReferral, ensureRefCode } from "../lib/referral/claim";
 import { cleanRef, newRefCode, referralEnabled, refFromCookieHeader } from "../lib/referral/code";
 
 const ON = { REFERRAL_ENABLED: "1" } as unknown as NodeJS.ProcessEnv;
@@ -35,26 +35,22 @@ const rpcDb = (data: unknown, error: unknown = null) => {
   return { db: { rpc } as never, rpc };
 };
 
-describe("claimReferral / rewardReferrer", () => {
+describe("claimReferral", () => {
   it("does nothing while the flag is off or the code is malformed", async () => {
     const { db, rpc } = rpcDb("ok");
     expect(await claimReferral(db, "u", "abcdefgh", OFF)).toBeNull();
     expect(await claimReferral(db, "u", "NOPE", ON)).toBeNull();
-    expect(await rewardReferrer(db, "u", OFF)).toBeNull();
     expect(rpc).not.toHaveBeenCalled();
   });
   it("passes a valid claim to the database and returns its verdict", async () => {
     const { db, rpc } = rpcDb("ok");
     expect(await claimReferral(db, "u1", "abcdefgh", ON)).toBe("ok");
     expect(rpc).toHaveBeenCalledWith("claim_referral", { p_receiver: "u1", p_code: "abcdefgh" });
-    const r = rpcDb("rewarded");
-    expect(await rewardReferrer(r.db, "u1", ON)).toBe("rewarded");
-    expect(r.rpc).toHaveBeenCalledWith("reward_referral_sender", { p_receiver: "u1" });
   });
   it("swallows database errors and thrown failures", async () => {
     expect(await claimReferral(rpcDb(null, { message: "no function" }).db, "u", "abcdefgh", ON)).toBeNull();
     const boom = { rpc: async () => { throw new Error("down"); } } as never;
-    expect(await rewardReferrer(boom, "u", ON)).toBeNull();
+    expect(await claimReferral(boom, "u", "abcdefgh", ON)).toBeNull();
   });
 });
 

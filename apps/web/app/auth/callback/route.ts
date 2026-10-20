@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
 
   const dest = new URL(next, baseUrl);
   const res = NextResponse.redirect(dest, { status: 303 });
-  // A shared link's ?ref= code was kept in a cookie; credit it once for a brand-new account. Silent on any failure.
+  // A shared link's ?ref= code was kept in a cookie; attribute it once to a brand-new account. Silent on any failure.
   const ref = refFromCookieHeader(request.headers.get("cookie"));
   if (ref && session?.user) {
     await claimReferral(createServiceRoleClient(), session.user.id, ref);

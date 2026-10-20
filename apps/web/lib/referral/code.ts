@@ -1,5 +1,5 @@
 /**
- * Referral via shared songs (migration 0111). A code is 8 lowercase base32 characters, one per user, never a handle or
+ * Referral attribution via shared songs (migration 0111, no rewards). A code is 8 lowercase base32 characters, one per user, never a handle or
  * an id. Everything here is behind REFERRAL_ENABLED=1.
  */
 import { randomBytes } from "node:crypto";

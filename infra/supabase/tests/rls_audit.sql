@@ -96,7 +96,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('funnel_daily',          'service', null,      null, null),
   ('funnel_campaign_daily', 'service', null,      null, null),
   ('referral_codes',        'service', 'user_id', null, 'per-user share code; API routes with the service role only'),
-  ('referrals',             'service', 'sender_id', null, 'who brought whom; rewards run through service-role functions'),
+  ('referrals',             'service', 'sender_id', null, 'who brought whom; attribution only, no rewards'),
   ('provider_daily_usage',  'service', null,      null, null),
   ('pool_tracks',           'service', null,      null, 'station pool; the station route reads admitted rows with the service role'),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),

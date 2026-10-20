@@ -21,17 +21,6 @@ export async function claimReferral(db: SupabaseClient, userId: string, rawCode:
   }
 }
 
-/** Called when a listener finishes a station track; rewards their referrer once. */
-export async function rewardReferrer(db: SupabaseClient, receiverId: string, env = process.env): Promise<string | null> {
-  if (!referralEnabled(env)) return null;
-  try {
-    const { data, error } = await rpc(db).rpc("reward_referral_sender", { p_receiver: receiverId });
-    return error || typeof data !== "string" ? null : data;
-  } catch {
-    return null;
-  }
-}
-
 type Table = {
   select: (c: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { code: string } | null; error: unknown }> } };
   insert: (r: object) => Promise<{ error: { code?: string } | null }>;
@@ -59,4 +48,17 @@ export async function ensureRefCode(db: SupabaseClient, userId: string, env = pr
     }
   } catch { /* unavailable */ }
   return null;
+}
+
+/** Whether this user joined through a friend's share link (drives the "joined from a friend" badge). */
+export async function joinedFromFriend(db: SupabaseClient, userId: string, env = process.env): Promise<boolean> {
+  if (!referralEnabled(env)) return false;
+  try {
+    const { data, error } = await (db as unknown as {
+      from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: unknown; error: unknown }> } } };
+    }).from("referrals").select("id").eq("receiver_id", userId).maybeSingle();
+    return !error && data != null;
+  } catch {
+    return false;
+  }
 }
