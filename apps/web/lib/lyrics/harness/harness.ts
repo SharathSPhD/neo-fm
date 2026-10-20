@@ -14,6 +14,8 @@ export interface HarnessConfig {
   guard: boolean;
   /** polish this many drafts and let a blind listwise judge pick (1 = no selection) */
   candidates: number;
+  /** polish returns only the changed lines (PCE_POLISH_EDITS) instead of the whole lyric */
+  edits?: boolean;
 }
 
 export const ARMS: Record<string, HarnessConfig> = {
@@ -22,6 +24,7 @@ export const ARMS: Record<string, HarnessConfig> = {
   revise: { exemplars: 0, playbook: false, rounds: 1, guard: true, candidates: 1 },
   refs_revise: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 1 },
   pick3: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 3 },
+  live_edits: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, edits: true },
   full: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 3 },
 };
 

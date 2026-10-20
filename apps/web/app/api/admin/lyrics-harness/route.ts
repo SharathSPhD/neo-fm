@@ -23,7 +23,7 @@ import { estimateArmUsd } from "../../../../lib/lyrics/harness/cost";
 import { ARMS, runHarness } from "../../../../lib/lyrics/harness/harness";
 import { distillPrompt } from "../../../../lib/lyrics/harness/playbook";
 import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
-import { livePolishTemplate, polishLyrics } from "../../../../lib/lyrics/polish";
+import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../../../../lib/lyrics/polish";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (meter.usd() >= maxUsd) { out.push({ id: c.id, lyrics: null, trace: [], error: "budget" }); return; }
       try {
         const r = await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: c.drafts, playbook: c.playbook }, {
-          polish: (a) => polishLyrics(client, a, template),
+          polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template),
           ask,
           prefers: async (a) => (await judgePair(client, a.language, a.brief, a.revised, a.previous)).winner === "pce",
           shuffle: (xs) => seededShuffle(xs, c.id),
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // template === null is the live arm; otherwise the harness arm on the same draft.
       polish: async (t, c) => t === null
         ? polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template)
-        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => polishLyrics(client, a, template), ask, prefers: async () => true })).lyrics,
+        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template), ask, prefers: async () => true })).lyrics,
       judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
       judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
       spentUsd: () => meter.usd(),
