@@ -66,7 +66,11 @@ for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
     // On the CI runner only, the 320px SE profile wedges for minutes on this click (it is instant on the other profiles and in a local WebKit run),
     // so the form-fit check runs on iPhone 13 and 15 Pro Max here; the Android journey checks the form on a 407px screen.
     if (name !== "iPhone SE") {
-      await page.getByRole("button", { name: /dedicate this hour/i }).click({ timeout: 10000 }).catch(() => {});
+      // The click sometimes lands before the page is interactive on a CI runner: try again once, and wait for the field instead of reading it at once.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await page.getByRole("button", { name: /dedicate this hour/i }).click({ timeout: 10000 }).catch(() => {});
+        if (await page.waitForSelector("input[maxlength='24']", { timeout: 6000 }).then(() => true, () => false)) break;
+      }
       const f = await page.evaluate(() => { const i = document.querySelector("input[maxlength='24']"); if (!i) return null; const r = i.getBoundingClientRect(); return { l: r.left, r: r.right, w: innerWidth, scrollW: document.scrollingElement.scrollWidth }; });
       check(`${name}: dedicate form opens and fits the screen`, !!f && f.l >= 0 && f.r <= f.w + 1 && f.scrollW <= f.w + 1, JSON.stringify(f));
     }
