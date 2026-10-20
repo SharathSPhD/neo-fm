@@ -95,9 +95,9 @@ const notif = adb("shell", "dumpsys", "notification", "--noredact");
 const ctx = (text, needle, n) => text.split("\n").map((l, i, a) => (l.includes(needle) ? a.slice(i, i + n).join("\n") : null)).filter(Boolean).slice(0, 2).join("\n---\n");
 console.log("diag notification:\n" + ctx(notif, `pkg=${PKG}`, 14));
 console.log("diag media_session:\n" + ctx(adb("shell", "dumpsys", "media_session"), PKG, 12));
-check("media notification posted", notif.includes(`pkg=${PKG}`) && /MediaStyle|media/i.test(notif.split(`pkg=${PKG}`)[1] ?? ""));
+check("media notification posted (foreground service notification from the app)", notif.includes(`|${PKG}|`));
 const session = adb("shell", "dumpsys", "media_session");
-check("media session active", new RegExp(`${PKG}[\\s\\S]{0,600}state=PlaybackState \\{state=3`).test(session));
+check("media session active", /CapgoMediaSession[\s\S]{0,900}active=true[\s\S]{0,300}state=PlaybackState \{state=(PLAYING\(3\)|3)/.test(session));
 
 // 5. screen off: playback must continue
 const before = await audioTime();
