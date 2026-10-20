@@ -109,6 +109,11 @@ jobs:
       - uses: reactivecircus/android-emulator-runner@c9c93e6ba9c4194322e114c40970d5983d9a07cc # v2.38.0
         env:
           FCM_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.FCM_SERVICE_ACCOUNT_JSON_B64 }}
+          NEO_FM_STAGING_URL: https://neo-fm-staging.vercel.app
+          NEO_FM_STAGING_SUPABASE_URL: https://cjvwbyrarqgvxycrbgwx.supabase.co
+          NEO_FM_STAGING_SUPABASE_KEY: sb_publishable_Kjo66KGxyC-Jdb9szThMkw_Lwuzo954
+          QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
+          QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
           GH_TOKEN: ${{ github.token }}
         with:
           api-level: 35

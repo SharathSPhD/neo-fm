@@ -78,6 +78,24 @@ describe("hostCascade", () => {
     await expect(hostCascade(brief, fakes({ complete: vi.fn(async ({ prompt }) => (prompt.startsWith("Plan a") ? "{}" : "")) }).deps, 3)).rejects.toThrow("no candidates");
   });
 
+  it("gives drafts room to think (4000 tokens) and asks again for a draft that came back empty", async () => {
+    const seenTokens: number[] = [];
+    let n = 0;
+    const f = fakes();
+    const base = f.deps.complete;
+    f.deps.complete = vi.fn(async (a) => {
+      if (a.system && !a.prompt.startsWith("Plan a")) {
+        seenTokens.push(a.maxTokens);
+        if (n++ === 0) return "";
+      }
+      return base(a);
+    });
+    const song = await hostCascade(brief, f.deps, 4);
+    expect(song.lyrics).toBeTruthy();
+    expect(seenTokens.length).toBe(9); // 4 drafts + 1 retry + 4 revisions
+    expect(new Set(seenTokens)).toEqual(new Set([4000]));
+  });
+
   it("extractJson tolerates prose and fences", () => {
     expect(extractJson<{ a: number }>('x ```json\n{"a":1}\n``` y')).toEqual({ a: 1 });
     expect(extractJson("nothing")).toBeNull();

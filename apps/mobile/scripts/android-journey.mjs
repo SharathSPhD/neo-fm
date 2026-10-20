@@ -1,6 +1,7 @@
 // Whole-app journey in the installed APK: every public page, back button, rotation, and playback across background and return.
 // Drives the installed APK's WebView over the Chrome DevTools protocol, saves a screenshot per case and fails when a
 // button or link sticks out past the screen edge, the page scrolls sideways, or the last content hides under the nav bar.
+import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { inflateSync } from "node:zlib";
@@ -215,10 +216,25 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
     // A foreground app receives the message in JS instead of the system shade, so send it with the app in the background.
     adb("shell", "input", "keyevent", "KEYCODE_HOME");
     await sleep(2500);
-    const status = await sendFcm(fcmToken);
-    check("FCM accepts a push to the emulator's token", status === 200, String(status));
+    // The emulator's Play services connection to FCM can take a while to settle, so a push sent right after boot may be held back:
+    // send again (up to 3 times, 30s each) before calling it missing.
+    let accepted = 0;
     let seen = false;
-    for (let i = 0; i < 20 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
+    for (let attempt = 1; attempt <= 3 && !seen; attempt++) {
+      const status = await sendFcm(fcmToken);
+      if (status === 200) accepted++;
+      else console.log(`diag FCM attempt ${attempt}: status ${status}`);
+      for (let i = 0; i < 15 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
+      if (!seen) console.log(`diag FCM attempt ${attempt}: not in the shade after 30s`);
+    }
+    check("FCM accepts a push to the emulator's token", accepted > 0, `${accepted} of the sends were accepted`);
+    if (!seen) {
+      // Evidence for a missing push: is the app allowed to post, is it stopped, and what did Firebase/GCM log.
+      console.log("diag POST_NOTIFICATIONS:", adb("shell", "cmd", "appops", "get", PKG, "POST_NOTIFICATION").trim());
+      console.log("diag package state:", adb("shell", "dumpsys", "package", PKG).split("\n").filter((l) => /stopped=|enabled=|notificationsEnabled|POST_NOTIFICATIONS/.test(l)).join(" | ").slice(0, 300));
+      console.log("diag notification dump for the app:", adb("shell", "dumpsys", "notification", "--noredact").split("\n").filter((l) => l.includes(PKG)).slice(0, 12).join(" | ").slice(0, 600));
+      console.log("diag firebase/gcm log:", adb("logcat", "-d", "-t", "400", "-s", "FirebaseMessaging:*", "FCM:*", "GCM:*", "GoogleApiManager:*", "NotificationManager:*").split("\n").slice(-25).join(" | ").slice(0, 1500));
+    }
     check("the pushed notification shows up on the device", seen);
     adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
     await sleep(4000);
@@ -226,6 +242,59 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
   } catch (e) { check("push delivery through FCM", false, String(e).slice(0, 120)); }
 } else {
   console.log("diag FCM delivery check skipped: no service account in this run");
+}
+// Signed-in registration against staging (prod has no test user). Skipped until staging has native push on (404 = off), and
+// where the staging URL or the test user's credentials are not provided. The app's own bridge does the registering: after
+// sign-in a fresh page load of the settings mounts <NativePush />, which sends the FCM token and records the flag.
+const STAGING = process.env.NEO_FM_STAGING_URL;
+// A test user: the QA login when its secrets are present, otherwise a throwaway account made through staging's public sign-up
+// (the publishable key is public by design; staging auto-confirms test addresses).
+let STAGING_EMAIL = process.env.QA_STAGING_EMAIL;
+let STAGING_PASSWORD = process.env.QA_STAGING_PASSWORD;
+if (STAGING && !(STAGING_EMAIL && STAGING_PASSWORD) && process.env.NEO_FM_STAGING_SUPABASE_URL && process.env.NEO_FM_STAGING_SUPABASE_KEY) {
+  const email = `ci-push-${Date.now()}@neo-fm.test`;
+  const password = `${randomUUID()}-Aa1!`;
+  try {
+    const r = await fetch(`${process.env.NEO_FM_STAGING_SUPABASE_URL}/auth/v1/signup`, { method: "POST", headers: { apikey: process.env.NEO_FM_STAGING_SUPABASE_KEY, "content-type": "application/json" }, body: JSON.stringify({ email, password }) });
+    const j = await r.json();
+    if (j.access_token) { STAGING_EMAIL = email; STAGING_PASSWORD = password; } else console.log("diag staging throwaway sign-up gave no session:", r.status, String(j.msg ?? j.error_code ?? "").slice(0, 80));
+  } catch (e) { console.log("diag staging throwaway sign-up failed:", String(e).slice(0, 80)); }
+}
+if (!STAGING || !STAGING_EMAIL || !STAGING_PASSWORD) {
+  console.log("diag signed-in push registration skipped: no staging URL or test user in this run");
+} else {
+  try {
+    await send("Page.navigate", { url: STAGING + "/sign-in" });
+    await sleep(6000);
+    const stagingPush = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:"probe-probe-probe-probe"})}).then(r=>r.status)`);
+    if (stagingPush === 404) {
+      console.log("diag signed-in push registration skipped: native push is off on staging (404)");
+    } else {
+      await evalJs(`(()=>{const set=(n,v)=>{const i=document.querySelector("input[name='"+n+"']");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(i,v);i.dispatchEvent(new Event("input",{bubbles:true}))};set("email",${JSON.stringify(STAGING_EMAIL)});set("password",${JSON.stringify(STAGING_PASSWORD)});document.querySelector("form").requestSubmit();return true})()`, true);
+      await sleep(8000);
+      const signedIn = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:"probe-probe-probe-probe"})}).then(r=>r.status)`);
+      check("staging: test user signs in inside the app", signedIn !== 401, String(signedIn));
+      await send("Page.navigate", { url: STAGING + "/account/notifications" });
+      await sleep(3000);
+      // The shell only injects the Capacitor bridge on its own origins (server.allowNavigation), so a staging page has no
+      // push plugin. That is by design (the shipped app must not trust staging); skip with a note instead of failing.
+      const bridge = await evalJs(`!!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications)`);
+      console.log("diag Capacitor push plugin on the staging origin:", bridge);
+      let registered = false;
+      if (bridge) {
+      for (let i = 0; i < 15 && !registered; i++) { await sleep(2000); registered = (await evalJs(`localStorage.getItem("neofm.nativePush")`)) === "1"; }
+      check("staging: the app registers its FCM token once signed in", registered);
+      const shown = await evalJs(`/push notifications are on in this app/i.test(document.body.innerText)`);
+      check("staging: notification settings say push is on in the app", registered && shown === true, String(shown));
+      } else {
+        console.log("diag signed-in registration skipped: the shell does not bridge staging pages");
+      }
+      if (fcmToken) {
+        const del = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:${JSON.stringify(fcmToken)}})}).then(r=>r.status)`);
+        console.log("diag staging cleanup of the registered token:", del);
+      }
+    }
+  } catch (e) { check("staging signed-in push registration", false, String(e).slice(0, 120)); }
 }
 await goto("/sign-in");
 await send("Page.navigate", { url: ORIGIN + "/account/notifications" });
