@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 
 import { languageCodeForPath } from "@/lib/seo/language-pages";
 import { siteUrl } from "@/lib/seo/site";
+import { startupImages } from "@/lib/pwa/splash";
 import { AmbientBackground } from "@/components/ambient-background";
 import { AuthListener } from "@/components/auth-listener";
 import { getUiLang } from "@/lib/i18n/server";
@@ -39,6 +40,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "neo-fm",
+    startupImage: startupImages,
   },
   icons: {
     icon: [
