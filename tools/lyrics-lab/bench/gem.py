@@ -1,8 +1,9 @@
 import os, json, time, urllib.request, urllib.error, threading
 KEY=os.environ["GEMINI_API_KEY"]; USAGE={}; _l=threading.Lock()
-def call(model, prompt, system=None, temp=1.0, json_out=False, max_tokens=8192, tries=6):
+def call(model, prompt, system=None, temp=1.0, json_out=False, max_tokens=8192, tries=6, thinking=None):
     body={"contents":[{"role":"user","parts":[{"text":prompt}]}],"generationConfig":{"temperature":temp,"maxOutputTokens":max_tokens}}
     if system: body["systemInstruction"]={"parts":[{"text":system}]}
+    if thinking is not None: body["generationConfig"]["thinkingConfig"]={"thinkingBudget":thinking}
     if json_out: body["generationConfig"]["responseMimeType"]="application/json"
     url=f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={KEY}"
     for t in range(tries):

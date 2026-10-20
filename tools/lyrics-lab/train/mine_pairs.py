@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "bench")); sys.
 import lyricmetrics as lm, overlap
 ap = argparse.ArgumentParser()
 ap.add_argument("--cands", required=True); ap.add_argument("--ngrams", required=True); ap.add_argument("--out", required=True)
-ap.add_argument("--judge", choices=["none", "gemini"], default="none"); ap.add_argument("--margin", type=float, default=8.0)
+ap.add_argument("--sft-out"); ap.add_argument("--judge", choices=["none", "gemini"], default="none"); ap.add_argument("--margin", type=float, default=8.0)
 a = ap.parse_args()
 corpus = overlap.load(a.ngrams); data = json.load(open(a.cands)); n_judge = 0
 def judge_score(lang, brief, text):
@@ -20,6 +20,7 @@ def judge_score(lang, brief, text):
                  'Reply only JSON {"diction":n,"imagery":n}', temp=0.0, json_out=True, max_tokens=300)
     j = json.loads(t[t.index("{"):t.rindex("}") + 1]); return (j["diction"] + j["imagery"]) / 2
 pairs = 0
+fsft = open(a.sft_out, "w", encoding="utf-8") if a.sft_out else None
 with open(a.out, "w", encoding="utf-8") as f:
     for bid, v in data.items():
         b = v["brief"]; scored = []
@@ -31,6 +32,8 @@ with open(a.out, "w", encoding="utf-8") as f:
             scored.append((r, t))
         if len(scored) < 2: continue
         scored.sort(key=lambda x: -x[0])
+        if fsft:  # rejection-sampling SFT target: the best candidate under the blended reward
+            fsft.write(json.dumps({"id": bid, "lang": b["lang"], "style": b["style"], "brief": b["brief"], "text": scored[0][1], "reward": round(scored[0][0], 1)}, ensure_ascii=False) + "\n")
         if scored[0][0] - scored[-1][0] < a.margin: continue
         f.write(json.dumps({"id": bid, "lang": b["lang"], "style": b["style"], "brief": b["brief"], "chosen": scored[0][1], "rejected": scored[-1][1],
                             "margin": round(scored[0][0] - scored[-1][0], 1)}, ensure_ascii=False) + "\n"); pairs += 1
