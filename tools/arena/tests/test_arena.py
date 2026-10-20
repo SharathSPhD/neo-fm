@@ -81,3 +81,23 @@ class Board(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Validate(unittest.TestCase):
+    def test_spearman_and_ties(self):
+        from arena import validate
+        self.assertAlmostEqual(validate.spearman([1, 2, 3, 4], [10, 20, 30, 40]), 1.0)
+        self.assertAlmostEqual(validate.spearman([1, 2, 3, 4], [4, 3, 2, 1]), -1.0)
+        self.assertEqual(validate.spearman([1, 2, 3], [5, 5, 5]), 0.0)  # constant judge has no signal
+
+    def test_three_of_three_against_reference_is_not_conclusive(self):
+        from arena import validate
+        r = validate.pairwise_agreement([{"a_ref": 98, "b_ref": 93, "pick": "b"}] +
+                                        [{"a_ref": 100, "b_ref": 85 - i, "pick": "b"} for i in range(0, 2)], gap=5)
+        self.assertEqual(r["agree"], 0)
+        self.assertGreater(r["ci"][1], 0.5)  # 0/3 still leaves up to ~56% inside the interval
+
+    def test_split_orders_are_reported(self):
+        from arena import validate
+        r = validate.pairwise_agreement([{"a_ref": 90, "b_ref": 60, "pick": "split"}])
+        self.assertEqual((r["split"], r["decisive"], r["rate"]), (1, 0, None))

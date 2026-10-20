@@ -47,6 +47,59 @@ export async function polishLyrics(
   return out;
 }
 
+/** The non-empty lines of a lyric, in order; edit-list polish numbers and replaces these. */
+const lyricLines = (lyrics: string): string[] => lyrics.split("\n").map((l) => l.trim()).filter(Boolean);
+
+export interface LineEdit { line: number; text: string }
+
+/** Edits from a model reply: a JSON array of {line, text}, tolerating a code fence; null when the reply is not that shape. */
+export function parseLineEdits(raw: string): LineEdit[] | null {
+  const m = raw.match(/\[[\s\S]*\]/);
+  if (!m) return null;
+  try {
+    const arr = JSON.parse(m[0]) as unknown;
+    if (!Array.isArray(arr)) return null;
+    const out: LineEdit[] = [];
+    for (const e of arr) {
+      const o = e as { line?: unknown; text?: unknown };
+      if (typeof o?.line !== "number" || !Number.isInteger(o.line) || typeof o.text !== "string") return null;
+      out.push({ line: o.line, text: o.text });
+    }
+    return out;
+  } catch { return null; }
+}
+
+/** Applies single-line replacements to the numbered (1-based) non-empty lines. Section tags and multi-line or empty replacements are never edited. */
+export function applyLineEdits(lyrics: string, edits: LineEdit[]): string {
+  const lines = lyricLines(lyrics);
+  for (const e of edits) {
+    const i = e.line - 1;
+    const t = e.text.trim();
+    if (i < 0 || i >= lines.length || !t || t.includes("\n") || /^\[.*\]$/.test(lines[i]!)) continue;
+    lines[i] = t;
+  }
+  return lines.join("\n");
+}
+
+const EDIT_FORMAT = `OUTPUT FORMAT (overrides "Output ONLY the final lyrics"): do not rewrite the lyric. The draft below has numbered lines. Output ONLY a JSON array of the lines you change, e.g. [{"line":3,"text":"new line 3"}]. Replace whole lines one for one; never touch section tags, never merge or split lines. Output [] if nothing needs changing.`;
+
+/** Edit-list polish (PCE_POLISH_EDITS): same editing instructions as polishLyrics, but the model returns only the changed lines, so output tokens (most of the cost and latency) fall. Falls back to the full polish if the reply cannot be parsed. */
+export async function polishLyricsEdits(
+  client: Anthropic,
+  a: { language: string; style: string; brief: string; lyrics: string },
+  template: string = DEFAULT_POLISH_TEMPLATE,
+  onUsage?: (u: TokenUsage) => void,
+): Promise<string> {
+  const numbered = lyricLines(a.lyrics).map((l, i) => `${i + 1}: ${l}`).join("\n");
+  const prompt = `${fill(template, { ...a, lyrics: numbered })}\n\n${EDIT_FORMAT}`;
+  const res = await client.messages.create({ model: POLISH_MODEL, max_tokens: 4000, messages: [{ role: "user", content: prompt }] });
+  onUsage?.(summariseAnthropicUsage(POLISH_MODEL, res.usage));
+  meter.record(POLISH_MODEL, res.usage);
+  const edits = parseLineEdits(res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join(""));
+  if (!edits) return polishLyrics(client, a, template, onUsage);
+  return applyLineEdits(a.lyrics, edits);
+}
+
 let cache: { at: number; template: string } | null = null;
 /** The live polish template (config_versions kind=polish_prompt, status=live), cached 60 s; falls back to the evaluated default. */
 export async function livePolishTemplate(db: { from: (t: string) => any }): Promise<string> {

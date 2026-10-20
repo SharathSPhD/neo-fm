@@ -4,6 +4,10 @@
  *   POST ?action=estimate  {arm, n}                                   Expected Claude USD for n songs. Spends nothing.
  *   POST ?action=run       {arm, cases:[{id,language,style,brief,drafts,playbook?}], max_usd}
  *                                                                     Final lyrics per case (drafts[0] is the engine's pick), trace and spend.
+ *   POST ?action=probe    {language, style, brief}                    No Claude. Reports PCE_HARNESS_REFS as this deployment reads it and whether the polish brief would get the refs block (same expression as lib/agent/process.ts).
+ *   POST ?action=archive  {languages?:[name], limit?}                 No Claude. Distinct finished PCE/single lyrics from eval_runs (the lyric archive), newest first, for corpus harvesting.
+ *   POST ?action=score    {items:[{id,language,brief,lyrics}], gemini?, max_usd}
+ *                                                                     Pointwise 1-5 scores on five dims, four lyrics per call, Claude plus Gemini when gemini=true. Hard stop at max_usd.
  *   POST ?action=distill   {language, pairs:[{brief,chosen,rejected}], max_usd}
  *                                                                     One Claude call: craft-notes playbook for a language.
  *   POST ?action=gate     {arm, cases:[{id,language,style,brief,draft,baseline}], max_usd}
@@ -18,12 +22,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { anthropicClient, serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { meter } from "../../../../lib/eval/cost";
-import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
+import { JUDGE_MODEL, judgePair, judgePairGemini } from "../../../../lib/eval/judge";
+import { geminiInteract, geminiQaModel } from "../../../../lib/gemini/interactions";
 import { estimateArmUsd } from "../../../../lib/lyrics/harness/cost";
-import { ARMS, runHarness } from "../../../../lib/lyrics/harness/harness";
-import { distillPrompt } from "../../../../lib/lyrics/harness/playbook";
+import { langCode } from "../../../../lib/lyrics/harness/exemplars";
+import { ARMS, refsContext, runHarness } from "../../../../lib/lyrics/harness/harness";
+import { POINTWISE_SYSTEM, parsePointwise, pointwisePrompt, type PointwiseItem } from "../../../../lib/lyrics/harness/pointwise";
+import { distillPrompt, playbookFor } from "../../../../lib/lyrics/harness/playbook";
 import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
-import { livePolishTemplate, polishLyrics } from "../../../../lib/lyrics/polish";
+import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../../../../lib/lyrics/polish";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -59,12 +66,51 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ arm: body.arm, config: cfg, per_song_usd: per, total_usd: Math.round(per * n * 100) / 100, n, note: "upper bound if every round runs; recalibrate from the spend block" });
   }
 
+  if (action === "probe") {
+    const language = String(body.language ?? ""), style = String(body.style ?? ""), brief = String(body.brief ?? "");
+    const flag = process.env.PCE_HARNESS_REFS ?? "";
+    const enabled = flag.split(",").map((x) => x.trim()).filter(Boolean).includes(langCode(language));
+    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0 };
+    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
+  }
+
+  if (action === "archive") {
+    const langs = (Array.isArray(body.languages) ? body.languages : []).map((x) => String(x).toLowerCase());
+    const limit = Math.max(1, Math.min(3000, Number(body.limit ?? 2000)));
+    const { data, error } = await serviceClient().from("eval_runs")
+      .select("batch,brief_id,language,style_family,brief,arm,lyrics,created_at").eq("status", "done").not("lyrics", "is", null)
+      .order("created_at", { ascending: false }).limit(limit);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const rows = ((data ?? []) as { language: string; lyrics: string; arm: string; brief_id: string }[])
+      .filter((r) => r.lyrics.length >= 60 && (langs.length === 0 || langs.includes(r.language.toLowerCase())));
+    return NextResponse.json({ n: rows.length, rows });
+  }
+
   const client = anthropicClient();
   const ask = async (x: { model: string; prompt: string; maxTokens: number }) => {
     const res = await client.messages.create({ model: x.model, max_tokens: x.maxTokens, messages: [{ role: "user", content: x.prompt }] });
     meter.record(x.model, res.usage);
     return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   };
+
+  if (action === "score") {
+    const items = (Array.isArray(body.items) ? body.items : []).slice(0, 40) as PointwiseItem[];
+    const gkey = body.gemini === true ? process.env.GEMINI_API_KEY : undefined;
+    const results: Record<string, { claude?: unknown; gemini?: unknown }> = {};
+    let skipped = 0;
+    for (let i = 0; i < items.length; i += 4) {
+      if (meter.usd() >= maxUsd) { skipped = items.length - i; break; }
+      const batch = items.slice(i, i + 4), ids = batch.map((x) => x.id), text = pointwisePrompt(batch);
+      const [c, g] = await Promise.all([
+        client.messages.create({ model: JUDGE_MODEL, max_tokens: 700, system: POINTWISE_SYSTEM, messages: [{ role: "user", content: text }] })
+          .then((res) => { meter.record(JUDGE_MODEL, res.usage); return parsePointwise(res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join(""), ids); })
+          .catch(() => new Map()),
+        gkey ? geminiInteract({ apiKey: gkey, model: geminiQaModel(), json: true, system: POINTWISE_SYSTEM, text }).then((r) => parsePointwise(r.text, ids)).catch(() => new Map()) : Promise.resolve(new Map()),
+      ]);
+      for (const id of ids) results[id] = { claude: c.get(id) ?? null, gemini: gkey ? (g.get(id) ?? null) : undefined };
+    }
+    return NextResponse.json({ n: Object.keys(results).length, requested: items.length, skipped_for_budget: skipped, results, spend: meter.snapshot(), max_usd: maxUsd });
+  }
 
   if (action === "distill") {
     const pairs = (Array.isArray(body.pairs) ? body.pairs : []).slice(0, 40) as { brief: string; chosen: string; rejected: string }[];
@@ -84,7 +130,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (meter.usd() >= maxUsd) { out.push({ id: c.id, lyrics: null, trace: [], error: "budget" }); return; }
       try {
         const r = await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: c.drafts, playbook: c.playbook }, {
-          polish: (a) => polishLyrics(client, a, template),
+          polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template),
           ask,
           prefers: async (a) => (await judgePair(client, a.language, a.brief, a.revised, a.previous)).winner === "pce",
           shuffle: (xs) => seededShuffle(xs, c.id),
@@ -106,7 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // template === null is the live arm; otherwise the harness arm on the same draft.
       polish: async (t, c) => t === null
         ? polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template)
-        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => polishLyrics(client, a, template), ask, prefers: async () => true })).lyrics,
+        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template), ask, prefers: async () => true })).lyrics,
       judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
       judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
       spentUsd: () => meter.usd(),

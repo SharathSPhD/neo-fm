@@ -3,11 +3,12 @@
   "private": true,
   "description": "Release QA scripts: public pass on prod and signed-in pass on staging. No secrets.",
   "scripts": {
-    "public": "node sweep.js && node i18n.js && node queue.js && node playback.js",
+    "public": "node sweep.js && node i18n.js && node queue.js && node playback.js && node ads.js",
     "staging": "node staging-pass.js",
     "features": "node features.js",
     "checkout": "node checkout.js",
-    "create-song": "node create-song.js"
+    "create-song": "node create-song.js",
+    "ads": "node ads.js"
   },
   "dependencies": {
     "playwright-core": "^1.64.1"
