@@ -276,6 +276,13 @@ function LaunchFunnel({ funnel }: { funnel: FunnelSummary }) {
           ...days.map((d) => [d, ...LAUNCH_COLUMNS.map((c) => cell(d, c))]),
         ]}
       />
+      {(funnel.share_loop?.visits ?? 0) > 0 && (
+        <Table
+          title={`Share loop by channel (${funnel.window_days}d)`}
+          head={["Channel", "Visits from shares", "Reached sign-up"]}
+          rows={funnel.share_loop.by_channel.map((c) => [c.channel, String(c.visits), String(c.signup_views)])}
+        />
+      )}
       {campaigns.length > 0 && (
         <Table
           title={`Funnel by campaign, first touch (${funnel.window_days}d)`}

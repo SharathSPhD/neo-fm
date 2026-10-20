@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { withShareUtm } from "@/lib/share/attribution";
+
 /**
  * Share control for a public song page: Web Share API where available,
  * copy-link otherwise. A completed share by a signed-in viewer is
@@ -30,10 +32,10 @@ export function PublicShareButton({
   }
 
   async function onClick() {
-    const url = window.location.href.split("#")[0]!;
+    const clean = `${window.location.origin}${window.location.pathname}`;
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title, text: `Listen to “${title}” on neo-fm, your personal FM`, url });
+        await navigator.share({ title, text: `Listen to “${title}” on neo-fm, your personal FM`, url: withShareUtm(clean, "native", "song") });
         record();
         return;
       } catch (e) {
@@ -41,7 +43,7 @@ export function PublicShareButton({
       }
     }
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(withShareUtm(clean, "copy", "song"));
       setState("copied");
       record();
     } catch {

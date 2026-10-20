@@ -18,7 +18,9 @@ import {
 } from "@/lib/seo/language-pages";
 import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
 import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
+import { poolTracksIndexable } from "@/lib/seo/pool-tracks";
 import { siteUrl } from "@/lib/seo/site";
+import { loadPool } from "@/lib/station/pool";
 import { loadTopSongs } from "@/lib/seo/top-songs";
 
 export const revalidate = 600;
@@ -50,6 +52,10 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
   if (!page) notFound();
 
   const songs = await loadTopSongs(page.code, TOP_COUNT).catch(() => []);
+  // Station tracks fill the page while community songs are few; listed only while SEO_POOL_TRACKS is on.
+  const stationTracks = poolTracksIndexable()
+    ? (await loadPool().catch(() => [])).filter((t) => t.language === page.code && t.kind === "vocal").slice(0, TOP_COUNT)
+    : [];
   const ld = musicPlaylistLd({
     base: siteUrl(),
     path: languagePagePath(page),
@@ -93,7 +99,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
         <h2 id="top-songs" className="text-2xl font-medium tracking-tight">
           {page.songsHeading}
         </h2>
-        {songs.length === 0 ? (
+        {songs.length === 0 && stationTracks.length === 0 ? (
           <p className="text-sm text-foreground/60">{page.empty}</p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -105,6 +111,17 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
                 >
                   <p className="line-clamp-2 font-medium">{s.title}</p>
                   <p className="mt-1 text-xs text-foreground/60">{s.style}</p>
+                  <p className="mt-3 text-xs text-accent">{page.play}</p>
+                </Link>
+              </li>
+            ))}
+            {stationTracks.map((t) => (
+              <li key={t.id}>
+                <Link
+                  href={`/t/${t.id}`}
+                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
+                >
+                  <p className="line-clamp-2 font-medium">{t.title}</p>
                   <p className="mt-3 text-xs text-accent">{page.play}</p>
                 </Link>
               </li>

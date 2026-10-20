@@ -24,6 +24,7 @@ import { loadDedication } from "@/lib/share/load";
 import { whatsappShareUrl } from "@/lib/station/share";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
+import { withShareUtm } from "@/lib/share/attribution";
 import { prettyStyle as styleLabel } from "@/lib/song/labels";
 import { ProCta } from "@/components/pro-cta";
 import Link from "next/link";
@@ -376,7 +377,7 @@ export default async function PublicSongPage(
           <a
             href={whatsappShareUrl(
               dedication ? `A song for ${dedication.to}` : displayTitle,
-              `${siteUrl()}/s/${data.public_id}`,
+              withShareUtm(`${siteUrl()}/s/${data.public_id}`, "whatsapp", dedication ? "gift" : "song"),
             )}
             target="_blank"
             rel="noopener noreferrer"

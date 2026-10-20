@@ -9,6 +9,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { buildSharePayload } from "@/lib/share/card";
+import { withShareUtm } from "@/lib/share/attribution";
 import { pickClipWindow } from "@/lib/share/clip-plan";
 import { clipSupported, exportClip, type ExportedClip } from "@/lib/share/clip-export";
 import { buildLyricTimeline, parseLineTimings, type SyncSectionInput } from "@/lib/lyrics/sync";
@@ -104,7 +105,7 @@ export function ClipExportButton({
     if (!clip) return;
     try {
       if (navigator.canShare?.({ files: [clip.file] })) {
-        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, shareUrl) : { title }) });
+        await navigator.share({ files: [clip.file], ...(shareUrl ? buildSharePayload(title, withShareUtm(shareUrl, "clip", "clip")) : { title }) });
       }
     } catch (e) {
       if ((e as Error).name !== "AbortError") setError(t("clip.failed"));

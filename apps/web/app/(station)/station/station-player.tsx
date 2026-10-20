@@ -15,7 +15,7 @@ import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
-import { trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
+import { trackShareLink, trackShareUrl, whatsappShareUrl } from "@/lib/station/share";
 import { takeFallback } from "@/lib/station/fallback";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
@@ -425,7 +425,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   async function share() {
     if (!current) return;
     const text = t("station.shareText", { title: current.title });
-    const url = trackShareUrl(current.id, location.origin);
+    const native = typeof navigator.share === "function";
+    const url = trackShareLink(current.id, native ? "native" : "copy", location.origin);
     try {
       if (navigator.share) await navigator.share({ title: current.title, text, url });
       else { await navigator.clipboard.writeText(`${text} ${url}`); setNote(t("station.note.copied")); }

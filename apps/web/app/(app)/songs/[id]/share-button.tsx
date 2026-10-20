@@ -18,6 +18,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { buildSharePayload } from "@/lib/share/card";
+import { withShareUtm } from "@/lib/share/attribution";
 import {
   DEDICATION_MESSAGE_MAX,
   DEDICATION_TO_MAX,
@@ -167,13 +168,13 @@ export function ShareButton({
     // same copy-link path as the Copy button.
     if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
       try {
-        await navigator.share(buildSharePayload(title, url));
+        await navigator.share(buildSharePayload(title, withShareUtm(url, "native", "song")));
         return;
       } catch (e) {
         if ((e as Error).name === "AbortError") return;
       }
     }
-    await copyToClipboard(url);
+    await copyToClipboard(withShareUtm(url, "copy", "song"));
   }
 
   if (!canShare) {
@@ -278,7 +279,7 @@ export function ShareButton({
                     </button>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(publicUrl)}
+                      onClick={() => copyToClipboard(withShareUtm(publicUrl, "copy", "song"))}
                       className="rounded-md border border-muted/30 px-3 py-2 text-xs hover:bg-muted/10"
                     >
                       {copyState === "copied"
@@ -340,7 +341,7 @@ export function ShareButton({
                         href={whatsappShareUrl({
                           to: dedTo,
                           title,
-                          url: publicUrl,
+                          url: withShareUtm(publicUrl, "whatsapp", "gift"),
                         })}
                         target="_blank"
                         rel="noopener noreferrer"
