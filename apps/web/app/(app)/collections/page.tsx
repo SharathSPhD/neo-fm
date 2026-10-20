@@ -43,7 +43,7 @@ export default async function CollectionsPage() {
             <li key={c.id}>
               <Link
                 href={`/collections/${c.id}`}
-                className="flex min-h-11 flex-col gap-1 rounded-xl border border-muted/40 p-4 hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex min-h-11 flex-col gap-1 rounded-xl border border-muted/40 p-4 hover:border-accent focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <span className="truncate text-lg font-medium">{c.title}</span>
                 <span className="text-xs text-foreground/60">

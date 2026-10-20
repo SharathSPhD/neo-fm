@@ -18,7 +18,7 @@ export async function SongOfTheDay() {
       </p>
       <Link
         href={`/s/${song.public_id}`}
-        className="text-2xl font-medium tracking-tight hover:underline focus:outline-none focus:ring-2 focus:ring-accent"
+        className="text-2xl font-medium tracking-tight hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent"
       >
         {song.title || "Untitled"}
       </Link>

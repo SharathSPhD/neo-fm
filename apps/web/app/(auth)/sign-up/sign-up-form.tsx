@@ -90,7 +90,7 @@ export function SignUpForm() {
           type="email"
           required
           autoComplete="email"
-          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
         />
       </label>
       <label className="flex flex-col gap-1.5">
@@ -103,7 +103,7 @@ export function SignUpForm() {
           required
           autoComplete="new-password"
           minLength={8}
-          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
         />
       </label>
       {error ? (
@@ -119,7 +119,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={pending || !ready}
-        className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-background shadow-[0_0_28px_-8px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
+        className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-background shadow-[0_0_28px_-8px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-60"
       >
         {pending ? t("auth.signUp.pending") : t("auth.signUp.title")}
       </button>
@@ -127,7 +127,7 @@ export function SignUpForm() {
         <button
           type="button"
           onClick={resend}
-          className="self-start text-xs text-foreground/60 hover:text-foreground underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+          className="self-start text-xs text-foreground/60 hover:text-foreground underline-offset-2 hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent rounded-sm"
         >
           {t("auth.signUp.resend", { email: pendingEmail })}
         </button>

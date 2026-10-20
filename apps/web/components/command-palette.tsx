@@ -136,7 +136,7 @@ export function CommandPalette() {
       label={t("palette.title")}
       title="Command palette"
       shouldFilter
-      className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 p-4 backdrop-blur-sm sm:pt-24"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-background/60 p-4 backdrop-blur-xs sm:pt-24"
     >
       <div
         role="presentation"
@@ -152,9 +152,9 @@ export function CommandPalette() {
           </span>
           <Command.Input
             placeholder={t("palette.placeholder")}
-            className="w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
+            className="w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-hidden"
           />
-          <kbd className="rounded border border-muted/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">
+          <kbd className="rounded-sm border border-muted/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">
             esc
           </kbd>
         </div>
@@ -230,7 +230,7 @@ function PaletteItem({
         ) : null}
       </span>
       {hint ? (
-        <kbd className="rounded border border-muted/30 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/55">
+        <kbd className="rounded-sm border border-muted/30 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/55">
           {hint}
         </kbd>
       ) : null}

@@ -46,7 +46,7 @@ function href(lang: IdeaLang, occasion: Occasion | null, mood: Mood | null): str
 }
 
 const chip = (active: boolean, disabled = false) =>
-  `rounded-full border px-3 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
+  `rounded-full border px-3 py-1.5 text-sm transition focus:outline-hidden focus:ring-2 focus:ring-accent ${
     active
       ? "border-accent bg-accent/15 text-accent"
       : disabled
@@ -125,7 +125,7 @@ export default async function IdeasPage(props: { searchParams: Promise<Search> }
         {occasion || mood ? (
           <>
             {" "}·{" "}
-            <Link href={href(lang, null, null)} className="text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Clear filters</Link>
+            <Link href={href(lang, null, null)} className="text-accent underline focus:outline-hidden focus:ring-2 focus:ring-accent">Clear filters</Link>
           </>
         ) : null}
       </p>
@@ -143,7 +143,7 @@ export default async function IdeasPage(props: { searchParams: Promise<Search> }
               </p>
               <Link
                 href={`/songs/new?idea=${encodeURIComponent(i.id)}`}
-                className="mt-4 self-start rounded-md bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+                className="mt-4 self-start rounded-md bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
               >
                 Use this idea
               </Link>

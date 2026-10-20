@@ -335,12 +335,12 @@ export default async function PublicSongPage(
           {displayTitle}
         </h1>
         <p className="text-sm text-foreground/60">
-          <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+          <span className="mr-2 rounded-sm border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
           {doc
             ? `${prettyStyle(doc.style_family, t)} · ${prettyLanguage(doc.language, t)} · ${doc.target_duration_seconds}s`
             : ""}
           {data.published_visibility === "unlisted" ? (
-            <span className="ml-2 rounded bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">
+            <span className="ml-2 rounded-sm bg-muted/20 px-1.5 py-0.5 text-[10px] uppercase tracking-widest text-foreground/50">
               {t("pub.unlisted")}
             </span>
           ) : null}
@@ -382,7 +382,7 @@ export default async function PublicSongPage(
             )}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-black hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-black hover:brightness-95 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             Send on WhatsApp
           </a>

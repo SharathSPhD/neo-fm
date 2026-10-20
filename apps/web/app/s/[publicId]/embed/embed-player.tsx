@@ -63,7 +63,7 @@ export function EmbedPlayer({
           <p
             lang={language}
             aria-live="off"
-            className="min-h-[1.25rem] truncate text-sm text-foreground/80"
+            className="min-h-5 truncate text-sm text-foreground/80"
           >
             {cur?.text ?? " "}
           </p>
@@ -71,7 +71,7 @@ export function EmbedPlayer({
           <div
             lang={language}
             aria-live="off"
-            className="flex min-h-[5.5rem] flex-col items-center justify-center gap-1 text-center"
+            className="flex min-h-22 flex-col items-center justify-center gap-1 text-center"
           >
             <span className="max-w-full truncate text-xs text-foreground/50">{prev?.text ?? " "}</span>
             <span className="max-w-full text-base font-medium text-accent">

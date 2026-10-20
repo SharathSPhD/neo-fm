@@ -100,7 +100,7 @@ export function NotificationBell() {
         aria-label={label}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground/70 hover:bg-muted/20 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground/70 hover:bg-muted/20 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       >
         <span aria-hidden>🔔</span>
         {unread > 0 ? (
@@ -140,7 +140,7 @@ export function NotificationBell() {
                     <Link
                       href={r.href}
                       onClick={() => onItem(n)}
-                      className={`flex min-h-11 flex-col gap-0.5 px-3 py-2 hover:bg-muted/20 focus:outline-none focus-visible:bg-muted/20 ${
+                      className={`flex min-h-11 flex-col gap-0.5 px-3 py-2 hover:bg-muted/20 focus:outline-hidden focus-visible:bg-muted/20 ${
                         n.read_at ? "text-foreground/65" : "font-medium"
                       }`}
                     >

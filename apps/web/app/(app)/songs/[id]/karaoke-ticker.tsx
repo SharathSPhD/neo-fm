@@ -151,7 +151,7 @@ export function KaraokeTicker({
                 onClick={() => seek(l.start)}
                 aria-current={i === active ? "true" : undefined}
                 className={[
-                  "block min-h-[44px] w-full rounded px-3 py-1.5 text-left transition-colors",
+                  "block min-h-[44px] w-full rounded-sm px-3 py-1.5 text-left transition-colors",
                   i === active
                     ? "bg-accent/15 font-medium text-foreground"
                     : i < active

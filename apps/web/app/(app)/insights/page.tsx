@@ -94,7 +94,7 @@ export default async function InsightsPage() {
                     <div className="mt-3 flex h-10 items-end gap-px" role="img" aria-label={`Plays per day over the last ${DAYS} days for ${s.title}`}>
                       {days.map((d) => {
                         const v = s.byDay.get(d) ?? 0;
-                        return <span key={d} title={`${d}: ${v}`} className={"flex-1 rounded-sm " + (v ? "bg-accent" : "bg-muted/20")} style={{ height: `${v ? Math.max(12, (v / peak) * 100) : 6}%` }} />;
+                        return <span key={d} title={`${d}: ${v}`} className={"flex-1 rounded-xs " + (v ? "bg-accent" : "bg-muted/20")} style={{ height: `${v ? Math.max(12, (v / peak) * 100) : 6}%` }} />;
                       })}
                     </div>
                   </li>

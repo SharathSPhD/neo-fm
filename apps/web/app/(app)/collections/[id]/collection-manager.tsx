@@ -129,7 +129,7 @@ export function CollectionManager({ collection, songs: initialSongs }: Props) {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={80}
           aria-label="Collection title"
-          className="rounded-lg border border-transparent bg-transparent text-3xl font-medium tracking-tight hover:border-muted/40 focus:border-accent focus:outline-none"
+          className="rounded-lg border border-transparent bg-transparent text-3xl font-medium tracking-tight hover:border-muted/40 focus:border-accent focus:outline-hidden"
         />
         <textarea
           value={description}

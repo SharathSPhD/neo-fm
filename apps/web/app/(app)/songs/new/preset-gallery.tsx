@@ -79,7 +79,7 @@ function PresetCard({
       data-preset={preset.id}
       onClick={onPick}
       className={[
-        "flex w-full flex-col gap-2 rounded-md border bg-gradient-to-b px-4 py-3 text-left transition",
+        "flex w-full flex-col gap-2 rounded-md border bg-linear-to-b px-4 py-3 text-left transition",
         tone,
         active
           ? "ring-2 ring-accent/60"
