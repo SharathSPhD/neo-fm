@@ -2,7 +2,7 @@
  * Best-of-N render harness: render, score with pluggable scorers, stop early when good enough, otherwise render again
  * (within a hard render and spend budget) and keep the highest-scoring candidate.
  *
- * Measured basis (docs/song-render-harness.md): plain-lyric renders already average ~94% diction match, so N>1
+ * Measured basis (docs/handoff/song-render-harness.md): plain-lyric renders already average ~94% diction match, so N>1
  * only pays on the weak tail and on high-variance style prompts (duet, folk, qawwali: 26..98% for the same prompt).
  * Hence the adaptive loop: most songs stop after one render and cost nothing extra.
  *
