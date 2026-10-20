@@ -2,6 +2,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { buildFunnel, type CampaignRow, type FunnelRow, type FunnelSummary } from "./funnel";
+import { buildPullFunnel, type ActivityRow, type CohortUser, type PullFunnel } from "./pull-funnel";
 import { lyriaBudgetGbp } from "./spend-cap";
 import { summarize, type DictionRow, type HealthSummary, type JobRow } from "./health-summary";
 
@@ -72,5 +73,39 @@ export async function loadFunnel(db: SupabaseClient, days: number): Promise<Funn
   return {
     ...buildFunnel((views.data ?? []) as FunnelRow[], { signups: ids.length, firstSongUsers, shared: shared.count ?? 0, gifted: gifted.count ?? 0, paidUsers, signupDays: (cohort.data ?? []).map((u) => String(u.created_at).slice(0, 10)) }, days, campaigns.error ? [] : ((campaigns.data ?? []) as CampaignRow[])),
     cohort_truncated: ids.length >= COHORT_CAP,
+  };
+}
+
+const CHUNK = 150;
+const ACTIVITY_CAP = 20_000;
+
+/** Visit to first play to return day 1 and day 7. Activity is a station play/finish/like or a created song. */
+export async function loadPullFunnel(db: SupabaseClient, days: number): Promise<PullFunnel & { cohort_truncated: boolean }> {
+  const sinceTs = new Date(Date.now() - days * 86_400_000);
+  const [counters, cohort] = await Promise.all([
+    db.from("funnel_daily").select("event,n").gte("day", sinceTs.toISOString().slice(0, 10)).in("event", ["landing_view", "station_play_anon"]),
+    db.from("users").select("id,created_at").gte("created_at", sinceTs.toISOString()).limit(COHORT_CAP),
+  ]);
+  const err = [counters, cohort].find((r) => r.error)?.error;
+  if (err) throw new OpsQueryError(err.message);
+  const users = (cohort.data ?? []).map((u) => ({ id: String(u.id), created_at: String(u.created_at) })) as CohortUser[];
+  const sum = (event: string) => (counters.data ?? []).filter((r) => r.event === event).reduce((a, r) => a + Number(r.n), 0);
+
+  const activity: ActivityRow[] = [];
+  for (let i = 0; i < users.length && activity.length < ACTIVITY_CAP; i += CHUNK) {
+    const ids = users.slice(i, i + CHUNK).map((u) => u.id);
+    const [signals, jobs] = await Promise.all([
+      db.from("station_signals").select("user_id,created_at").in("user_id", ids).in("kind", ["play", "finish", "like"]).gte("created_at", sinceTs.toISOString()).limit(5000),
+      db.from("jobs").select("user_id,created_at").in("user_id", ids).gte("created_at", sinceTs.toISOString()).limit(5000),
+    ]);
+    // A missing station_signals table (older environments) just means song activity only.
+    if (jobs.error) throw new OpsQueryError(jobs.error.message);
+    for (const r of [...(signals.error ? [] : (signals.data ?? [])), ...(jobs.data ?? [])]) {
+      activity.push({ user_id: String(r.user_id), created_at: String(r.created_at) });
+    }
+  }
+  return {
+    ...buildPullFunnel(users, activity, { visits: sum("landing_view"), anonStationPlays: sum("station_play_anon") }, days),
+    cohort_truncated: users.length >= COHORT_CAP || activity.length >= ACTIVITY_CAP,
   };
 }
