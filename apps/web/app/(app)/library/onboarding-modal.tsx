@@ -9,7 +9,7 @@
  * the flag is set on first-mount client-side. (Future: persist on
  * users.preferences when migration 0023 lands.)
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
@@ -29,6 +29,7 @@ function Rich({ text }: { text: string }) {
 export function LibraryOnboardingModal() {
   const { t } = useUiLang();
   const [open, setOpen] = useState(false);
+  const gotItRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -41,14 +42,25 @@ export function LibraryOnboardingModal() {
     }
   }, []);
 
-  function close() {
+  const close = useCallback(() => {
     try {
       window.localStorage.setItem(STORAGE_KEY, "1");
     } catch {
       // best effort
     }
     setOpen(false);
-  }
+  }, []);
+
+  // Esc dismisses, and focus moves into the dialog so keyboard users can reach it.
+  useEffect(() => {
+    if (!open) return;
+    gotItRef.current?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, close]);
 
   if (!open) return null;
 
@@ -88,6 +100,7 @@ export function LibraryOnboardingModal() {
           </li>
         </ul>
         <button
+          ref={gotItRef}
           type="button"
           onClick={close}
           className="mt-6 w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
