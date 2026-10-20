@@ -53,6 +53,7 @@ export function UserMenu({ email, handle, plan }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-label={handle ? `@${handle}` : email}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
