@@ -1,0 +1,7 @@
+{
+ "gemini_audio": {"w": 0.45, "lo": 1, "hi": 5},
+ "sung_word_acc": {"w": 0.35, "lo": 0, "hi": 1},
+ "music_arena_pref": {"w": 0.10, "lo": 0, "hi": 1},
+ "audio_quality": {"w": 0.05, "lo": 0, "hi": 10},
+ "text_audio_match": {"w": 0.05, "lo": 0, "hi": 1}
+}
