@@ -105,3 +105,11 @@ describe("GET /auth/callback", () => {
     );
   });
 });
+
+describe("GET /auth/callback referral claim", () => {
+  it("leaves sign-in untouched when there is no referral cookie", async () => {
+    mockExchange(true);
+    const res = await GET(makeRequest({ code: "abc" }));
+    expect(res.headers.get("set-cookie")).toBeNull();
+  });
+});

@@ -74,13 +74,13 @@ describe("json-ld", () => {
 });
 
 describe("language pages", () => {
-  it("covers the five launch languages with unique slugs and complete copy", () => {
-    expect(LANGUAGE_PAGES.map((p) => p.code).sort()).toEqual(["bn", "hi", "kn", "ta", "te"]);
-    expect(new Set(LANGUAGE_PAGES.map((p) => p.slug)).size).toBe(5);
+  it("covers the launch languages with unique slugs and complete copy", () => {
+    expect(LANGUAGE_PAGES.map((p) => p.code).sort()).toEqual(["bn", "hi", "kn", "mr", "ta", "te"]);
+    expect(new Set(LANGUAGE_PAGES.map((p) => p.slug)).size).toBe(6);
     for (const p of LANGUAGE_PAGES) {
       expect(p.title).toContain("neo-fm");
       expect(p.points.length).toBeGreaterThanOrEqual(3);
-      for (const field of [p.h1, p.intro, p.cta, p.browse, p.songsHeading, p.empty, p.play]) expect(field.length).toBeGreaterThan(3);
+      for (const field of [p.h1, p.intro, p.cta, p.listen, p.browse, p.songsHeading, p.empty, p.play]) expect(field.length).toBeGreaterThan(3);
       // Copy is in the page's own script, not the English template.
       expect(p.h1).not.toMatch(/[A-Za-z]{4,}/);
     }
@@ -94,7 +94,7 @@ describe("language pages", () => {
     const m = hreflangPaths();
     expect(m.en).toBe("/");
     expect(m["x-default"]).toBe("/");
-    expect(Object.keys(m).sort()).toEqual(["bn", "en", "hi", "kn", "ta", "te", "x-default"]);
+    expect(Object.keys(m).sort()).toEqual(["bn", "en", "hi", "kn", "mr", "ta", "te", "x-default"]);
   });
 });
 
@@ -123,7 +123,7 @@ describe("sitemap", () => {
     });
     const home = entries.find((e) => e.url === "https://neo.test");
     expect(home?.alternates?.languages?.kn).toBe("https://neo.test/ai-songs/kannada");
-    expect(entries.filter((e) => /\/ai-songs\/[a-z]+$/.test(e.url))).toHaveLength(5);
+    expect(entries.filter((e) => /\/ai-songs\/[a-z]+$/.test(e.url))).toHaveLength(6);
   });
 });
 
@@ -147,7 +147,7 @@ describe("unknown language slugs", () => {
     await expect(how.default({ params })).rejects.toSatisfy(isNotFoundError);
     expect(lang.dynamicParams).toBe(false);
     expect(how.dynamicParams).toBe(false);
-    expect(lang.generateStaticParams().map((p) => p.lang).sort()).toEqual(["bengali", "hindi", "kannada", "tamil", "telugu"]);
+    expect(lang.generateStaticParams().map((p) => p.lang).sort()).toEqual(["bengali", "hindi", "kannada", "marathi", "tamil", "telugu"]);
   });
   it("lives outside the (marketing) group, whose loading boundary commits a 200 before notFound() runs", () => {
     expect(existsSync(join(process.cwd(), "app/ai-songs/[lang]/page.tsx"))).toBe(true);

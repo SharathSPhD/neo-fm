@@ -73,8 +73,14 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
         <p className="max-w-prose text-lg text-foreground/80">{page.intro}</p>
         <div className="flex flex-wrap gap-3">
           <Link
-            href="/sign-up"
+            href={`/station?utm_source=seo&utm_medium=organic&utm_campaign=lang-${page.code}`}
             className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+          >
+            {page.listen}
+          </Link>
+          <Link
+            href="/sign-up"
+            className="rounded-md border border-accent/60 px-5 py-2.5 font-medium text-accent hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-accent"
           >
             {page.cta}
           </Link>
