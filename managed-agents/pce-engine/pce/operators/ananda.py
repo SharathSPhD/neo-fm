@@ -20,6 +20,12 @@ DEFAULT_WEIGHTS = {
     "reward_model": 0.20,
 }
 
+# Candidate-selection mode (brief key `prosody_select`, set by run_cascade.py). Off by default, so scoring is unchanged.
+# On: for Indic lyrics the flat 0.7 form term becomes the deterministic form score (lyric_form.py) with a larger weight,
+# so choosing among the K candidates sees metre and rhyme. It selects; it never drives a revision.
+PROSODY_SELECT = False
+PROSODY_WEIGHTS = {"coherence": 0.30, "diversity": 0.15, "form_fidelity": 0.55}
+
 _SYLL_RE = re.compile(r"[aeiouy]+", re.IGNORECASE)
 
 
@@ -73,7 +79,12 @@ def ananda(
     if not candidate.text.strip():
         return 0.0
 
-    w = dict(weights or DEFAULT_WEIGHTS)
+    form_det = None
+    if PROSODY_SELECT and weights is None:
+        from pce.operators.lyric_form import form_score
+
+        form_det = form_score(candidate.text)
+    w = dict(weights or (PROSODY_WEIGHTS if form_det is not None else DEFAULT_WEIGHTS))
     # If no reward model provided, redistribute its weight onto the other axes proportionally.
     if reward is None:
         rw = w.pop("reward_model", 0.0)
@@ -89,7 +100,7 @@ def ananda(
     div3 = _distinct_n(tokens, 3)
     diversity = float(0.5 * div2 + 0.5 * div3)
 
-    form = _form_fidelity(candidate.text, constraint)
+    form = form_det if form_det is not None else _form_fidelity(candidate.text, constraint)
 
     score = (
         w.get("coherence", 0.0) * coherence

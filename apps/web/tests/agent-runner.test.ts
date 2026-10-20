@@ -128,3 +128,12 @@ describe("briefText prompt injection hardening", () => {
     expect(sanitizeBriefPrompt("x".repeat(5000))).toHaveLength(1000);
   });
 });
+
+describe("briefText prosody select", () => {
+  it("adds the kickoff line only when the flag is on", async () => {
+    const { briefText } = await import("../lib/agent/runner");
+    const b = { language: "Telugu", styleFamily: "carnatic", targetSeconds: 30, prompt: "x" };
+    expect(briefText(b)).not.toContain("Prosody select");
+    expect(briefText({ ...b, prosodySelect: true })).toContain("Prosody select: yes");
+  });
+});

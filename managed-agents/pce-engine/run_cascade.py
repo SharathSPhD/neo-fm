@@ -61,6 +61,10 @@ def main(workdir: str) -> int:
     _jnana.ASPECT_HIT_FLOOR = min(_jnana.ASPECT_HIT_FLOOR, hit) if embed.model_id.endswith("@service") else _jnana.ASPECT_HIT_FLOOR
     lm = ReplayLM(gens.get("draft", []), gens.get("revision", []), embed)
     K = int(brief.get("K", 3))
+    if brief.get("prosody_select"):
+        sys.modules["pce.operators.ananda"].PROSODY_SELECT = True  # (the package attribute `ananda` is the function)
+        # Selection now sees metre and rhyme (lyric_form.py). Cost guard: never more than 4 candidates.
+        K = min(K, 4)
     cit_t = float(brief.get("cit_temperature", 1 / 3))  # 1/3 is the neutral point: exactly K candidates per pass
     try:
         state = run_cascade(
