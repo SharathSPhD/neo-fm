@@ -20,7 +20,7 @@ ARG STAGE=phase1
 # Built by the CI workflow as a sanity check that the FastAPI surface
 # imports without the real backend. `PWM_SKIP_BACKEND_IMPORT=1` keeps
 # the wrapper from ever trying to load `api.main`.
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -57,7 +57,7 @@ CMD ["uvicorn", "serve:app", "--host", "0.0.0.0", "--port", "9000"]
 # Tag pin: matches music-inference 25.11-py3 — the first NGC release with
 # DGX Spark support. Keep both services on the same tag so torchaudio /
 # numpy / torch are pinned identically across the stack.
-FROM nvcr.io/nvidia/pytorch:25.11-py3 AS phase1
+FROM nvcr.io/nvidia/pytorch:26.09-py3 AS phase1
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

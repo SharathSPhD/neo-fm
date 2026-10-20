@@ -14,7 +14,7 @@
 ARG STAGE=phase0
 
 # ----- phase0 stage (CI smoke) ----------------------------------------------
-FROM python:3.12-slim AS phase0
+FROM python:3.14-slim AS phase0
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -55,7 +55,7 @@ CMD ["uv", "run", "uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "80
 # version of the container". 25.12 has a torchaudio incompatibility
 # on GB10; 25.11 is the safe pick. pyproject `requires-python = ">=3.10"`
 # remains compatible.
-FROM nvcr.io/nvidia/pytorch:25.11-py3 AS phase1
+FROM nvcr.io/nvidia/pytorch:26.09-py3 AS phase1
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

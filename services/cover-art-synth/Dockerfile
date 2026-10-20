@@ -4,7 +4,7 @@
 # build inherits torch+CUDA from the nvcr image; the CI build skips
 # the diffusion dependencies and runs against the FakeCoverArtModel.
 
-FROM nvcr.io/nvidia/pytorch:24.08-py3 AS dgx
+FROM nvcr.io/nvidia/pytorch:26.09-py3 AS dgx
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -19,7 +19,7 @@ EXPOSE 8090
 CMD ["uvicorn", "app.serve:app", "--host", "0.0.0.0", "--port", "8090"]
 
 
-FROM python:3.12-slim AS ci
+FROM python:3.14-slim AS ci
 
 WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
