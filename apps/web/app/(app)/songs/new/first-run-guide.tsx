@@ -25,7 +25,7 @@ export function FirstRunGuide({
   onPickIdea(prompt: string): void;
   onSkip(): void;
 }) {
-  const { setLang, t } = useUiLang();
+  const { t } = useUiLang();
   const [playing, setPlaying] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
   const playback = useRef<MoodPlayback | null>(null);
@@ -41,7 +41,7 @@ export function FirstRunGuide({
   function pickLanguage(lang: UiLang) {
     stop();
     setPicked(null);
-    setLang(lang);
+    // Picks the song language and its starter ideas only; the site language stays as the visitor set it.
     onPickLanguage(lang);
   }
 
