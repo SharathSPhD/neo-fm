@@ -17,7 +17,7 @@ import type { Metadata } from "next";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
-import { passMonthlyTracks } from "@/lib/billing/pass";
+import { passMonthlyTracks, readOwnStationPass } from "@/lib/billing/pass";
 import { serverI18n } from "@/lib/i18n/server";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
@@ -110,10 +110,13 @@ export default async function PricingPage() {
   const billingEnabled = isBillingEnabled();
   const billing = getBillingConfigOrNull();
   let signedIn = false;
+  let hasPass = false;
   if (billingEnabled) {
     const supabase = createServerClient();
     const { data } = await supabase.auth.getUser();
     signedIn = Boolean(data?.user);
+    // A paid-up pass holder sees "Manage" instead of a second checkout (the checkout route refuses it too).
+    if (data?.user) hasPass = (await readOwnStationPass(supabase, data.user.id)) !== null;
   }
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
@@ -232,8 +235,17 @@ export default async function PricingPage() {
           <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
           <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
           <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
-          <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
-          <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
+          {hasPass ? (
+            <>
+              <p data-testid="pass-owned" className="text-sm font-medium text-accent">{t("pricing.pass.owned")}</p>
+              <a href="/account" className="inline-flex w-fit rounded-full border border-accent/40 px-5 py-2 text-sm hover:bg-accent/10">{t("pricing.pass.manage")}</a>
+            </>
+          ) : (
+            <>
+              <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
+              <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
+            </>
+          )}
         </section>
       ) : null}
       <QualityEvidenceSummary />
