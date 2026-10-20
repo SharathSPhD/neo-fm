@@ -49,7 +49,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={flip}
       aria-pressed={theme === "light"}
       aria-label={theme === "dark" ? t("misc.theme.toLight") : t("misc.theme.toDark")}
-      className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-muted/40 text-foreground/70 hover:text-foreground hover:border-foreground/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${className}`}
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-md border border-muted/40 text-foreground/70 hover:text-foreground hover:border-foreground/40 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent ${className}`}
     >
       {/* render both, hide the inactive — avoids hydration drift */}
       <span aria-hidden className={mounted && theme === "dark" ? "" : "hidden"}>

@@ -74,19 +74,19 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
         <div className="flex flex-wrap gap-3">
           <Link
             href={`/station?utm_source=seo&utm_medium=organic&utm_campaign=lang-${page.code}`}
-            className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+            className="rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
           >
             {page.listen}
           </Link>
           <Link
             href="/sign-up"
-            className="rounded-md border border-accent/60 px-5 py-2.5 font-medium text-accent hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-accent"
+            className="rounded-md border border-accent/60 px-5 py-2.5 font-medium text-accent hover:bg-accent/10 focus:outline-hidden focus:ring-2 focus:ring-accent"
           >
             {page.cta}
           </Link>
           <Link
             href="/discover"
-            className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+            className="rounded-md border border-muted/50 px-5 py-2.5 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent"
           >
             {page.browse}
           </Link>
@@ -113,7 +113,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
               <li key={s.publicId}>
                 <Link
                   href={`/s/${s.publicId}`}
-                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-hidden focus:ring-2 focus:ring-accent"
                 >
                   <p className="line-clamp-2 font-medium">{s.title}</p>
                   <p className="mt-1 text-xs text-foreground/60">{s.style}</p>
@@ -125,7 +125,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
               <li key={t.id}>
                 <Link
                   href={`/t/${t.id}`}
-                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-hidden focus:ring-2 focus:ring-accent"
                 >
                   <p className="line-clamp-2 font-medium">{t.title}</p>
                   <p className="mt-3 text-xs text-accent">{page.play}</p>

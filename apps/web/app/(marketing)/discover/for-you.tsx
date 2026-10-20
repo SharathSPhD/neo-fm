@@ -51,7 +51,7 @@ export async function ForYou() {
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ranked.map(({ r }) => (
             <li key={r.public_id}>
-              <Link href={`/s/${r.public_id}`} className="block rounded-lg border border-accent/30 bg-accent/5 p-4 hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent">
+              <Link href={`/s/${r.public_id}`} className="block rounded-lg border border-accent/30 bg-accent/5 p-4 hover:border-accent/60 focus:outline-hidden focus:ring-2 focus:ring-accent">
                 <span className="font-medium">{r.song_documents?.title || t("song.untitled")}</span>
                 <span className="mt-1 block text-xs text-foreground/60">{prettyLanguage(r.song_documents?.language ?? "")} · {prettyStyle(r.song_documents?.style_family ?? "")}</span>
                 <span className="mt-1 block text-[11px] text-accent/80">{forYouReason(profile, r.song_documents?.language ?? "", r.song_documents?.style_family ?? "")}</span>

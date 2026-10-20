@@ -59,7 +59,7 @@ export function ReviewClient({
 
   return (
     <div className="mt-8">
-      <div className="sticky top-0 z-10 -mx-2 flex flex-wrap items-center gap-3 border-b border-muted/30 bg-background/95 px-2 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-2 flex flex-wrap items-center gap-3 border-b border-muted/30 bg-background/95 px-2 py-3 backdrop-blur-sm">
         <p role="status" className="text-sm" data-testid="progress">
           <strong>{done}</strong> of {total} reviewed ({edited} edited)
         </p>

@@ -100,7 +100,7 @@ function AdSkip({ afterMs, onSkip }: { afterMs: number; onSkip: () => void }) {
     const t = setTimeout(() => setReady(true), afterMs);
     return () => clearTimeout(t);
   }, [afterMs]);
-  return <button type="button" disabled={!ready} onClick={onSkip} className="rounded border px-3 py-2 disabled:opacity-50">Skip</button>;
+  return <button type="button" disabled={!ready} onClick={onSkip} className="rounded-sm border px-3 py-2 disabled:opacity-50">Skip</button>;
 }
 /** Name field plus a WhatsApp send that dedicates the current station hour to someone (STATION_DEDICATE=1). */
 function DedicateHour({ onSend }: { onSend: (name: string) => void }) {
@@ -116,7 +116,7 @@ function DedicateHour({ onSend }: { onSend: (name: string) => void }) {
         maxLength={24}
         placeholder={t("station.dedicate.prompt")}
         aria-label={t("station.dedicate.prompt")}
-        className="min-h-[44px] flex-1 rounded border px-3 py-2"
+        className="min-h-[44px] flex-1 rounded-sm border px-3 py-2"
       />
       <button type="submit" disabled={!name.trim()} className="rounded-full bg-[#25D366] px-4 py-2 font-medium text-black hover:brightness-95 disabled:opacity-50">{t("station.dedicate.button")}</button>
     </form>
@@ -555,7 +555,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     <section aria-label={t("station.player.label")} className="flex flex-col gap-4">
       <InstallPrompt plays={plays} minPlays={2} />
       {dedicatedTo ? (
-        <p className="rounded border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium" role="status">{t("station.dedicate.banner", { name: dedicatedTo })}</p>
+        <p className="rounded-sm border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium" role="status">{t("station.dedicate.banner", { name: dedicatedTo })}</p>
       ) : null}
       {stationRow}
       {station ? (
@@ -630,7 +630,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
                 </div>
               </div>
               <p className="text-xs text-foreground/80">
-                <span className="mr-2 rounded border border-foreground/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+                <span className="mr-2 rounded-sm border border-foreground/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {languageName(current.language)} · {current.tags.slice(0, 4).join(", ")}
               </p>
             </>
@@ -692,7 +692,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           </div>
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {nudging ? (
-            <div className="flex flex-col gap-2 rounded border border-accent/40 bg-accent/10 p-3 text-sm">
+            <div className="flex flex-col gap-2 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm">
               <p>{t("station.nudge.text")}</p>
               <div className="flex flex-wrap items-center gap-3">
                 <a href="/sign-up?next=%2Fstation" onClick={() => sendFunnelEvent("nudge_clicked")} className="inline-flex min-h-[44px] items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-background hover:bg-accent/90">{t("station.nudge.signUp")}</a>

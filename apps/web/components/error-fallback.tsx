@@ -39,14 +39,14 @@ export function ErrorFallback({
           {t("error.body")}{" "}
           <Link
             href="/feedback"
-            className="inline-flex min-h-[44px] items-center rounded text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="inline-flex min-h-[44px] items-center rounded-sm text-accent hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
           >
             {t("error.report")}
           </Link>
         </p>
       </div>
       {error.digest && (
-        <code className="break-all rounded bg-background/50 px-2 py-1 font-mono text-xs text-foreground/60">
+        <code className="break-all rounded-sm bg-background/50 px-2 py-1 font-mono text-xs text-foreground/60">
           {t("error.ref")}: {error.digest}
         </code>
       )}
@@ -54,13 +54,13 @@ export function ErrorFallback({
         <button
           type="button"
           onClick={reset}
-          className="min-h-[44px] rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="min-h-[44px] rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {t("error.retry")}
         </button>
         <Link
           href={homeHref}
-          className="inline-flex min-h-[44px] items-center rounded-md border border-muted/40 px-4 py-1.5 text-sm text-foreground/80 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="inline-flex min-h-[44px] items-center rounded-md border border-muted/40 px-4 py-1.5 text-sm text-foreground/80 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
         >
           {t(homeKey)}
         </Link>

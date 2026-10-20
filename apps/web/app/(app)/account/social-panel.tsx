@@ -59,7 +59,7 @@ export function SocialPanel() {
               {p.connected ? (
                 <button className="text-sm underline" onClick={() => disconnect(p.platform)}>Disconnect</button>
               ) : (
-                <button className="rounded border px-3 py-1 text-sm disabled:opacity-40" disabled={!p.neofm_app_ready} onClick={() => connect(p.platform, "neofm_app")}>Connect</button>
+                <button className="rounded-sm border px-3 py-1 text-sm disabled:opacity-40" disabled={!p.neofm_app_ready} onClick={() => connect(p.platform, "neofm_app")}>Connect</button>
               )}
             </div>
             {!p.connected && s.own_app_allowed && (
@@ -68,9 +68,9 @@ export function SocialPanel() {
                 {own === p.platform && (
                   <div className="mt-2 space-y-2 text-sm">
                     <p className="text-xs opacity-70">Add this redirect URL in your app: <code>{typeof window !== "undefined" ? window.location.origin : ""}/api/social/callback/{p.platform}</code></p>
-                    <input className="w-full rounded border px-2 py-1" placeholder="Client ID" value={cid} onChange={(e) => setCid(e.target.value)} autoComplete="off" />
-                    <input className="w-full rounded border px-2 py-1" placeholder="Client secret" type="password" value={sec} onChange={(e) => setSec(e.target.value)} autoComplete="off" />
-                    <button className="rounded border px-3 py-1 disabled:opacity-40" disabled={!cid || !sec} onClick={() => connect(p.platform, "own_app")}>Save and connect</button>
+                    <input className="w-full rounded-sm border px-2 py-1" placeholder="Client ID" value={cid} onChange={(e) => setCid(e.target.value)} autoComplete="off" />
+                    <input className="w-full rounded-sm border px-2 py-1" placeholder="Client secret" type="password" value={sec} onChange={(e) => setSec(e.target.value)} autoComplete="off" />
+                    <button className="rounded-sm border px-3 py-1 disabled:opacity-40" disabled={!cid || !sec} onClick={() => connect(p.platform, "own_app")}>Save and connect</button>
                   </div>
                 )}
               </div>

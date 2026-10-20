@@ -33,7 +33,7 @@ export function ReportButton({ publicId, trackId, compact }: { publicId?: string
   return (
     <div className="text-xs text-foreground/60">
       {!open ? (
-        <button type="button" onClick={() => setOpen(true)} className="underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded">{compact ? t("station.report") : t("pub.report.open")}</button>
+        <button type="button" onClick={() => setOpen(true)} className="underline hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm">{compact ? t("station.report") : t("pub.report.open")}</button>
       ) : (
         <form onSubmit={(e) => { e.preventDefault(); void send(); }} className="glass mt-2 flex max-w-md flex-col gap-3 rounded-2xl p-4">
           <label className="flex flex-col gap-2">
@@ -47,7 +47,7 @@ export function ReportButton({ publicId, trackId, compact }: { publicId?: string
             <textarea value={details} onChange={(e) => setDetails(e.target.value)} maxLength={1000} rows={3} className="rounded-xl border border-foreground/15 bg-foreground/5 px-3 py-2 text-sm" />
           </label>
           <div className="flex gap-2">
-            <button type="submit" disabled={state === "sending"} className="rounded border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent disabled:opacity-50">{state === "sending" ? t("pub.report.sending") : t("pub.report.send")}</button>
+            <button type="submit" disabled={state === "sending"} className="rounded-sm border border-accent/40 bg-accent/10 px-3 py-1 text-sm text-accent disabled:opacity-50">{state === "sending" ? t("pub.report.sending") : t("pub.report.send")}</button>
             <button type="button" onClick={() => setOpen(false)} className="px-2 py-1 text-sm underline">{t("pub.report.cancel")}</button>
           </div>
           {state === "error" ? <p role="alert" className="text-red-400">{t("pub.report.error")}</p> : null}

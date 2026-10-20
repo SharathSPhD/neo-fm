@@ -138,7 +138,7 @@ export function FirstRunGuide({
             </li>
           ))}
         </ul>
-        <p role="status" className="-mb-2 min-h-[1.25rem] text-sm text-accent">
+        <p role="status" className="-mb-2 min-h-5 text-sm text-accent">
           {picked !== null ? t("guide.picked") : ""}
         </p>
       </div>

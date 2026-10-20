@@ -132,7 +132,7 @@ export function KaraokeTicker({
         tabIndex={0}
         onWheel={() => (holdUntil.current = Date.now() + USER_SCROLL_HOLD_MS)}
         onTouchMove={() => (holdUntil.current = Date.now() + USER_SCROLL_HOLD_MS)}
-        className="relative max-h-72 overflow-y-auto scroll-smooth rounded-md py-6 text-base leading-relaxed sm:max-h-80 sm:text-lg"
+        className="relative max-h-72 overflow-y-auto scroll-smooth rounded-md py-6 text-base leading-relaxed sm:max-h-80 sm:text-lg sm:leading-7"
         data-testid="lyrics-panel"
       >
         <ol className="flex flex-col">
@@ -151,7 +151,7 @@ export function KaraokeTicker({
                 onClick={() => seek(l.start)}
                 aria-current={i === active ? "true" : undefined}
                 className={[
-                  "block min-h-[44px] w-full rounded px-3 py-1.5 text-left transition-colors",
+                  "block min-h-[44px] w-full rounded-sm px-3 py-1.5 text-left transition-colors",
                   i === active
                     ? "bg-accent/15 font-medium text-foreground"
                     : i < active

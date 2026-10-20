@@ -72,14 +72,14 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
         <p>This song is not available right now.</p>
       )}
       <div className="flex flex-wrap gap-2">
-        <Link href="/station" className="rounded bg-accent px-4 py-2 text-background">
+        <Link href="/station" className="rounded-sm bg-accent px-4 py-2 text-background">
           Tune in to your station
         </Link>
         <a
           href={whatsappShareUrl(track.title, tagShareUrl(trackShareUrl(id), { source: "whatsapp", campaign: "station" }))}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded border px-4 py-2"
+          className="rounded-sm border px-4 py-2"
         >
           Share on WhatsApp
         </a>

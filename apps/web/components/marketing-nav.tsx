@@ -29,25 +29,25 @@ export async function MarketingNav({
             <>
               <Link
                 href="/discover"
-                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.discover")}
               </Link>
               <Link
                 href="/ideas"
-                className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
+                className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
               >
                 Ideas
               </Link>
               <Link
                 href="/pricing"
-                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
+                className="hidden rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:inline-block sm:px-3"
               >
                 {t("nav.pricing")}
               </Link>
               <Link
                 href="/help"
-                className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
+                className="hidden rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:inline-block"
               >
                 {t("nav.help")}
               </Link>
@@ -58,13 +58,13 @@ export async function MarketingNav({
             <>
               <Link
                 href="/library"
-                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
+                className="rounded-md px-2 py-1.5 text-foreground/70 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent sm:px-3"
               >
                 {t("nav.library")}
               </Link>
               <Link
                 href="/station"
-                className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 font-medium text-background hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
               >
                 {t("nav.station")}
               </Link>
@@ -73,13 +73,13 @@ export async function MarketingNav({
             <>
               <Link
                 href="/sign-in"
-                className="shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-foreground/80 sm:border sm:border-muted/40 sm:px-3.5 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="shrink-0 whitespace-nowrap rounded-full px-2 py-1.5 text-foreground/80 sm:border sm:border-muted/40 sm:px-3.5 hover:border-foreground/40 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {t("nav.signIn")}
               </Link>
               <Link
                 href="/sign-up"
-                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-2.5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-[400px]:px-4 sm:py-1.5"
+                className="shrink-0 whitespace-nowrap rounded-full bg-accent px-2.5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background min-[400px]:px-4 sm:py-1.5"
               >
                 {t("nav.getStarted")}
               </Link>

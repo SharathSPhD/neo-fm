@@ -107,20 +107,20 @@ async function Hero() {
           <span className="eq" aria-hidden><i /><i /><i /><i /></span>
           {t("landing.badge")}
         </span>
-        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl md:text-7xl">
+        <h1 id="hero-heading" className="max-w-3xl text-4xl font-semibold leading-tight tracking-tight sm:text-6xl sm:leading-none md:text-7xl">
           <Accented text={t("landing.title")} />
         </h1>
         <p className="max-w-2xl text-lg text-foreground/75 sm:text-xl">
           {t("landing.subtitle")}
         </p>
         <div className="flex flex-wrap items-center gap-3">
-          <Link href="/station" className="rounded-full bg-accent px-6 py-3 font-medium text-background shadow-[0_0_36px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 hover:shadow-[0_0_44px_-4px_hsl(var(--accent))] focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
+          <Link href="/station" className="rounded-full bg-accent px-6 py-3 font-medium text-background shadow-[0_0_36px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 hover:shadow-[0_0_44px_-4px_hsl(var(--accent))] focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background">
             {t("landing.ctaListen")}
           </Link>
-          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+          <Link href={signedIn ? "/songs/new" : "/sign-up?next=/songs/new"} className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent">
             {signedIn ? t("landing.ctaMake") : t("landing.ctaPrimary")}
           </Link>
-          <Link href="/discover" className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
+          <Link href="/discover" className="glass rounded-full px-6 py-3 font-medium text-foreground/90 hover:border-foreground/60 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent">
             {t("landing.ctaSecondary")}
           </Link>
         </div>
@@ -199,7 +199,7 @@ async function PricingTeaser() {
           <h2 id="price-heading" className="text-2xl font-semibold tracking-tight">{t("landing.priceTitle")}</h2>
           <p className="mt-2 max-w-xl text-sm text-foreground/70">{t("landing.priceBody")}</p>
         </div>
-        <Link href="/pricing" className="rounded-md border border-accent/40 bg-accent/10 px-5 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-accent">{t("landing.seePricing")}</Link>
+        <Link href="/pricing" className="rounded-md border border-accent/40 bg-accent/10 px-5 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 focus:outline-hidden focus:ring-2 focus:ring-accent">{t("landing.seePricing")}</Link>
       </div>
     </section>
   );
@@ -216,7 +216,7 @@ async function Footer() {
             href={languagePagePath(l)}
             hrefLang={l.code}
             lang={l.code}
-            className="inline-flex min-h-8 items-center underline hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center underline hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {l.native}
           </Link>
@@ -237,43 +237,43 @@ async function Footer() {
         <p className="flex flex-wrap items-center gap-4 text-xs text-foreground/50">
           <Link
             href="/pricing"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("nav.pricing")}
           </Link>
           <Link
             href="/trust"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("footer.trust")}
           </Link>
           <Link
             href="/privacy"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("footer.privacy")}
           </Link>
           <Link
             href="/terms"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("footer.terms")}
           </Link>
           <Link
             href="/ai-disclosure"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("footer.ai")}
           </Link>
           <Link
             href="/help"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("nav.help")}
           </Link>
           <Link
             href="/feedback"
-            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent rounded"
+            className="inline-flex min-h-8 items-center hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
           >
             {t("footer.contact")}
           </Link>

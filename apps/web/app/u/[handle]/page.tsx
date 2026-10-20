@@ -264,7 +264,7 @@ export default async function ProfilePage(props: Props) {
             {!currentUserId ? (
               <Link
                 href={`/sign-in?next=${encodeURIComponent(`/u/${profile.handle}`)}`}
-                className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent"
               >
                 {t("profile.signInFollow")}
               </Link>
@@ -296,7 +296,7 @@ export default async function ProfilePage(props: Props) {
                 <a
                   key={g.language}
                   href={`#lang-${g.language}`}
-                  className="rounded-full border border-muted/40 px-3 py-1 text-xs text-foreground/80 hover:border-accent/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                  className="rounded-full border border-muted/40 px-3 py-1 text-xs text-foreground/80 hover:border-accent/50 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent"
                 >
                   {prettyLanguage(g.language)} · {g.songs.length}
                 </a>
@@ -318,7 +318,7 @@ export default async function ProfilePage(props: Props) {
                     <li key={song.id}>
                       <Link
                         href={`/s/${song.public_id}`}
-                        className="group flex gap-3 glass rounded-2xl p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="group flex gap-3 glass rounded-2xl p-3 transition hover:border-accent/40 focus:outline-hidden focus:ring-2 focus:ring-accent"
                       >
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md">
                           <CoverArt url={null} seed={song.id} styleFamily={song.style_family} alt="" showGlyph />

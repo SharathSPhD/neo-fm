@@ -6,7 +6,7 @@ export function BrandMark({ label = "neo-fm home" }: { label?: string }) {
     <Link
       href="/"
       aria-label={label}
-      className="inline-flex min-h-8 flex-none items-center gap-2 whitespace-nowrap rounded text-lg font-semibold tracking-tight focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="inline-flex min-h-8 flex-none items-center gap-2 whitespace-nowrap rounded-sm text-lg font-semibold tracking-tight focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
     >
       <span className="live-dot" aria-hidden />
       <span>

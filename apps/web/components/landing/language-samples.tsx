@@ -93,7 +93,7 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
             aria-controls="lang-panel"
             tabIndex={i === active ? 0 : -1}
             onClick={() => select(i)}
-            className={`rounded-full border px-4 py-1.5 text-sm transition focus:outline-none focus:ring-2 focus:ring-accent ${
+            className={`rounded-full border px-4 py-1.5 text-sm transition focus:outline-hidden focus:ring-2 focus:ring-accent ${
               i === active ? "border-accent bg-accent/15 text-accent" : "border-muted/40 text-foreground/80 hover:border-foreground/50"
             }`}
           >
@@ -114,16 +114,16 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
                 type="button"
                 onClick={toggle}
                 aria-pressed={state === "playing"}
-                className="shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+                className="shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
               >
                 {state === "playing" ? "■ Stop" : state === "loading" ? "Loading…" : `▶ Hear ${meta.name}`}
               </button>
             </div>
-            <p lang={meta.code} className="mt-4 whitespace-pre-line text-xl leading-relaxed sm:text-2xl">{song.lines.join("\n")}</p>
-            <p role="status" className="mt-3 min-h-[1.25rem] text-xs text-foreground/60">
+            <p lang={meta.code} className="mt-4 whitespace-pre-line text-xl leading-relaxed sm:text-2xl sm:leading-8">{song.lines.join("\n")}</p>
+            <p role="status" className="mt-3 min-h-5 text-xs text-foreground/60">
               {state === "error" ? "Couldn't load the audio. Open the song page to listen." : ""}
             </p>
-            <Link href={`/s/${song.publicId}`} className="text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Open the full song and lyrics</Link>
+            <Link href={`/s/${song.publicId}`} className="text-sm text-accent underline focus:outline-hidden focus:ring-2 focus:ring-accent">Open the full song and lyrics</Link>
           </>
         ) : poolOnly ? (
           <>
@@ -136,22 +136,22 @@ export function LanguageSamples({ samples }: { samples: LanguageSample[] }) {
                 type="button"
                 onClick={toggle}
                 aria-pressed={state === "playing"}
-                className="shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+                className="shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
               >
                 {state === "playing" ? "■ Stop" : state === "loading" ? "Loading…" : `▶ Hear ${meta.name}`}
               </button>
             </div>
-            <p lang={meta.code} className="mt-4 text-xl leading-relaxed sm:text-2xl">{sample?.idea}</p>
-            <p role="status" className="mt-3 min-h-[1.25rem] text-xs text-foreground/60">
+            <p lang={meta.code} className="mt-4 text-xl leading-relaxed sm:text-2xl sm:leading-8">{sample?.idea}</p>
+            <p role="status" className="mt-3 min-h-5 text-xs text-foreground/60">
               {state === "error" ? "Couldn't load the audio. Open the station to listen." : ""}
             </p>
-            <Link href="/station" className="inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Tune in to the station</Link>
+            <Link href="/station" className="inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-hidden focus:ring-2 focus:ring-accent">Tune in to the station</Link>
           </>
         ) : (
           <>
             <p className="text-xs text-foreground/60">No community song in {meta.name} yet. Here is how you could start one:</p>
-            <p lang={meta.code} className="mt-3 text-xl leading-relaxed sm:text-2xl">{sample?.idea}</p>
-            <Link href="/sign-up?next=/songs/new" className="mt-4 inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-none focus:ring-2 focus:ring-accent">Make the first {meta.name} song</Link>
+            <p lang={meta.code} className="mt-3 text-xl leading-relaxed sm:text-2xl sm:leading-8">{sample?.idea}</p>
+            <Link href="/sign-up?next=/songs/new" className="mt-4 inline-flex min-h-8 items-center text-sm text-accent underline focus:outline-hidden focus:ring-2 focus:ring-accent">Make the first {meta.name} song</Link>
           </>
         )}
       </div>

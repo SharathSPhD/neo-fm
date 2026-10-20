@@ -57,7 +57,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
-        className="inline-flex h-9 items-center gap-2 rounded-full border border-muted/40 px-2 py-1 text-sm font-medium text-foreground/85 hover:border-foreground/40 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="inline-flex h-9 items-center gap-2 rounded-full border border-muted/40 px-2 py-1 text-sm font-medium text-foreground/85 hover:border-foreground/40 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       >
         <span
           aria-hidden
@@ -65,7 +65,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         >
           {initial}
         </span>
-        <span className="hidden truncate 2xl:inline-block max-w-[10rem]">
+        <span className="hidden truncate 2xl:inline-block max-w-40">
           {handle ? `@${handle}` : email}
         </span>
       </button>
@@ -74,7 +74,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-lg border border-muted/40 bg-background/95 shadow-xl backdrop-blur-sm"
+          className="absolute right-0 z-40 mt-2 w-64 overflow-hidden rounded-lg border border-muted/40 bg-background/95 shadow-xl backdrop-blur-xs"
         >
           <div className="border-b border-muted/30 px-4 py-3 text-sm">
             <div className="font-medium text-foreground">
@@ -92,7 +92,7 @@ export function UserMenu({ email, handle, plan }: Props) {
               <Link
                 role="menuitem"
                 href={`/u/${handle}`}
-                className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+                className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
               >
                 {t("menu.profile")}
               </Link>
@@ -100,7 +100,7 @@ export function UserMenu({ email, handle, plan }: Props) {
               <Link
                 role="menuitem"
                 href="/onboarding/handle"
-                className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+                className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
               >
                 {t("menu.pickHandle")}
               </Link>
@@ -108,21 +108,21 @@ export function UserMenu({ email, handle, plan }: Props) {
             <Link
               role="menuitem"
               href="/account"
-              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
             >
               {t("menu.account")}
             </Link>
             <Link
               role="menuitem"
               href="/feedback"
-              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
             >
               {t("menu.feedback")}
             </Link>
             <Link
               role="menuitem"
               href="/help"
-              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+              className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
             >
               {t("menu.help")}
             </Link>
@@ -138,7 +138,7 @@ export function UserMenu({ email, handle, plan }: Props) {
             <button
               type="submit"
               role="menuitem"
-              className="w-full px-4 py-3 text-left text-sm text-foreground/80 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
+              className="w-full px-4 py-3 text-left text-sm text-foreground/80 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-hidden"
             >
               {t("menu.signOut")}
             </button>

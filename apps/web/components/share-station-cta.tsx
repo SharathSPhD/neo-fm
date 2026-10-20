@@ -15,7 +15,7 @@ export function ShareStationCta({ t }: { t: (key: UiKey) => string }) {
       </div>
       <Link
         href="/station"
-        className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-accent px-5 text-sm font-semibold text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         {t("pub.cta.button")}
       </Link>

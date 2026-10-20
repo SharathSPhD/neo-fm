@@ -109,7 +109,7 @@ export function MakeInLanguageButton({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-muted/50 px-3 py-2 text-sm hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-muted/50 px-3 py-2 text-sm hover:border-accent focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       >
         <span aria-hidden>🌐</span> Make it in another language
       </button>

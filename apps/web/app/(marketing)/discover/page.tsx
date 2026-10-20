@@ -272,7 +272,7 @@ export default async function DiscoverPage(
               <li key={row.id} className="group flex flex-col gap-2">
                 <Link
                   href={`/s/${row.public_id}`}
-                  className="relative block aspect-square overflow-hidden glass glass-hover rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="relative block aspect-square overflow-hidden glass glass-hover rounded-2xl focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
                   aria-label={t("discover.openPublic", { title })}
                 >
                   <CoverArt
@@ -283,7 +283,7 @@ export default async function DiscoverPage(
                   />
                   <span
                     aria-hidden
-                    className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition group-hover:opacity-100"
+                    className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/55 via-black/15 to-transparent opacity-0 transition group-hover:opacity-100"
                   />
                 </Link>
                 <div className="flex flex-col gap-0.5">

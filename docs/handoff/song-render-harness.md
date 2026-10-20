@@ -64,3 +64,12 @@ Why English: CLAP and the Lyria style prompt both read English style text far be
 - **Pilot (smallest run that can show a signal):** 3 briefs (hi, ta, te) x arms A and B x 2 renders = 12 renders, about GBP 3 at the estimate (about GBP 6 if 2x low), plus under GBP 0.5 of Gemini transcription.
 - **Read-out:** mean and worst-of-2 diction per arm (the metric that already drives selection), the share of renders under the 80 gate, and a blind pairwise listen that is only trusted if it picks the same slot in both orders (arena #441: the holistic judge is position-driven, so unvalidated holistic wins are not counted).
 - **Decision rule:** B ships as the default style line only if it lifts mean diction or cuts the under-80 share without raising Lyria refusals; otherwise A stays. Safety: no prompt wording is chosen to get around the moderation screen.
+
+## E5 result (2026-10-20): Claude-written romanization (Tamil, Telugu)
+Sending Lyria only Claude-written, phonetically natural Latin lyrics (3 renders per language, one brief each), scored by sung-word match against the native text: Tamil 95/97/100, Telugu 97/100/93, against about 65 for the current native-plus-ITRANS input (Tamil 64/75, Telugu 64/67; hints off 63-67). Small sample, one brief per language, AI-judged, accent/naturalness not yet judged. Next: confirm on more briefs and judge naturalness before wiring a Claude romanization step.
+
+## E6 confirmation (2026-10-20): Kannada holds, Tamil/Telugu refused by the screen
+Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native-plus-ITRANS input (2 renders each). The two new Tamil (occ-ta-3) and Telugu (occ-te-3) briefs were refused by moderation on both attempts (not billed; cause unknown, not worked around), so Tamil/Telugu stay at the E5 evidence (one brief each). A Gemini flash single-listen naturalness rating scored every render 5/5, including 60%-diction stock, so it does not discriminate; accent and naturalness remain unjudged.
+
+## E7 (2026-10-20): Tamil and Telugu confirmed on a second brief
+occ-ta-2 and occ-te-2 with Claude-romanized lyrics, 2 renders each, sung-word match against native text: Tamil 93/98, Telugu 98/96. With E5, Tamil and Telugu are 93-100 over two briefs each, against about 65 for the current input; Kannada 97/99 (E6). AI-scored, small samples; accent and naturalness are unjudged (the Gemini flash single-listen rated everything 5/5).
