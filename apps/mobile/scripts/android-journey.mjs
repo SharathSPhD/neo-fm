@@ -227,6 +227,39 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
 } else {
   console.log("diag FCM delivery check skipped: no service account in this run");
 }
+// Signed-in registration against staging (prod has no test user). Skipped until staging has native push on (404 = off), and
+// where the staging URL or the test user's credentials are not provided. The app's own bridge does the registering: after
+// sign-in a fresh page load of the settings mounts <NativePush />, which sends the FCM token and records the flag.
+const STAGING = process.env.NEO_FM_STAGING_URL;
+const E2E_EMAIL = process.env.E2E_USER_EMAIL;
+const E2E_PASSWORD = process.env.E2E_USER_PASSWORD;
+if (!STAGING || !E2E_EMAIL || !E2E_PASSWORD) {
+  console.log("diag signed-in push registration skipped: no staging URL or test user in this run");
+} else {
+  try {
+    await send("Page.navigate", { url: STAGING + "/sign-in" });
+    await sleep(6000);
+    const stagingPush = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:"probe-probe-probe-probe"})}).then(r=>r.status)`);
+    if (stagingPush === 404) {
+      console.log("diag signed-in push registration skipped: native push is off on staging (404)");
+    } else {
+      await evalJs(`(()=>{const set=(n,v)=>{const i=document.querySelector("input[name='"+n+"']");Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").set.call(i,v);i.dispatchEvent(new Event("input",{bubbles:true}))};set("email",${JSON.stringify(E2E_EMAIL)});set("password",${JSON.stringify(E2E_PASSWORD)});document.querySelector("form").requestSubmit();return true})()`, true);
+      await sleep(8000);
+      const signedIn = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:"probe-probe-probe-probe"})}).then(r=>r.status)`);
+      check("staging: test user signs in inside the app", signedIn !== 401, String(signedIn));
+      await send("Page.navigate", { url: STAGING + "/account/notifications" });
+      let registered = false;
+      for (let i = 0; i < 15 && !registered; i++) { await sleep(2000); registered = (await evalJs(`localStorage.getItem("neofm.nativePush")`)) === "1"; }
+      check("staging: the app registers its FCM token once signed in", registered);
+      const shown = await evalJs(`/push notifications are on in this app/i.test(document.body.innerText)`);
+      check("staging: notification settings say push is on in the app", registered && shown === true, String(shown));
+      if (fcmToken) {
+        const del = await evalJs(`fetch("/api/notifications/push/native",{method:"DELETE",headers:{"content-type":"application/json"},body:JSON.stringify({token:${JSON.stringify(fcmToken)}})}).then(r=>r.status)`);
+        console.log("diag staging cleanup of the registered token:", del);
+      }
+    }
+  } catch (e) { check("staging signed-in push registration", false, String(e).slice(0, 120)); }
+}
 await goto("/sign-in");
 await send("Page.navigate", { url: ORIGIN + "/account/notifications" });
 await sleep(6000);
