@@ -803,6 +803,8 @@ export const en = {
   "clip.preview": "Clip preview",
   "clip.share": "Share clip",
   "clip.download": "Download clip",
+  "clip.copyLink": "Copy link for the video description",
+  "clip.linkCopied": "Link copied",
   "clip.failed": "Could not make the clip. Please try again.",
   "clip.unsupported": "This browser cannot record clips. Try Chrome or Safari on your phone.",
   "clip.compatNote": "This browser could not make an Instagram-ready MP4. If Instagram or WhatsApp will not take this file, try Chrome on Android or Safari on iPhone.",

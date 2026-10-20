@@ -805,6 +805,8 @@ export const te: Dict = {
   "clip.preview": "క్లిప్ ప్రివ్యూ",
   "clip.share": "క్లిప్ షేర్ చేయండి",
   "clip.download": "క్లిప్ డౌన్‌లోడ్ చేయండి",
+  "clip.copyLink": "వీడియో వివరణ కోసం లింక్ కాపీ చేయండి",
+  "clip.linkCopied": "లింక్ కాపీ అయింది",
   "clip.failed": "క్లిప్ తయారు కాలేదు. దయచేసి మళ్లీ ప్రయత్నించండి.",
   "clip.unsupported": "ఈ బ్రౌజర్ క్లిప్‌లను రికార్డ్ చేయలేదు. ఫోన్‌లో Chrome లేదా Safari ప్రయత్నించండి.",
   "clip.compatNote": "ఈ బ్రౌజర్ Instagramకు సరిపోయే MP4ని తయారు చేయలేకపోయింది. Instagram లేదా WhatsAppలో ఈ ఫైల్ పనిచేయకపోతే, Androidలో Chrome లేదా iPhoneలో Safariని ఉపయోగించి చూడండి.",

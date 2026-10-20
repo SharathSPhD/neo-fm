@@ -21,6 +21,7 @@ import { translate } from "@/lib/i18n/ui-strings";
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { MoreLikeThis } from "@/components/more-like-this";
 import { loadDedication } from "@/lib/share/load";
+import { tagShareUrl } from "@/lib/share/tag";
 import { whatsappShareUrl } from "@/lib/station/share";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
@@ -377,7 +378,7 @@ export default async function PublicSongPage(
           <a
             href={whatsappShareUrl(
               dedication ? `A song for ${dedication.to}` : displayTitle,
-              `${siteUrl()}/s/${data.public_id}`,
+              tagShareUrl(`${siteUrl()}/s/${data.public_id}`, { source: "whatsapp", campaign: dedication ? "gift" : "clip" }),
             )}
             target="_blank"
             rel="noopener noreferrer"
