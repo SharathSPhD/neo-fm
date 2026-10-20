@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 
 import { FunnelBeacon } from "@/components/funnel-beacon";
 import { ReportButton } from "@/components/report-button";
+import { TogetherAudio } from "@/components/together-audio";
 import { jsonLdString, musicRecordingLd } from "@/lib/seo/jsonld";
 import { trackIndexable } from "@/lib/seo/pool-tracks";
 import { siteUrl } from "@/lib/seo/site";
@@ -66,7 +67,7 @@ export default async function TrackSharePage(props: { params: Promise<{ id: stri
       <h1 className="text-2xl font-semibold">{track.title}</h1>
       <p className="text-sm text-foreground/70">AI-made {prettyLanguage(track.language)} music on neo-fm</p>
       {data?.signedUrl ? (
-        <audio controls preload="metadata" src={data.signedUrl} className="w-full" />
+        <TogetherAudio src={data.signedUrl} durationSeconds={track.durationSeconds} />
       ) : (
         <p>This song is not available right now.</p>
       )}
