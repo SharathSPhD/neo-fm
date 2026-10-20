@@ -95,6 +95,8 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('feedback',              'service', 'user_id', null, 'submitted via submit_feedback(); read by service role only'),
   ('funnel_daily',          'service', null,      null, null),
   ('funnel_campaign_daily', 'service', null,      null, null),
+  ('referral_codes',        'service', 'user_id', null, 'per-user share code; API routes with the service role only'),
+  ('referrals',             'service', 'sender_id', null, 'who brought whom; rewards run through service-role functions'),
   ('provider_daily_usage',  'service', null,      null, null),
   ('pool_tracks',           'service', null,      null, 'station pool; the station route reads admitted rows with the service role'),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
@@ -145,6 +147,9 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('provider_daily_usage',   'provider',     '''lyria'''),
   ('pool_tracks',           'source',       '''new_render'''),
   ('pool_tracks',           'language',     '''hi'''),
+  ('referral_codes',        'code',         '''abcdefgh'''),
+  ('referrals',              'code',         '''abcdefgh'''),
+  ('referrals',              'receiver_id',  '''bbbbbbbb-0000-4000-8000-00000000000b'''), -- sender <> receiver
   ('song_packs',             'sku',          '''single'''),
   ('song_packs',             'songs_total',  '1'),
   ('stripe_webhook_events',  'status',       '''processing'''),

@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 
 import { getLogger } from "@/lib/obs/log";
+import { rewardReferrer } from "@/lib/referral/claim";
 import { insertSignal, type SignalInsertClient } from "@/lib/station/signal-store";
 import { parseSignal } from "@/lib/station/signals";
 import { requireUser } from "@/lib/supabase/auth";
@@ -20,7 +21,10 @@ export async function POST(req: Request) {
   const sig = parseSignal(body);
   if (!sig) return NextResponse.json({ error: "bad_request" }, { status: 400 });
   // Still 204 on failure so playback never breaks, but the failure is now logged instead of vanishing.
-  const res = await insertSignal(createServiceRoleClient() as unknown as SignalInsertClient, authed.user.id, sig);
+  const db = createServiceRoleClient();
+  const res = await insertSignal(db as unknown as SignalInsertClient, authed.user.id, sig);
   if (!res.ok) getLogger("api/station/signal", req).warn("station signal not stored", { reason: res.reason, kind: sig.kind });
+  // A listener finishing a track is what earns their referrer a credit (no-op unless REFERRAL_ENABLED=1).
+  if (res.ok && sig.kind === "finish") await rewardReferrer(db, authed.user.id);
   return new NextResponse(null, { status: 204 });
 }
