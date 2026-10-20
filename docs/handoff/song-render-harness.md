@@ -44,3 +44,11 @@ Decision rule: ship adaptive best-of-N behind a flag only if it wins at least 60
 ## Spend (log in `ops/lyria-cost.md`)
 
 Render estimate GBP 0.25 (runs about 2x low). E2 first slice: 5 style-heavy briefs x 4 renders = 20 renders, about GBP 5, plus about GBP 1 of Gemini listens. Gemini balance is GBP 16 with a GBP 5 floor for listeners, so a 2x undercount still fits. Hard stop at 20 renders or GBP 6 estimated.
+
+## Results so far (2026-10-20)
+
+**E1, local scorers on 178 pool songs** ([audio-scorers-pool-2026-10-20.md](/mnt/project-files/audio-scorers-pool-2026-10-20.md)): the open scorers do not separate good from bad renders. Audiobox PQ is 7.9-8.2 in every language; the Music Arena preference head is 61.5% held-out (59% on vocals) and flat across the pool; CLAP text match is about 0 on native-script tags (needs English style descriptions); the sung-word check had no reference lyrics, so it is language match only; Malayalam is unmeasured (Whisper script share 0.11). Decision: `DEFAULT_WEIGHTS` in `lib/render/scorers.ts` gives Gemini-heard diction 0.55 and a Gemini naturalness listen 0.30, with PQ 0.10 and the preference head 0.05 as tie-breakers only.
+
+**E2 slice 1, same input rendered twice** (prod `/api/admin/test-render`, Hindi brief occ-hi-1, 6 renders, about GBP 1.50 estimated): diction match duet 98/93, qawwali 85/100, bhajan 76/100. Picking the better of two would have gained +2.5, +15 and +24 on those pairs (mean +13.8 on the pairs, 3 pairs only). Folk and ballad prompts were refused by the safety screen on their wording (not billed) and are still to run.
+
+**Next:** a Gemini naturalness listen scorer, a blind Gemini Pro pairwise judge for E2/E3, then wiring `renderBestOf` into the render step behind a flag once E2 shows the win-rate in the decision rule.

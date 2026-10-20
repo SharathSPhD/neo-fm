@@ -60,3 +60,14 @@ describe("renderBestOf", () => {
     expect(w.candidate).toBe(2);
   });
 });
+
+describe("dictionScorer", () => {
+  it("scores the transcript against the lyrics and vetoes a mostly unsung render", async () => {
+    const { dictionScorer } = await import("../lib/render/scorers");
+    const lyrics = "chal re dost station par\nhaath hilaao muskurao";
+    const s = dictionScorer<string>(lyrics, async (t) => t);
+    expect(await s.score(lyrics)).toBeGreaterThanOrEqual(95);
+    const bad = (await s.score("la la la")) as number;
+    expect(bad).toBeLessThanOrEqual(s.vetoAtOrBelow as number);
+  });
+});
