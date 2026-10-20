@@ -4,6 +4,8 @@ title = "neo-fm gitleaks config"
 useDefault = true
 
 [allowlist]
+# mobile-android.yml:114 references a secret by NAME (secrets.X), no value; one exact commit, so later edits are still scanned.
+commits = ["b23142c7a1dc0a1c1c19306439cc552c7517402b"]
 description = "Test fixtures and lockfiles carry fake or public values"
 paths = [
   '''pnpm-lock\.yaml$''',
