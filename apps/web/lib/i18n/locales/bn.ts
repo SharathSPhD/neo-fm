@@ -153,6 +153,8 @@ export const bn: Dict = {
   "pricing.pass.perMonth": "প্রতি মাসে",
   "pricing.pass.desc": "আপনার পছন্দমতো আপনার নিজের ২৪/৭ স্টেশন। টেস্ট মোড: এখনও আসল চার্জ নেই।",
   "pricing.pass.cta": "পাস শুরু করুন",
+  "pricing.pass.owned": "আপনার স্টেশন পাস আছে।",
+  "pricing.pass.manage": "পাস পরিচালনা করুন",
   "pricing.pass.note": "প্রতি মাসে বিল। যেকোনো সময় বাতিল করুন।",
   "pricing.pass.perks": "বিজ্ঞাপনের বিরতি নেই, আর মাসে {n}টি পর্যন্ত ব্যক্তিগত গান।",
   "discover.title": "কমিউনিটির গান",

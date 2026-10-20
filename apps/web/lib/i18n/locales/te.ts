@@ -153,6 +153,8 @@ export const te: Dict = {
   "pricing.pass.perMonth": "నెలకు",
   "pricing.pass.desc": "మీ అభిరుచికి తగిన మీ సొంత 24/7 స్టేషన్. టెస్ట్ మోడ్: ఇంకా అసలు ఛార్జీ లేదు.",
   "pricing.pass.cta": "పాస్ ప్రారంభించండి",
+  "pricing.pass.owned": "మీకు స్టేషన్ పాస్ ఉంది.",
+  "pricing.pass.manage": "పాస్‌ను నిర్వహించండి",
   "pricing.pass.note": "ప్రతి నెలా బిల్లు. ఎప్పుడైనా రద్దు చేయవచ్చు.",
   "pricing.pass.perks": "ప్రకటన విరామాలు లేవు, నెలకు {n} వరకు వ్యక్తిగత పాటలు.",
   "discover.title": "కమ్యూనిటీ నుంచి పాటలు",

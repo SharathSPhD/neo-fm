@@ -151,6 +151,8 @@ export const en = {
   "pricing.pass.perMonth": "a month",
   "pricing.pass.desc": "Your own 24/7 station, tuned to your taste. Test mode: no real charge yet.",
   "pricing.pass.cta": "Start the pass",
+  "pricing.pass.owned": "You have the Station pass.",
+  "pricing.pass.manage": "Manage your pass",
   "pricing.pass.note": "Billed monthly. Cancel anytime.",
   "pricing.pass.perks": "No ad breaks, and up to {n} personal songs a month.",
   "discover.title": "Songs from the community",
