@@ -65,8 +65,9 @@ check("native media-session plugin reachable", (await evalJs("typeof window.Capa
 
 // 2. no purchase UI, and the server refuses checkout for the shell UA
 await goto("/pricing");
-const buyButtons = await evalJs(`[...document.querySelectorAll("button,a")].map(e=>e.innerText).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t.trim())).length`);
-console.log("diag pricing buttons:", await evalJs(`JSON.stringify([...document.querySelectorAll("button,a")].map(e=>e.innerText.trim()).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t)))`));
+// signed-out visitors get a plain sign-in link per tier (not a purchase control); only <button>s start checkout
+const buyButtons = await evalJs(`[...document.querySelectorAll("button")].map(e=>e.innerText).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t.trim())).length`);
+console.log("diag pricing buttons:", await evalJs(`JSON.stringify([...document.querySelectorAll("button")].map(e=>e.innerText.trim()).filter(t=>/^(upgrade|buy|subscribe|get creator|get pro)/i.test(t)))`));
 check("no purchase buttons on /pricing", buyButtons === 0, `found ${buyButtons}`);
 const checkoutStatus = await evalJs(`fetch("/api/billing/checkout",{method:"POST",headers:{"content-type":"application/json"},body:"{}"}).then(r=>r.status)`);
 check("checkout refused for the app (403)", checkoutStatus === 403, `status ${checkoutStatus}`);
@@ -88,6 +89,9 @@ check("station audio plays", playing);
 
 // 4. media notification and session while playing
 const notif = adb("shell", "dumpsys", "notification", "--noredact");
+const ctx = (text, needle, n) => text.split("\n").map((l, i, a) => (l.includes(needle) ? a.slice(i, i + n).join("\n") : null)).filter(Boolean).slice(0, 2).join("\n---\n");
+console.log("diag notification:\n" + ctx(notif, `pkg=${PKG}`, 14));
+console.log("diag media_session:\n" + ctx(adb("shell", "dumpsys", "media_session"), PKG, 12));
 check("media notification posted", notif.includes(`pkg=${PKG}`) && /MediaStyle|media/i.test(notif.split(`pkg=${PKG}`)[1] ?? ""));
 const session = adb("shell", "dumpsys", "media_session");
 check("media session active", new RegExp(`${PKG}[\\s\\S]{0,600}state=PlaybackState \\{state=3`).test(session));

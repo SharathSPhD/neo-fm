@@ -5,6 +5,7 @@ APK="${1:?apk path}"
 OUT="${2:-smoke-out}"
 mkdir -p "$OUT"
 adb install -r "$APK"
+adb shell pm grant com.neofm.app android.permission.POST_NOTIFICATIONS || echo "no POST_NOTIFICATIONS permission declared"
 adb shell am start -n com.neofm.app/.MainActivity
 sleep 20
 adb shell dumpsys activity activities | grep -q com.neofm.app || { echo "app not in foreground"; exit 1; }
