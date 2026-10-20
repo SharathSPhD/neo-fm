@@ -13,7 +13,7 @@ for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
   const d = devices[name];
   const ctx = await browser.newContext({ ...d, userAgent: `${d.userAgent} NeoFmApp/0.1.0 (ios)` });
   const page = await ctx.newPage();
-  for (const path of ["/", "/station", "/pricing", "/sign-in"]) {
+  for (const path of ["/", "/discover", "/templates", "/pricing", "/help", "/whats-new", "/trust", "/ideas", "/feedback", "/privacy", "/terms", "/ai-disclosure", "/grievance", "/refusals", "/sign-in", "/station"]) {
     await page.goto(ORIGIN + path, { waitUntil: "networkidle" });
     const m = await page.evaluate(() => {
       const w = innerWidth;
@@ -30,6 +30,15 @@ for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
     if (path === "/sign-in") check(`${name}: no Google sign-in in the app`, !/continue with google/i.test(await page.evaluate(() => document.body.innerText)));
   }
   await ctx.close();
+  // landscape
+  const lctx = await browser.newContext({ ...d, userAgent: `${d.userAgent} NeoFmApp/0.1.0 (ios)`, viewport: { width: d.viewport.height, height: d.viewport.width } });
+  const lpage = await lctx.newPage();
+  for (const path of ["/", "/station", "/pricing"]) {
+    await lpage.goto(ORIGIN + path, { waitUntil: "networkidle" });
+    const m = await lpage.evaluate(() => ({ w: innerWidth, scrollW: document.scrollingElement.scrollWidth }));
+    check(`${name} landscape ${path}: no sideways scroll`, m.scrollW <= m.w + 1, JSON.stringify(m));
+  }
+  await lctx.close();
 }
 await browser.close();
 const failed = results.filter((r) => !r.ok);
