@@ -21,7 +21,7 @@ const check = (name, ok, detail = "") => {
 let ws, id = 0;
 const pending = new Map();
 const send = (method, params = {}) => new Promise((res) => { const n = ++id; pending.set(n, res); ws.send(JSON.stringify({ id: n, method, params })); });
-const evalJs = async (expression) => (await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true })).result?.result?.value;
+const evalJs = async (expression, userGesture = false) => (await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true, userGesture })).result?.result?.value;
 
 async function attach() {
   if (ws) try { ws.close(); } catch {}
@@ -86,7 +86,7 @@ shot("last-page");
 const focus = () => adb("shell", "dumpsys", "window").split("\n").filter((l) => /mCurrentFocus|mFocusedApp/.test(l)).join(" | ");
 await goto("/");
 console.log("diag before click: history", await evalJs("history.length"), await evalJs("location.pathname"));
-await evalJs(`(()=>{const a=[...document.querySelectorAll("a[href]")].find(x=>new URL(x.href).pathname==="/pricing"&&x.offsetParent!==null);a&&a.click();return !!a})()`);
+await evalJs(`(()=>{const a=[...document.querySelectorAll("a[href]")].find(x=>new URL(x.href).pathname==="/pricing"&&x.offsetParent!==null);a&&a.click();return !!a})()`, true);
 await sleep(4000);
 const onPricing = (await evalJs("location.pathname")) === "/pricing";
 console.log("diag on pricing: history", await evalJs("history.length"), "entries", await evalJs("JSON.stringify(navigation.entries().map(e=>new URL(e.url).pathname).slice(-5))"));
@@ -118,7 +118,7 @@ check("portrait again after rotating back", (await evalJs("innerHeight > innerWi
 await goto("/station");
 let playing = false;
 for (let attempt = 0; attempt < 3 && !playing; attempt++) {
-  await evalJs(`(()=>{const b=[...document.querySelectorAll("button")].find(x=>/start my station|play|tune in/i.test(x.innerText));b&&b.click();return !!b})()`);
+  await evalJs(`(()=>{const b=[...document.querySelectorAll("button")].find(x=>/start my station|play|tune in/i.test(x.innerText));b&&b.click();return !!b})()`, true);
   for (let i = 0; i < 20 && !playing; i++) { await sleep(2000); playing = (await audioTime()) > 0; }
 }
 check("station plays", playing);
