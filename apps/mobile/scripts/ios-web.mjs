@@ -12,6 +12,16 @@ const sitemap = await (await fetch(ORIGIN + "/sitemap.xml")).text();
 const trackPath = sitemap.match(/\/t\/[0-9a-f-]{36}/i)?.[0];
 check("sitemap lists a public track for the listen-together check", !!trackPath, String(trackPath));
 const browser = await webkit.launch();
+if (trackPath) {
+  // WebKit's first audio load on a fresh runner spends minutes initialising GStreamer (iPhone SE, first in line, read currentTime 0
+  // after a 7 minute stall in both runs); warm it up once so the per-device checks measure the page, not the runner.
+  const warm = await (await browser.newContext()).newPage();
+  const t0 = Date.now();
+  await warm.goto(ORIGIN + trackPath, { waitUntil: "networkidle" });
+  await warm.evaluate(() => new Promise((res) => { const a = document.querySelector("audio"); if (!a) return res(); a.addEventListener("loadedmetadata", res, { once: true }); a.addEventListener("error", res, { once: true }); a.load(); setTimeout(res, 600000); })).catch(() => {});
+  console.log(`audio warm-up took ${Math.round((Date.now() - t0) / 1000)}s`);
+  await warm.context().close();
+}
 for (const name of ["iPhone SE", "iPhone 13", "iPhone 15 Pro Max"]) {
   const d = devices[name];
   const ctx = await browser.newContext({ ...d, userAgent: `${d.userAgent} NeoFmApp/0.1.0 (ios)` });
