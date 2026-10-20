@@ -67,7 +67,7 @@ export function AppShell({
   return (
     <div className="relative min-h-screen text-foreground">
       <TopNav user={user} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-12 sm:pt-6">
         {children}
       </div>
       <MobileBottomNav />

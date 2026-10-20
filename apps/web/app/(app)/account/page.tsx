@@ -23,6 +23,7 @@ import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { isBillingEnabled } from "@/lib/billing/config";
 import { readOwnStationPass } from "@/lib/billing/pass";
+import { showPlanChip } from "@/lib/billing/plan-chip";
 import { startOfMonthIso } from "@/lib/billing/usage";
 import { serverI18n } from "@/lib/i18n/server";
 import { createServerClient } from "@/lib/supabase/server";
@@ -159,11 +160,11 @@ async function PlanCards({ userId, email }: { userId: string; email: string }) {
           label={t("account.plan")}
           value={
             <span className="inline-flex items-center gap-2">
-              {pass && plan === "Free" ? null : (
+              {showPlanChip(plan, !!pass) ? (
                 <span className="rounded-full border border-accent/30 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
                   {plan}
                 </span>
-              )}
+              ) : null}
               {pass ? (
                 <span
                   data-testid="station-pass-badge"

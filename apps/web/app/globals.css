@@ -325,7 +325,7 @@ a:focus {
   color: hsl(var(--background));
 }
 
-/* Now-playing orb: a spinning aurora ring around a tinted disc with a note, until cover art exists in the queue API. */
+/* Now-playing orb: a spinning aurora ring around a dark core, until cover art exists in the queue API. */
 .orb {
   position: relative;
   width: 7rem;
@@ -343,16 +343,12 @@ a:focus {
   animation: orb-spin 24s linear infinite;
 }
 .orb::after {
-  content: "\266A";
+  /* Dark core with a faint tint: the same disc in every player state (no glyph, so no font fallback). */
+  content: "";
   position: absolute;
   inset: 12%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   border-radius: inherit;
-  font-size: 2.25rem;
-  color: hsl(0 0% 100% / 0.92);
-  background: radial-gradient(circle at 30% 25%, hsl(var(--aurora-a) / 0.95), hsl(var(--aurora-c) / 0.75) 80%);
+  background: radial-gradient(circle at 30% 25%, hsl(var(--aurora-a) / 0.22), hsl(var(--background)) 70%);
 }
 .orb[data-paused="true"]::before { animation-play-state: paused; }
 @keyframes orb-spin { to { transform: rotate(360deg); } }
