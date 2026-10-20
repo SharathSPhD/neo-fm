@@ -5,7 +5,7 @@ One benchmark every lyrics and song change has to win on. Stdlib Python only; no
 ## How it works
 - **Entries**: each pipeline variant writes one JSON of outputs over a fixed brief set (`data/entries/lyrics/<variant>.json` = `{brief_id: lyric}`; songs = `{brief_id: {audio, scores, usd}}`). Briefs: `data/briefs/lyrics.json` (the lab's 40 briefs plus 8 Bengali, per language and tier) and `songs.json` (same briefs; render a subset, the song threads choose).
 - **Lyrics battles**: blind Claude judge (`claude-sonnet-5-5`, six-dimension rubric from the lab), every pair judged in both orders and merged (summed difference >= 1 = win, else tie). Position bias is reported and cancels.
-- **Song battles**: scorers give each song numbers (`gemini_audio`, `sung_word_acc`, `audio_quality`, `text_audio_match`, `music_arena_pref`); they are scaled, blended with `data/song-weights.json`, compared on shared scorers only, and ties fall inside a margin. Direct Gemini pairwise verdicts can be added with `songs.ingest_pairwise`.
+- **Song battles**: scorers give each song numbers (`gemini_audio`, `sung_word_acc`, `music_arena_pref`, `audio_quality`, `text_audio_match`; the last three are weak and low-weighted, see `songs.py`); they are scaled, blended with `data/song-weights.json`, compared on shared scorers only, and ties fall inside a margin. Direct Gemini pairwise verdicts can be added with `songs.ingest_pairwise`.
 - **Ranking**: Bradley-Terry on all battles, shown on an Elo scale with a 95% interval from resampling whole briefs. "Beats reference" is only claimed when intervals do not overlap. Cost per item comes from `costs.jsonl`.
 - Rule from the lab: `det` (metre/rhyme score) alone was gamed. Report judge win rate first; never rank on a proxy.
 

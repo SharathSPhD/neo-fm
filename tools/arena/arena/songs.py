@@ -11,12 +11,16 @@ from __future__ import annotations
 
 from . import store
 
+# Weights follow the audio-scoring lab (2026-10-20): Music Arena preference model 61.5% held-out
+# (weak, vocals 59%), audio quality (PQ) flat at 7.9-8.2, CLAP text match about 0 on native-script
+# text (score it against English style descriptions), sung-word accuracy needs no reference text.
+# Malayalam is unmeasured. So the Gemini audio judge and sung-word accuracy carry the blend.
 DEFAULT_WEIGHTS = {
-    "gemini_audio": {"w": 0.35, "lo": 1, "hi": 5},
-    "sung_word_acc": {"w": 0.25, "lo": 0, "hi": 1},
-    "audio_quality": {"w": 0.15, "lo": 0, "hi": 1},
-    "text_audio_match": {"w": 0.10, "lo": 0, "hi": 1},
-    "music_arena_pref": {"w": 0.15, "lo": 0, "hi": 1},
+    "gemini_audio": {"w": 0.45, "lo": 1, "hi": 5},
+    "sung_word_acc": {"w": 0.35, "lo": 0, "hi": 1},
+    "music_arena_pref": {"w": 0.10, "lo": 0, "hi": 1},
+    "audio_quality": {"w": 0.05, "lo": 0, "hi": 10},
+    "text_audio_match": {"w": 0.05, "lo": 0, "hi": 1},
 }
 MARGIN = 0.04  # blended-score gap under which a pair is a tie; about one scorer-step of noise
 
