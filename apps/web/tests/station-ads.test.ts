@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AD_CAPS, TIER_CAPS, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
+import { AD_CAPS, TIER_CAPS, adHoldoutPct, inAdHoldout, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
 import { parseAdState } from "../lib/station/ads-server";
 import { summarizeAds } from "../lib/ops/ads-report";
 
@@ -187,5 +187,22 @@ describe("adTierFor", () => {
     const broken = { rpc: async () => ({ data: false, error: null }), from: () => { throw new Error("down"); } } as never;
     expect(await adTierFor(broken, "u1")).toBe("free");
     expect(await adTierFor(broken, null)).toBe("free");
+  });
+});
+
+describe("ad holdout", () => {
+  it("is stable per listener and close to the requested share", () => {
+    const ids = Array.from({ length: 2000 }, (_, i) => `00000000-0000-4000-8000-${String(i).padStart(12, "0")}`);
+    expect(ids.map((i) => inAdHoldout(i, 10))).toEqual(ids.map((i) => inAdHoldout(i, 10)));
+    const share = ids.filter((i) => inAdHoldout(i, 10)).length / ids.length;
+    expect(share).toBeGreaterThan(0.07);
+    expect(share).toBeLessThan(0.13);
+    expect(ids.some((i) => inAdHoldout(i, 0))).toBe(false);
+  });
+  it("reads ADS_HOLDOUT_PCT, defaulting to 10 and capping at 50", () => {
+    expect(adHoldoutPct({} as NodeJS.ProcessEnv)).toBe(10);
+    expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "0" } as unknown as NodeJS.ProcessEnv)).toBe(0);
+    expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "90" } as unknown as NodeJS.ProcessEnv)).toBe(50);
+    expect(adHoldoutPct({ ADS_HOLDOUT_PCT: "x" } as unknown as NodeJS.ProcessEnv)).toBe(10);
   });
 });

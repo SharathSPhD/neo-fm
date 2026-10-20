@@ -68,6 +68,20 @@ export function adsEnabled(): boolean {
   return process.env.ADS_ENABLED === "1";
 }
 
+/** Share of signed-in listeners (0-50) who never get ads, so next-day return can be compared against a control. ADS_HOLDOUT_PCT, default 10. */
+export function adHoldoutPct(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.ADS_HOLDOUT_PCT;
+  const n = raw === undefined || raw === "" ? 10 : Number(raw);
+  return Number.isFinite(n) ? Math.min(50, Math.max(0, Math.floor(n))) : 10;
+}
+
+/** Stable per listener (FNV-1a of the user id), so the same people stay in the control group. */
+export function inAdHoldout(userId: string, pct: number = adHoldoutPct()): boolean {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < userId.length; i++) h = Math.imul(h ^ userId.charCodeAt(i), 0x01000193) >>> 0;
+  return h % 100 < pct;
+}
+
 /** Seconds a spot occupies, for the cap. */
 export function spotSeconds(slot: Pick<AdSlot, "durationSeconds">): number {
   return slot.durationSeconds ?? AD_CAPS.cardOnlySeconds;
