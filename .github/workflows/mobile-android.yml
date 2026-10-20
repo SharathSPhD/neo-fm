@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   apk:
-    name: debug-signed beta APK
+    name: beta APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,6 +43,22 @@ jobs:
           cd android && ./gradlew assembleDebug --no-daemon
       - name: Name the APK
         run: cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk neo-fm-beta.apk
+      - name: Sign with the stable beta key (when its secrets exist)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          # A stable key lets a phone update the beta in place. Without the secrets (forks, PRs from forks) the APK stays debug-signed.
+          if [ -z "$KS_B64" ]; then echo "no beta key secrets: keeping the debug signature"; exit 0; fi
+          APKSIGNER="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          KS="$RUNNER_TEMP/beta.p12"
+          echo "$KS_B64" | base64 -d > "$KS"
+          KS_PASS="$KS_PASS" KEY_PASS="$KEY_PASS" "$APKSIGNER" sign --ks "$KS" --ks-key-alias "$KEY_ALIAS" \
+            --ks-pass env:KS_PASS --key-pass env:KEY_PASS neo-fm-beta.apk
+          "$APKSIGNER" verify --print-certs neo-fm-beta.apk | grep -i "SHA-256 digest" | head -1
+          rm -f "$KS"
       - uses: actions/upload-artifact@v4
         with:
           name: neo-fm-beta-apk
@@ -65,7 +81,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
         run: |
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "neo-fm beta $TAG" --notes "Beta APK for sideloading (debug-signed). Allow 'install unknown apps' for your browser, then open the file."
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "neo-fm beta $TAG" --notes "Beta APK for sideloading. Allow 'install unknown apps' for your browser, then open the file."
           gh release upload "$TAG" neo-fm-beta.apk --clobber
 
   emulator-smoke:
