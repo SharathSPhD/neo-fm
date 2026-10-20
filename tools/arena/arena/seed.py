@@ -65,11 +65,11 @@ def import_prod(path: str, ts: str, usd_per_song: float = 0.09) -> dict:
     store.write_json(f"entries/lyrics/{PROD}.json", {k: v["polished"] for k, v in d.items() if v["polished"]})
     rows = []
     for bid, v in d.items():
-        for key, arm in (("judge_claude_vs_G0", "G0"), ("judge_claude_vs_G2", "G2")):
-            s = {"pce": 1.0, "tie": 0.5, "single": 0.0}.get(v[key])
-            if s is not None:
-                rows.append({"kind": "lyrics", "a": PROD, "b": ARM[arm], "brief": bid, "score": s,
-                             "judge": "claude/pce-thread-both-orders", "ts": ts})
+        for fam, tag in (("claude", "claude/pce-thread-both-orders"), ("gemini", "gemini/pce-thread-cross-check")):
+            for arm in ("G0", "G2"):
+                s = {"pce": 1.0, "tie": 0.5, "single": 0.0}.get(v.get(f"judge_{fam}_vs_{arm}"))
+                if s is not None:
+                    rows.append({"kind": "lyrics", "a": PROD, "b": ARM[arm], "brief": bid, "score": s, "judge": tag, "ts": ts})
     have = {(r["a"], r["b"], r["brief"], r["judge"]) for r in store.read_jsonl("battles.jsonl")}
     fresh = [r for r in rows if (r["a"], r["b"], r["brief"], r["judge"]) not in have]
     store.append_jsonl("battles.jsonl", fresh)
