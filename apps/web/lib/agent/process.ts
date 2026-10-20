@@ -16,6 +16,7 @@ import { auditDiction } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
 import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
+import { languageNote } from "../engine/lang-notes";
 import { judgeAndRetry } from "../engine/judge";
 import { voiceChoiceFor, voiceHint } from "../voice";
 import { judgeLeadGender, renderWithVoiceCheck } from "../voice/check";
@@ -171,6 +172,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const intent = process.env.PCE_INTENT === "1" ? await timed("intent", () => intentFor(db, job.song_document_id, doc)) : undefined;
       // PCE_STYLES: route the style without a model call; ignored when the full intent is on (it already carries the genre).
       const styled = !intent && process.env.PCE_STYLES === "1" ? styleOnly({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }) : null;
+      // PCE_LANG_NOTES: per-language craft note (Marathi); off until it wins the eval gate.
+      const langNote = process.env.PCE_LANG_NOTES === "1" ? languageNote(doc.language) : "";
       if (styled) trace.push(`styles routed genre=${styled.genre || "none"}`);
       // The pool tags raga from document_json.raga.name, so a raga named in the brief is recorded there (best-effort).
       const ragaName = styled?.raga ?? intent?.raga?.toLowerCase();
@@ -187,7 +190,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         tasteCard: tasteCard || undefined,
         engine: embedEngine(job.id),
         intent,
-        styleNote: styled?.note || undefined,
+        styleNote: styled?.note || langNote || undefined,
+        prosodySelect: process.env.PCE_PROSODY_SELECT === "1" || undefined,
       };
       // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
       const store = runStore(db, plan.agent === "free" ? "free" : "pro");
@@ -202,7 +206,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         if (!v.allowed) throw new SafetyRefusal(v.reason);
         // The structured intent (PCE_INTENT) is extracted once per job; polish sees it as part of the brief and the judge reads against it.
         const savedIntent = brief.intent;
-        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : styled?.note ? `${doc.document_json.metadata?.prompt ?? ""}\n${styled.note}` : doc.document_json.metadata?.prompt ?? "";
+        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${doc.document_json.metadata?.prompt ?? ""}\n${styled?.note || langNote}` : doc.document_json.metadata?.prompt ?? "";
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
@@ -357,6 +361,7 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
 
 /** Machine-readable failure code shown to users as friendly copy (components/job-progress.tsx); the raw reason stays in agent_runs.render_error. */
 export function failureCode(renderError?: string | null): string {
+  if (renderError && /^lyria 402/i.test(renderError)) return "creation_paused";
   if (renderError && /daily cap/i.test(renderError)) return "provider_busy";
   if (renderError && /spend cap/i.test(renderError)) return "allowance_reached";
   if (renderError && /content policy|safety/i.test(renderError)) return "content_policy";

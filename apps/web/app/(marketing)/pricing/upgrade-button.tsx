@@ -24,6 +24,7 @@ import { useState, useTransition } from "react";
 import { sendFunnelEvent } from "@/components/funnel-beacon";
 import { checkoutErrorView } from "@/lib/billing/checkout-guard";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { useAppShell } from "@/lib/native/use-app-shell";
 
 type Props = { label: string; variant?: "primary" | "secondary" } & (
   | { tier: "creator" | "pro"; interval?: "month" | "year"; pack?: never; pass?: never }
@@ -36,6 +37,7 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [manageUrl, setManageUrl] = useState<string | null>(null);
+  const shell = useAppShell();
 
   function start() {
     setError(null);
@@ -84,6 +86,11 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
     });
   }
 
+  // Plain text, no link: store rules forbid steering app users to outside purchase (see lib/native/app-shell.ts).
+  if (shell) {
+    return <p className="text-xs text-foreground/60">Plans and packs are managed on neo-fm.com with this same account.</p>;
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <button
@@ -107,5 +114,21 @@ export function UpgradeButton({ label, variant = "primary", ...target }: Props) 
         </a>
       ) : null}
     </div>
+  );
+}
+
+/** Signed-out "Upgrade to X" entry: in the app shell it must not read as a purchase call to action. */
+export function UpgradeSignInLink({ label }: { label: string }) {
+  const shell = useAppShell();
+  if (shell) {
+    return <p className="text-xs text-foreground/60">Plans and packs are managed on neo-fm.com with this same account.</p>;
+  }
+  return (
+    <a
+      href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
+      className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
+    >
+      {label}
+    </a>
   );
 }

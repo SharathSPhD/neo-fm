@@ -26,6 +26,8 @@ export function isoDuration(seconds: number | null | undefined): string | undefi
 export interface SongLd {
   base: string;
   publicId: string;
+  /** Path of the page when it is not /s/<publicId>, e.g. /t/<id> for a station track. */
+  path?: string;
   name: string;
   /** BCP 47 language code, e.g. "ta". */
   language: string;
@@ -40,7 +42,7 @@ export interface SongLd {
 const MAX_LYRICS_CHARS = 5000;
 
 export function musicRecordingLd(s: SongLd) {
-  const url = `${s.base}/s/${s.publicId}`;
+  const url = `${s.base}${s.path ?? `/s/${s.publicId}`}`;
   const lyrics = s.lyrics?.trim().slice(0, MAX_LYRICS_CHARS);
   return {
     "@context": "https://schema.org",

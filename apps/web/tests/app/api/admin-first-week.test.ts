@@ -14,6 +14,7 @@ vi.mock("../../../lib/agent/adapters", () => ({
 vi.mock("../../../lib/ops/load", () => ({
   OpsQueryError: class extends Error {},
   loadFunnel: async () => ({ window_days: 7 }),
+  loadPullFunnel: async () => ({ window_days: 7, signups: 0 }),
 }));
 
 import { GET } from "../../../app/api/admin/first-week/route";
@@ -39,6 +40,7 @@ describe("GET /api/admin/first-week", () => {
     expect(res.status).toBe(200);
     expect(body.cost).toMatchObject({ listener_hours: 1, ledger_gbp_per_listener_hour: 2, admitted_pool_tracks: 4 });
     expect(body.funnel).toEqual({ window_days: 7 });
+    expect(body.pull).toEqual({ window_days: 7, signups: 0 });
     expect(JSON.stringify(body)).not.toContain("u-1");
   });
 });
