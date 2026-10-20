@@ -82,13 +82,14 @@ export class CircuitBreaker {
   }
 }
 
-/** Outage-class: rate limiting, provider 5xx, or a transport failure (message from generateMusic's `lyria <status>:` errors). */
+/** Outage-class: rate limiting, an exhausted provider balance (402), provider 5xx, or a transport failure (message from generateMusic's `lyria <status>:` errors). */
 export function isOutage(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   const m = /^lyria (\d{3})/.exec(msg);
   if (m) {
     const s = Number(m[1]);
-    return s === 429 || s >= 500;
+    // 402 is not retryable per call, but it says the provider will refuse every render until the balance is topped up.
+    return s === 429 || s === 402 || s >= 500;
   }
   if (/^lyria returned no audio/.test(msg)) return false;
   return /fetch failed|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|network|timeout/i.test(msg);
