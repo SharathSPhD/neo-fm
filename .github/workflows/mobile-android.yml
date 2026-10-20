@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: mobile-android-${{ github.ref }}
@@ -42,10 +42,22 @@ jobs:
         with:
           name: neo-fm-beta-apk
           path: neo-fm-beta.apk
-      - name: Attach to the GitHub Release
-        if: startsWith(github.ref, 'refs/tags/mobile-v')
+
+  release:
+    name: attach APK to the GitHub Release
+    if: startsWith(github.ref, 'refs/tags/mobile-v')
+    needs: [apk, emulator-smoke]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: neo-fm-beta-apk
+      - name: Create release and upload
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --prerelease --title "neo-fm beta $GITHUB_REF_NAME" --notes "Beta APK for sideloading (debug-signed). Allow 'install unknown apps' for your browser, then open the file."
           gh release upload "$GITHUB_REF_NAME" neo-fm-beta.apk --clobber
@@ -62,7 +74,7 @@ jobs:
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
-      - uses: reactivecircus/android-emulator-runner@v2
+      - uses: reactivecircus/android-emulator-runner@c9c93e6ba9c4194322e114c40970d5983d9a07cc # v2.38.0
         with:
           api-level: 34
           arch: x86_64
