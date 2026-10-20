@@ -90,8 +90,12 @@ await evalJs(`(()=>{const a=[...document.querySelectorAll("a[href]")].find(x=>ne
 await sleep(4000);
 const onPricing = (await evalJs("location.pathname")) === "/pricing";
 console.log("diag on pricing: history", await evalJs("history.length"), "entries", await evalJs("JSON.stringify(navigation.entries().map(e=>new URL(e.url).pathname).slice(-5))"));
+console.log("diag GET / status:", await evalJs(`fetch("/",{redirect:"manual"}).then(r=>r.status+" "+r.type)`));
 adb("shell", "input", "keyevent", "KEYCODE_BACK");
-await sleep(3000);
+const seq = [];
+for (let i = 0; i < 12; i++) { await sleep(300); try { seq.push(await evalJs("location.pathname")); } catch { seq.push("?"); } }
+console.log("diag path after back every 300ms:", seq.join(" "));
+await sleep(500);
 const back = await evalJs("location.pathname");
 console.log("diag after back:", back, "history", await evalJs("history.length"), "| focus:", focus());
 check("back button returns to the previous page", onPricing && back === "/", `pricing=${onPricing} then ${back}`);
