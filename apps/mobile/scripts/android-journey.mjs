@@ -153,6 +153,37 @@ if (trackPath) {
   check("together link: a stale link is a plain player", (await evalJs(`/a friend is listening/i.test(document.body.innerText)`)) === false);
 }
 
+// 4c. dedicate this hour: a station link with ?for=Name greets the listener, the dedicate form fits the screen, and the name is cut to letters
+async function openRaw(path, ready) {
+  await send("Page.navigate", { url: ORIGIN + path });
+  for (let i = 0; i < 15; i++) { await sleep(2000); if ((await evalJs(ready)) === true) return true; }
+  return false;
+}
+const bannerUp = await openRaw("/station?s=raat&for=Anita", `/this hour is for anita/i.test(document.body.innerText)`);
+shot("dedicate-banner");
+const dp = JSON.parse(await evalJs(probe));
+check("dedicate link: 'This hour is for Anita' shows and fits the screen", bannerUp && !dp.sideways && dp.out.length === 0, JSON.stringify({ bannerUp, out: dp.out }));
+await evalJs(`(()=>{const b=[...document.querySelectorAll("button")].find(x=>/dedicate this hour/i.test(x.innerText));b&&b.click();return !!b})()`, true);
+await sleep(1500);
+const form = JSON.parse(await evalJs(`(()=>{const i=document.querySelector("input[maxlength='24']");if(!i)return JSON.stringify({input:false});const r=i.getBoundingClientRect();return JSON.stringify({input:true,l:r.left,r:r.right,w:innerWidth})})()`));
+shot("dedicate-form");
+check("dedicate form opens and the name field fits the screen", form.input && form.l >= 0 && form.r <= form.w + 1, JSON.stringify(form));
+await openRaw("/station?s=raat&for=" + encodeURIComponent("<b>Anita</b>123"), `/this hour is for/i.test(document.body.innerText)`);
+const shown = await evalJs(`(document.body.innerText.match(/this hour is for[^\\n]*/i)||[""])[0]`);
+check("dedicate link: markup and digits in the name are dropped", /this hour is for bAnitab$/i.test(shown.trim()) && !/[<>0-9]/.test(shown), shown);
+
+// 4d. push in the shell: the opt-in lives under Account > Notifications and needs sign-in, so check what the WebView can do and that the page degrades
+const cap = JSON.parse(await evalJs(`JSON.stringify({sw:"serviceWorker" in navigator,push:"PushManager" in window,notif:"Notification" in window,perm:"Notification" in window?Notification.permission:null,secure:isSecureContext})`));
+console.log("diag push capability in the WebView:", JSON.stringify(cap));
+const key = await evalJs(`fetch("/api/notifications/push/key").then(r=>r.json()).then(j=>j.enabled===true)`);
+check("push key endpoint answers in the shell", key === true);
+await goto("/sign-in");
+await send("Page.navigate", { url: ORIGIN + "/account/notifications" });
+await sleep(6000);
+const redirected = await evalJs("location.pathname + location.search");
+const ap = JSON.parse(await evalJs(probe));
+check("signed-out notifications link goes to sign-in and fits the screen", /^\/sign-in\?next=/.test(redirected) && !ap.err && !ap.sideways && ap.out.length === 0, redirected);
+
 // 5. the app can be killed and reopened cleanly
 adb("shell", "am", "force-stop", PKG);
 adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
