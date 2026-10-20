@@ -55,7 +55,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
         className="flex flex-wrap items-end gap-3"
         role="search"
       >
-        <label className="flex flex-1 min-w-[14rem] flex-col gap-1">
+        <label className="flex flex-1 min-w-56 flex-col gap-1">
           <span className="text-[10px] uppercase tracking-widest text-foreground/40">
             {t("palette.search")}
           </span>
@@ -64,7 +64,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder={t("lib.searchPlaceholder")}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm outline-hidden focus:border-accent"
           />
         </label>
         <Select
@@ -207,7 +207,7 @@ function Select({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-md border border-muted/30 bg-background px-3 py-2 text-sm outline-none focus:border-accent"
+        className="rounded-md border border-muted/30 bg-background px-3 py-2 text-sm outline-hidden focus:border-accent"
       >
         {options.map((o) => (
           <option key={o.v} value={o.v}>

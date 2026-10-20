@@ -240,7 +240,7 @@ function CardSkeleton({ rows }: { rows: number }) {
   return (
     <section aria-hidden className="flex animate-pulse flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-4 w-full rounded bg-muted/20" />
+        <div key={i} className="h-4 w-full rounded-sm bg-muted/20" />
       ))}
     </section>
   );

@@ -371,7 +371,7 @@ export function SongList({
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setEditing(null);
                 }}
-                className="flex-1 rounded-md border border-accent/40 bg-transparent px-3 py-1.5 text-base outline-none"
+                className="flex-1 rounded-md border border-accent/40 bg-transparent px-3 py-1.5 text-base outline-hidden"
               />
               <button
                 type="submit"
@@ -390,7 +390,7 @@ export function SongList({
                 {s.title ?? songFallbackTitle(s, t("lib.songLower"))}
               </span>
               <span className="text-xs text-foreground/50">
-                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
+                <span className="mr-2 rounded-sm border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
               </span>
             </Link>

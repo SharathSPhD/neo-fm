@@ -74,7 +74,7 @@ export default async function HowItWorks(props: { params: Promise<{ lang: string
       <div>
         <Link
           href="/sign-up"
-          className="inline-block rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
+          className="inline-block rounded-md bg-accent px-5 py-2.5 font-medium text-background hover:bg-accent/90 focus:outline-hidden focus:ring-2 focus:ring-accent focus:ring-offset-2 focus:ring-offset-background"
         >
           {a.cta}
         </Link>

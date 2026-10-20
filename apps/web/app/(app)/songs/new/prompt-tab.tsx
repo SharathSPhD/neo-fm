@@ -222,7 +222,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
           maxLength={PROMPT_MAX_CHARS + 50}
           rows={5}
           placeholder="e.g. A melancholic Carnatic raga about the monsoon season and longing for home, with a female vocalist in the Kalyani raga, 90 seconds long"
-          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base leading-relaxed outline-none focus:border-accent resize-none"
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base leading-relaxed outline-hidden focus:border-accent resize-none"
           lang={language}
         />
         <span
@@ -254,7 +254,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             id="prompt-style"
             value={styleFamily}
             onChange={(e) => { setStyleTouched(true); setStyleFamily(e.target.value as StyleFamily); }}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
           >
             {STYLE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -275,7 +275,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             id="prompt-language"
             value={language}
             onChange={(e) => { const l = e.target.value as Language; setLanguage(l); if (!styleTouched) setStyleFamily(DEFAULT_STYLE[l]); }}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
           >
             {LANGUAGE_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
@@ -301,7 +301,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             id="prompt-duration"
             value={duration}
             onChange={(e) => setDuration(Number(e.target.value) as Duration)}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
           >
             {DURATION_OPTIONS.map((s) => (
               <option key={s} value={s}>
@@ -322,7 +322,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             value={voiceNow}
             disabled={voiceChoices.length <= 1}
             onChange={(e) => setVoice(e.target.value as VoiceChoice)}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent disabled:opacity-60"
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent disabled:opacity-60"
           >
             {(shownVoices ?? voiceChoices).map((c) => (
               <option key={c} value={c}>

@@ -34,7 +34,7 @@ export function EmptyState({
       {cta && (
         <Link
           href={cta.href}
-          className="mt-2 inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="mt-2 inline-flex items-center rounded-md bg-accent px-4 py-2 text-sm font-medium text-background hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           {cta.label}
         </Link>

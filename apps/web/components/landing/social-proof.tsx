@@ -18,7 +18,7 @@ export async function SocialProof() {
             {stats.songs} public songs across {stats.languages} languages, each one labelled AI-generated and open to listen to.
           </p>
         </div>
-        <Link href="/discover" className="rounded-md border border-accent/40 bg-accent/10 px-5 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 focus:outline-none focus:ring-2 focus:ring-accent">Browse what people made</Link>
+        <Link href="/discover" className="rounded-md border border-accent/40 bg-accent/10 px-5 py-2.5 text-sm font-medium text-accent hover:bg-accent/20 focus:outline-hidden focus:ring-2 focus:ring-accent">Browse what people made</Link>
       </div>
     </section>
   );

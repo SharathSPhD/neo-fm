@@ -87,29 +87,29 @@ export default function HealthPage() {
       <form onSubmit={submit} className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col text-sm">
           Ops secret
-          <input type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="rounded border px-2 py-1" />
+          <input type="password" autoComplete="off" value={secret} onChange={(e) => setSecret(e.target.value)} className="rounded-sm border px-2 py-1" />
         </label>
         <label className="flex flex-col text-sm">
           Window
-          <select value={hours} onChange={(e) => setHours(Number(e.target.value))} className="rounded border px-2 py-1">
+          <select value={hours} onChange={(e) => setHours(Number(e.target.value))} className="rounded-sm border px-2 py-1">
             {[1, 6, 24, 72, 168].map((h) => <option key={h} value={h}>{h}h</option>)}
           </select>
         </label>
-        <button type="submit" className="rounded border px-3 py-1 text-sm">Load</button>
+        <button type="submit" className="rounded-sm border px-3 py-1 text-sm">Load</button>
       </form>
       {err && <p role="alert" className="text-sm text-red-600">{err}</p>}
       {data && (
         <>
           <div
             role={data.alerts.length ? "alert" : "status"}
-            className={`sticky top-0 z-10 rounded border p-3 text-sm ${data.alerts.length ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100" : "border-green-600"}`}
+            className={`sticky top-0 z-10 rounded-sm border p-3 text-sm ${data.alerts.length ? "border-red-500 bg-red-50 text-red-900 dark:bg-red-950 dark:text-red-100" : "border-green-600"}`}
           >
             {data.alerts.length ? <ul className="list-disc pl-5">{data.alerts.map((a) => <li key={a}>{a}</li>)}</ul> : "No alerts"}
             {data.truncated ? <p>Job list truncated; counts are a floor.</p> : null}
           </div>
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {["queued", "processing", "completed", "failed"].map((k) => (
-              <div key={k} className="rounded border p-3"><div className="text-xs uppercase opacity-70">{k}</div><div className="text-2xl">{data.counts[k] ?? 0}</div></div>
+              <div key={k} className="rounded-sm border p-3"><div className="text-xs uppercase opacity-70">{k}</div><div className="text-2xl">{data.counts[k] ?? 0}</div></div>
             ))}
           </section>
           <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -171,7 +171,7 @@ export default function HealthPage() {
             <div className="mb-2 flex items-center gap-3">
               <h2 className="font-medium">Trends</h2>
               {[7, 30].map((d) => (
-                <button key={d} type="button" aria-pressed={trendDays === d} className={`rounded border px-2 text-xs ${trendDays === d ? "font-semibold" : "opacity-70"}`}
+                <button key={d} type="button" aria-pressed={trendDays === d} className={`rounded-sm border px-2 text-xs ${trendDays === d ? "font-semibold" : "opacity-70"}`}
                   onClick={() => { setTrendDays(d); void load(secret, hours, d); }}>{d}d</button>
               ))}
             </div>
@@ -197,7 +197,7 @@ export default function HealthPage() {
                   {errors.groups.map((g) => (
                     <tr key={g.fingerprint} className="align-top">
                       <td>{g.count}</td>
-                      <td className="break-words"><span className="font-medium">{g.name}</span>: {g.message}</td>
+                      <td className="wrap-break-word"><span className="font-medium">{g.name}</span>: {g.message}</td>
                       <td className="break-all">{g.route || "-"}</td>
                       <td>{g.last_seen.slice(5, 16).replace("T", " ")}</td>
                       <td className="break-all font-mono text-xs">{g.sample_request_id?.slice(0, 8) ?? "-"}</td>
@@ -218,7 +218,7 @@ export default function HealthPage() {
 const pct = (r: number | null) => (r === null ? "-" : `${Math.round(r * 100)}%`);
 
 function Stat({ label, value }: { label: string; value: string }) {
-  return <div className="rounded border p-3"><div className="text-xs uppercase opacity-70">{label}</div><div className="text-lg">{value}</div></div>;
+  return <div className="rounded-sm border p-3"><div className="text-xs uppercase opacity-70">{label}</div><div className="text-lg">{value}</div></div>;
 }
 
 function Table({ title, head, rows }: { title: string; head: string[]; rows: string[][] }) {
@@ -242,7 +242,7 @@ function Spark({ title, unit, values }: { title: string; unit: string; values: (
   const x = (i: number) => (values.length > 1 ? (i / (values.length - 1)) * 100 : 50);
   const path = pts.map((p, n) => `${n ? "L" : "M"}${x(p.i).toFixed(1)},${(28 - (p.v / max) * 26).toFixed(1)}`).join(" ");
   return (
-    <div className="rounded border p-3">
+    <div className="rounded-sm border p-3">
       <div className="text-xs uppercase opacity-70">{title}</div>
       <div className="text-lg">{last === null ? "-" : unit === "£" ? `£${last.toFixed(2)}` : `${Math.round(last * 10) / 10}${unit}`}</div>
       <svg viewBox="0 0 100 30" className="h-8 w-full" role="img" aria-label={`${title} over ${values.length} days`}>

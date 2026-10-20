@@ -60,7 +60,7 @@ export function RecoverButton({
         type="button"
         onClick={onClick}
         disabled={busy}
-        className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] font-medium text-accent hover:bg-accent/20 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        className="rounded-md border border-accent/40 bg-accent/10 px-2 py-1 text-[11px] font-medium text-accent hover:bg-accent/20 disabled:opacity-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
       >
         {busy ? t("lib.recover.busy") : (label ?? t("song.recover"))}
       </button>

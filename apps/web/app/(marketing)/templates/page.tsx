@@ -90,7 +90,7 @@ export default async function TemplatesPage() {
         </p>
         <Link
           href="/discover"
-          className="text-accent hover:underline focus:outline-none focus:ring-2 focus:ring-accent rounded"
+          className="text-accent hover:underline focus:outline-hidden focus:ring-2 focus:ring-accent rounded-sm"
         >
           {t("templates.listen")}
         </Link>
@@ -108,7 +108,7 @@ function TemplateCard({ preset }: { preset: StylePreset }) {
       href={href}
       data-preset={preset.id}
       className={[
-        "flex h-full w-full flex-col gap-2 rounded-md border bg-gradient-to-b px-4 py-3 text-left transition hover:border-foreground/40 hover:bg-muted/20 focus:outline-none focus:ring-2 focus:ring-accent",
+        "flex h-full w-full flex-col gap-2 rounded-md border bg-linear-to-b px-4 py-3 text-left transition hover:border-foreground/40 hover:bg-muted/20 focus:outline-hidden focus:ring-2 focus:ring-accent",
         tone,
       ].join(" ")}
     >

@@ -31,9 +31,9 @@ export function TogetherAudio({ src, durationSeconds }: { src: string; durationS
   return (
     <div className="flex flex-col gap-3">
       {offset !== null && !joined ? (
-        <div className="flex flex-wrap items-center gap-3 rounded border px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 rounded-sm border px-4 py-3">
           <p className="text-sm">A friend is listening to this right now, {mmss(offset)} in.</p>
-          <button type="button" onClick={join} className="rounded bg-accent px-4 py-2 text-background">
+          <button type="button" onClick={join} className="rounded-sm bg-accent px-4 py-2 text-background">
             Listen together
           </button>
         </div>
