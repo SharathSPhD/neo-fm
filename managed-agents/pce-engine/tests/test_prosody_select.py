@@ -4,11 +4,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-from pce.operators.ananda import ananda
-from pce.operators.lyric_form import form_score
-from pce.substrate.embed import Embedder
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # CI runs pytest from the repo root
+
+from pce.operators.ananda import ananda  # noqa: E402
+from pce.operators.lyric_form import form_score  # noqa: E402
+from pce.substrate.embed import Embedder  # noqa: E402
 ananda_mod = sys.modules["pce.operators.ananda"]  # (the package attribute `ananda` is the function)
-from pce.types import Candidate, Constraint
+from pce.types import Candidate, Constraint  # noqa: E402
 
 ENGINE = Path(__file__).resolve().parent.parent
 GOOD = "सपनों की रात आई\nयादों की बात आई\nचाँदनी की छाँव में\nबारिश की चाल में\n"
