@@ -25,7 +25,7 @@ export function NetworkBanner() {
   return (
     <div
       role="status"
-      className="bg-amber-500/15 px-4 py-2 text-center text-sm text-amber-200"
+      className="bg-amber-500/15 px-4 py-2 text-center text-sm text-warn"
     >
       {t("net.offline")}
     </div>

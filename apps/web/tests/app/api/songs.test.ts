@@ -140,6 +140,7 @@ describe("POST /api/songs", () => {
       p_style_family: "western",
       p_target_duration_seconds: 30,
       p_priority: 0,
+      p_use_pack: false,
     });
     // The route must NOT do any direct table inserts; the RPC owns the writes.
     expect(user_client.__state.inserted).toEqual([]);

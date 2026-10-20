@@ -15,6 +15,8 @@
   --foreground: 0 0% 96%;
   --accent: 28 92% 60%;
   --muted: 240 4% 22%;
+  /* Amber notice text (amber-200 on dark: 11:1). */
+  --warn: 48 96% 80%;
 }
 
 /*
@@ -27,13 +29,22 @@
   --foreground: 240 10% 12%;
   --accent: 28 92% 42%;
   --muted: 240 5% 86%;
+  /* Dark amber for notices on cream (~9:1). */
+  --warn: 30 90% 22%;
 }
 
-html,
-body {
+html {
   background-color: hsl(var(--background));
+}
+/* Body stays transparent so the fixed .ambient layer (z -10) shows through. */
+body {
   color: hsl(var(--foreground));
   min-height: 100vh;
+  /* viewport-fit=cover: in the Android/iOS shells the page runs edge to edge, so keep it clear of the status bar, cutout, navigation bar and side bars. env() is 0 in ordinary browsers. */
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 body {
@@ -65,4 +76,292 @@ a:focus {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+
+/*
+ * Accessibility: contrast floor for de-emphasised text (WCAG 1.4.3, 4.5:1).
+ * Many components use `text-foreground/30..55` for secondary copy; those
+ * alphas fall below 4.5:1 against the page background. Rather than edit
+ * every call site we clamp them here, keeping the visual hierarchy
+ * (secondary text stays lighter than primary) while passing AA.
+ */
+:root .text-foreground\/30,
+:root .text-foreground\/35,
+:root .text-foreground\/40,
+:root .text-foreground\/45 {
+  color: hsl(var(--foreground) / 0.7);
+}
+/* /50 and /55 also sit on the aurora, where the effective background is lighter than --background. */
+:root:not([data-theme="light"]) .text-foreground\/50,
+:root:not([data-theme="light"]) .text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.7);
+}
+:root[data-theme="light"] .text-foreground\/30,
+:root[data-theme="light"] .text-foreground\/35,
+:root[data-theme="light"] .text-foreground\/40,
+:root[data-theme="light"] .text-foreground\/45,
+:root[data-theme="light"] .text-foreground\/50,
+:root[data-theme="light"] .text-foreground\/55 {
+  color: hsl(var(--foreground) / 0.68);
+}
+
+/*
+ * Embedded player themes (/s/<id>/embed?theme=light|dark|auto). Scoped to
+ * the embed root so the host page's and the app's own theme toggle never
+ * leak in; "auto" follows the visitor's OS setting.
+ */
+.embed-root {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.embed-root[data-embed-theme="light"] {
+  --background: 0 0% 99%;
+  --foreground: 240 10% 12%;
+  --accent: 28 92% 42%;
+  --muted: 240 5% 86%;
+  --warn: 30 90% 22%;
+}
+.embed-root[data-embed-theme="dark"] {
+  --background: 240 6% 8%;
+  --foreground: 0 0% 96%;
+  --accent: 28 92% 60%;
+  --muted: 240 4% 22%;
+  --warn: 48 96% 80%;
+}
+@media (prefers-color-scheme: light) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 0 0% 99%;
+    --foreground: 240 10% 12%;
+    --accent: 28 92% 42%;
+    --muted: 240 5% 86%;
+    --warn: 30 90% 22%;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .embed-root[data-embed-theme="auto"] {
+    --background: 240 6% 8%;
+    --foreground: 0 0% 96%;
+    --accent: 28 92% 60%;
+    --muted: 240 4% 22%;
+    --warn: 48 96% 80%;
+  }
+}
+
+/*
+ * Ambient background ("aurora"). Three soft colour fields drift slowly
+ * behind the page; the palette follows the listener's local daypart
+ * (data-daypart, set by <AmbientBackground>) and can be overridden per
+ * page with --aurora-a/b/c (e.g. a now-playing page tinting from cover art).
+ * Only transforms are animated, so it stays on the compositor; the global
+ * reduced-motion rule above freezes it.
+ */
+.ambient {
+  --aurora-a: 262 80% 55%;
+  --aurora-b: 332 80% 55%;
+  --aurora-c: 28 92% 55%;
+  --aurora-strength: 0.32;
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+}
+.ambient[data-daypart="dawn"] {
+  --aurora-a: 18 95% 62%;
+  --aurora-b: 340 80% 62%;
+  --aurora-c: 44 95% 60%;
+}
+.ambient[data-daypart="day"] {
+  --aurora-a: 28 92% 58%;
+  --aurora-b: 190 80% 50%;
+  --aurora-c: 330 75% 60%;
+}
+.ambient[data-daypart="dusk"] {
+  --aurora-a: 12 90% 58%;
+  --aurora-b: 290 70% 52%;
+  --aurora-c: 250 70% 55%;
+}
+.ambient[data-daypart="night"] {
+  --aurora-a: 262 80% 55%;
+  --aurora-b: 218 85% 52%;
+  --aurora-c: 320 75% 52%;
+}
+:root[data-theme="light"] .ambient {
+  --aurora-strength: 0.16;
+}
+/* A page can tint the aurora (see useAmbientTint); wins over the daypart palette. */
+:root[data-tint] .ambient {
+  --aurora-a: var(--tint-a);
+  --aurora-b: var(--tint-b);
+  --aurora-c: var(--tint-c);
+  --aurora-strength: 0.4;
+}
+.ambient::after {
+  /* Film grain: breaks gradient banding on 8-bit panels. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.ambient > span {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 9999px;
+  opacity: var(--aurora-strength);
+  will-change: transform;
+  transition: opacity 1.2s ease;
+}
+.ambient > span:nth-child(1) {
+  top: -30vmax;
+  left: -20vmax;
+  background: radial-gradient(circle, hsl(var(--aurora-a)) 0%, transparent 62%);
+  animation: aurora-drift-a 38s ease-in-out infinite alternate;
+}
+.ambient > span:nth-child(2) {
+  top: 10vmax;
+  right: -30vmax;
+  background: radial-gradient(circle, hsl(var(--aurora-b)) 0%, transparent 62%);
+  animation: aurora-drift-b 46s ease-in-out infinite alternate;
+}
+.ambient > span:nth-child(3) {
+  bottom: -40vmax;
+  left: 10vmax;
+  background: radial-gradient(circle, hsl(var(--aurora-c)) 0%, transparent 62%);
+  animation: aurora-drift-c 52s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift-a {
+  to { transform: translate3d(14vmax, 8vmax, 0) scale(1.12); }
+}
+@keyframes aurora-drift-b {
+  to { transform: translate3d(-12vmax, 10vmax, 0) scale(0.92); }
+}
+@keyframes aurora-drift-c {
+  to { transform: translate3d(10vmax, -12vmax, 0) scale(1.08); }
+}
+
+/* Frosted surface used by cards, nav and the player. */
+.glass {
+  background: hsl(var(--foreground) / 0.045);
+  border: 1px solid hsl(var(--foreground) / 0.1);
+  box-shadow: 0 1px 0 hsl(var(--foreground) / 0.06) inset, 0 12px 32px -16px hsl(0 0% 0% / 0.5);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+}
+.glass-hover {
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+.glass-hover:hover {
+  transform: translateY(-2px);
+  border-color: hsl(var(--accent) / 0.45);
+  background: hsl(var(--foreground) / 0.07);
+}
+
+/* Gradient headline accent. */
+.text-aurora {
+  background: linear-gradient(100deg, hsl(var(--aurora-c, var(--accent))), hsl(28 95% 62%) 40%, hsl(335 85% 66%) 80%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* "On air" equaliser bars. */
+.eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.eq > i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: bottom;
+  animation: eq-bounce 1.1s ease-in-out infinite;
+}
+.eq > i:nth-child(2) { animation-delay: -0.35s; animation-duration: 0.9s; }
+.eq > i:nth-child(3) { animation-delay: -0.7s; animation-duration: 1.3s; }
+.eq > i:nth-child(4) { animation-delay: -0.15s; animation-duration: 1s; }
+@keyframes eq-bounce {
+  0%, 100% { transform: scaleY(0.25); }
+  50% { transform: scaleY(1); }
+}
+.eq[data-paused="true"] > i {
+  animation-play-state: paused;
+  transform: scaleY(0.3);
+}
+
+/* Pulsing live dot. */
+.live-dot {
+  position: relative;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: hsl(var(--accent));
+}
+.live-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  animation: live-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes live-ping {
+  75%, 100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Chips and pills used by the station and filters. */
+.chip {
+  border: 1px solid hsl(var(--foreground) / 0.18);
+  border-radius: 9999px;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chip:hover { border-color: hsl(var(--accent) / 0.6); }
+.chip[aria-pressed="true"] {
+  background: hsl(var(--accent));
+  border-color: hsl(var(--accent));
+  color: hsl(var(--background));
+}
+
+/* Now-playing orb: a spinning aurora ring around a dark core, until cover art exists in the queue API. */
+.orb {
+  position: relative;
+  width: 7rem;
+  height: 7rem;
+  flex: none;
+  border-radius: 9999px;
+  box-shadow: 0 0 60px -8px hsl(var(--aurora-b) / 0.7);
+}
+.orb::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 180deg, hsl(var(--aurora-a)), hsl(var(--aurora-b)), hsl(var(--aurora-c)), hsl(var(--aurora-a)));
+  animation: orb-spin 24s linear infinite;
+}
+.orb::after {
+  /* Dark core with a faint tint: the same disc in every player state (no glyph, so no font fallback). */
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: inherit;
+  background: radial-gradient(circle at 30% 25%, hsl(var(--aurora-a) / 0.22), hsl(var(--background)) 70%);
+}
+.orb[data-paused="true"]::before { animation-play-state: paused; }
+@keyframes orb-spin { to { transform: rotate(360deg); } }
+
+/* Indic scripts: tracking utilities space out conjuncts and tight leading clips matras and subscripts, so reset both. */
+:is(:lang(hi), :lang(mr), :lang(kn), :lang(te), :lang(ta), :lang(bn), :lang(gu), :lang(pa), :lang(ml)) * {
+  letter-spacing: normal !important;
+}
+:is(:lang(hi), :lang(mr), :lang(kn), :lang(te), :lang(ta), :lang(bn), :lang(gu), :lang(pa), :lang(ml)) :is(h1, h2, h3) {
+  line-height: 1.35;
 }

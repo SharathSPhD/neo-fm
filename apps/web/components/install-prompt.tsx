@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { parseAppShell } from "@/lib/native/app-shell";
 
 const DISMISS_KEY = "neo-fm:install-dismissed-at";
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -19,6 +20,16 @@ function isStandalone(): boolean {
   );
 }
 
+/** Inside the store app or Telegram there is nothing to install, so the banner never applies. */
+function inHostedApp(): boolean {
+  return parseAppShell(navigator.userAgent) !== null || Boolean((window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram?.WebApp?.initData);
+}
+
+/** iPhone, iPod and iPad, including iPadOS which reports a Mac user agent. */
+function isIosDevice(): boolean {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+}
+
 function snoozed(): boolean {
   try {
     const at = Number(window.localStorage.getItem(DISMISS_KEY));
@@ -32,24 +43,28 @@ function snoozed(): boolean {
  * Install banner. Chromium browsers hand us `beforeinstallprompt`; iOS
  * Safari has no such event, so there we show the manual "Add to Home
  * Screen" hint. Hidden once installed or after "Not now" (14 days).
+ * `minPlays`/`plays` hold it back until the listener has heard that many
+ * tracks, so the station asks only after it has earned the ask.
  */
-export function InstallPrompt() {
+export function InstallPrompt({ plays = Infinity, minPlays = 0 }: { plays?: number; minPlays?: number } = {}) {
   const { t } = useUiLang();
   const [deferred, setDeferred] = useState<InstallEvent | null>(null);
   const [ios, setIos] = useState(false);
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
-    if (isStandalone() || snoozed()) return;
+    if (isStandalone() || snoozed() || inHostedApp()) return;
     const onPrompt = (e: Event) => {
       e.preventDefault();
+      // Chromium can re-fire this after "Not now"; the snooze must win.
+      if (snoozed()) return;
       setDeferred(e as InstallEvent);
       setHidden(false);
     };
     const onInstalled = () => setHidden(true);
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", onInstalled);
-    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    if (isIosDevice()) {
       setIos(true);
       setHidden(false);
     }
@@ -65,6 +80,8 @@ export function InstallPrompt() {
     } catch {
       // best effort
     }
+    setDeferred(null);
+    setIos(false);
     setHidden(true);
   }
 
@@ -76,7 +93,7 @@ export function InstallPrompt() {
     setHidden(true);
   }
 
-  if (hidden || (!deferred && !ios)) return null;
+  if (hidden || plays < minPlays || (!deferred && !ios)) return null;
 
   return (
     <aside

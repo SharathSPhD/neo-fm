@@ -26,6 +26,7 @@ You are the language model; the engine does every scoring step (apohana, ananda,
 1. `mkdir -p /mnt/session/work/pce && cd` there. Write `brief.json`:
    `{"topic": <brief, <=30 words>, "constraint": <step-1 line>, "must_avoid": [...], "aspects": [2-4 short phrases], "K": <3 free | 6 pro>, "seed": 0}`
    (`aspects` as short natural phrases; the embedder is multilingual so English aspects are fine.)
+   If the kickoff contains the line `Prosody select: yes`, add `"prosody_select": true` to the brief: the engine then picks among candidates using metre and rhyme and caps K at 4. `needs.json` is authoritative for how many candidates to write; never write more than it lists.
 2. `export EMBED_URL=... EMBED_TOKEN=...` (from the kickoff) and run `python3 $ENGINE/run_cascade.py /mnt/session/work/pce`.
 3. Exit code 3 = it needs text: read `needs.json`. It lists `prompts` (one per candidate; each begins with its own small nudge).
    Write one complete candidate per prompt, in order, in the target language/script, into `generations.json` under the key named by `kind`

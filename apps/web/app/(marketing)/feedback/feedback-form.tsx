@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 export function FeedbackForm() {
+  const { t } = useUiLang();
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [pending, startTransition] = useTransition();
@@ -16,13 +18,13 @@ export function FeedbackForm() {
     e.preventDefault();
     setOutcome(null);
     if (subject.trim().length === 0 || body.trim().length === 0) {
-      setOutcome({ kind: "err", message: "Both subject and body are required." });
+      setOutcome({ kind: "err", message: t("feedback.errRequired") });
       return;
     }
     if (body.trim().length > 5000) {
       setOutcome({
         kind: "err",
-        message: "Body is over 5000 characters. Trim it down.",
+        message: t("feedback.errTooLong"),
       });
       return;
     }
@@ -42,7 +44,7 @@ export function FeedbackForm() {
         const text = await res.text().catch(() => "");
         setOutcome({
           kind: "err",
-          message: text || "Couldn't submit. Try again in a minute.",
+          message: text || t("feedback.errFailed"),
         });
         return;
       }
@@ -57,14 +59,14 @@ export function FeedbackForm() {
     return (
       <section className="flex flex-col gap-3 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-5 py-4 text-sm text-emerald-200">
         <p>
-          Thank you. We logged this as <code>{outcome.id.slice(0, 8)}</code>.
+          {t("feedback.thanks.before")} <code>{outcome.id.slice(0, 8)}</code>.
         </p>
         <button
           type="button"
           onClick={() => setOutcome(null)}
           className="self-start text-xs text-emerald-300 underline"
         >
-          Send another note
+          {t("feedback.sendAnother")}
         </button>
       </section>
     );
@@ -74,29 +76,29 @@ export function FeedbackForm() {
     <form onSubmit={submit} className="flex flex-col gap-5">
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Subject
+          {t("feedback.subject")}
         </span>
         <input
           type="text"
           maxLength={200}
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="The audio cuts out at 30s"
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+          placeholder={t("feedback.subjectPh")}
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           required
         />
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-xs uppercase tracking-widest text-foreground/50">
-          Details
+          {t("feedback.details")}
         </span>
         <textarea
           rows={8}
           maxLength={5000}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Steps to reproduce, what you expected, what actually happened."
-          className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-base outline-none focus:border-accent"
+          placeholder={t("feedback.detailsPh")}
+          className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
           required
         />
         <span className="self-end text-[10px] text-foreground/40">
@@ -113,7 +115,7 @@ export function FeedbackForm() {
         disabled={pending}
         className="self-start rounded-md border border-accent/40 bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20 disabled:opacity-50"
       >
-        {pending ? "Sending…" : "Send"}
+        {pending ? t("feedback.sending") : t("feedback.send")}
       </button>
     </form>
   );

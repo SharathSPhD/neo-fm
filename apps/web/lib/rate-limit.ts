@@ -27,6 +27,10 @@
  *   - /api/songs/.../publish    : 30
  *   - /api/songs/.../regenerate : 6
  *   - /api/lyrics               : 60
+ *   - /api/station/queue        : 30 (open to signed-out visitors)
+ *   - /api/station/ad-event     : 60
+ *   - /api/station/signal       : 90
+ *   - /api/alexa                : 600 (shared Amazon source IPs)
  *   - /api/p/*  (public reads)  : 120
  *   - everything else under /api: 120
  */
@@ -94,6 +98,10 @@ export function pickRule(
   if (/^\/api\/events\/?$/.test(pathname)) {
     return { bucket: "anon:events", limit: 20 };
   }
+  // House-ad log: small writes, open to signed-out listeners.
+  if (/^\/api\/station\/ad-event\/?$/.test(pathname)) {
+    return { bucket: "station:ad-event", limit: 60 };
+  }
   // Native-review links are token-gated, not login-gated, so cap both the
   // rating writes and the page itself to blunt token guessing.
   if (/^\/api\/native-review\/[^/]+\/ratings\/?$/.test(pathname)) {
@@ -101,6 +109,18 @@ export function pickRule(
   }
   if (/^\/native-review\/[^/]+\/?$/.test(pathname)) {
     return { bucket: "review:page", limit: 30 };
+  }
+  // UI-translation review links are token-gated like native-review. A reviewer saves one verdict per string
+  // (hundreds per session), so writes get a higher cap than the page itself.
+  if (/^\/api\/ui-review\/[^/]+\/items\/?$/.test(pathname)) {
+    return { bucket: "uireview:write", limit: 120 };
+  }
+  if (/^\/ui-review\/[^/]+(\/open)?\/?$/.test(pathname)) {
+    return { bucket: "uireview:page", limit: 30 };
+  }
+  // Browser CSP violation reports: anonymous and unbounded in a hostile page, so cap hard.
+  if (/^\/api\/csp-report\/?$/.test(pathname)) {
+    return { bucket: "anon:csp", limit: 30 };
   }
   // Public abuse reports are anonymous writes into a moderation queue.
   if (/^\/api\/report\/?$/.test(pathname)) {
@@ -136,8 +156,28 @@ export function pickRule(
   if (/^\/api\/songs\/[^/]+\/(cover-art|variation|remix)\/?$/.test(pathname)) {
     return { bucket: "songs:gen-aux", limit: 6 };
   }
+  // The station queue is open to signed-out visitors and signs a URL per track, so cap it per IP. A listener refills
+  // about once per ten tracks, plus a few steering taps, so 30 a minute leaves a shared NAT plenty of room.
+  if (/^\/api\/station\/queue\/?$/.test(pathname)) {
+    return { bucket: "station:queue", limit: 30 };
+  }
+  // Alexa calls come from a small set of Amazon addresses shared by every listener, and the skill verifies each request's
+  // signature itself, so the per-IP default would throttle the whole skill. Generous cap, own bucket.
+  if (/^\/api\/alexa\/?$/.test(pathname)) {
+    return { bucket: "alexa:skill", limit: 600 };
+  }
+  // Listener signals are an authenticated write into station_signals. A listener sends a handful a minute even
+  // when skipping fast; the own bucket keeps them off the shared api:default budget, and 90 leaves room for a
+  // shared NAT while still capping a looping or hostile client.
+  if (/^\/api\/station\/signal\/?$/.test(pathname)) {
+    return { bucket: "station:signal", limit: 90 };
+  }
+  // Anonymous listener counters: write-only, so keep the budget lower than reads.
+  if (/^\/api\/p\/[^/]+\/listen\/?$/.test(pathname)) {
+    return { bucket: "public:listen", limit: 30 };
+  }
   // Public share-surface reads.
-  if (pathname.startsWith("/api/p/")) {
+  if (pathname.startsWith("/api/p/") || pathname === "/api/oembed") {
     return { bucket: "public:read", limit: 120 };
   }
   // Lyric / preview / library + everything else under /api. Pages, RSC

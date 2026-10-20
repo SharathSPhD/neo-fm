@@ -1,5 +1,8 @@
 import type Anthropic from "@anthropic-ai/sdk";
 
+import { geminiInteract, geminiQaModel } from "../gemini/interactions";
+import { meter } from "./cost";
+
 export const JUDGE_MODEL = "claude-sonnet-5-5";
 export const BASELINE_MODEL = "claude-haiku-5-5";
 
@@ -19,6 +22,7 @@ Reply with ONLY JSON: {"reason":"<=50 words","A":{"prosody":n,"diction":n,"image
 
 async function gen(client: Anthropic, model: string, prompt: string, max = 700): Promise<string> {
   const res = await client.messages.create({ model, max_tokens: max, ...(model === BASELINE_MODEL ? { thinking: { type: "disabled" as const } } : {}), messages: [{ role: "user", content: prompt }] });
+  meter.record(model, res.usage);
   const out = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   if (out.length < 20) throw new Error(`empty generation from ${model} (stop=${res.stop_reason})`);
   return out;
@@ -42,6 +46,7 @@ async function once(client: Anthropic, language: string, brief: string, a: strin
     model: JUDGE_MODEL, max_tokens: 500, system: RUBRIC,
     messages: [{ role: "user", content: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}` }],
   });
+  meter.record(JUDGE_MODEL, res.usage);
   const text = res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("");
   try {
     const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { A: Scores; B: Scores };
@@ -52,19 +57,13 @@ async function once(client: Anthropic, language: string, brief: string, a: strin
 
 /** Same rubric, different model family (Gemini): guards against the Claude-judges-Claude self-preference bias. */
 async function onceGemini(language: string, brief: string, a: string, b: string, apiKey: string): Promise<{ A: Scores; B: Scores } | null> {
-  const model = process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash";
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: RUBRIC }] },
-      contents: [{ parts: [{ text: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}` }] }],
-      generationConfig: { responseMimeType: "application/json" },
-    }),
-  });
-  if (!res.ok) return null;
-  const body = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  let text: string;
+  try {
+    ({ text } = await geminiInteract({
+      apiKey, model: geminiQaModel(), json: true, system: RUBRIC,
+      text: `Language: ${language}\nBrief: ${brief}\n\n=== LYRIC A ===\n${a}\n\n=== LYRIC B ===\n${b}`,
+    }));
+  } catch { return null; }
   try {
     const j = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as { A: Scores; B: Scores };
     for (const k of ["A", "B"] as const) for (const d of DIMS) if (!(j[k]?.[d] >= 1 && j[k][d] <= 5)) return null;

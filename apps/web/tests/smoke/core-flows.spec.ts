@@ -62,6 +62,38 @@ test.describe("sign up", () => {
   });
 });
 
+test.describe("sign in", () => {
+  test("valid credentials leave /sign-in for the library (regression: Next 15 replace+refresh hang)", async ({ page }) => {
+    test.skip(REMOTE, "signs in against the local fake backend only");
+    await dismissOnboarding(page);
+    await page.goto("/sign-in");
+    await page.getByLabel(/email/i).fill("smoke@neo-fm.test");
+    await page.getByLabel(/password/i).fill("Sm0ke-Test-Pass!");
+    await page.getByRole("button", { name: /^sign in/i }).click();
+    await expect(page).toHaveURL(/\/library/, { timeout: 15_000 });
+    await expect(page.getByRole("button", { name: /signing in/i })).toHaveCount(0);
+  });
+});
+
+test.describe("account page", () => {
+  test("streams the page ahead of a slow usage lookup (regression: 11 s of skeleton)", async ({ page }) => {
+    test.skip(REMOTE, "signs in against the local fake backend only");
+    await dismissOnboarding(page);
+    await page.goto("/sign-in");
+    await page.getByLabel(/email/i).fill("smoke@neo-fm.test");
+    await page.getByLabel(/password/i).fill("Sm0ke-Test-Pass!");
+    await page.getByRole("button", { name: /^sign in/i }).click();
+    await page.waitForURL((u) => !u.pathname.startsWith("/sign-in"));
+    const started = Date.now();
+    await page.goto("/account", { waitUntil: "commit" });
+    // The fake delays the usage count by 3 s; everything else must be on screen well before that.
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 2_500 });
+    await expect(page.getByText("smoke@neo-fm.test").locator("visible=true").first()).toBeVisible({ timeout: 2_500 });
+    expect(Date.now() - started).toBeLessThan(3_000);
+    await expect(page.getByRole("heading", { name: /plan usage/i })).toBeVisible({ timeout: 10_000 });
+  });
+});
+
 test.describe("create a song (up to queued)", () => {
   test("signed-in user submits a prompt and a job is queued", async ({ page }) => {
     test.skip(REMOTE, "signs in and creates a job; local fake backend only");
@@ -95,6 +127,8 @@ test.describe("public song page + report", () => {
     test.skip(REMOTE, "needs the seeded fake song; reporting writes");
     await page.goto(`/s/${PUBLIC_ID}`);
     await expect(page.getByText(/smoke test song/i).first()).toBeVisible();
+    // A first-time visitor gets one clear next step: a free station, no sign-up.
+    await expect(page.getByTestId("share-station-cta").getByRole("link", { name: /start my free station/i })).toHaveAttribute("href", "/station");
 
     await page.getByRole("button", { name: /report this song/i }).click();
     await page.getByRole("button", { name: /send report/i }).click();

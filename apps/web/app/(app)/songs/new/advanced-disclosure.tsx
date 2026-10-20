@@ -23,6 +23,8 @@ import {
 } from "@neo-fm/co-composer";
 import { useState } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
 export interface AdvancedState {
   /** Tempo in BPM. 0 / undefined = inherit from preset / co-composer. */
   tempoBpm: number | "";
@@ -103,6 +105,7 @@ export function AdvancedDisclosure({
   saveDisabled,
   saveStatus,
 }: AdvancedDisclosureProps) {
+  const { t } = useUiLang();
   const [expanded, setExpanded] = useState(false);
   const isWestern = WESTERN_STYLES.has(styleFamily);
   const ragaOptions = ragasForStyle(styleFamily);
@@ -127,7 +130,7 @@ export function AdvancedDisclosure({
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-muted/20 bg-muted/5 p-4">
+    <section className="flex flex-col gap-3 glass rounded-2xl p-4">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -136,26 +139,24 @@ export function AdvancedDisclosure({
         aria-controls="advanced-controls"
       >
         <span className="text-xs font-medium uppercase tracking-widest text-foreground/70">
-          Advanced
+          {t("adv.advanced")}
         </span>
         <span className="text-[10px] text-foreground/40">
-          {expanded ? "Hide" : "Show"} tempo · key · raga · tala · mix
+          {expanded ? t("adv.hideSummary") : t("adv.showSummary")}
         </span>
       </button>
 
       {expanded ? (
         <div id="advanced-controls" className="flex flex-col gap-4">
           <p className="text-[11px] text-foreground/50">
-            Leave a field empty to inherit from the preset / co-composer.
-            Filled fields override the suggestion and are passed verbatim
-            to the worker.
+            {t("adv.hint")}
           </p>
 
           {/* Tempo + Key */}
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1 text-xs">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Tempo (BPM)
+                {t("adv.tempo")}
               </span>
               <input
                 type="number"
@@ -170,14 +171,14 @@ export function AdvancedDisclosure({
                     set("tempoBpm", Number.isFinite(n) ? n : "");
                   }
                 }}
-                placeholder="(inherit)"
+                placeholder={t("adv.inherit")}
                 className="rounded-md border border-muted/30 bg-transparent px-2 py-1 font-mono text-xs"
               />
             </label>
 
             <label className="flex flex-col gap-1 text-xs">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Key {isWestern ? "" : "(Western-only)"}
+                {isWestern ? t("adv.key") : t("adv.keyWesternOnly")}
               </span>
               <select
                 value={value.key}
@@ -185,11 +186,11 @@ export function AdvancedDisclosure({
                 disabled={!isWestern}
                 className="rounded-md border border-muted/30 bg-transparent px-2 py-1 font-mono text-xs disabled:opacity-50"
               >
-                <option value="">(inherit)</option>
+                <option value="">{t("adv.inherit")}</option>
                 {WESTERN_KEYS.map((k) =>
                   WESTERN_MODES.map((m) => (
                     <option key={`${k}-${m}`} value={`${k}${m === "minor" ? "m" : ""}`}>
-                      {k} {m}
+                      {k} {m === "minor" ? t("adv.modeMinor") : t("adv.modeMajor")}
                     </option>
                   )),
                 )}
@@ -202,7 +203,7 @@ export function AdvancedDisclosure({
             <fieldset className="grid grid-cols-3 gap-3">
               <label className="col-span-2 flex flex-col gap-1 text-xs">
                 <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                  Raga
+                  {t("adv.raga")}
                 </span>
                 <select
                   value={value.ragaName}
@@ -227,7 +228,7 @@ export function AdvancedDisclosure({
                   }}
                   className="rounded-md border border-muted/30 bg-transparent px-2 py-1 text-xs"
                 >
-                  <option value="">(inherit)</option>
+                  <option value="">{t("adv.inherit")}</option>
                   {ragaOptions.map((r) => (
                     <option key={r.name} value={r.name}>
                       {r.label} — {r.mood ?? r.system}
@@ -237,17 +238,17 @@ export function AdvancedDisclosure({
               </label>
               <label className="flex flex-col gap-1 text-xs">
                 <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                  Tala
+                  {t("adv.tala")}
                 </span>
                 <select
                   value={value.tala}
                   onChange={(e) => set("tala", e.target.value)}
                   className="rounded-md border border-muted/30 bg-transparent px-2 py-1 text-xs"
                 >
-                  <option value="">(inherit)</option>
-                  {talaOptions.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      {t.label}
+                  <option value="">{t("adv.inherit")}</option>
+                  {talaOptions.map((ta) => (
+                    <option key={ta.name} value={ta.name}>
+                      {ta.label}
                     </option>
                   ))}
                 </select>
@@ -258,16 +259,16 @@ export function AdvancedDisclosure({
           {/* Orchestration */}
           <fieldset className="flex flex-col gap-2">
             <legend className="text-[10px] uppercase tracking-widest text-foreground/40">
-              Orchestration
+              {t("adv.orchestration")}
             </legend>
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-foreground/60">Lead vocal:</span>
+              <span className="text-foreground/60">{t("adv.leadVocal")}</span>
               {(
                 [
-                  ["", "(inherit)"],
-                  ["male", "male"],
-                  ["female", "female"],
-                  ["instrumental", "instrumental"],
+                  ["", "adv.inherit"],
+                  ["male", "adv.male"],
+                  ["female", "adv.female"],
+                  ["instrumental", "adv.instrumental"],
                 ] as const
               ).map(([k, l]) => (
                 <label key={k} className="flex items-center gap-1">
@@ -280,7 +281,7 @@ export function AdvancedDisclosure({
                       set("leadVocal", k as AdvancedState["leadVocal"])
                     }
                   />
-                  {l}
+                  {t(l)}
                 </label>
               ))}
             </div>
@@ -309,13 +310,13 @@ export function AdvancedDisclosure({
 
             <label className="flex flex-col gap-1 text-xs">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Texture
+                {t("adv.texture")}
               </span>
               <input
                 type="text"
                 value={value.texture}
                 onChange={(e) => set("texture", e.target.value)}
-                placeholder="(inherit, e.g. layered)"
+                placeholder={t("adv.inheritTexture")}
                 className="rounded-md border border-muted/30 bg-transparent px-2 py-1 text-xs"
                 maxLength={32}
               />
@@ -326,10 +327,16 @@ export function AdvancedDisclosure({
           <fieldset className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Accompaniment density
+                {t("adv.density")}
               </span>
               <div className="flex gap-3 text-xs">
-                {(["sparse", "balanced", "dense"] as const).map((d) => (
+                {(
+                  [
+                    ["sparse", "adv.sparse"],
+                    ["balanced", "adv.balanced"],
+                    ["dense", "adv.dense"],
+                  ] as const
+                ).map(([d, dl]) => (
                   <label key={d} className="flex items-center gap-1">
                     <input
                       type="radio"
@@ -338,7 +345,7 @@ export function AdvancedDisclosure({
                       checked={value.density === d}
                       onChange={() => set("density", d)}
                     />
-                    {d}
+                    {t(dl)}
                   </label>
                 ))}
                 {value.density !== "" ? (
@@ -347,7 +354,7 @@ export function AdvancedDisclosure({
                     onClick={() => set("density", "")}
                     className="text-foreground/40 underline"
                   >
-                    clear
+                    {t("adv.clear")}
                   </button>
                 ) : null}
               </div>
@@ -355,10 +362,16 @@ export function AdvancedDisclosure({
 
             <div className="flex flex-col gap-1.5">
               <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-                Dynamics
+                {t("adv.dynamics")}
               </span>
               <div className="flex gap-3 text-xs">
-                {(["calm", "balanced", "energetic"] as const).map((d) => (
+                {(
+                  [
+                    ["calm", "adv.calm"],
+                    ["balanced", "adv.balanced"],
+                    ["energetic", "adv.energetic"],
+                  ] as const
+                ).map(([d, dl]) => (
                   <label key={d} className="flex items-center gap-1">
                     <input
                       type="radio"
@@ -367,7 +380,7 @@ export function AdvancedDisclosure({
                       checked={value.dynamics === d}
                       onChange={() => set("dynamics", d)}
                     />
-                    {d}
+                    {t(dl)}
                   </label>
                 ))}
                 {value.dynamics !== "" ? (
@@ -376,7 +389,7 @@ export function AdvancedDisclosure({
                     onClick={() => set("dynamics", "")}
                     className="text-foreground/40 underline"
                   >
-                    clear
+                    {t("adv.clear")}
                   </button>
                 ) : null}
               </div>
@@ -386,33 +399,28 @@ export function AdvancedDisclosure({
           {/* Section tags */}
           <label className="flex flex-col gap-1 text-xs">
             <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-              Section tags
+              {t("adv.sectionTags")}
             </span>
             <textarea
               rows={3}
               value={value.sectionTagsRaw}
               onChange={(e) => set("sectionTagsRaw", e.target.value)}
-              placeholder={
-                "one tag per line. e.g.\nmood:bright\ncrowd:wedding"
-              }
+              placeholder={t("adv.sectionTagsPlaceholder")}
               className="rounded-md border border-muted/30 bg-transparent px-2 py-1 font-mono text-xs"
               maxLength={1024}
             />
             <span className="text-[10px] text-foreground/40">
-              Free-form `key:value` strings, one per line. Anything that
-              matches a single-valued composer family (raga, tala, key,
-              tempo, …) overrides the composer&apos;s suggestion via
-              tag-merge.
+              {t("adv.sectionTagsHelp")}
             </span>
           </label>
 
           {/* JSON preview */}
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-              Song document preview
+              {t("adv.preview")}
             </span>
             <pre
-              aria-label="Song document JSON preview"
+              aria-label={t("adv.previewAria")}
               className="max-h-48 overflow-auto rounded-md border border-muted/20 bg-muted/10 p-2 font-mono text-[10px] leading-tight"
             >
               {previewJson}
@@ -427,12 +435,15 @@ export function AdvancedDisclosure({
                 disabled={saveDisabled}
                 onClick={() =>
                   onSaveAsPreset(
-                    `${styleFamily} preset (${new Date().toLocaleDateString()})`,
+                    t("adv.presetTitle", {
+                      style: styleFamily,
+                      date: new Date().toLocaleDateString(),
+                    }),
                   )
                 }
                 className="self-start rounded-md border border-accent/40 bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
               >
-                Save as my preset
+                {t("adv.savePreset")}
               </button>
               {saveStatus ? (
                 <span className="text-[10px] text-foreground/50">{saveStatus}</span>

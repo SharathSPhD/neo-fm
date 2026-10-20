@@ -6,6 +6,8 @@ import { useEffect, useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/cn";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
 
 import { RecoverButton } from "./recover-button";
 
@@ -46,6 +48,7 @@ export function SongList({
   initialSongs: LibrarySong[];
   userId: string;
 }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const [songs, setSongs] = useState<LibrarySong[]>(initialSongs);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -79,7 +82,7 @@ export function SongList({
   }
 
   async function deleteSong(id: string) {
-    if (!window.confirm("Delete this song? This can't be undone.")) return;
+    if (!window.confirm(t("lib.confirmDelete"))) return;
     setBusyId(id);
     const res = await fetch(`/api/songs/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -285,9 +288,9 @@ export function SongList({
   if (songs.length === 0) {
     return (
       <section className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/50">
-        No songs yet.{" "}
+        {t("lib.noSongsYet")}{" "}
         <Link href="/songs/new" className="underline">
-          Create your first one
+          {t("lib.createFirst")}
         </Link>
         .
       </section>
@@ -317,7 +320,7 @@ export function SongList({
           {s.status === "completed" && s.visibility !== "public" ? (
             <input
               type="checkbox"
-              aria-label={`Select ${s.title ?? s.id} for batch publish`}
+              aria-label={t("lib.selectForBatch", { title: s.title ?? s.id })}
               checked={selected.has(s.id)}
               onChange={() => toggleSelected(s.id)}
               className="size-4 cursor-pointer accent-accent"
@@ -328,8 +331,8 @@ export function SongList({
               className="inline-block size-4"
               title={
                 s.status !== "completed"
-                  ? "Only completed songs can be published"
-                  : "Already public"
+                  ? t("lib.onlyCompleted")
+                  : t("lib.alreadyPublic")
               }
             />
           )}
@@ -337,14 +340,14 @@ export function SongList({
             type="button"
             onClick={() => toggleFavorite(s.id, s.is_favorite)}
             disabled={busyId === s.id}
-            aria-label={s.is_favorite ? "Unfavorite" : "Favorite"}
+            aria-label={s.is_favorite ? t("lib.unfav") : t("lib.fav")}
             className={cn(
               "rounded-full px-2 py-1 text-base transition",
               s.is_favorite
                 ? "text-amber-300"
                 : "text-foreground/30 hover:text-foreground/70",
             )}
-            title={s.is_favorite ? "Unfavorite" : "Favorite"}
+            title={s.is_favorite ? t("lib.unfav") : t("lib.fav")}
           >
             {s.is_favorite ? "★" : "☆"}
           </button>
@@ -375,7 +378,7 @@ export function SongList({
                 disabled={busyId === s.id}
                 className="text-xs text-accent hover:underline"
               >
-                Save
+                {t("lib.save")}
               </button>
             </form>
           ) : (
@@ -384,9 +387,10 @@ export function SongList({
                 className="text-base font-medium text-foreground"
                 title={s.title ?? undefined}
               >
-                {s.title ?? songFallbackTitle(s)}
+                {s.title ?? songFallbackTitle(s, t("lib.songLower"))}
               </span>
               <span className="text-xs text-foreground/50">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {[s.style_family, s.language].filter(Boolean).join(" · ") || "—"}
               </span>
             </Link>
@@ -404,17 +408,17 @@ export function SongList({
             <div className="flex items-center gap-2">
               <span className="text-xs text-foreground/40">
                 {s.status === "completed"
-                  ? "Audio URL pending…"
+                  ? t("lib.audioPending")
                   : s.status === "failed"
-                    ? "Failed"
+                    ? t("lib.o.failed")
                     : s.status === "processing"
-                      ? "Generating…"
-                      : "Queued"}
+                      ? t("lib.generating")
+                      : t("lib.o.queued")}
               </span>
               {isStuck(s) ? (
                 <RecoverButton
                   songId={s.id}
-                  label={s.status === "failed" ? "Retry" : "Recover"}
+                  label={s.status === "failed" ? t("song.retry") : t("song.recover")}
                 />
               ) : null}
             </div>
@@ -448,12 +452,12 @@ function BulkPublishBar({
   onPublish: () => void;
   onClear: () => void;
 }) {
+  const { t } = useUiLang();
   if (eligibleCount === 0 && !outcomes) return null;
   if (selectedCount === 0 && !outcomes) {
     return (
       <section className="mb-3 rounded-md border border-dashed border-muted/30 px-4 py-2 text-xs text-foreground/55">
-        Select up to 100 completed songs to publish in one batch (free tier
-        caps at 5 public songs).
+        {t("lib.batch.hint")}
       </section>
     );
   }
@@ -476,36 +480,48 @@ function BulkPublishBar({
   return (
     <section
       role="region"
-      aria-label="Bulk publish toolbar"
+      aria-label={t("lib.batch.aria")}
       className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-md border border-accent/30 bg-accent/5 px-4 py-3"
     >
       <div className="text-sm text-foreground/80">
         {selectedCount > 0 ? (
           <span>
-            <strong>{selectedCount}</strong> song
-            {selectedCount === 1 ? "" : "s"} selected
+            {(selectedCount === 1
+              ? t("lib.batch.selected.one", { n: selectedCount })
+              : t("lib.batch.selected.other", { n: selectedCount })
+            )
+              .split(/\[\[|\]\]/)
+              .map((part, i) =>
+                i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
+              )}
           </span>
         ) : (
-          <span className="text-foreground/55">Selection cleared</span>
+          <span className="text-foreground/55">{t("lib.batch.cleared")}</span>
         )}
         {summary ? (
           <span className="ml-3 text-xs text-foreground/65">
-            {summary.published > 0
-              ? `published: ${summary.published} · `
-              : ""}
-            {summary.already_public > 0
-              ? `already public: ${summary.already_public} · `
-              : ""}
-            {summary.quota_hit > 0
-              ? `quota hit: ${summary.quota_hit} · `
-              : ""}
-            {summary.forbidden > 0
-              ? `forbidden: ${summary.forbidden} · `
-              : ""}
-            {summary.not_completed > 0
-              ? `not completed: ${summary.not_completed} · `
-              : ""}
-            {summary.not_found > 0 ? `not found: ${summary.not_found}` : ""}
+            {[
+              summary.published > 0
+                ? t("lib.batch.published", { n: summary.published })
+                : "",
+              summary.already_public > 0
+                ? t("lib.batch.alreadyPublic", { n: summary.already_public })
+                : "",
+              summary.quota_hit > 0
+                ? t("lib.batch.quotaHit", { n: summary.quota_hit })
+                : "",
+              summary.forbidden > 0
+                ? t("lib.batch.forbidden", { n: summary.forbidden })
+                : "",
+              summary.not_completed > 0
+                ? t("lib.batch.notCompleted", { n: summary.not_completed })
+                : "",
+              summary.not_found > 0
+                ? t("lib.batch.notFound", { n: summary.not_found })
+                : "",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
         ) : null}
       </div>
@@ -516,7 +532,7 @@ function BulkPublishBar({
           disabled={pending || selectedCount === 0}
           className="rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 text-sm text-accent transition hover:bg-accent/25 disabled:opacity-40"
         >
-          {pending ? "Publishing…" : "Publish selected as public"}
+          {pending ? t("lib.batch.publishing") : t("lib.batch.publish")}
         </button>
         <button
           type="button"
@@ -524,7 +540,7 @@ function BulkPublishBar({
           disabled={pending}
           className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/60 hover:border-accent/40 hover:text-foreground disabled:opacity-40"
         >
-          Clear
+          {t("lib.batch.clear")}
         </button>
       </div>
     </section>
@@ -540,6 +556,7 @@ function RowActions({
   onRename: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -561,7 +578,7 @@ function RowActions({
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="More actions"
+        aria-label={t("lib.row.more")}
         className="rounded-md border border-muted/30 px-2 py-1 text-foreground/60 hover:border-accent/40 hover:text-foreground disabled:opacity-50"
       >
         ⋯
@@ -580,7 +597,7 @@ function RowActions({
             }}
             className="block w-full px-3 py-2 text-left text-foreground/85 hover:bg-muted/20"
           >
-            Rename
+            {t("lib.row.rename")}
           </button>
           <button
             type="button"
@@ -591,7 +608,7 @@ function RowActions({
             }}
             className="block w-full px-3 py-2 text-left text-red-300 hover:bg-red-400/10"
           >
-            Delete
+            {t("lib.row.delete")}
           </button>
         </div>
       ) : null}
@@ -604,8 +621,8 @@ function RowActions({
  * arrived here with a NULL title. Migration 0017 also backfills the
  * column server-side; this fallback is belt-and-braces.
  */
-function songFallbackTitle(s: LibrarySong): string {
-  const style = s.style_family ?? "song";
+function songFallbackTitle(s: LibrarySong, fallback: string): string {
+  const style = s.style_family ?? fallback;
   const date = s.created_at.slice(0, 10);
   return `${style.charAt(0).toUpperCase() + style.slice(1)} - ${date}`;
 }
@@ -628,7 +645,15 @@ function isStuck(s: LibrarySong): boolean {
   return ageMs > 60_000;
 }
 
+const PILL_KEYS = {
+  completed: "lib.pill.completed",
+  failed: "lib.pill.failed",
+  processing: "lib.pill.processing",
+  queued: "lib.pill.queued",
+} as const satisfies Record<string, UiKey>;
+
 function StatusPill({ status, error }: { status: string; error: string | null }) {
+  const { t } = useUiLang();
   const tone =
     status === "completed"
       ? "border-emerald-400/40 text-emerald-300"
@@ -643,7 +668,9 @@ function StatusPill({ status, error }: { status: string; error: string | null })
         tone,
       )}
     >
-      {status}
+      {Object.prototype.hasOwnProperty.call(PILL_KEYS, status)
+        ? t(PILL_KEYS[status as keyof typeof PILL_KEYS])
+        : status}
     </span>
   );
 }

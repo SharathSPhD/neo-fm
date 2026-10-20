@@ -17,7 +17,8 @@ const Body = z.object({
   payload: z.record(z.union([z.string().max(200), z.number(), z.boolean()])).optional(),
 });
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const authed = await requireUser();
   if (authed instanceof NextResponse) return authed;
   const id = SongIdSchema.safeParse(params.id);

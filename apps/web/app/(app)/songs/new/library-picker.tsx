@@ -1,28 +1,25 @@
 "use client";
 
+import { expansionLanguage } from "@/lib/languages/registry";
 import type { Language } from "@neo-fm/song-doc";
 import { useEffect, useMemo, useState } from "react";
+
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
 
 // v1.4 Sprint 6: a single source of truth for "<Language name> · <Script
 // name>" labels. The old code hand-rolled three branches and silently
 // fell back to "English · Latin script" for any unknown language — which
 // landed Tamil / Bengali / Telugu / Sanskrit users on a misleading label.
 // Centralising this here keeps the picker honest as new languages ship.
-const LANGUAGE_LABELS: Record<Language, string> = {
-  en: "English · Latin script",
-  hi: "Hindi · Devanagari",
-  kn: "Kannada · Kannada script",
-  ta: "Tamil · Tamil script",
-  bn: "Bengali · Bengali script",
-  te: "Telugu · Telugu script",
-  sa: "Sanskrit · Devanagari",
-};
-
-function languageLabel(language: Language): string {
-  // Exhaustive: typecheck enforces every Language key. The fallback is a
-  // defensive belt-and-braces in case the union grows ahead of this map.
-  return LANGUAGE_LABELS[language] ?? language;
-}
+const LANGUAGE_LABEL_KEYS = {
+  en: "libpick.lang.en",
+  hi: "libpick.lang.hi",
+  kn: "libpick.lang.kn",
+  ta: "libpick.lang.ta",
+  bn: "libpick.lang.bn",
+  te: "libpick.lang.te",
+  sa: "libpick.lang.sa",
+} as const satisfies Partial<Record<Language, string>>;
 
 /**
  * M2 library picker side panel.
@@ -66,6 +63,7 @@ export function LibraryPicker({
   onClose,
   onPick,
 }: LibraryPickerProps) {
+  const { t } = useUiLang();
   const [items, setItems] = useState<LyricSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -141,25 +139,25 @@ export function LibraryPicker({
 
   return (
     <aside
-      aria-label="Lyric library"
+      aria-label={t("libpick.aria")}
       className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-muted/30 bg-background px-5 py-6 shadow-xl"
     >
       <header className="mb-4 flex items-center justify-between">
         <div className="flex flex-col">
-          <h2 className="text-base font-medium">Public-domain lyric library</h2>
+          <h2 className="text-base font-medium">{t("libpick.title")}</h2>
           <p className="text-[11px] text-foreground/50">
-            {languageLabel(language)}
+            {language in LANGUAGE_LABEL_KEYS ? t(LANGUAGE_LABEL_KEYS[language as keyof typeof LANGUAGE_LABEL_KEYS]) : (expansionLanguage(language)?.name ?? language)}
             {" · "}
-            All entries verified PD in India & US (see source citation).
+            {t("libpick.verified")}
           </p>
         </div>
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close library"
+          aria-label={t("libpick.closeAria")}
           className="rounded-md border border-muted/30 px-2 py-1 text-xs text-foreground/70 hover:text-foreground"
         >
-          Close
+          {t("libpick.close")}
         </button>
       </header>
 
@@ -170,12 +168,12 @@ export function LibraryPicker({
       ) : null}
 
       {loading ? (
-        <p className="text-sm text-foreground/50">Loading...</p>
+        <p className="text-sm text-foreground/50">{t("libpick.loading")}</p>
       ) : null}
 
       {!loading && grouped.length === 0 && !error ? (
         <p className="text-sm text-foreground/50">
-          No lyrics available for this language yet.
+          {t("libpick.empty")}
         </p>
       ) : null}
 
@@ -199,7 +197,7 @@ export function LibraryPicker({
                       disabled={picking === entry.id}
                       className="shrink-0 rounded-md border border-accent/30 px-2 py-1 text-[11px] text-accent hover:bg-accent/10 disabled:opacity-50"
                     >
-                      {picking === entry.id ? "Loading..." : "Use this lyric"}
+                      {picking === entry.id ? t("libpick.loading") : t("libpick.use")}
                     </button>
                   </div>
                   <p className="font-serif text-xs leading-relaxed text-foreground/80">
@@ -212,7 +210,7 @@ export function LibraryPicker({
                     className="text-[10px] text-foreground/40 underline-offset-2 hover:text-foreground/70 hover:underline"
                     title={entry.source_citation}
                   >
-                    Source
+                    {t("libpick.source")}
                   </a>
                 </li>
               ))}

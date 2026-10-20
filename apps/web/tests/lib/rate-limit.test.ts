@@ -35,8 +35,14 @@ describe("pickRule", () => {
     ["/api/songs/abc-123/variation", "songs:gen-aux", 6],
     ["/api/songs/abc-123/remix", "songs:gen-aux", 6],
     ["/api/songs/abc-123/cover-art", "songs:gen-aux", 6],
+    ["/api/station/queue", "station:queue", 30],
+    ["/api/station/ad-event", "station:ad-event", 60],
+    ["/api/station/signal", "station:signal", 90],
+    ["/api/station/signal/", "station:signal", 90],
+    ["/api/alexa", "alexa:skill", 600],
     ["/api/p/abc/audio-url", "public:read", 120],
     ["/api/p/abc", "public:read", 120],
+    ["/api/p/abc/listen", "public:listen", 30],
     ["/api/lyrics", "api:default", 60],
     ["/api/me", "api:default", 60],
   ])("picks rule for %s", (p, bucket, limit) => {
@@ -166,5 +172,19 @@ describe("enforceRateLimit (memory fallback)", () => {
     const b = await enforceRateLimit(mkReq({ ip: "1.1.1.2" }), rule);
     expect(a.ok).toBe(true);
     expect(b.ok).toBe(true);
+  });
+});
+
+describe("station signal budget", () => {
+  it("allows normal listening and 429s a flood", async () => {
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    __resetRateLimitState();
+    const rule = pickRule("/api/station/signal", "POST")!;
+    const req = mkReq({ ip: "198.51.100.7", pathname: "/api/station/signal" });
+    for (let i = 0; i < 20; i++) expect((await enforceRateLimit(req, rule)).ok).toBe(true);
+    let last = true;
+    for (let i = 0; i < 100; i++) last = (await enforceRateLimit(req, rule)).ok;
+    expect(last).toBe(false);
   });
 });

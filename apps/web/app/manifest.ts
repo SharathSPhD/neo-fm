@@ -14,13 +14,16 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "neo-fm",
     short_name: "neo-fm",
     description:
-      "India-first, composition-aware AI music. Carnatic, Hindustani, " +
-      "Kannada folk, Western — generate songs with raga / tala / script.",
+      "Your personal 24/7 FM station. Music tuned to your taste, in Hindi, Tamil, " +
+      "Telugu, Kannada, Bengali and more. All music is AI-generated.",
     id: "/",
-    start_url: "/library",
+    start_url: "/station",
     scope: "/",
     lang: "en-IN",
     display: "standalone",
+    display_override: ["standalone", "minimal-ui"],
+    dir: "ltr",
+    prefer_related_applications: false,
     background_color: "#0a0612",
     theme_color: "#321656",
     orientation: "any",
@@ -33,6 +36,7 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
+      { name: "Listen to your station", short_name: "Station", url: "/station", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
       { name: "Create a song", short_name: "Create", url: "/songs/new", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
       { name: "My library", short_name: "Library", url: "/library", icons: [{ src: "/icon-192.png", sizes: "192x192" }] },
     ],

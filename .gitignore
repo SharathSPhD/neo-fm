@@ -50,6 +50,7 @@ weights/
 *.mp3
 *.flac
 *.opus
+!apps/web/public/voice/**/*.mp3
 !demos/**/*.wav
 !demos/**/*.mp3
 
@@ -95,6 +96,10 @@ playwright/.cache/
 # cannot re-include children of an excluded directory unless every
 # parent path component is also un-excluded.)
 docs/*
+!docs/HANDOFF.md
+!docs/MOBILE.md
+!docs/RELEASE-POLICY.md
+!docs/handoff/
 !docs/contracts/
 docs/contracts/*
 !docs/contracts/queue-message.schema.json

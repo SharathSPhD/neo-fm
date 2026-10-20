@@ -45,7 +45,10 @@ import {
   ListSongsQuerySchema,
 } from "../../../lib/api/song-schemas";
 import { screenRequest } from "../../../lib/safety";
+import { getLogger } from "../../../lib/obs/log";
 import { requireUser } from "../../../lib/supabase/auth";
+import { createServiceRoleClient } from "../../../lib/supabase/server";
+import { groupIdFor } from "../../../lib/song/language-version";
 import type { Json } from "../../../lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -186,6 +189,30 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // New-language version: the parent must be visible to the caller (RLS: own,
+  // or published) and in a different language. Checked before any job exists.
+  let versionParent: { id: string; version_group: string | null } | null = null;
+  if (parsed.data.version_of) {
+    const { data: parent } = await supabase
+      .from("jobs")
+      .select("id, song_documents ( language )")
+      .eq("id", parsed.data.version_of)
+      .maybeSingle<{ id: string; song_documents: { language: string } | null }>();
+    if (!parent || !parent.song_documents) {
+      return NextResponse.json({ error: "version_parent_not_found" }, { status: 404 });
+    }
+    if (parent.song_documents.language === parsed.data.language) {
+      return NextResponse.json({ error: "same_language" }, { status: 422 });
+    }
+    // Own tolerant read: the group column only exists once migration 0084 is applied.
+    const { data: g } = await supabase
+      .from("jobs")
+      .select("version_group")
+      .eq("id", parent.id)
+      .maybeSingle<{ version_group: string | null }>();
+    versionParent = { id: parent.id, version_group: g?.version_group ?? null };
+  }
+
   // ---- Resolve a validated Song Document (both branches) ------------------
   //
   // song_document branch: user supplied a full document → validate + elaborate.
@@ -263,6 +290,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         ...(song_document.metadata ?? {}),
         prompt: parsed.data.prompt,
+        ...(parsed.data.voice ? { voice: parsed.data.voice } : {}),
       },
     };
   }
@@ -283,11 +311,16 @@ export async function POST(request: NextRequest) {
       p_priority: 0,
       p_attempt_id: attempt_id,
       p_trace_id: trace_id,
+      p_use_pack: parsed.data.use_pack === true,
     } as never,
   );
 
   if (rpcErr) {
     const msg = rpcErr.message ?? "";
+    // Quota and capacity rejections are expected outcomes; anything else is a fault worth a log line.
+    if (!/quota_exceeded|concurrent_cap_exceeded|unauthenticated|invalid_target_duration_seconds/.test(msg)) {
+      getLogger("/api/songs", request).error("create_song_job_failed", { detail: msg });
+    }
     // ADR 0005: per-tier storage byte cap. Different reset semantics
     // (reset happens when the user deletes a song or the sweep prunes
     // expired tracks); we return -1 to make that explicit on the client.
@@ -350,12 +383,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Link the new version to its siblings. jobs has no UPDATE policy for
+  // authenticated, so this is a service-role write pinned to the row we just
+  // created for the caller. The parent row is never modified (it may belong
+  // to someone else); the group id is the parent's group, or the parent itself.
+  let versionLinked: boolean | undefined;
+  if (versionParent) {
+    const { data: linked, error: linkErr } = await createServiceRoleClient()
+      .from("jobs")
+      .update({ version_group: groupIdFor(versionParent) } as never)
+      .eq("id", row.job_id)
+      .eq("user_id", user.id)
+      .select("id");
+    versionLinked = !linkErr && (linked?.length ?? 0) > 0;
+  }
+
   // user.id is unused on the response shape now that the RPC owns the row,
   // but keep the dependency so the user/auth assertion runs before the RPC.
   void user;
 
   return NextResponse.json(
-    { job_id: row.job_id, status: row.status, song_id: row.song_id },
+    {
+      job_id: row.job_id,
+      status: row.status,
+      song_id: row.song_id,
+      ...(versionLinked === false ? { warning: "version_link_failed" } : {}),
+    },
     { status: 202 },
   );
 }

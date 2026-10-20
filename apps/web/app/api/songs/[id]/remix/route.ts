@@ -66,10 +66,8 @@ async function readBody(req: Request): Promise<unknown> {
   }
 }
 
-export async function POST(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   if (!UUID_RE.test(params.id)) {
     return NextResponse.json({ error: "invalid_id" }, { status: 400 });
   }
@@ -164,6 +162,8 @@ export async function POST(
       p_priority: 0,
       p_attempt_id: attempt_id,
       p_trace_id: trace_id,
+      // Always the full signature: prod has the 7- and 8-argument create_song_job side by side, and a 7-key call matches both.
+      p_use_pack: false,
     } as never,
   );
 

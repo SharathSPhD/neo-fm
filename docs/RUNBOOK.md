@@ -89,3 +89,16 @@ Facts from the code (`apps/web/lib/agent/auth.ts`): every admin and tick route a
 7. Rotate on: suspected leak, team change, or every 6 months. Record the date, never the value.
 
 If ticks start 401-ing after step 4: the deployment is on an old env. Redeploy and re-check; fall back by setting `CRON_SECRET` to the previous value (known good) and redeploying.
+
+## 6. Gift-song packs and annual plans (billing, test mode)
+
+- Packs are sellable only while `STRIPE_PRICE_PACK_SINGLE_ID` / `STRIPE_PRICE_PACK_THREE_ID` are set. Keep them **unset in every environment** until migration 0090 is applied to prod: /gift (#128) now spends a credit inside `create_song_job(..., p_use_pack := true)` once the monthly quota is used up, and without 0090 a buyer would pay for credit nothing spends. A pack credit is returned automatically (once per job) when the job it paid for ends `failed` with no audio; retrying that job via recover spends a credit again, or fails with quota_exceeded when none is left.
+- Before live mode: handle `charge.refunded` (and disputes) by revoking unused pack credit (`song_packs.songs_used = songs_total`) and decide what happens to songs already made. Not implemented; test mode only until then.
+- Migration 0089 goes to `neo-fm-prod` only after the PR merges and S says go.
+
+## Daily provider request caps (Lyria, Veo, TTS)
+
+The providers cap requests per day (Lyria 3 Pro 500, Veo 10, TTS 100; reset at midnight Pacific = 07:00 UTC in PDT, 08:00 in PST), separate from the monthly GBP envelopes. `provider_daily_usage` (migration 0108) counts them; hard stops sit at 90% (Lyria 450, Veo 9, TTS 90, overridable with `LYRIA_DAILY_CAP`, `LYRIA_BATCH_DAILY_CAP`, `VEO_DAILY_CAP`, `TTS_DAILY_CAP`). Lyria keeps 200 requests a day for listeners' songs: batch callers (test-render, diction-lab, the pool and the media lab) stop at 250.
+- Listeners' songs are counted in the render path (one count per Lyria request, retries included). At the cap the song fails with the "busy, try later" message and no allowance is used.
+- Scripts that call a paid provider outside this app must call `POST /api/admin/provider-cap {"provider":"lyria"|"veo"|"tts","class":"batch"}` (Bearer ADMIN_SECRET) before EACH request and stop on 429 / `ok:false`. `GET /api/admin/provider-cap` shows today's counts.
+- Until 0108 is applied the counter fails open (nothing is blocked).

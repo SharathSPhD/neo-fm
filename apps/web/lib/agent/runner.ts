@@ -6,6 +6,7 @@
  */
 import type { DurationClass, LyriaResult } from "./lyria";
 import { SpendCapError } from "./lyria";
+import { intentBlock, type IntentSpec } from "../engine/intent";
 
 export interface AgentEvent {
   id: string;
@@ -55,6 +56,12 @@ export interface Brief {
   engine?: { url: string; token: string };
   /** Opt-in taste card (see lib/personalization); only present with the listener's consent. */
   tasteCard?: string;
+  /** Structured request (PCE_INTENT); the agent sees it as extra facts to honour. */
+  intent?: IntentSpec;
+  /** Routed style notes (PCE_STYLES): form and metre only, no intent text. */
+  styleNote?: string;
+  /** PCE_PROSODY_SELECT: the engine selects among candidates with a metre and rhyme term and caps K at 4. */
+  prosodySelect?: boolean;
 }
 
 export const RUBRIC = `# neo-fm song rubric - starter, tune the criteria
@@ -83,6 +90,9 @@ export function briefText(b: Brief): string {
     // A singer delivers ~1 short line per 5 s. Over-long lyrics get cut off or rushed (measured: 12 lines in 30 s -> 51% pronunciation match).
     `Lyric length: about ${Math.max(4, Math.round(b.targetSeconds / 5))} short lines in total (hook + verses), roughly ${Math.max(20, Math.round(b.targetSeconds * 1.5))} words. Do not write more than that.`,
     ...(b.tasteCard ? [b.tasteCard] : []),
+    ...(b.intent ? [intentBlock(b.intent)] : []),
+    ...(b.styleNote ? [b.styleNote] : []),
+    ...(b.prosodySelect ? ["Prosody select: yes"] : []),
     ...(b.engine ? [`Engine mode: yes. EMBED_URL=${b.engine.url}`, `EMBED_TOKEN=${b.engine.token}`] : []),
   ].join("\n");
 }
@@ -103,6 +113,11 @@ export interface AdvanceDeps {
   gate?: () => string | null;
   /** Called when a call that passed the gate exits without reaching the provider, so a half-open probe is not held for a cooldown. */
   gateRelease?: () => void;
+  /**
+   * Finish the run as soon as the render is stored instead of waiting for the agent's closing summary
+   * (measured 25-30 s of pure waiting; nothing downstream reads that summary).
+   */
+  finishOnRender?: boolean;
 }
 
 /** Sandbox-only tools an unattended run may use. Anything else that pauses for approval is denied. */
@@ -152,6 +167,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
     await d.sessions.sendToolConfirmation(sid, e.id, ok ? "allow" : "deny", ok ? undefined : "Not permitted for unattended runs.");
   }
 
+  let rendered = false;
   for (const call of pending) {
     // Provider outage: do not consume the tier's only render slot or reserve spend; the call stays pending for the next tick.
     const blocked = d.gate?.();
@@ -179,6 +195,7 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       await d.store.upsert({ job_id: jobId, audio_path: path });
       const sent = await d.sessions.sendToolResult(sid, call.id, `Rendered ${r.model} (${r.mimeType}, ${r.audio.byteLength} bytes). Stored.`);
       d.log?.(`sent render result for ${call.id}: ${sent ?? "ok"}`);
+      rendered = true;
     } catch (e) {
       if (e instanceof SpendCapError) d.gateRelease?.();
       const msg = e instanceof SpendCapError
@@ -190,6 +207,10 @@ export async function advance(jobId: string, d: AdvanceDeps): Promise<AdvanceRes
       await d.store.upsert({ job_id: jobId, render_error: (e instanceof Error ? e.message : String(e)).slice(0, 400) }).catch(() => {});
       d.log?.(`render path failed (${e instanceof Error ? e.message.slice(0, 120) : "?"}); sent: ${sent ?? "ok"}`);
     }
+  }
+  if (rendered && d.finishOnRender) {
+    await d.store.upsert({ job_id: jobId, status: "done" });
+    return "done";
   }
   if (pending.length > 0 || paused.length > 0) return "waiting";
 

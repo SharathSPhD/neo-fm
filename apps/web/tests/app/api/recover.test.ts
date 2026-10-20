@@ -40,7 +40,7 @@ describe("POST /api/songs/[id]/recover", () => {
     vi.mocked(requireUser).mockResolvedValueOnce(
       NextResponse.json({ error: "unauthorized" }, { status: 401 }),
     );
-    const res = await POST(makeRequest(), { params: { id: SONG_ID } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(401);
   });
 
@@ -50,7 +50,7 @@ describe("POST /api/songs/[id]/recover", () => {
       user: { id: "u1" } as never,
       supabase: supabase as never,
     });
-    const res = await POST(makeRequest(), { params: { id: "not-a-uuid" } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: "not-a-uuid" }) });
     expect(res.status).toBe(400);
   });
 
@@ -70,7 +70,7 @@ describe("POST /api/songs/[id]/recover", () => {
       user: { id: "u1" } as never,
       supabase: supabase as never,
     });
-    const res = await POST(makeRequest(), { params: { id: SONG_ID } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
       job_id: SONG_ID,
@@ -92,7 +92,7 @@ describe("POST /api/songs/[id]/recover", () => {
       user: { id: "u1" } as never,
       supabase: supabase as never,
     });
-    const res = await POST(makeRequest(), { params: { id: SONG_ID } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(404);
   });
 
@@ -108,7 +108,7 @@ describe("POST /api/songs/[id]/recover", () => {
       user: { id: "u1" } as never,
       supabase: supabase as never,
     });
-    const res = await POST(makeRequest(), { params: { id: SONG_ID } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(409);
     const body = (await res.json()) as { error: string; details?: string };
     expect(body.error).toBe("not_recoverable");
@@ -125,7 +125,7 @@ describe("POST /api/songs/[id]/recover", () => {
       user: { id: "u1" } as never,
       supabase: supabase as never,
     });
-    const res = await POST(makeRequest(), { params: { id: SONG_ID } });
+    const res = await POST(makeRequest(), { params: Promise.resolve({ id: SONG_ID }) });
     expect(res.status).toBe(500);
   });
 });

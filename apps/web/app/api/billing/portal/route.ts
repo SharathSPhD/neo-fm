@@ -12,7 +12,10 @@
  * - 200 with a portal URL otherwise.
  *
  * The customer id comes from public.user_billing (RLS-readable by
- * the owning user) -- if it's missing, we have no portal to open.
+ * the owning user). A Station pass is its own entitlement with its own
+ * Stripe customer in public.station_passes (owner-readable), so pass-only
+ * listeners can open the portal to cancel too. If neither has one, we have
+ * no portal to open.
  */
 import { NextResponse } from "next/server";
 
@@ -25,6 +28,25 @@ import { requireUser } from "@/lib/supabase/auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+/** The Stripe customer on the listener's own Station pass row; null when there is none or the table is missing. */
+async function passCustomerId(supabase: unknown, userId: string): Promise<string | null> {
+  try {
+    const { data } = await (
+      (supabase as { from: unknown }).from as unknown as (t: string) => {
+        select: (c: string) => {
+          eq: (k: string, v: string) => { maybeSingle: () => Promise<{ data: { stripe_customer_id: string | null } | null }> };
+        };
+      }
+    )("station_passes")
+      .select("stripe_customer_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    return data?.stripe_customer_id ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export async function POST() {
   const cfg = getBillingConfigOrNull();
@@ -51,7 +73,9 @@ export async function POST() {
       { status: 500 },
     );
   }
-  if (!billing?.stripe_customer_id) {
+  let customerId = billing?.stripe_customer_id ?? null;
+  if (!customerId) customerId = await passCustomerId(supabase, user.id);
+  if (!customerId) {
     return NextResponse.json(
       {
         error: "no_customer",
@@ -66,7 +90,7 @@ export async function POST() {
   const stripe = getStripe();
   try {
     const session = await stripe.billingPortal.sessions.create({
-      customer: billing.stripe_customer_id,
+      customer: customerId,
       return_url: `${getPublicAppUrl()}/account`,
     });
     return NextResponse.json({ url: session.url });

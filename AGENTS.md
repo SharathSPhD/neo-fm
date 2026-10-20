@@ -1,6 +1,6 @@
 # AGENTS.md: rules for agents working in neo-fm
 
-Read this first. Applies to every agent (human or AI) committing to this repository. For what the product is and how it is built, read [README.md](README.md) and [STATUS.md](STATUS.md).
+Read this first, then [docs/HANDOFF.md](docs/HANDOFF.md) for the current state and runbook. Applies to every agent (human or AI) committing to this repository. For what the product is and how it is built, read [README.md](README.md) and [STATUS.md](STATUS.md).
 
 ## Merge contract
 
@@ -37,6 +37,7 @@ Vercel deploy protection blocks commits whose author email is unrecognised, so u
 
 - **TypeScript**: strict mode. No `any` without an inline rationale. Files are `kebab-case.ts`. Imports at the top of the file, no inline imports.
 - **Python** (the `pce-engine` vendor and legacy services): type hints, `ruff` clean. Files are `snake_case.py`.
+- **Gemini**: server-side calls go through `apps/web/lib/gemini/interactions.ts` (Interactions API); see [docs/GEMINI.md](docs/GEMINI.md). No new `generateContent` fetches, no legacy SDKs.
 - **Comments** explain non-obvious *why*, not what.
 - Match the surrounding code's style, naming and comment density.
 

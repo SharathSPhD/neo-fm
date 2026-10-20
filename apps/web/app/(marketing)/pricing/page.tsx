@@ -15,140 +15,156 @@
  */
 import type { Metadata } from "next";
 
-import { isBillingEnabled } from "@/lib/billing/config";
+import { FunnelBeacon } from "@/components/funnel-beacon";
+import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
+import { passMonthlyTracks, readOwnStationPass } from "@/lib/billing/pass";
+import { serverI18n } from "@/lib/i18n/server";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
 
-import { UpgradeButton } from "./upgrade-button";
+import { UpgradeButton, UpgradeSignInLink } from "./upgrade-button";
 import { WaitlistButton } from "./waitlist-button";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/pricing" },
   title: "Pricing -- neo-fm",
   description:
-    "Free for 3 songs a month. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
+    "Start your own station free with 3 songs a month. One gift song is ₹99. Creator (₹299) and Pro (₹799) add more songs, longer tracks, Pro-grade lyric polish and pronunciation checks. Cancel anytime.",
 };
 
 interface Tier {
   id: "free" | "creator" | "pro";
   label: string;
   price: string;
-  cadence: string;
-  pitch: string;
-  features: readonly string[];
+  pitch: UiKey;
+  features: readonly UiKey[];
+  /** Yearly price (10 x monthly); the button shows only when the yearly Stripe price is configured. */
+  annualPrice?: string;
   cta:
-    | { kind: "primary"; href: string; label: string }
-    | { kind: "waitlist"; tier: "creator" | "pro"; label: string };
+    | { kind: "primary"; href: string; label: UiKey }
+    | { kind: "waitlist"; tier: "creator" | "pro"; label: UiKey };
 }
 
+// Copy lives in lib/i18n/locales; plan names and prices are not translated.
 const TIERS: readonly Tier[] = [
   {
     id: "free",
     label: "Free",
     price: "₹0",
-    cadence: "per month",
-    pitch: "Try the engine. 3 songs a month, written with our lyric engine.",
+    pitch: "pricing.free.pitch",
     features: [
-      "3 songs per month (UTC)",
-      "30-second songs with real vocals",
-      "Kannada, Tamil, Telugu, Hindi, Bengali lyrics in native script",
-      "Pronunciation check on every song",
-      "Private library + public share links",
+      "pricing.free.f1",
+      "pricing.free.f2",
+      "pricing.free.f3",
+      "pricing.free.f4",
+      "pricing.free.f5",
     ],
-    cta: { kind: "primary", href: "/sign-up", label: "Start free" },
+    cta: { kind: "primary", href: "/sign-up", label: "pricing.free.cta" },
   },
   {
     id: "creator",
     label: "Creator",
     price: "₹299",
-    cadence: "per month",
-    pitch: "For songwriters and bedroom producers shipping demos.",
+    pitch: "pricing.creator.pitch",
     features: [
-      "Up to 15 songs per month",
-      "Up to 90 second songs",
-      "Sonnet-polished meter & diction on every lyric",
-      "Wider style palette: Carnatic, Hindustani, folk, film, devotional",
-      "Priority queue",
+      "pricing.creator.f1",
+      "pricing.creator.f2",
+      "pricing.creator.f3",
+      "pricing.creator.f4",
+      "pricing.creator.f5",
     ],
-    cta: {
-      kind: "waitlist",
-      tier: "creator",
-      label: "Join Creator waitlist",
-    },
+    annualPrice: "₹2,990",
+    cta: { kind: "waitlist", tier: "creator", label: "pricing.creator.cta" },
   },
   {
     id: "pro",
     label: "Pro",
     price: "₹799",
-    cadence: "per month",
-    pitch:
-      "For serious songwriters and small studios. The most renders, our best lyric pass.",
+    pitch: "pricing.pro.pitch",
     features: [
-      "Up to 40 songs per month",
-      "Up to 3 minute songs",
-      "Opus final lyric pass + diction coach",
-      "Taste profile that learns your style (opt-in)",
-      "Email support",
+      "pricing.pro.f1",
+      "pricing.pro.f2",
+      "pricing.pro.f3",
+      "pricing.pro.f4",
+      "pricing.pro.f5",
     ],
-    cta: { kind: "waitlist", tier: "pro", label: "Join Pro waitlist" },
+    annualPrice: "₹7,990",
+    cta: { kind: "waitlist", tier: "pro", label: "pricing.pro.cta" },
   },
 ];
 
+const PACKS = [
+  { sku: "single", price: "₹99", name: "pricing.packs.single.name", desc: "pricing.packs.single.desc" },
+  { sku: "three", price: "₹249", name: "pricing.packs.three.name", desc: "pricing.packs.three.desc" },
+] as const satisfies readonly { sku: "single" | "three"; price: string; name: UiKey; desc: UiKey }[];
+
+/** Must match the Stripe price created by /api/admin/stripe-setup (14900 paise). */
+const STATION_PASS_PRICE = "₹149";
+
 export default async function PricingPage() {
+  const { t } = await serverI18n();
   // Server-side check so we don't bundle the Stripe client when billing
   // is off. `isBillingEnabled()` is also called inside /api/billing/*
   // so dummy mode always returns 503, never an undefined-key crash.
   const billingEnabled = isBillingEnabled();
+  const billing = getBillingConfigOrNull();
   let signedIn = false;
+  let hasPass = false;
   if (billingEnabled) {
     const supabase = createServerClient();
     const { data } = await supabase.auth.getUser();
     signedIn = Boolean(data?.user);
+    // A paid-up pass holder sees "Manage" instead of a second checkout (the checkout route refuses it too).
+    if (data?.user) hasPass = (await readOwnStationPass(supabase, data.user.id)) !== null;
   }
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-12 px-6 py-12">
+      <FunnelBeacon event="pricing_view" />
       <header className="flex flex-col gap-3 text-center">
-        <p className="text-xs uppercase tracking-widest text-foreground/40">
-          pricing
+        <p className="text-xs uppercase tracking-widest text-foreground/60">
+          {t("pricing.eyebrow")}
         </p>
         <h1 className="text-4xl font-medium tracking-tight sm:text-5xl">
-          Sing your stories.
-          <br className="hidden sm:block" /> Pay only when you scale.
+          {t("pricing.headline1")}
+          <br className="hidden sm:block" /> {t("pricing.headline2")}
         </h1>
         <p className="mx-auto max-w-2xl text-base text-foreground/60">
           {billingEnabled
-            ? "Free covers the casual creator. Creator and Pro unlock longer songs, priority queue, stem downloads, and API access. Upgrade anytime — cancel anytime."
-            : "Free covers the casual creator. Creator and Pro unlock longer songs, priority queue, stems, and an API. We're finishing billing — drop your email and we'll write the day we open the gates."}
+            ? t("pricing.introLive")
+            : t("pricing.introWaitlist")}
         </p>
       </header>
       <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {TIERS.map((tier) => (
           <article
             key={tier.id}
-            className={`flex flex-col gap-5 rounded-xl border p-7 transition ${
+            className={`flex flex-col gap-5 rounded-2xl p-7 transition ${
               tier.id === "creator"
-                ? "border-accent/40 bg-accent/5 shadow-lg shadow-accent/10"
-                : "border-muted/30 bg-muted/5 hover:border-muted/50"
+                ? "glass border-accent/50 shadow-[0_0_48px_-12px_hsl(var(--accent))]"
+                : "glass glass-hover"
             }`}
           >
             <header className="flex items-baseline justify-between gap-3">
               <h2 className="text-xl font-medium tracking-tight">{tier.label}</h2>
               {tier.id === "creator" ? (
                 <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] uppercase tracking-widest text-accent">
-                  Most popular
+                  {t("pricing.popular")}
                 </span>
               ) : null}
             </header>
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-medium">{tier.price}</span>
-              <span className="text-sm text-foreground/50">{tier.cadence}</span>
+              <span className="text-sm text-foreground/50">{t("pricing.perMonth")}</span>
             </div>
-            <p className="text-sm text-foreground/70">{tier.pitch}</p>
+            <p className="text-sm text-foreground/70">{t(tier.pitch)}</p>
             <ul className="flex flex-col gap-2 text-sm text-foreground/80">
               {tier.features.map((f) => (
                 <li key={f} className="flex items-start gap-2">
                   <span aria-hidden="true" className="mt-1 text-accent">
                     ◆
                   </span>
-                  <span>{f}</span>
+                  <span>{t(f)}</span>
                 </li>
               ))}
             </ul>
@@ -158,30 +174,78 @@ export default async function PricingPage() {
                   href={tier.cta.href}
                   className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
                 >
-                  {tier.cta.label}
+                  {t(tier.cta.label)}
                 </a>
               ) : billingEnabled && signedIn ? (
-                <UpgradeButton
-                  tier={tier.cta.tier}
-                  label={`Upgrade to ${tier.label}`}
-                />
+                <div className="flex flex-col gap-2">
+                  <UpgradeButton
+                    tier={tier.cta.tier}
+                    label={t("pricing.upgradeTo", { tier: tier.label })}
+                  />
+                  {tier.annualPrice && billing?.annualPrices[tier.cta.tier] ? (
+                    <>
+                      <UpgradeButton
+                        tier={tier.cta.tier}
+                        interval="year"
+                        variant="secondary"
+                        label={t("pricing.annual.cta", { price: tier.annualPrice })}
+                      />
+                      <p className="text-center text-xs text-foreground/50">{t("pricing.annual.note")}</p>
+                    </>
+                  ) : null}
+                </div>
               ) : billingEnabled ? (
-                <a
-                  href={`/sign-in?next=${encodeURIComponent("/pricing")}`}
-                  className="block w-full rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-center text-sm font-medium text-accent transition hover:bg-accent/20"
-                >
-                  {`Upgrade to ${tier.label}`}
-                </a>
+                <UpgradeSignInLink label={t("pricing.upgradeTo", { tier: tier.label })} />
               ) : (
-                <WaitlistButton tier={tier.cta.tier} label={tier.cta.label} />
+                <WaitlistButton tier={tier.cta.tier} label={t(tier.cta.label)} />
               )}
             </div>
           </article>
         ))}
       </section>
+      {billingEnabled && signedIn && PACKS.some((p) => billing?.packPrices[p.sku]) ? (
+        <section className="flex flex-col gap-6">
+          <header className="flex flex-col gap-2 text-center">
+            <h2 className="text-2xl font-medium tracking-tight">{t("pricing.packs.title")}</h2>
+            <p className="mx-auto max-w-2xl text-sm text-foreground/60">{t("pricing.packs.intro")}</p>
+          </header>
+          <div className="mx-auto grid w-full max-w-3xl gap-6 sm:grid-cols-2">
+            {PACKS.filter((p) => billing?.packPrices[p.sku]).map((p) => (
+              <article key={p.sku} className="flex flex-col gap-4 glass rounded-2xl p-7">
+                <h3 className="text-lg font-medium">{t(p.name)}</h3>
+                <span className="text-3xl font-medium">{p.price}</span>
+                <p className="text-sm text-foreground/70">{t(p.desc)}</p>
+                <div className="mt-auto flex flex-col gap-2 pt-2">
+                  <UpgradeButton pack={p.sku} label={t("pricing.packs.buy")} />
+                  <p className="text-center text-xs text-foreground/50">{t("pricing.packs.payNote")}{billing?.packUpi ? ` ${t("pricing.packs.upiNote")}` : ""}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {billingEnabled && signedIn && billing?.stationPassPrice ? (
+        <section className="mx-auto flex w-full max-w-3xl flex-col gap-4 glass rounded-2xl border-accent/30 p-7">
+          <h2 className="text-2xl font-medium tracking-tight">{t("pricing.pass.title")}</h2>
+          <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
+          <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
+          {hasPass ? (
+            <>
+              <p data-testid="pass-owned" className="text-sm font-medium text-accent">{t("pricing.pass.owned")}</p>
+              <a href="/account" className="inline-flex w-fit rounded-full border border-accent/40 px-5 py-2 text-sm hover:bg-accent/10">{t("pricing.pass.manage")}</a>
+            </>
+          ) : (
+            <>
+              <UpgradeButton pass="station" label={t("pricing.pass.cta")} />
+              <p className="text-center text-xs text-foreground/50">{t("pricing.pass.note")}</p>
+            </>
+          )}
+        </section>
+      ) : null}
+      <QualityEvidenceSummary />
       <footer className="mx-auto max-w-2xl rounded-md border border-muted/20 bg-muted/5 px-6 py-4 text-center text-xs text-foreground/50">
-        Prices in INR incl. GST ($6.99 / $17.99 outside India). Longer songs use more of your monthly render budget.
-        All songs are AI-generated and labelled as such. <a href="/help" className="underline">FAQ</a>.
+        {t("pricing.footnote")} <a href="/help" className="underline">{t("pricing.faq")}</a>.
       </footer>
     </main>
   );

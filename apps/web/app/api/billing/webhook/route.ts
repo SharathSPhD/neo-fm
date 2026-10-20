@@ -5,7 +5,8 @@
  * `STRIPE_WEBHOOK_SECRET`, then dispatches the small subset of events we
  * care about:
  *
- *   - checkout.session.completed     -> initial upgrade
+ *   - checkout.session.completed     -> initial upgrade, or a gift-song pack (mode=payment) once paid
+ *   - checkout.session.async_payment_succeeded -> a pack whose payment settled after checkout
  *   - customer.subscription.created  -> idempotent reinforcement
  *   - customer.subscription.updated  -> plan change / status flip
  *   - customer.subscription.deleted  -> cancellation
@@ -13,6 +14,7 @@
  *
  * All of these resolve to one DB call: `apply_stripe_subscription_state()`
  * with the latest subscription state we observe. The RPC is idempotent.
+ * The Station pass price (test mode only) goes to `apply_station_pass_state()` instead and never touches the tier.
  *
  * Idempotency: Stripe delivers at-least-once, so each event id is claimed in
  * `stripe_webhook_events` (migration 0065) before it is applied. A duplicate
@@ -30,7 +32,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { getBillingConfigOrNull } from "@/lib/billing/config";
+import { getBillingConfigOrNull, getPackForPriceId, getTierForPriceId, PACK_SONGS } from "@/lib/billing/config";
+import { isMissingFunction } from "@/lib/billing/pass";
 import { getStripe } from "@/lib/billing/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -39,6 +42,7 @@ export const runtime = "nodejs";
 
 const HANDLED_EVENTS = new Set<Stripe.Event["type"]>([
   "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
@@ -128,15 +132,18 @@ export async function POST(req: Request) {
 async function applyEvent(
   event: Stripe.Event,
   prices: { creator: string; pro: string },
-): Promise<{ user_id: string; status: string } | { skipped: string }> {
+): Promise<{ user_id: string; status: string } | { skipped: string } | { user_id: string; pack: string }> {
   const stripe = getStripe();
   let subscriptionId: string | null = null;
   let userIdHint: string | null = null;
   let customerId: string | null = null;
 
-  if (event.type === "checkout.session.completed") {
+  if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
     const session = event.data.object as Stripe.Checkout.Session;
-    if (session.mode !== "subscription") {
+    if (session.mode === "payment") {
+      return applyPackPurchase(session);
+    }
+    if (session.mode !== "subscription" || event.type !== "checkout.session.completed") {
       return { skipped: "non_subscription_checkout" };
     }
     subscriptionId =
@@ -180,6 +187,10 @@ async function applyEvent(
     (subscription as unknown as { current_period_end?: number })
       .current_period_end ??
     null;
+  // The station pass is its own entitlement. Falling through to apply_stripe_subscription_state would treat the unknown
+  // price as "free" and downgrade a paying Creator/Pro user, so it is routed to apply_station_pass_state below.
+  const isPass = Boolean(priceId) && priceId === getBillingConfigOrNull()?.stationPassPrice;
+  const tier = getTierForPriceId(priceId);
   const status = subscription.status;
   const cancelAtPeriodEnd = subscription.cancel_at_period_end;
   const stripeCustomerId =
@@ -200,6 +211,26 @@ async function applyEvent(
   }
 
   const admin = createServiceRoleClient();
+  if (isPass) {
+    // Not in the generated types until migration 0098 lands, hence the cast.
+    const { error: passError } = await (admin as unknown as { rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: { code?: string; message: string } | null }> }).rpc("apply_station_pass_state", {
+      p_user_id: resolvedUserId,
+      p_stripe_customer_id: resolvedCustomerId,
+      p_subscription_id: subscriptionId,
+      p_price_id: priceId ?? "",
+      p_status: status,
+      p_current_period_end: periodEndUnix != null ? new Date(periodEndUnix * 1000).toISOString() : new Date(0).toISOString(),
+      p_cancel_at_period_end: cancelAtPeriodEnd,
+    });
+    if (passError) {
+      if ((passError as { code?: string }).code === "23503") return { skipped: "user_deleted" };
+      // Migration 0098 not applied yet: acknowledge so Stripe does not retry for days. After applying it, resend the
+      // customer.subscription.* events from the Stripe dashboard (test mode) to store the pass.
+      if (isMissingFunction(passError)) return { skipped: "station_pass_unavailable" };
+      throw new Error(`apply_station_pass_state: ${passError.message}`);
+    }
+    return { user_id: resolvedUserId, status };
+  }
   const { error } = await admin.rpc("apply_stripe_subscription_state", {
     p_user_id: resolvedUserId,
     p_stripe_customer_id: resolvedCustomerId,
@@ -211,8 +242,9 @@ async function applyEvent(
         ? new Date(periodEndUnix * 1000).toISOString()
         : new Date(0).toISOString(),
     p_cancel_at_period_end: cancelAtPeriodEnd,
-    p_creator_price_id: prices.creator,
-    p_pro_price_id: prices.pro,
+    // The RPC compares the price to one id per tier; annual prices map to the same tier, so hand it the id we resolved.
+    p_creator_price_id: tier === "creator" ? priceId ?? prices.creator : prices.creator,
+    p_pro_price_id: tier === "pro" ? priceId ?? prices.pro : prices.pro,
   });
   if (error) {
     // FK violation: the account was erased (DELETE /api/account) before this event arrived. Retrying can never succeed.
@@ -222,4 +254,36 @@ async function applyEvent(
     throw new Error(`apply_stripe_subscription_state: ${error.message}`);
   }
   return { user_id: resolvedUserId, status };
+}
+
+/**
+ * One-off gift-song pack. The song count comes from the price actually purchased (looked up from Stripe, mapped
+ * through env), not from session metadata. grant_song_pack is idempotent on the Checkout session id.
+ */
+async function applyPackPurchase(session: Stripe.Checkout.Session): Promise<{ user_id: string; pack: string } | { skipped: string }> {
+  if (session.payment_status !== "paid") {
+    // Delayed methods: checkout.session.async_payment_succeeded delivers the paid state later.
+    return { skipped: "payment_not_paid" };
+  }
+  const userId =
+    (typeof session.client_reference_id === "string" ? session.client_reference_id : null) ??
+    (session.metadata?.user_id as string | undefined) ??
+    null;
+  if (!userId) return { skipped: "no_user_id_metadata" };
+
+  const items = await getStripe().checkout.sessions.listLineItems(session.id, { limit: 10 });
+  const sku = items.data.map((li) => getPackForPriceId(li.price?.id)).find((v) => v !== null) ?? null;
+  if (!sku) return { skipped: "not_a_pack_price" };
+
+  const { error } = await createServiceRoleClient().rpc("grant_song_pack", {
+    p_user_id: userId,
+    p_session_id: session.id,
+    p_sku: sku,
+    p_songs: PACK_SONGS[sku],
+  });
+  if (error) {
+    if ((error as { code?: string }).code === "23503") return { skipped: "user_deleted" };
+    throw new Error(`grant_song_pack: ${error.message}`);
+  }
+  return { user_id: userId, pack: sku };
 }

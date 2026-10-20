@@ -10,8 +10,12 @@ import Link from "next/link";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 
+import { serverI18n } from "@/lib/i18n/server";
+import { jsonLdString, musicPlaylistLd } from "@/lib/seo/jsonld";
+import { siteUrl } from "@/lib/seo/site";
 import { createServerClient } from "@/lib/supabase/server";
 import { CoverArt } from "@/components/cover-art";
+import { avatarUrl } from "@/lib/profile/avatar-url";
 import {
   avatarColors,
   avatarInitial,
@@ -31,16 +35,19 @@ export const dynamic = "force-dynamic";
 const MAX_SONGS = 200;
 
 type Props = {
-  params: { handle: string };
+  params: Promise<{ handle: string }>;
 };
 
-export async function generateMetadata({ params }: { params: { handle: string } }): Promise<Metadata> {
+export async function generateMetadata(props: { params: Promise<{ handle: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const handle = params.handle.toLowerCase();
   const title = `@${handle} on neo-fm`;
   const data = await loadProfile(handle);
   // Unknown handles and empty profiles are not worth indexing.
   const indexable = Boolean(data && data.songs.length > 0);
-  const description = data
+  const description = data?.profile.bio
+    ? data.profile.bio
+    : data
     ? profileBlurb(
         handle,
         profileStats(data.songs),
@@ -61,6 +68,8 @@ type ProfileRow = {
   id: string;
   handle: string;
   created_at: string;
+  bio: string | null;
+  avatar_path: string | null;
 };
 
 type SongRow = {
@@ -86,7 +95,7 @@ const loadProfile = cache(async function loadProfile(handle: string) {
       };
     }
   )
-    .select("id, handle, created_at")
+    .select("id, handle, created_at, bio, avatar_path")
     .eq("handle", handle)
     .maybeSingle();
   if (lookup.error || !lookup.data) return null;
@@ -126,7 +135,23 @@ const loadProfile = cache(async function loadProfile(handle: string) {
   return { profile, songs, totalLikes };
 });
 
-export default async function ProfilePage({ params }: Props) {
+/** Placeholder swapped into a count string so the number can be rendered bold in the right spot. */
+const MARK = "\u0000";
+
+function Count({ text, n }: { text: string; n: number }) {
+  const [before = "", after = ""] = text.split(MARK);
+  return (
+    <>
+      {before}
+      <strong className="font-semibold">{n}</strong>
+      {after}
+    </>
+  );
+}
+
+export default async function ProfilePage(props: Props) {
+  const params = await props.params;
+  const { t } = await serverI18n();
   const supabase = createServerClient();
   const handle = params.handle.toLowerCase();
 
@@ -176,34 +201,59 @@ export default async function ProfilePage({ params }: Props) {
     groups.map((g) => prettyLanguage(g.language)),
   );
 
+  const playlistLd =
+    songs.length > 0
+      ? musicPlaylistLd({
+          base: siteUrl(),
+          path: `/u/${profile.handle}`,
+          name: `Songs by @${profile.handle}`,
+          description: shareText,
+          tracks: songs.map((s) => ({ publicId: s.public_id, name: s.title?.trim() || `${prettyStyle(s.style_family)} song`, language: s.language })),
+        })
+      : null;
+
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-10 px-6 py-12">
+      {playlistLd ? (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdString(playlistLd) }} />
+      ) : null}
       <header className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <div
-          aria-hidden
-          className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-4xl font-semibold text-white"
-          style={{ backgroundImage: `linear-gradient(135deg, ${avatarColors(profile.handle).from}, ${avatarColors(profile.handle).to})` }}
-        >
-          {avatarInitial(profile.handle)}
-        </div>
+        {avatarUrl(profile.avatar_path) ? (
+          // eslint-disable-next-line @next/next/no-img-element -- user avatar from the public bucket
+          <img
+            src={avatarUrl(profile.avatar_path) ?? ""}
+            alt={`@${profile.handle}`}
+            width={96}
+            height={96}
+            className="h-24 w-24 shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="flex h-24 w-24 shrink-0 items-center justify-center rounded-full text-4xl font-semibold text-white"
+            style={{ backgroundImage: `linear-gradient(135deg, ${avatarColors(profile.handle).from}, ${avatarColors(profile.handle).to})` }}
+          >
+            {avatarInitial(profile.handle)}
+          </div>
+        )}
         <div className="flex flex-1 flex-col gap-2">
           <h1 className="text-4xl font-medium tracking-tight">@{profile.handle}</h1>
           <p className="text-sm text-foreground/60">
             <span data-testid="follower-count">{followerCount}</span>{" "}
-            {followerCount === 1 ? "follower" : "followers"} · joined{" "}
+            {t(followerCount === 1 ? "profile.follower" : "profile.followers", { n: "" }).trim()} · {t("profile.joined")}{" "}
             {new Date(profile.created_at).toLocaleDateString(undefined, { year: "numeric", month: "long" })}
           </p>
+          {profile.bio ? <p className="max-w-prose whitespace-pre-line text-sm text-foreground/85">{profile.bio}</p> : null}
           {stats.songs > 0 ? (
             <ul className="flex flex-wrap gap-x-5 gap-y-1 text-sm text-foreground/80">
               <li>
-                <strong className="font-semibold">{stats.songs}</strong> {stats.songs === 1 ? "song" : "songs"}
+                <Count text={t(stats.songs === 1 ? "profile.song.one" : "profile.song.other", { n: MARK })} n={stats.songs} />
               </li>
               <li>
-                <strong className="font-semibold">{stats.languages}</strong>{" "}
-                {stats.languages === 1 ? "language" : "languages"}
+                <Count text={t(stats.languages === 1 ? "profile.language.one" : "profile.language.other", { n: MARK })} n={stats.languages} />
               </li>
               <li>
-                <strong className="font-semibold">{stats.likes}</strong> {stats.likes === 1 ? "like" : "likes"}
+                <Count text={t(stats.likes === 1 ? "profile.like.one" : "profile.like.other", { n: MARK })} n={stats.likes} />
               </li>
             </ul>
           ) : null}
@@ -216,15 +266,15 @@ export default async function ProfilePage({ params }: Props) {
                 href={`/sign-in?next=${encodeURIComponent(`/u/${profile.handle}`)}`}
                 className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus:ring-2 focus:ring-accent"
               >
-                Sign in to follow
+                {t("profile.signInFollow")}
               </Link>
             ) : null}
             {isSelf ? (
               <Link
-                href="/onboarding/handle"
+                href="/account/profile"
                 className="rounded-md border border-muted/30 px-3 py-1.5 text-xs text-foreground/70 hover:border-accent/30 hover:text-foreground"
               >
-                Change handle
+                {t("profile.editProfile")}
               </Link>
             ) : null}
             <ShareProfileButton handle={profile.handle} text={shareText} />
@@ -235,13 +285,13 @@ export default async function ProfilePage({ params }: Props) {
       {songs.length === 0 ? (
         <p className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/60">
           {isSelf
-            ? "You haven't published any songs yet."
-            : `@${profile.handle} hasn't published any songs yet.`}
+            ? t("profile.noneSelf")
+            : t("profile.noneOther", { handle: profile.handle })}
         </p>
       ) : (
         <>
           {groups.length > 1 ? (
-            <nav aria-label="Jump to language" className="flex flex-wrap gap-2">
+            <nav aria-label={t("profile.jumpToLang")} className="flex flex-wrap gap-2">
               {groups.map((g) => (
                 <a
                   key={g.language}
@@ -258,17 +308,17 @@ export default async function ProfilePage({ params }: Props) {
               <h2 id={`h-${g.language}`} className="mb-4 text-xl font-medium tracking-tight">
                 {prettyLanguage(g.language)}{" "}
                 <span className="text-sm font-normal text-foreground/60">
-                  {g.songs.length} {g.songs.length === 1 ? "song" : "songs"}
+                  {t(g.songs.length === 1 ? "profile.song.one" : "profile.song.other", { n: g.songs.length })}
                 </span>
               </h2>
               <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {g.songs.map((song) => {
-                  const title = song.title?.trim() || `${prettyStyle(song.style_family)} song`;
+                  const title = song.title?.trim() || t("discover.styleSong", { style: prettyStyle(song.style_family) });
                   return (
                     <li key={song.id}>
                       <Link
                         href={`/s/${song.public_id}`}
-                        className="group flex gap-3 rounded-lg border border-muted/20 bg-muted/5 p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
+                        className="group flex gap-3 glass rounded-2xl p-3 transition hover:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent"
                       >
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-md">
                           <CoverArt url={null} seed={song.id} styleFamily={song.style_family} alt="" showGlyph />
@@ -291,7 +341,7 @@ export default async function ProfilePage({ params }: Props) {
               </ul>
             </section>
           ))}
-          <p className="text-xs text-foreground/50">AI-generated music and lyrics, made on neo-fm.</p>
+          <p className="text-xs text-foreground/50">{t("profile.aiNote")}</p>
         </>
       )}
     </main>

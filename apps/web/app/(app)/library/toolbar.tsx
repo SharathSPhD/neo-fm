@@ -9,6 +9,9 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
 type Defaults = {
   q: string;
   style: string | null;
@@ -20,6 +23,7 @@ type Defaults = {
 };
 
 export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const params = useSearchParams();
   const [pending, startTransition] = useTransition();
@@ -53,60 +57,60 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
       >
         <label className="flex flex-1 min-w-[14rem] flex-col gap-1">
           <span className="text-[10px] uppercase tracking-widest text-foreground/40">
-            Search
+            {t("palette.search")}
           </span>
           <input
             type="search"
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search titles…"
-            className="rounded-md border border-muted/30 bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+            placeholder={t("lib.searchPlaceholder")}
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-sm outline-none focus:border-accent"
           />
         </label>
         <Select
-          label="Style"
+          label={t("prompt.style")}
           value={defaults.style ?? ""}
           options={[
-            { v: "", l: "All styles" },
-            { v: "carnatic", l: "Carnatic" },
-            { v: "hindustani", l: "Hindustani" },
-            { v: "kannada-folk", l: "Kannada folk" },
-            { v: "western", l: "Western" },
+            { v: "", l: "lib.o.allStyles" },
+            { v: "carnatic", l: "lib.o.carnatic" },
+            { v: "hindustani", l: "lib.o.hindustani" },
+            { v: "kannada-folk", l: "lib.o.kannadaFolk" },
+            { v: "western", l: "lib.o.western" },
           ]}
           onChange={(v) => update("style", v || null)}
         />
         <Select
-          label="Language"
+          label={t("lang.label")}
           value={defaults.lang ?? ""}
           options={[
-            { v: "", l: "All languages" },
-            { v: "hi", l: "Hindi" },
-            { v: "kn", l: "Kannada" },
-            { v: "en", l: "English" },
+            { v: "", l: "lib.o.allLangs" },
+            { v: "hi", l: "lib.o.hindi" },
+            { v: "kn", l: "lib.o.kannada" },
+            { v: "en", l: "lib.o.english" },
           ]}
           onChange={(v) => update("lang", v || null)}
         />
         <Select
-          label="Status"
+          label={t("lib.f.status")}
           value={defaults.status ?? ""}
           options={[
-            { v: "", l: "Any status" },
-            { v: "completed", l: "Completed" },
-            { v: "processing", l: "Generating" },
-            { v: "queued", l: "Queued" },
-            { v: "failed", l: "Failed" },
+            { v: "", l: "lib.o.anyStatus" },
+            { v: "completed", l: "lib.o.completed" },
+            { v: "processing", l: "lib.o.generating" },
+            { v: "queued", l: "lib.o.queued" },
+            { v: "failed", l: "lib.o.failed" },
           ]}
           onChange={(v) => update("status", v || null)}
         />
         <Select
-          label="Sort"
+          label={t("lib.f.sort")}
           value={defaults.sort}
           options={[
-            { v: "newest", l: "Newest first" },
-            { v: "oldest", l: "Oldest first" },
-            { v: "duration_desc", l: "Longest first" },
-            { v: "duration_asc", l: "Shortest first" },
-            { v: "favorites", l: "Favorites first" },
+            { v: "newest", l: "lib.o.newest" },
+            { v: "oldest", l: "lib.o.oldest" },
+            { v: "duration_desc", l: "lib.o.longest" },
+            { v: "duration_asc", l: "lib.o.shortest" },
+            { v: "favorites", l: "lib.o.favFirst" },
           ]}
           onChange={(v) => update("sort", v)}
         />
@@ -115,7 +119,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
           disabled={pending}
           className="rounded-md border border-accent/40 bg-accent/10 px-4 py-2 text-sm text-accent transition hover:bg-accent/20 disabled:opacity-50"
         >
-          {pending ? "…" : "Apply"}
+          {pending ? "…" : t("lib.apply")}
         </button>
       </form>
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-foreground/60">
@@ -126,11 +130,11 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
               checked={defaults.favOnly}
               onChange={(e) => update("fav", e.target.checked ? "1" : null)}
             />
-            Favorites only
+            {t("lib.favOnly")}
           </label>
           <div
             role="group"
-            aria-label="View mode"
+            aria-label={t("lib.viewMode")}
             className="inline-flex items-center overflow-hidden rounded-md border border-muted/30"
           >
             <button
@@ -143,7 +147,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
                   : "px-3 py-1.5 text-foreground/55 hover:text-foreground"
               }
             >
-              ▦ Grid
+              ▦ {t("lib.grid")}
             </button>
             <button
               type="button"
@@ -155,7 +159,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
                   : "px-3 py-1.5 text-foreground/55 hover:text-foreground"
               }
             >
-              ☰ List
+              ☰ {t("lib.list")}
             </button>
           </div>
         </div>
@@ -175,7 +179,7 @@ export function LibraryToolbar({ defaults }: { defaults: Defaults }) {
             }}
             className="text-foreground/60 underline hover:text-foreground"
           >
-            Clear all filters
+            {t("lib.clearFilters")}
           </button>
         ) : null}
       </div>
@@ -191,9 +195,10 @@ function Select({
 }: {
   label: string;
   value: string;
-  options: { v: string; l: string }[];
+  options: { v: string; l: UiKey }[];
   onChange: (v: string) => void;
 }) {
+  const { t } = useUiLang();
   return (
     <label className="flex flex-col gap-1">
       <span className="text-[10px] uppercase tracking-widest text-foreground/40">
@@ -206,7 +211,7 @@ function Select({
       >
         {options.map((o) => (
           <option key={o.v} value={o.v}>
-            {o.l}
+            {t(o.l)}
           </option>
         ))}
       </select>

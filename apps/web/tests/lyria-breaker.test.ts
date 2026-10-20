@@ -59,6 +59,7 @@ describe("circuit breaker", () => {
   it("classifies errors", () => {
     expect(isOutage(new Error("lyria 429: slow down"))).toBe(true);
     expect(isOutage(new Error("lyria 503: x"))).toBe(true);
+    expect(isOutage(new Error("lyria 402: prepayment depleted"))).toBe(true);
     expect(isOutage(new Error("lyria 400: bad"))).toBe(false);
     expect(isOutage(new Error("lyria returned no audio part"))).toBe(false);
     expect(isOutage(new Error("fetch failed"))).toBe(true);

@@ -11,6 +11,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+
+import { LanguageSwitcher } from "./language-switcher";
 import { ThemeToggle } from "./theme-toggle";
 
 type Props = {
@@ -21,6 +24,7 @@ type Props = {
 };
 
 export function UserMenu({ email, handle, plan }: Props) {
+  const { t } = useUiLang();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
@@ -49,6 +53,7 @@ export function UserMenu({ email, handle, plan }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-label={handle ? `@${handle}` : email}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={menuId}
@@ -60,7 +65,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         >
           {initial}
         </span>
-        <span className="hidden truncate sm:inline-block max-w-[10rem]">
+        <span className="hidden truncate 2xl:inline-block max-w-[10rem]">
           {handle ? `@${handle}` : email}
         </span>
       </button>
@@ -73,7 +78,7 @@ export function UserMenu({ email, handle, plan }: Props) {
         >
           <div className="border-b border-muted/30 px-4 py-3 text-sm">
             <div className="font-medium text-foreground">
-              {handle ? `@${handle}` : "Set up your handle"}
+              {handle ? `@${handle}` : t("menu.setHandle")}
             </div>
             <div className="truncate text-xs text-foreground/55">{email}</div>
             {plan && (
@@ -89,7 +94,7 @@ export function UserMenu({ email, handle, plan }: Props) {
                 href={`/u/${handle}`}
                 className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
               >
-                My profile
+                {t("menu.profile")}
               </Link>
             ) : (
               <Link
@@ -97,7 +102,7 @@ export function UserMenu({ email, handle, plan }: Props) {
                 href="/onboarding/handle"
                 className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
               >
-                Pick a handle →
+                {t("menu.pickHandle")}
               </Link>
             )}
             <Link
@@ -105,26 +110,29 @@ export function UserMenu({ email, handle, plan }: Props) {
               href="/account"
               className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
             >
-              Account & plan
+              {t("menu.account")}
             </Link>
             <Link
               role="menuitem"
               href="/feedback"
               className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
             >
-              Send feedback
+              {t("menu.feedback")}
             </Link>
             <Link
               role="menuitem"
               href="/help"
               className="px-4 py-2 text-foreground/85 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
             >
-              Help & FAQ
+              {t("menu.help")}
             </Link>
           </nav>
           <div className="flex items-center justify-between border-t border-muted/30 px-4 py-3">
-            <span className="text-xs text-foreground/60">Theme</span>
+            <span className="text-xs text-foreground/60">{t("menu.theme")}</span>
             <ThemeToggle />
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-muted/30 px-4 py-2">
+            <LanguageSwitcher />
           </div>
           <form action="/sign-out" method="post" className="border-t border-muted/30">
             <button
@@ -132,7 +140,7 @@ export function UserMenu({ email, handle, plan }: Props) {
               role="menuitem"
               className="w-full px-4 py-3 text-left text-sm text-foreground/80 hover:bg-muted/20 hover:text-foreground focus:bg-muted/20 focus:outline-none"
             >
-              Sign out
+              {t("menu.signOut")}
             </button>
           </form>
         </div>

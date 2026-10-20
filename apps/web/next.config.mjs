@@ -1,15 +1,23 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    // harfbuzzjs loads its wasm from disk; keep it out of the webpack bundle.
-    serverComponentsExternalPackages: ["harfbuzzjs"],
-    // Font files are read at runtime by the OG image route; make sure
-    // the serverless bundle ships them.
-    outputFileTracingIncludes: {
-      "/s/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
-    },
+  // Do not advertise the framework version.
+  poweredByHeader: false,
+  // WebP only: no AVIF encoder in the image optimizer (it was the surface of the Next image-optimizer RCE advisories).
+  images: { formats: ["image/webp"] },
+  // harfbuzzjs loads its wasm from disk; keep it out of the webpack bundle.
+  serverExternalPackages: ["harfbuzzjs"],
+  // Font files are read at runtime by the OG image route; make sure
+  // the serverless bundle ships them.
+  outputFileTracingIncludes: {
+    "/s/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
+    "/api/recap/image": ["./lib/share/fonts/*.ttf"],
+    "/c/[publicId]/opengraph-image": ["./lib/share/fonts/*.ttf"],
   },
+  // Next streams <title>/<meta description> into the body for browser user agents, so Lighthouse and some link-preview
+  // crawlers saw no description. Treat every UA as "HTML limited" to keep metadata in <head> (a few ms of TTFB on
+  // pages whose metadata is computed; the home page metadata is static).
+  htmlLimitedBots: /.*/,
   transpilePackages: ["@neo-fm/song-doc"],
 };
 

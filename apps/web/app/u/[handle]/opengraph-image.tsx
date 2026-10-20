@@ -11,7 +11,8 @@ export const alt = "neo-fm creator";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function OgImage({ params }: { params: { handle: string } }) {
+export default async function OgImage(props: { params: Promise<{ handle: string }> }) {
+  const params = await props.params;
   const handle = params.handle.toLowerCase();
   let found = false;
   let songs: ProfileSong[] = [];
@@ -104,7 +105,7 @@ export default async function OgImage({ params }: { params: { handle: string } }
             <div style={{ fontSize: 34, color: "rgba(254,247,234,0.75)" }}>
               {found && stats.songs > 0
                 ? `${stats.songs} ${stats.songs === 1 ? "song" : "songs"}${langs ? ` · ${langs}` : ""}`
-                : "AI music, India-first"}
+                : "Your personal FM"}
             </div>
           </div>
         </div>

@@ -18,6 +18,8 @@ import { useEffect, useState, useTransition } from "react";
 import { CoverArt } from "@/components/cover-art";
 import { cn } from "@/lib/cn";
 import { createBrowserSupabase } from "@/lib/supabase/client";
+import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import type { UiKey } from "@/lib/i18n/ui-strings";
 
 import { RecoverButton } from "./recover-button";
 import type { LibrarySong } from "./song-list";
@@ -33,6 +35,7 @@ export function SongGrid({
   initialSongs: LibrarySongWithCover[];
   userId: string;
 }) {
+  const { t } = useUiLang();
   const router = useRouter();
   const [songs, setSongs] = useState<LibrarySongWithCover[]>(initialSongs);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -57,7 +60,7 @@ export function SongGrid({
   }
 
   async function deleteSong(id: string) {
-    if (!window.confirm("Delete this song? This can't be undone.")) return;
+    if (!window.confirm(t("lib.confirmDelete"))) return;
     setBusyId(id);
     const res = await fetch(`/api/songs/${id}`, { method: "DELETE" });
     if (res.ok) {
@@ -162,9 +165,9 @@ export function SongGrid({
   if (songs.length === 0) {
     return (
       <section className="rounded-md border border-dashed border-muted/30 px-6 py-12 text-center text-sm text-foreground/50">
-        No songs yet.{" "}
+        {t("lib.noSongsYet")}{" "}
         <Link href="/songs/new" className="underline">
-          Create your first one
+          {t("lib.createFirst")}
         </Link>
         .
       </section>
@@ -177,14 +180,14 @@ export function SongGrid({
         <li key={s.id} className="group flex flex-col gap-2">
           <Link
             href={`/songs/${s.id}`}
-            className="relative block aspect-square overflow-hidden rounded-lg border border-muted/30 bg-muted/10 transition hover:border-accent/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            aria-label={`${s.title ?? "Song"} – open detail`}
+            className="relative block aspect-square overflow-hidden glass glass-hover rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            aria-label={t("lib.openDetail", { title: s.title ?? t("song.song") })}
           >
             <CoverArt
               url={s.cover_url}
               seed={s.id}
               styleFamily={s.style_family}
-              alt={s.title ?? "Song cover art"}
+              alt={s.title ?? t("lib.coverAlt")}
             />
             <button
               type="button"
@@ -193,7 +196,7 @@ export function SongGrid({
                 void toggleFavorite(s.id, s.is_favorite);
               }}
               disabled={busyId === s.id}
-              aria-label={s.is_favorite ? "Unfavorite" : "Favorite"}
+              aria-label={s.is_favorite ? t("lib.unfav") : t("lib.fav")}
               className={cn(
                 "absolute right-2 top-2 rounded-full bg-background/80 px-2 py-1 text-base backdrop-blur transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
                 s.is_favorite
@@ -209,7 +212,7 @@ export function SongGrid({
                 statusTone(s.status),
               )}
             >
-              {s.status}
+              {statusLabel(s.status, t)}
             </span>
           </Link>
           <div className="flex items-start justify-between gap-2">
@@ -221,9 +224,10 @@ export function SongGrid({
                 className="line-clamp-1 text-sm font-medium text-foreground"
                 title={s.title ?? undefined}
               >
-                {s.title ?? songFallbackTitle(s)}
+                {s.title ?? songFallbackTitle(s, t("lib.songLower"))}
               </span>
               <span className="text-xs text-foreground/55">
+                <span className="mr-2 rounded border border-foreground/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">{t("station.aiLabel")}</span>
                 {[s.style_family, s.language].filter(Boolean).join(" · ") ||
                   "—"}
               </span>
@@ -231,15 +235,15 @@ export function SongGrid({
             {isStuck(s) ? (
               <RecoverButton
                 songId={s.id}
-                label={s.status === "failed" ? "Retry" : "Recover"}
+                label={s.status === "failed" ? t("song.retry") : t("song.recover")}
               />
             ) : null}
             <button
               type="button"
               disabled={busyId === s.id}
               onClick={() => void deleteSong(s.id)}
-              aria-label="Delete song"
-              title="Delete song"
+              aria-label={t("lib.deleteSong")}
+              title={t("lib.deleteSong")}
               className="rounded p-1 text-foreground/35 hover:text-red-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               ×
@@ -251,8 +255,21 @@ export function SongGrid({
   );
 }
 
-function songFallbackTitle(s: LibrarySong): string {
-  const style = s.style_family ?? "song";
+const PILL_KEYS = {
+  completed: "lib.pill.completed",
+  failed: "lib.pill.failed",
+  processing: "lib.pill.processing",
+  queued: "lib.pill.queued",
+} as const satisfies Record<string, UiKey>;
+
+function statusLabel(status: string, t: (k: UiKey) => string): string {
+  return Object.prototype.hasOwnProperty.call(PILL_KEYS, status)
+    ? t(PILL_KEYS[status as keyof typeof PILL_KEYS])
+    : status;
+}
+
+function songFallbackTitle(s: LibrarySong, fallback: string): string {
+  const style = s.style_family ?? fallback;
   const date = s.created_at.slice(0, 10);
   return `${style.charAt(0).toUpperCase() + style.slice(1)} - ${date}`;
 }

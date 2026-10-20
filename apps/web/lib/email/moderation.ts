@@ -7,7 +7,7 @@
 export interface Mail { to: string; subject: string; text: string }
 export type Mailer = (mail: Mail) => Promise<{ sent: boolean }>;
 
-const GRIEVANCE = "grievance@neo-fm.com";
+const GRIEVANCE = "info@technektar.com";
 
 export function takedownNotice(args: { title: string | null; category: string | null; note: string }): Omit<Mail, "to"> {
   const title = (args.title ?? "").trim() || "your song";

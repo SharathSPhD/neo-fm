@@ -11,7 +11,7 @@
  *   4. Bypass for Supabase storage (signed URLs are time-bound; we
  *      never want a stale URL served from cache).
  */
-const CACHE_VERSION = "neo-fm-v2";
+const CACHE_VERSION = "neo-fm-v3";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const MAX_PAGES = 20;
@@ -92,6 +92,11 @@ self.addEventListener("fetch", (event) => {
   // Never cache signed Storage URLs.
   if (isSupabaseStorage(url)) return;
 
+  // Audio and video go straight to the network. Relaying a cross-origin media request (pool audio on the R2 CDN) through
+  // respondWith(fetch(req)) hands Chrome an opaque partial response, which it rejects with MEDIA_ERR_SRC_NOT_SUPPORTED.
+  // Anything cross-origin is left alone for the same reason; this worker only serves the app's own pages and assets.
+  if (req.destination === "audio" || req.destination === "video" || req.headers.has("range") || url.origin !== self.location.origin) return;
+
   // Static assets: cache-first.
   if (isStatic(url)) {
     event.respondWith(
@@ -161,6 +166,50 @@ self.addEventListener("fetch", (event) => {
         if (hit) return hit;
         throw e;
       }
+    })(),
+  );
+});
+
+// ---- Web Push (notifications centre) -----------------------------------
+// The server only sends when push is configured and the user opted in. The
+// payload is {title, body?, url, tag?}; the url must be a same-origin path.
+function safePath(u) {
+  return typeof u === "string" && u.startsWith("/") && !u.startsWith("//") ? u : "/library";
+}
+
+self.addEventListener("push", (event) => {
+  let msg = {};
+  try {
+    msg = event.data ? event.data.json() : {};
+  } catch {
+    msg = {};
+  }
+  const title = typeof msg.title === "string" && msg.title ? msg.title.slice(0, 120) : "neo-fm";
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: typeof msg.body === "string" ? msg.body.slice(0, 240) : undefined,
+      tag: typeof msg.tag === "string" ? msg.tag : undefined,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      data: { url: safePath(msg.url) },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = safePath(event.notification.data && event.notification.data.url);
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of all) {
+        if ("focus" in c) {
+          await c.focus();
+          if ("navigate" in c) await c.navigate(url).catch(() => undefined);
+          return;
+        }
+      }
+      await self.clients.openWindow(url);
     })(),
   );
 });

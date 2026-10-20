@@ -6,6 +6,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { reporterOutcome, takedownNotice, type Mailer } from "../email/moderation";
+import { notifyUser } from "../notifications/notify";
 
 export type ResolveAction = "takedown" | "dismiss" | "reinstate";
 
@@ -31,7 +32,8 @@ export async function listQueue(db: SupabaseClient, limit = 100): Promise<QueueI
     .select("id,job_id,reporter_id,category,details,reason,created_at").eq("status", "open").order("created_at", { ascending: true }).limit(500);
   if (error) throw new Error(`song_reports: ${error.message}`);
   const byJob = new Map<string, ReportRow[]>();
-  for (const r of (reports ?? []) as ReportRow[]) byJob.set(r.job_id, [...(byJob.get(r.job_id) ?? []), r]);
+  // Pool-track reports (migration 0110) have no job; they are listed by listPoolQueue.
+  for (const r of ((reports ?? []) as ReportRow[]).filter((x) => x.job_id)) byJob.set(r.job_id, [...(byJob.get(r.job_id) ?? []), r]);
   if (!byJob.size) return [];
   const { data: jobs, error: je } = await db.from("jobs")
     .select("id,user_id,public_id,published_visibility,moderation_status,song_documents(title)").in("id", [...byJob.keys()]);
@@ -84,6 +86,11 @@ export async function resolveJobReports(
     if (error) return { ok: false, error: "db_error", detail: error.message };
   }
 
+  // In-app notice (migration 0085); best effort and independent of whether the email could be sent.
+  if (args.action === "takedown") {
+    await notifyUser(db, j.user_id, "takedown", { job_id: j.id, title: titleOf(j) }, `takedown:${j.id}`);
+  }
+
   // Emails are best-effort: the decision is already recorded, so a mail failure must not undo or fail it.
   let owner = false; let reporters = 0;
   const emailOf = async (id: string) => {
@@ -100,4 +107,37 @@ export async function resolveJobReports(
     }
   } catch (e) { console.warn("[moderation] email failed", e instanceof Error ? e.message : e); }
   return { ok: true, resolved_reports: reports.length, notified: { owner, reporters } };
+}
+
+export interface PoolQueueItem { pool_track_id: string; title: string | null; report_count: number; categories: string[]; oldest_report_at: string }
+
+/** Open reports against station pool tracks (migration 0110). Empty, not an error, while the migration is unapplied. */
+export async function listPoolQueue(db: SupabaseClient, limit = 100): Promise<PoolQueueItem[]> {
+  const { data: reports, error } = await db.from("song_reports")
+    .select("pool_track_id,category,created_at").eq("status", "open").not("pool_track_id", "is", null).order("created_at", { ascending: true }).limit(500);
+  if (error || !reports?.length) return [];
+  const byTrack = new Map<string, { category: string | null; created_at: string }[]>();
+  for (const r of reports as { pool_track_id: string; category: string | null; created_at: string }[]) byTrack.set(r.pool_track_id, [...(byTrack.get(r.pool_track_id) ?? []), r]);
+  const { data: tracks } = await db.from("pool_tracks").select("id,title").in("id", [...byTrack.keys()]);
+  const titles = new Map(((tracks ?? []) as { id: string; title: string | null }[]).map((t) => [t.id, t.title]));
+  return [...byTrack.entries()]
+    .map(([id, rs]): PoolQueueItem => ({ pool_track_id: id, title: titles.get(id) ?? null, report_count: rs.length, categories: [...new Set(rs.map((r) => r.category ?? "other"))], oldest_report_at: rs[0]!.created_at }))
+    .sort((a, b) => b.report_count - a.report_count || a.oldest_report_at.localeCompare(b.oldest_report_at)).slice(0, limit);
+}
+
+/** takedown retires the track from the station (it can be re-admitted by an operator); dismiss just closes the reports. */
+export async function resolvePoolReports(
+  db: SupabaseClient, args: { poolTrackId: string; action: "takedown" | "dismiss"; note?: string; now?: Date },
+): Promise<{ ok: true; resolved_reports: number } | { ok: false; error: "not_found" | "db_error"; detail?: string }> {
+  const { data: track } = await db.from("pool_tracks").select("id").eq("id", args.poolTrackId).maybeSingle();
+  if (!track) return { ok: false, error: "not_found" };
+  if (args.action === "takedown") {
+    const { error } = await db.from("pool_tracks").update({ status: "retired" }).eq("id", args.poolTrackId);
+    if (error) return { ok: false, error: "db_error", detail: error.message };
+  }
+  const { data, error } = await db.from("song_reports")
+    .update({ status: args.action === "takedown" ? "actioned" : "dismissed", resolved_at: (args.now ?? new Date()).toISOString(), resolution_note: (args.note ?? "").trim().slice(0, 500) || null })
+    .eq("pool_track_id", args.poolTrackId).eq("status", "open").select("id");
+  if (error) return { ok: false, error: "db_error", detail: error.message };
+  return { ok: true, resolved_reports: (data ?? []).length };
 }

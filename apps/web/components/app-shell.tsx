@@ -10,11 +10,20 @@
  * `globals.css` and respect the `data-theme` attribute toggled via
  * `<ThemeToggle>`.
  */
+import { NotificationBell } from "@/components/notifications/bell";
 import Link from "next/link";
 
+import { serverI18n } from "@/lib/i18n/server";
+import type { UiKey } from "@/lib/i18n/ui-strings";
+
+import { BrandMark } from "./brand-mark";
 import { CommandPalette } from "./command-palette";
 import { CommandPaletteTrigger } from "./command-palette-trigger";
+import { NavLink } from "./nav-link";
+import { IconAccount, IconDiscover, IconLibrary, IconPlus, IconStation } from "./nav-icons";
+import { LanguageSwitcher } from "./language-switcher";
 import { UserMenu } from "./user-menu";
+import { WhatsNewLink } from "./whats-new-link";
 
 type NavUser = {
   email: string;
@@ -22,137 +31,121 @@ type NavUser = {
   plan?: string;
 };
 
-const TOP_NAV_LINKS = [
-  { href: "/library", label: "Library", icon: "▲" },
-  { href: "/discover", label: "Discover", icon: "◎" },
-] as const;
+const TOP_NAV_LINKS: readonly { href: string; label: UiKey }[] = [
+  { href: "/station", label: "nav.station" },
+  { href: "/library", label: "nav.library" },
+  { href: "/discover", label: "nav.discover" },
+  { href: "/collections", label: "nav.collections" },
+];
 
 type BottomLink = {
   href: string;
-  label: string;
-  icon: string;
+  label: UiKey;
+  icon: React.ReactNode;
   primary?: boolean;
 };
 
 const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
-  { href: "/library", label: "Library", icon: "♪" },
-  { href: "/discover", label: "Discover", icon: "◎" },
-  { href: "/songs/new", label: "Create", icon: "+", primary: true },
-  { href: "/account", label: "Account", icon: "◐" },
+  { href: "/station", label: "nav.station", icon: <IconStation /> },
+  { href: "/library", label: "nav.library", icon: <IconLibrary /> },
+  { href: "/discover", label: "nav.discover", icon: <IconDiscover /> },
+  { href: "/songs/new", label: "nav.create", icon: <IconPlus />, primary: true },
+  { href: "/account", label: "nav.account", icon: <IconAccount /> },
 ];
+
+const TOP_LINK =
+  "whitespace-nowrap rounded-full px-3 py-1.5 text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+const TOP_LINK_ACTIVE = "bg-foreground/10 text-foreground";
 
 export function AppShell({
   user,
   children,
-  active,
 }: {
   user: NavUser;
   children: React.ReactNode;
-  /** Override which nav item is highlighted; defaults to URL-derived. */
-  active?: string;
 }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <TopNav user={user} active={active} />
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-6 sm:px-6 sm:pb-12 sm:pt-8">
+    <div className="relative min-h-screen text-foreground">
+      <TopNav user={user} />
+      <div className="mx-auto w-full max-w-6xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pb-12 sm:pt-6">
         {children}
       </div>
-      <MobileBottomNav active={active} />
+      <MobileBottomNav />
       <CommandPalette />
     </div>
   );
 }
 
-function TopNav({ user, active }: { user: NavUser; active?: string }) {
+async function TopNav({ user }: { user: NavUser }) {
+  const { t } = await serverI18n();
   return (
-    <header className="sticky top-0 z-30 border-b border-muted/30 bg-background/85 backdrop-blur-md">
+    <header className="glass sticky top-[env(safe-area-inset-top)] z-30 rounded-none border-x-0 border-t-0">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-base font-semibold tracking-tight text-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-lg"
-          >
-            neo-fm
-          </Link>
-          <nav
-            aria-label="Primary"
-            className="hidden items-center gap-1 text-sm sm:flex"
-          >
-            {TOP_NAV_LINKS.map((l) => {
-              const isActive = active ? active === l.href : false;
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={[
-                    "rounded-md px-3 py-1.5 text-foreground/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                    isActive ? "bg-muted/20 text-foreground" : "",
-                  ].join(" ")}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
+          <BrandMark />
+          <nav aria-label="Primary" className="hidden items-center gap-0.5 whitespace-nowrap text-sm sm:flex">
+            {TOP_NAV_LINKS.map((l) => (
+              <NavLink key={l.href} href={l.href} className={TOP_LINK} activeClassName={TOP_LINK_ACTIVE}>
+                {t(l.label)}
+              </NavLink>
+            ))}
+            {/* Secondary links wait for room; both stay reachable from the command palette and account menu. */}
+            <NavLink href="/insights" className={`${TOP_LINK} hidden lg:inline-block`} activeClassName={TOP_LINK_ACTIVE}>
+              Insights
+            </NavLink>
+            <WhatsNewLink className={`${TOP_LINK} hidden xl:inline-block`} activeClassName={TOP_LINK_ACTIVE} />
           </nav>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-none items-center gap-2">
           <CommandPaletteTrigger />
+          <NotificationBell />
+          {/* On phones the picker lives in the account menu (no room beside the bell and avatar at 360px). */}
+          <div className="hidden sm:block"><LanguageSwitcher compact /></div>
           <Link
             href="/songs/new"
-            className="hidden h-9 items-center rounded-md bg-accent px-3 text-sm font-medium text-background hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
+            className="hidden h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
           >
-            New song
+            {t("nav.newSong")}
           </Link>
-          <UserMenu
-            email={user.email}
-            handle={user.handle}
-            plan={user.plan}
-          />
+          <UserMenu email={user.email} handle={user.handle} plan={user.plan} />
         </div>
       </div>
     </header>
   );
 }
 
-function MobileBottomNav({ active }: { active?: string }) {
+async function MobileBottomNav() {
+  const { t } = await serverI18n();
   return (
     <nav
       aria-label="Primary mobile"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-muted/30 bg-background/95 backdrop-blur-md sm:hidden"
+      className="glass fixed inset-x-0 bottom-0 z-30 rounded-none border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] sm:hidden"
     >
       <ul className="mx-auto flex max-w-6xl items-stretch justify-around">
         {BOTTOM_NAV_LINKS.map((l) => {
-          const isActive = active ? active === l.href : false;
           if (l.primary) {
             return (
               <li key={l.href} className="flex flex-1 items-center justify-center py-2">
                 <Link
                   href={l.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent text-2xl font-semibold leading-none text-background shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                  aria-label={l.label}
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent text-background shadow-[0_0_28px_-4px_hsl(var(--accent))] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  aria-label={t(l.label)}
                 >
-                  <span aria-hidden>{l.icon}</span>
+                  {l.icon}
                 </Link>
               </li>
             );
           }
           return (
             <li key={l.href} className="flex-1">
-              <Link
+              <NavLink
                 href={l.href}
-                aria-current={isActive ? "page" : undefined}
-                className={[
-                  "flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium uppercase tracking-wider focus:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                  isActive ? "text-accent" : "text-foreground/65",
-                ].join(" ")}
+                className="flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                activeClassName="text-accent"
               >
-                <span aria-hidden className="text-base">
-                  {l.icon}
-                </span>
-                {l.label}
-              </Link>
+                {l.icon}
+                {t(l.label)}
+              </NavLink>
             </li>
           );
         })}

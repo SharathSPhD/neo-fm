@@ -56,6 +56,19 @@ describe("advance", () => {
     await expect(advance("j1", h.deps)).rejects.toThrow("db down");
     expect(h.deps.sessions.create).not.toHaveBeenCalled();
   });
+  it("finishes right after the render is stored when finishOnRender is set, without waiting for the agent summary", async () => {
+    const h = harness([call("e1")], { finishOnRender: true });
+    h.deps.sessions.status = vi.fn(async () => "running");
+    expect(await advance("j1", h.deps)).toBe("done");
+    expect(h.row()?.status).toBe("done");
+    expect(h.row()?.audio_path).toBe("j1/1.mp3");
+  });
+  it("keeps waiting for the agent after a failed render even when finishOnRender is set", async () => {
+    const h = harness([call("e1")], { finishOnRender: true, music: vi.fn(async () => { throw new Error("boom"); }) });
+    h.deps.sessions.status = vi.fn(async () => "running");
+    expect(await advance("j1", h.deps)).toBe("waiting");
+    expect(h.row()?.status).toBe("running");
+  });
   it("answers a pending render once, then refuses the second over the tier limit", async () => {
     const h = harness([call("e1"), call("e2")]);
     expect(await advance("j1", h.deps)).toBe("waiting");
@@ -113,5 +126,14 @@ describe("briefText prompt injection hardening", () => {
   it("caps very long briefs", async () => {
     const { sanitizeBriefPrompt } = await import("../lib/agent/runner");
     expect(sanitizeBriefPrompt("x".repeat(5000))).toHaveLength(1000);
+  });
+});
+
+describe("briefText prosody select", () => {
+  it("adds the kickoff line only when the flag is on", async () => {
+    const { briefText } = await import("../lib/agent/runner");
+    const b = { language: "Telugu", styleFamily: "carnatic", targetSeconds: 30, prompt: "x" };
+    expect(briefText(b)).not.toContain("Prosody select");
+    expect(briefText({ ...b, prosodySelect: true })).toContain("Prosody select: yes");
   });
 });
