@@ -55,7 +55,7 @@ const BOTTOM_NAV_LINKS: readonly BottomLink[] = [
 ];
 
 const TOP_LINK =
-  "whitespace-nowrap rounded-full px-3 py-1.5 text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+  "whitespace-nowrap rounded-full px-3 py-1.5 text-foreground/70 transition-colors hover:bg-foreground/5 hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent";
 const TOP_LINK_ACTIVE = "bg-foreground/10 text-foreground";
 
 export function AppShell({
@@ -105,7 +105,7 @@ async function TopNav({ user }: { user: NavUser }) {
           <div className="hidden sm:block"><LanguageSwitcher compact /></div>
           <Link
             href="/songs/new"
-            className="hidden h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
+            className="hidden h-9 items-center gap-1.5 rounded-full bg-accent px-4 text-sm font-medium text-background shadow-[0_0_24px_-6px_hsl(var(--accent))] transition hover:bg-accent/90 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background sm:inline-flex"
           >
             {t("nav.newSong")}
           </Link>
@@ -130,7 +130,7 @@ async function MobileBottomNav() {
               <li key={l.href} className="flex flex-1 items-center justify-center py-2">
                 <Link
                   href={l.href}
-                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent text-background shadow-[0_0_28px_-4px_hsl(var(--accent))] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-accent text-background shadow-[0_0_28px_-4px_hsl(var(--accent))] focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
                   aria-label={t(l.label)}
                 >
                   {l.icon}
@@ -142,7 +142,7 @@ async function MobileBottomNav() {
             <li key={l.href} className="flex-1">
               <NavLink
                 href={l.href}
-                className="flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground/65 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="flex h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium uppercase tracking-wider text-foreground/65 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
                 activeClassName="text-accent"
               >
                 {l.icon}

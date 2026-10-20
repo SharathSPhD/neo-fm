@@ -55,7 +55,7 @@ export async function ListenFirst() {
           <li key={r.public_id}>
             <Link
               href={`/s/${r.public_id}`}
-              className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-none focus:ring-2 focus:ring-accent"
+              className="block rounded-xl border border-muted/50 p-4 transition hover:border-accent/60 focus:outline-hidden focus:ring-2 focus:ring-accent"
             >
               <p className="line-clamp-2 font-medium">{r.song_documents?.title || t("song.untitled")}</p>
               <p className="mt-1 text-xs text-foreground/60">

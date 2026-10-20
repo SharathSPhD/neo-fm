@@ -64,7 +64,7 @@ export default function SocialPage() {
     <main className="mx-auto max-w-3xl space-y-6 p-4">
       <h1 className="text-xl font-semibold">Video publishing</h1>
       <input
-        type="password" value={secret} placeholder="Admin secret" className="w-full rounded border p-2"
+        type="password" value={secret} placeholder="Admin secret" className="w-full rounded-sm border p-2"
         onChange={(e) => { setSecret(e.target.value); sessionStorage.setItem(KEY, e.target.value); }}
         onBlur={() => secret && void load(secret)}
       />
@@ -74,19 +74,19 @@ export default function SocialPage() {
         {PLATFORMS.map((p) => {
           const a = accounts.find((x) => x.platform === p);
           return (
-            <div key={p} className="flex items-center justify-between rounded border p-2">
+            <div key={p} className="flex items-center justify-between rounded-sm border p-2">
               <span>{p}: {a ? `connected (${a.label})` : "not connected"}</span>
-              <button className="rounded border px-3 py-1" onClick={() => void connect(p)}>{a ? "Reconnect" : "Connect"}</button>
+              <button className="rounded-sm border px-3 py-1" onClick={() => void connect(p)}>{a ? "Reconnect" : "Connect"}</button>
             </div>
           );
         })}
       </section>
       <section className="space-y-2">
         <h2 className="font-medium">Queue</h2>
-        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Paste S's approving words here before approving" className="w-full rounded border p-2" />
+        <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Paste S's approving words here before approving" className="w-full rounded-sm border p-2" />
         {posts.length === 0 && <p className="text-sm opacity-70">Nothing queued.</p>}
         {posts.map((p) => (
-          <div key={p.id} className="space-y-1 rounded border p-2 text-sm">
+          <div key={p.id} className="space-y-1 rounded-sm border p-2 text-sm">
             <div className="font-medium">{p.platform}: {p.title} <span className="opacity-60">[{p.status}, {p.visibility}]</span></div>
             <pre className="whitespace-pre-wrap opacity-80">{p.caption}</pre>
             {p.needs_native_read && !p.native_read_ok && <p>Needs a native-speaker read of this caption.</p>}
@@ -94,10 +94,10 @@ export default function SocialPage() {
             {p.external_url && <a className="underline" href={p.external_url}>Open</a>}
             {p.status === "draft" && (
               <div className="flex flex-wrap gap-2">
-                <button className="rounded border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "private" })}>Approve (private)</button>
-                <button className="rounded border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "public" })}>Approve (public)</button>
-                {p.needs_native_read && <button className="rounded border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "private", native_read_ok: true })}>Approve, native read done</button>}
-                <button className="rounded border px-3 py-1" onClick={() => void act({ action: "skip", id: p.id })}>Skip</button>
+                <button className="rounded-sm border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "private" })}>Approve (private)</button>
+                <button className="rounded-sm border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "public" })}>Approve (public)</button>
+                {p.needs_native_read && <button className="rounded-sm border px-3 py-1" onClick={() => void act({ action: "approve", id: p.id, approval_note: note, visibility: "private", native_read_ok: true })}>Approve, native read done</button>}
+                <button className="rounded-sm border px-3 py-1" onClick={() => void act({ action: "skip", id: p.id })}>Skip</button>
               </div>
             )}
           </div>

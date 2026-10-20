@@ -54,7 +54,7 @@ export function PublicShareButton({
     <button
       type="button"
       onClick={onClick}
-      className="rounded-md border border-muted/30 px-3 py-1.5 text-xs hover:bg-muted/10 focus:outline-none focus:ring-2 focus:ring-accent"
+      className="rounded-md border border-muted/30 px-3 py-1.5 text-xs hover:bg-muted/10 focus:outline-hidden focus:ring-2 focus:ring-accent"
     >
       {state === "copied" ? "Link copied" : state === "failed" ? "Copy failed" : "Share"}
     </button>

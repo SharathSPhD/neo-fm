@@ -67,7 +67,7 @@ export function HandleForm({ initial }: { initial: string }) {
             maxLength={30}
             placeholder="ravi.kumar"
             autoFocus
-            className="flex-1 bg-transparent px-2 py-2 text-base outline-none"
+            className="flex-1 bg-transparent px-2 py-2 text-base outline-hidden"
             required
           />
         </div>

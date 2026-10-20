@@ -177,7 +177,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
         <div
           aria-label={t("cover.preview")}
           aria-busy={inFlight ? "true" : "false"}
-          className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-md border border-muted/20 bg-gradient-to-br from-accent/20 to-fuchsia-500/20 text-xs text-foreground/50"
+          className="relative flex h-44 w-44 items-center justify-center overflow-hidden rounded-md border border-muted/20 bg-linear-to-br from-accent/20 to-fuchsia-500/20 text-xs text-foreground/50"
         >
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -194,7 +194,7 @@ export function CoverArtPanel({ songId }: { songId: string }) {
             <div
               role="status"
               aria-live="polite"
-              className="absolute inset-0 flex items-center justify-center bg-background/65 text-xs font-medium text-foreground/80 backdrop-blur-sm"
+              className="absolute inset-0 flex items-center justify-center bg-background/65 text-xs font-medium text-foreground/80 backdrop-blur-xs"
             >
               <span className="inline-flex items-center gap-2">
                 <span

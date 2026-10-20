@@ -46,7 +46,7 @@ export async function TopThisWeek({ lang }: { lang: string | null }) {
             <li key={s.public_id}>
               <Link
                 href={`/s/${s.public_id}`}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 focus:outline-none focus:ring-2 focus:ring-accent"
+                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/10 focus:outline-hidden focus:ring-2 focus:ring-accent"
               >
                 <span className="w-6 text-right text-sm tabular-nums text-foreground/40">{i + 1}</span>
                 <span className="flex min-w-0 flex-1 flex-col">

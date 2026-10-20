@@ -24,7 +24,7 @@ export async function Breadcrumbs({ items }: { items: Crumb[] }) {
               {item.href && !isLast ? (
                 <Link
                   href={item.href}
-                  className="rounded hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  className="rounded-sm hover:text-foreground focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
                 >
                   {item.label}
                 </Link>

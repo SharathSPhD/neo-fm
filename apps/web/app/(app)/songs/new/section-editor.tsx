@@ -117,7 +117,7 @@ export function SectionEditor({
           onChange={(e) =>
             onChange({ ...section, script: e.target.value as Script })
           }
-          className="rounded-md border border-muted/30 bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+          className="rounded-md border border-muted/30 bg-transparent px-2 py-1 text-xs outline-hidden focus:border-accent"
         >
           {SCRIPTS.map((s) => (
             <option key={s} value={s}>
@@ -146,7 +146,7 @@ export function SectionEditor({
               ? "\u0CB9\u0CBE\u0CA1\u0BBF\u0CA8 \u0CB8\u0CBE\u0CB9\u0CBF\u0CA4\u0BCD\u0BAF..."
               : t("create.lyricsPlaceholder")
         }
-        className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-none focus:border-accent"
+        className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
       />
       <div className="flex items-center justify-between text-[10px]">
         <span

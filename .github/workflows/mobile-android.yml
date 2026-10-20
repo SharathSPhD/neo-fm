@@ -114,6 +114,7 @@ jobs:
           NEO_FM_STAGING_SUPABASE_KEY: sb_publishable_Kjo66KGxyC-Jdb9szThMkw_Lwuzo954
           QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
           QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
         with:
           api-level: 35
           arch: x86_64

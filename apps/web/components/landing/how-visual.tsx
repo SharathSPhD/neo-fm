@@ -34,7 +34,7 @@ export function HowVisual() {
           <p className="text-[11px] font-medium uppercase tracking-widest text-foreground/60">3 · Your song</p>
           <div className="mt-4 flex h-12 items-end gap-1" aria-hidden>
             {BARS.map((h, i) => (
-              <span key={i} className="w-1.5 rounded-sm bg-accent/70" style={{ height: `${h}%` }} />
+              <span key={i} className="w-1.5 rounded-xs bg-accent/70" style={{ height: `${h}%` }} />
             ))}
           </div>
           <p className="mt-3 text-xs text-foreground/70">Performed by a singer, then checked line by line against your lyrics.</p>

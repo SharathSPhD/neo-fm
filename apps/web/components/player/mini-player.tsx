@@ -42,7 +42,7 @@ export function MiniPlayer() {
           />
           <Link
             href={`/songs/${track.songId}`}
-            className="min-w-0 flex-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="min-w-0 flex-1 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-accent"
           >
             <span className="flex items-center gap-2 truncate text-sm font-medium">
               <span className="eq text-accent" data-paused={p.playing ? "false" : "true"} aria-hidden>
@@ -103,7 +103,7 @@ export function MiniPlayer() {
           </div>
         ) : null}
         <div aria-hidden className="h-1 bg-muted/30">
-          <div className="h-full bg-gradient-to-r from-accent to-pink-500" style={{ width: `${pct}%` }} />
+          <div className="h-full bg-linear-to-r from-accent to-pink-500" style={{ width: `${pct}%` }} />
         </div>
       </section>
     </>

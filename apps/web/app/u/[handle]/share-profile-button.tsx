@@ -31,7 +31,7 @@ export function ShareProfileButton({ handle, text }: { handle: string; text: str
       <button
         type="button"
         onClick={share}
-        className="rounded-md border border-muted/40 px-3 py-1.5 text-sm text-foreground/80 hover:border-accent/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+        className="rounded-md border border-muted/40 px-3 py-1.5 text-sm text-foreground/80 hover:border-accent/50 hover:text-foreground focus:outline-hidden focus:ring-2 focus:ring-accent"
       >
         {t("profile.shareProfile")}
       </button>
