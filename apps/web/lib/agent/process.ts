@@ -191,6 +191,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         engine: embedEngine(job.id),
         intent,
         styleNote: styled?.note || langNote || undefined,
+        prosodySelect: process.env.PCE_PROSODY_SELECT === "1" || undefined,
       };
       // agent_runs.agent_key is constrained to free|pro; the variant is recorded in job_telemetry.metrics.plan instead.
       const store = runStore(db, plan.agent === "free" ? "free" : "pro");
@@ -360,6 +361,7 @@ async function persistOutputs(db: ReturnType<typeof serviceClient>, jobId: strin
 
 /** Machine-readable failure code shown to users as friendly copy (components/job-progress.tsx); the raw reason stays in agent_runs.render_error. */
 export function failureCode(renderError?: string | null): string {
+  if (renderError && /^lyria 402/i.test(renderError)) return "creation_paused";
   if (renderError && /daily cap/i.test(renderError)) return "provider_busy";
   if (renderError && /spend cap/i.test(renderError)) return "allowance_reached";
   if (renderError && /content policy|safety/i.test(renderError)) return "content_policy";
