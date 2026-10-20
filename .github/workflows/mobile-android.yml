@@ -110,6 +110,7 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
+          target: google_apis
           script: bash apps/mobile/scripts/emulator-smoke.sh neo-fm-beta.apk smoke-out
       - uses: actions/upload-artifact@v4
         if: always()

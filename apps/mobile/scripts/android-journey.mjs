@@ -177,6 +177,23 @@ const cap = JSON.parse(await evalJs(`JSON.stringify({sw:"serviceWorker" in navig
 console.log("diag push capability in the WebView:", JSON.stringify(cap));
 const key = await evalJs(`fetch("/api/notifications/push/key").then(r=>r.json()).then(j=>j.enabled===true)`);
 check("push key endpoint answers in the shell", key === true);
+// Native push (FCM): the shell ships the plugin, the server answers the registration endpoint (401 signed out; 404 would mean
+// push is off in prod), and with Play services on the emulator the plugin can fetch an FCM token. Registering the token
+// needs a signed-in user, so that last step is not exercised here.
+const plug = await evalJs(`!!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications)`);
+check("push plugin is present in the shell", plug === true);
+const reg = await evalJs(`fetch("/api/notifications/push/native",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token:"probe-probe-probe-probe-1",platform:"android"})}).then(r=>r.status)`);
+console.log("diag native push registration endpoint status signed out:", reg);
+check("native push registration endpoint requires sign-in (push is on)", reg === 401, String(reg));
+adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS");
+const fcm = await evalJs(`new Promise(async (res) => {
+  const p = window.Capacitor.Plugins.PushNotifications;
+  const t = setTimeout(() => res("timeout"), 20000);
+  await p.addListener("registration", (d) => { clearTimeout(t); res(d && d.value ? "token:" + d.value.length : "empty"); });
+  await p.addListener("registrationError", (e) => { clearTimeout(t); res("error:" + JSON.stringify(e)); });
+  try { const perm = await p.requestPermissions(); if (perm.receive !== "granted") { clearTimeout(t); return res("permission:" + perm.receive); } await p.register(); } catch (e) { clearTimeout(t); res("throw:" + String(e)); }
+})`);
+console.log("diag FCM registration in the emulator:", fcm);
 await goto("/sign-in");
 await send("Page.navigate", { url: ORIGIN + "/account/notifications" });
 await sleep(6000);
