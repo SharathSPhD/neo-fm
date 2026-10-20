@@ -24,5 +24,10 @@
   "label": "Production (6 Haiku, PCE pick, Sonnet polish)",
   "owner": "pce",
   "reference": true
+ },
+ "harness-refs": {
+  "kind": "lyrics",
+  "label": "exemplars + craft notes in Sonnet polish (harness arm refs)",
+  "owner": "lyrics-harness"
  }
 }
