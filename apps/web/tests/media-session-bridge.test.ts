@@ -23,6 +23,12 @@ describe("nativeMediaSession", () => {
   it("is null in the Android shell until Capacitor is injected", async () => {
     expect((await load(ANDROID_UA)).nativeMediaSession()).toBeNull();
   });
+  it("falls back to Capacitor.Plugins when the page has no registerPlugin (injected bridge only)", async () => {
+    const setPlaybackState = vi.fn().mockResolvedValue(undefined);
+    const m = await load(ANDROID_UA, { Plugins: { MediaSession: { setPlaybackState } } });
+    await m.nativeMediaSession()!.setPlaybackState({ playbackState: "paused" });
+    expect(setPlaybackState).toHaveBeenCalledWith({ playbackState: "paused" });
+  });
   it("forwards calls in the Android shell and swallows native rejections", async () => {
     const setPlaybackState = vi.fn().mockRejectedValue(new Error("no service"));
     const registerPlugin = vi.fn().mockReturnValue({ setPlaybackState });

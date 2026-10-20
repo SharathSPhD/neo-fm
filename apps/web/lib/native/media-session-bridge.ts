@@ -20,9 +20,14 @@ let cached: NativeMediaSession | null | undefined;
 export function nativeMediaSession(): NativeMediaSession | null {
   if (cached !== undefined) return cached;
   if (typeof navigator === "undefined") return null;
-  const cap = (globalThis as unknown as { Capacitor?: { registerPlugin?: (n: string) => NativeMediaSession } }).Capacitor;
+  const cap = (globalThis as unknown as {
+    Capacitor?: { registerPlugin?: (n: string) => NativeMediaSession; Plugins?: Record<string, NativeMediaSession | undefined> };
+  }).Capacitor;
   const android = parseAppShell(navigator.userAgent)?.platform === "android";
-  cached = android && typeof cap?.registerPlugin === "function" ? safe(cap.registerPlugin("MediaSession")) : null;
+  // On a remote page only the injected native bridge exists (no @capacitor/core runtime), which exposes plugins as
+  // Capacitor.Plugins.<Name>; registerPlugin is there only when the page bundles the runtime.
+  const plugin = android ? (typeof cap?.registerPlugin === "function" ? cap.registerPlugin("MediaSession") : cap?.Plugins?.MediaSession) : undefined;
+  cached = plugin ? safe(plugin) : null;
   return cached;
 }
 
