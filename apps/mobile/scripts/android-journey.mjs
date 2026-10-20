@@ -215,10 +215,18 @@ if (fcmToken && process.env.FCM_SERVICE_ACCOUNT_JSON_B64) {
     // A foreground app receives the message in JS instead of the system shade, so send it with the app in the background.
     adb("shell", "input", "keyevent", "KEYCODE_HOME");
     await sleep(2500);
-    const status = await sendFcm(fcmToken);
-    check("FCM accepts a push to the emulator's token", status === 200, String(status));
+    // The emulator's Play services connection to FCM can take a while to settle, so a push sent right after boot may be held back:
+    // send again (up to 3 times, 30s each) before calling it missing.
+    let accepted = 0;
     let seen = false;
-    for (let i = 0; i < 20 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
+    for (let attempt = 1; attempt <= 3 && !seen; attempt++) {
+      const status = await sendFcm(fcmToken);
+      if (status === 200) accepted++;
+      else console.log(`diag FCM attempt ${attempt}: status ${status}`);
+      for (let i = 0; i < 15 && !seen; i++) { await sleep(2000); seen = /neo-fm e2e push/.test(adb("shell", "dumpsys", "notification", "--noredact")); }
+      if (!seen) console.log(`diag FCM attempt ${attempt}: not in the shade after 30s`);
+    }
+    check("FCM accepts a push to the emulator's token", accepted > 0, `${accepted} of the sends were accepted`);
     check("the pushed notification shows up on the device", seen);
     adb("shell", "am", "start", "-n", `${PKG}/.MainActivity`);
     await sleep(4000);
