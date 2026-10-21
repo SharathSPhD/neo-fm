@@ -3,6 +3,7 @@
  * for, the occasion, the mood, the genre) reach the poets, the polisher, the Lyria style prompt and the judge, instead
  * of being squeezed into a 30-word `topic`. Pure functions plus one injected model call; flag `PCE_INTENT=1`.
  */
+import { englishStylesEnabled, routeEnglishStyle } from "./english-styles";
 import { DAYPART_DEFAULTS, FESTIVALS, GENRES, KEYWORDS, fitsLanguage, genreById, isVocalOnly, mentions } from "./genres";
 
 export interface IntentSpec {
@@ -166,9 +167,16 @@ export function ragaIn(prompt: string): string | undefined {
  * Returns null for a plain brief, so today's behaviour is the floor.
  */
 export function styleOnly(ctx: { prompt: string; language: string; styleFamily: string }, env: Readonly<Record<string, string | undefined>> = process.env): { genre: string; raga?: string; note: string; fragment: string } | null {
+  if (ctx.language === "en" && englishStylesEnabled(env)) {
+    const e = routeEnglishStyle(ctx.prompt);
+    return e ? { genre: e.id, note: `Style: ${e.name}. Form: ${e.forms.join(" / ")}. ${e.lyricNotes}`, fragment: e.lyria } : null;
+  }
   const raga = ragaIn(ctx.prompt);
   const spec = routeGenre({ ...fallbackIntent(ctx.prompt), ...(raga ? { raga } : {}) }, ctx);
   const g = genreById(spec.genre);
   if (!g && !raga) return null;
   return { genre: g?.id ?? "", note: g ? `Style: ${g.name}. Form: ${g.forms.join(" / ")}. ${g.lyricNotes}` : "", ...(raga ? { raga } : {}), fragment: [lyriaFragment(spec, env), raga && env.PCE_RAGA_PROMPT === "1" ? `${RAGA_CUES[raga]}.` : ""].filter(Boolean).join(" ") };
 }
+
+/** Style routing runs under PCE_STYLES for any language, and for English alone under ENGLISH_STYLES. */
+export const styleRoutingOn = (language: string, env: Readonly<Record<string, string | undefined>> = process.env): boolean => env.PCE_STYLES === "1" || (language === "en" && englishStylesEnabled(env));

@@ -6,7 +6,7 @@
  */
 import { SAFETY } from "../agent/definitions";
 import { sanitizeBriefPrompt } from "../agent/runner";
-import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
+import { extractIntent, intentBlock, lyriaFragment, styleOnly, styleRoutingOn, type IntentSpec } from "../engine/intent";
 
 export type CascadeReply =
   | { status: "needs"; kind: "draft" | "revision"; prompts: string[] }
@@ -112,7 +112,7 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
   };
   const intent = await intentP;
   // PCE_STYLES: style routing without a model call or intent text; the full intent (PCE_INTENT) already carries the genre.
-  const styled = !intent && env.PCE_STYLES === "1" ? styleOnly({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }) : null;
+  const styled = !intent && styleRoutingOn(b.language, env) ? styleOnly({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }) : null;
   const iBlock = intent ? `${intentBlock(intent)}\n` : styled?.note ? `${styled.note}\n` : "";
   if (intent) d.log?.(`intent ok genre=${intent.genre ?? "none"} names=${intent.names.length} src=${intent.source}`);
   d.log?.(`plan ok topic="${brief.topic.slice(0, 60)}" aspects=${brief.aspects.length}`);
