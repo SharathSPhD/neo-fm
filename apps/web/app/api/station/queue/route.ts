@@ -27,6 +27,8 @@ import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { stationTasteEnabled, tasteBias } from "@/lib/station/taste-bias";
+import { loadStatedTaste } from "@/lib/taste/store";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { almanacIdsFor, almanacLines } from "@/lib/station/almanac";
 import { programmeLines } from "@/lib/station/programmes";
@@ -82,9 +84,17 @@ export async function GET(req: NextRequest) {
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
-  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
-  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) });
+  // STATION_TASTE=1: the saved taste profile (moods, genres, energy, language mix) becomes a small ranking prior.
+  let prior: ReturnType<typeof tasteBias> | undefined;
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
+  if (user && stationTasteEnabled()) {
+    try {
+      const stated = await loadStatedTaste(admin, user.id);
+      if (stated.status === "ok" && stated.taste) prior = tasteBias(stated.taste, { hour: clock.hour, languageLocked: !!lang });
+    } catch { /* the prior is optional: rank without it */ }
+  }
+  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
+  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40), prior });
   const city = cityFromHeader(req.headers.get("x-vercel-ip-city"));
   const { exclude, ...steer } = parseSteer(sp);
   const steered = Boolean(steer.energy || steer.moreLike);
@@ -148,5 +158,5 @@ export async function GET(req: NextRequest) {
       if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
     } catch { /* voice links are optional: serve the queue as it is */ }
   }
-  return NextResponse.json({ tracks: out });
+  return NextResponse.json({ tracks: out }, prior ? { headers: { "x-station-taste": "applied" } } : undefined);
 }
