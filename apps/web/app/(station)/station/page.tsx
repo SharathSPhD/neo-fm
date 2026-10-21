@@ -8,6 +8,7 @@ import { cleanDedicatee, dedicateEnabled } from "@/lib/station/dedicate";
 import { passMixEnabled } from "@/lib/station/lang-mix";
 import { findStation } from "@/lib/station/named";
 import { hasPassPerks } from "@/lib/station/pass-perks";
+import { STATION_LANGS as BASE_STATION_LANGS, STATION_MOODS, MAX_MOODS } from "@/lib/station/prefs";
 import { stationTasteEnabled } from "@/lib/station/taste-bias";
 import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
 
@@ -43,7 +44,7 @@ export async function generateMetadata({ searchParams }: { searchParams?: Promis
 }
 export const dynamic = "force-dynamic";
 
-export default async function StationPage({ searchParams }: { searchParams?: Promise<{ s?: string; for?: string }> }) {
+export default async function StationPage({ searchParams }: { searchParams?: Promise<{ s?: string; for?: string; lang?: string; moods?: string }> }) {
   // `/station?s=subah` opens a named station; anything unknown opens the listener's own station.
   const params = await searchParams;
   const initialStation = findStation(params?.s)?.slug ?? "";
@@ -64,6 +65,11 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
     ...(process.env.LANG_WAVES ? stationChipLanguages(process.env.LANG_WAVES, process.env.LANG_MIN_POOL, counts).map((l) => l.code as string) : []),
     ...(englishMain && (counts.en ?? 0) >= minPool(process.env.LANG_MIN_POOL) ? ["en"] : []),
   ];
+  // A taste-aware nudge opens `/station?lang=kn&moods=calm,romantic`: a choice in itself, so the first-visit picker is skipped.
+  const moodsParam = (params?.moods ?? "").split(",").filter((m): m is (typeof STATION_MOODS)[number] => (STATION_MOODS as readonly string[]).includes(m));
+  const linkPrefs = params?.lang !== undefined || moodsParam.length
+    ? { lang: params?.lang && [...BASE_STATION_LANGS, ...extraLangs].includes(params.lang) ? params.lang : "", moods: [...new Set(moodsParam)].slice(0, MAX_MOODS) }
+    : null;
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
       <h1 className="text-3xl font-semibold tracking-tight">{t("station.title")}</h1>
@@ -72,7 +78,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} tasteIntake={stationTasteEnabled()} />
+      <StationPlayer mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} tasteIntake={stationTasteEnabled()} linkPrefs={linkPrefs} />
     </main>
   );
 }
