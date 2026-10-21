@@ -15,7 +15,7 @@ from arena import lyrics as L  # noqa: E402
 PAIRS = Path(__file__).resolve().parents[1] / "lyrics-lab/results/pairs_r2_judge_selected.jsonl"
 OUT = Path(__file__).with_name("proxy_judge_result.json")
 MODEL = "claude-haiku-5-5"
-PRICE_IN, PRICE_OUT = 1.0, 5.0  # assumed Haiku list USD/M; the route meter undercounts so keep the estimate as the number to trust
+PRICE_IN, PRICE_OUT = 0.10, 0.50  # Haiku 5.5 list USD/M (premium-lyrics thread, 2026-10-21); the route meter undercounts so keep this estimate
 URL = os.environ.get("NEO_FM_URL", "https://www.neo-fm.com") + "/api/admin/lyrics-teacher"
 
 
@@ -33,11 +33,11 @@ def jobs(limit: int = 0) -> list[dict]:
 
 def estimate(js: list[dict]) -> float:
     tin = sum(len(L.SYSTEM) + len(j["prompt"]) for j in js) / 1.5  # Indic scripts tokenise heavily
-    return (tin * PRICE_IN + L.OUT_TOKENS * len(js) * PRICE_OUT) / 1e6
+    return (tin * PRICE_IN + 2000 * len(js) * PRICE_OUT) / 1e6
 
 
 def call(chunk: list[dict], max_usd: float) -> dict:
-    req = urllib.request.Request(URL, json.dumps({"model": MODEL, "system": L.SYSTEM, "max_tokens": 800, "max_usd": max_usd, "jobs": chunk}).encode(),
+    req = urllib.request.Request(URL, json.dumps({"model": MODEL, "system": L.SYSTEM, "max_tokens": 2500, "max_usd": max_usd, "jobs": chunk}).encode(),
                                  {"authorization": f"Bearer {os.environ['MA_PROD_ADMIN_SECRET']}", "content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=290) as r:
         return json.load(r)
@@ -78,7 +78,7 @@ def main() -> None:
     spent = 0.0
     for k in range(0, len(js), 50):
         chunk = js[k:k + 50]
-        d = call(chunk, round(est * len(chunk) / len(js) * 1.3, 3))
+        d = call(chunk, max(0.1, round(est * len(chunk) / len(js) * 1.3, 3)))  # route estimates with the full 2500-token cap, so its ceiling is above the real cost
         results.update(d["results"])
         spent += est * len(chunk) / len(js)
         if spent >= a.hard_stop_usd:
