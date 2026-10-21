@@ -21,10 +21,10 @@ function verdict(j: ShowcaseJudge): string {
 
 function Scoreboard({ cases }: { cases: ShowcaseCase[] }) {
   return (
-    <div className="mt-4 overflow-x-auto">
+    <div className="mt-4 overflow-x-auto" role="region" aria-label="Score table, scrolls sideways" tabIndex={0}>
     <table className="w-full min-w-[34rem] text-left text-sm">
       <thead>
-        <tr className="text-foreground/60">
+        <tr className="text-foreground/70">
           <th className="py-1 pr-3 font-medium">Judge</th>
           <th className="py-1 pr-3 font-medium">Premium W-L-T</th>
           <th className="py-1 pr-3 font-medium">Sign test p</th>
@@ -54,12 +54,12 @@ function Scoreboard({ cases }: { cases: ShowcaseCase[] }) {
   );
 }
 
-function Lyric({ title, sub, text }: { title: string; sub: string; text: string }) {
+function Lyric({ title, sub, text, lang }: { title: string; sub: string; text: string; lang: string }) {
   return (
     <div className="rounded-lg border border-foreground/10 p-4">
       <h4 className="font-medium">{title}</h4>
-      <p className="text-xs text-foreground/60">{sub}</p>
-      <pre className="mt-3 whitespace-pre-wrap font-sans text-sm leading-relaxed">{text}</pre>
+      <p className="text-xs text-foreground/70">{sub}</p>
+      <pre lang={lang} className="mt-3 whitespace-pre-wrap break-words font-sans text-base leading-relaxed">{text}</pre>
     </div>
   );
 }
@@ -71,7 +71,7 @@ export default async function ShowcasePage(props: { searchParams: Promise<{ lang
   const all = showcaseCases();
   const cases = all.filter((c) => c.lang === lang);
   return (
-    <main className="mx-auto max-w-5xl px-6 py-16">
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Lyric quality showcase</h1>
       <p className="mt-3 max-w-2xl text-foreground/70">
         The same brief, written at two lyric grades from the same first draft. Every pair was judged blind, in both orders, by two
@@ -88,34 +88,34 @@ export default async function ShowcasePage(props: { searchParams: Promise<{ lang
             key={l.code}
             href={`?lang=${l.code}`}
             aria-current={l.code === lang ? "page" : undefined}
-            className={`rounded-full border px-4 py-1 text-sm ${l.code === lang ? "bg-foreground text-background" : "border-foreground/20"}`}
+            className={`inline-flex min-h-[44px] items-center rounded-full border px-4 text-sm ${l.code === lang ? "bg-foreground text-background" : "border-foreground/20"}`}
           >
             {l.name} ({all.filter((c) => c.lang === l.code).length})
           </a>
         ))}
-        <span className="rounded-full border border-dashed border-foreground/20 px-4 py-1 text-sm text-foreground/50" title="No English cases have been judged at Premium yet">
+        <span className="inline-flex min-h-[44px] items-center rounded-full border border-dashed border-foreground/20 px-4 text-sm text-foreground/70" title="No English cases have been judged at Premium yet">
           English: not judged yet
         </span>
       </nav>
       <section className="mt-6" aria-label="Scores">
         <h2 className="text-lg font-medium">Scores, {SHOWCASE_LANGS.find((l) => l.code === lang)?.name}</h2>
-        <p className="text-sm text-foreground/60">Premium against Standard on the same draft. Score differences are Premium minus Standard, averaged per dimension. Claude and Gemini are shown separately.</p>
+        <p className="text-sm text-foreground/70">Premium against Standard on the same draft. Score differences are Premium minus Standard, averaged per dimension. Claude and Gemini are shown separately.</p>
         <Scoreboard cases={cases} />
-        <p className="mt-2 text-xs text-foreground/50">Across both languages ({all.length} cases): Claude {(() => { const t = tally(all, "claude"); return `${t.premium}-${t.standard}-${t.tie}`; })()}, Gemini {(() => { const t = tally(all, "gemini"); return `${t.premium}-${t.standard}-${t.tie}`; })()}. One Claude verdict was unparseable and counts as a tie.</p>
+        <p className="mt-2 text-xs text-foreground/70">Across both languages ({all.length} cases): Claude {(() => { const t = tally(all, "claude"); return `${t.premium}-${t.standard}-${t.tie}`; })()}, Gemini {(() => { const t = tally(all, "gemini"); return `${t.premium}-${t.standard}-${t.tie}`; })()}. One Claude verdict was unparseable and counts as a tie.</p>
       </section>
       <section className="mt-10 space-y-10">
         {cases.map((c) => (
           <article key={c.id} id={c.id}>
             <h3 className="text-lg font-medium">{c.brief}</h3>
-            <p className="text-xs text-foreground/60">{c.style} · Claude: {verdict(c.judges.claude)} · Gemini: {verdict(c.judges.gemini)}</p>
+            <p className="text-xs text-foreground/70">{c.style} · Claude: {verdict(c.judges.claude)} · Gemini: {verdict(c.judges.gemini)}</p>
             <div className="mt-3 grid gap-4 md:grid-cols-2">
-              <Lyric title="Standard" sub="Sonnet polish" text={c.standard} />
-              <Lyric title="Premium" sub="Opus polish with corpus exemplars" text={c.premium} />
+              <Lyric title="Standard" sub="Sonnet polish" text={c.standard} lang={lang} />
+              <Lyric title="Premium" sub="Opus polish with corpus exemplars" text={c.premium} lang={lang} />
             </div>
           </article>
         ))}
       </section>
-      <p className="mt-12 text-xs text-foreground/50">AI-written and AI-judged. All cases from the lab runs of 21 Oct 2026 are shown, wins and losses alike. Both grades start from the same short first draft, written before a token-limit fix, so some drafts are brief.</p>
+      <p className="mt-12 text-xs text-foreground/70">AI-written and AI-judged. All cases from the lab runs of 21 Oct 2026 are shown, wins and losses alike. Both grades start from the same short first draft, written before a token-limit fix, so some drafts are brief.</p>
     </main>
   );
 }
