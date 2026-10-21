@@ -9,6 +9,7 @@
     "checkout": "node checkout.js",
     "create-song": "node create-song.js",
     "ads": "node ads.js",
+    "showcase": "node showcase.js",
     "taste": "node taste.js",
     "week": "node week.js",
     "taste-save": "node taste-save.js",
