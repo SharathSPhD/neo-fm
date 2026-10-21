@@ -6,7 +6,7 @@ import { isLiveSubscriptionStatus } from "@/lib/billing/checkout-guard";
 import { hasStationPass } from "@/lib/billing/pass";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-import { AD_CAPS, adAudioEnabled, adItem, inAdHoldout, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
+import { AD_CAPS, adAudioEnabled, adItem, inAdHoldout, passUpsellDue, passUpsellEnabled, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
@@ -123,9 +123,13 @@ export async function adForQueue(args: {
   state: AdClientState;
   language: string | null;
   hour: number;
-  tracks: { tags: string[]; joinedToPrev?: boolean }[];
+  tracks: { tags: string[]; joinedToPrev?: boolean; boundaryBefore?: boolean }[];
   now?: number;
   nonce?: string;
+  /** ADS_BREAK_BOUNDARIES: place only at segment boundaries (tracks carry boundaryBefore). */
+  boundariesOnly?: boolean;
+  /** Web request (not the Capacitor shell); the pass upsell never shows in the shell. */
+  inAppShell?: boolean;
 }): Promise<AdInsertion | null> {
   const { admin, userId, state, language, hour, tracks } = args;
   const now = args.now ?? Date.now();
@@ -151,6 +155,8 @@ export async function adForQueue(args: {
     adsLastHour: Math.max(state.adsLastHour, history?.adsLastHour ?? 0),
     adsToday: Math.max(state.seen.length, history?.adsToday ?? 0),
     perCreativeToday,
+    boundariesOnly: args.boundariesOnly === true,
+    passUpsell: passUpsellEnabled() && passUpsellDue(state.seen.length, tier, args.inAppShell === true),
   };
   const placement = pickAd(slots, tracks, ctx);
   if (!placement) return null;

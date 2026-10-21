@@ -137,3 +137,21 @@ export function adInventory(
     sponsorValueInr: { cpmLow: cpm.low, cpmHigh: cpm.high, low: value(cpm.low), high: value(cpm.high) },
   };
 }
+
+export interface PassUpsellStats { slots: number; starts: number; completes: number; taps: number; tapRate: number | null }
+
+/** Station pass creatives (house ads pointing at /pricing), the break ADS_PASS_UPSELL puts after every 3rd break of a session. */
+export function passUpsellStats(
+  slots: { id: string; kind: string; cta_url?: string | null }[],
+  events: { slot_id: string; event: string }[],
+): PassUpsellStats {
+  const pass = new Set(slots.filter((s) => s.kind === "house" && s.cta_url === "/pricing").map((s) => s.id));
+  let starts = 0, completes = 0, taps = 0;
+  for (const e of events) {
+    if (!pass.has(e.slot_id)) continue;
+    if (e.event === "start") starts += 1;
+    else if (e.event === "complete") completes += 1;
+    else if (e.event === "tap") taps += 1;
+  }
+  return { slots: pass.size, starts, completes, taps, tapRate: starts > 0 ? Math.round((taps / starts) * 1000) / 1000 : null };
+}

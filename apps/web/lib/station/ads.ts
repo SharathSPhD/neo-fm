@@ -73,6 +73,56 @@ export function adAudioEnabled(): boolean {
   return process.env.ADS_AUDIO_ENABLED === "1";
 }
 
+/**
+ * ADS_BREAK_BOUNDARIES=1: a break may only sit at a segment boundary, i.e. directly after a programme or Almanac voice
+ * segment or after the last track of a mood set, never between two tracks of a set or after a plain link.
+ */
+export function breakBoundariesEnabled(): boolean {
+  return process.env.ADS_BREAK_BOUNDARIES === "1";
+}
+
+/** ADS_PASS_UPSELL=1: after the 3rd break of a session, Free web listeners get the Station pass house ad in the next break. */
+export function passUpsellEnabled(): boolean {
+  return process.env.ADS_PASS_UPSELL === "1";
+}
+
+/** House ads that point at the pricing page (the "listen without breaks, Rs 149 a month" creatives). */
+export function isPassSlot(slot: Pick<AdSlot, "kind" | "ctaUrl">): boolean {
+  return slot.kind === "house" && slot.ctaUrl === "/pricing";
+}
+
+/** Breaks heard so far this session after which the pass upsell is due, and then again every this many breaks. */
+export const PASS_UPSELL_AFTER_BREAKS = 3;
+
+/** The upsell is for Free listeners on the web (the app shells hide purchase prompts, docs/MOBILE.md). */
+export function passUpsellDue(breaksThisSession: number, tier: AdTier | null, inAppShell: boolean): boolean {
+  return tier === "free" && !inAppShell && breaksThisSession >= PASS_UPSELL_AFTER_BREAKS && breaksThisSession % PASS_UPSELL_AFTER_BREAKS === 0;
+}
+
+export interface MixedItem { type?: string; voice?: { kind?: string }; set?: { id: string; index: number; size: number } }
+
+/**
+ * For a queue that may already hold voice segments: the position in `items` of each track (non-voice item) and whether a
+ * break may sit directly before it under ADS_BREAK_BOUNDARIES (the item before it is a programme or Almanac segment, or
+ * the last track of a mood set).
+ */
+export function boundaryFlags(items: MixedItem[]): { positions: number[]; flags: boolean[] } {
+  const positions: number[] = [];
+  const flags: boolean[] = [];
+  items.forEach((it, i) => {
+    if (it.type === "voice") return;
+    const prev = items[i - 1];
+    let ok = false;
+    if (prev) {
+      if (prev.type === "voice") ok = prev.voice?.kind === "programme" || prev.voice?.kind === "almanac";
+      else ok = !!prev.set && prev.set.index === prev.set.size - 1;
+    }
+    positions.push(i);
+    flags.push(ok);
+  });
+  return { positions, flags };
+}
+
 /** Share of signed-in listeners (0-50) who never get ads, so next-day return can be compared against a control. ADS_HOLDOUT_PCT, default 10. */
 export function adHoldoutPct(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.ADS_HOLDOUT_PCT;
@@ -111,6 +161,10 @@ export interface AdContext {
   adsLastHour: number;
   adsToday: number;
   perCreativeToday: Record<string, number>;
+  /** ADS_BREAK_BOUNDARIES: only positions whose track has `boundaryBefore` qualify. */
+  boundariesOnly?: boolean;
+  /** Prefer the Station pass house ad for this break (see passUpsellDue). */
+  passUpsell?: boolean;
 }
 
 /** Slots that may be served at all right now, before the caps. */
@@ -156,11 +210,12 @@ const hits = (tags: string[], list: string[]) => tags.some((t) => list.includes(
  * play before it. Starts at the earliest cap-allowed position and slides later past neighbours that forbid it.
  * Null when the slice is too short: the next refill will carry larger counters and try again.
  */
-export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[]; joinedToPrev?: boolean }[], ctx: Pick<AdContext, "played" | "sinceBreak" | "tier">): number | null {
+export function placeAd(slot: Pick<AdSlot, "excludedTags">, tracks: { tags: string[]; joinedToPrev?: boolean; boundaryBefore?: boolean }[], ctx: Pick<AdContext, "played" | "sinceBreak" | "tier" | "boundariesOnly">): number | null {
   const blocked = [...NEVER_NEXT_TO, ...slot.excludedTags.map((t) => t.toLowerCase())];
   for (let p = tracksBeforeBreak(ctx); p < tracks.length; p++) {
     // Never split a set: its tracks crossfade into each other.
     if (tracks[p]?.joinedToPrev) continue;
+    if (ctx.boundariesOnly && !tracks[p]?.boundaryBefore) continue;
     const before = tracks[p - 1]?.tags ?? [];
     const after = tracks[p]?.tags ?? [];
     if (hits(before, blocked) || hits(after, blocked) || hits(before, NEVER_AFTER)) continue;
@@ -184,9 +239,14 @@ export function weightedPick<T extends { weight: number }>(items: T[], rand: () 
 export interface AdPlacement { slot: AdSlot; index: number }
 
 /** The one break (if any) to put into this slice of the queue. */
-export function pickAd(slots: AdSlot[], tracks: { tags: string[]; joinedToPrev?: boolean }[], ctx: AdContext, rand: () => number = Math.random): AdPlacement | null {
+export function pickAd(slots: AdSlot[], tracks: { tags: string[]; joinedToPrev?: boolean; boundaryBefore?: boolean }[], ctx: AdContext, rand: () => number = Math.random): AdPlacement | null {
   if (!ctx.enabled || !ctx.tier) return null;
-  const candidates = eligibleSlots(slots, ctx).filter((s) => capsAllow(ctx, s));
+  let candidates = eligibleSlots(slots, ctx).filter((s) => capsAllow(ctx, s));
+  // The pass upsell narrows this break to the pass creatives; with none eligible it is an ordinary break.
+  if (ctx.passUpsell) {
+    const pass = candidates.filter(isPassSlot);
+    if (pass.length > 0) candidates = pass;
+  }
   // Try slots in weighted order until one fits next to its neighbours.
   const pool = [...candidates];
   while (pool.length > 0) {
