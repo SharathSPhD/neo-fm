@@ -5,7 +5,10 @@
  * the line rendered with its duration. Safe to re-run: rendered lines and existing wavs are skipped, and it stops at the first
  * rate-limit error (Tier 1 allows 100 TTS requests a day) after keeping what it already made.
  *
- *   GEMINI_API_KEY=... node scripts/render-programmes.mjs [wavDir]
+ *   GEMINI_API_KEY=... node scripts/render-programmes.mjs [--langs hi,kn] [--reserved N] [wavDir]
+ *
+ * --langs limits the run to those languages. --reserved N caps the TTS requests made (reserve them through the provider cap first,
+ * apps/web/lib/ops/provider-cap.ts); without it the run is unlimited. Calls are paced for Tier 1's 10 TTS requests a minute.
  *
  * Needs ffmpeg. Spends Gemini TTS (about USD 0.007 per line): only run it with S's approval, and add the spend to lab/spend.md.
  */
@@ -18,17 +21,24 @@ import { fileURLToPath } from "node:url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const web = join(root, "apps/web");
 const { GoogleGenAI } = createRequire(join(web, "package.json"))("@google/genai");
-const wavDir = resolve(process.argv[2] ?? join(process.env.TMPDIR ?? "/tmp", "programme-wavs"));
+const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
+const langs = arg("langs")?.split(",");
+const reserved = arg("reserved") === undefined ? Infinity : Number(arg("reserved"));
+const positional = process.argv.slice(2).filter((a, i, all) => !a.startsWith("--") && !(i > 0 && all[i - 1].startsWith("--")));
+const wavDir = resolve(positional[0] ?? join(process.env.TMPDIR ?? "/tmp", "programme-wavs"));
 const file = join(web, "lib/station/voice-programmes.json");
 const lines = JSON.parse(readFileSync(file, "utf8"));
 const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 mkdirSync(wavDir, { recursive: true });
 
-let made = 0;
+let made = 0, calls = 0;
 for (const l of lines) {
-  if (l.rendered) continue;
+  if (l.rendered || (langs && !langs.includes(l.lang))) continue;
   const wav = join(wavDir, `${l.id.split("/")[1]}.wav`);
   if (!existsSync(wav)) {
+    if (calls >= reserved) { console.error(`reserved ${reserved} calls used up at ${l.id}`); break; }
+    if (calls > 0) await new Promise((r) => setTimeout(r, 6500));
+    calls++;
     try {
       const i = await client.interactions.create({
         model: "gemini-3.8-flash-tts",

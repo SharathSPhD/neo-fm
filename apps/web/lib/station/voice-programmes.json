@@ -133,5 +133,167 @@
   "seconds": 16.4,
   "rendered": true,
   "text": "नियो एफएम वर रात्रीचे सूर. रात्रीच्या शांततेत मालकंस रागासारखे गंभीर सूर मनाला सुखावतात. इथलं प्रत्येक गाणं एआयने तयार केलं आहे. निवांत ऐका."
+ },
+ {
+  "id": "programme/hi-morning-raga",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "morning",
+  "seconds": 16.9,
+  "rendered": true,
+  "text": "neo-fm पर सुबह की धुनें। इस पहर राग बिलावल के खुले और उजले सुर दिन की अच्छी शुरुआत कराते हैं। यहाँ हर गीत एआई से बनाया गया है, और आपकी पसंद के हिसाब से चुना जाता है।"
+ },
+ {
+  "id": "programme/hi-morning-ghazal",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "morning",
+  "seconds": 14.6,
+  "rendered": true,
+  "text": "neo-fm पर आज का ख़ास रंग, ग़ज़ल। ग़ज़ल में हर शेर अपने आप में पूरी बात कहता है। यहाँ हर गीत एआई से बनाया गया है। जो पसंद आए, उस पर दिल दबाइए।"
+ },
+ {
+  "id": "programme/hi-midday-sarang",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "midday",
+  "seconds": 13.5,
+  "rendered": true,
+  "text": "neo-fm पर दोपहर के सुर। परंपरा में दोपहर के लिए राग सारंग गाया जाता है, जिसमें धूप जैसी रौशन शांति है। यहाँ हर गीत एआई से बनाया गया है।"
+ },
+ {
+  "id": "programme/hi-midday-bhajan",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "midday",
+  "seconds": 15.4,
+  "rendered": true,
+  "text": "neo-fm पर आज का ख़ास रंग, भजन। सीधे-सादे बोल और भक्ति का भाव, यही भजन की पहचान है। यहाँ हर गीत एआई से बनाया गया है, और आपकी पसंद के हिसाब से चुना जाता है।"
+ },
+ {
+  "id": "programme/hi-dusk-marwa",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "dusk",
+  "seconds": 14.9,
+  "rendered": true,
+  "text": "neo-fm पर साँझ के सुर। सूरज ढलते समय राग मारवा गाया जाता है, जिसमें शाम की बेचैनी और चाहत झलकती है। यहाँ हर गीत एआई से बनाया गया है।"
+ },
+ {
+  "id": "programme/hi-dusk-qawwali",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "dusk",
+  "seconds": 14.8,
+  "rendered": true,
+  "text": "neo-fm पर आज का ख़ास रंग, क़व्वाली। यह सूफ़ी परंपरा की गायकी है, जिसमें मुख्य गायक के साथ पूरी टोली बोल दोहराती है। यहाँ हर गीत एआई से बनाया गया है।"
+ },
+ {
+  "id": "programme/hi-dawn-lalit",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "dawn",
+  "seconds": 15.6,
+  "rendered": true,
+  "text": "neo-fm पर भोर से पहले के सुर। राग ललित भोर के सबसे शांत समय का राग माना जाता है। यहाँ हर गीत एआई से बनाया गया है, और आपकी पसंद के हिसाब से चुना जाता है।"
+ },
+ {
+  "id": "programme/hi-evening-thumri",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "evening",
+  "seconds": 14.6,
+  "rendered": true,
+  "text": "neo-fm पर आज का ख़ास रंग, ठुमरी। ठुमरी में सुरों से ज़्यादा भाव बोलता है। यहाँ हर गीत एआई से बनाया गया है। जो पसंद आए, उस पर दिल दबाइए।"
+ },
+ {
+  "id": "programme/hi-night-darbari",
+  "kind": "programme",
+  "lang": "hi",
+  "daypart": "night",
+  "seconds": 15.3,
+  "rendered": true,
+  "text": "neo-fm पर देर रात के सुर। राग दरबारी कान्हड़ा गहरी रात का गंभीर और शांत राग है। यहाँ हर गीत एआई से बनाया गया है। बस आराम से सुनते रहिए।"
+ },
+ {
+  "id": "programme/kn-morning-dasara",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "morning",
+  "seconds": 14.8,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಇಂದಿನ ವಿಶೇಷ, ದಾಸರ ಪದಗಳು. ಪುರಂದರದಾಸರಂತಹ ಹರಿದಾಸರು ಸರಳ ಕನ್ನಡದಲ್ಲಿ ಭಕ್ತಿಯನ್ನು ಹಾಡಿದರು. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
+ },
+ {
+  "id": "programme/kn-morning-hamsadhwani",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "morning",
+  "seconds": 13.3,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಬೆಳಗಿನ ರಾಗಗಳು. ಹಂಸಧ್ವನಿ ರಾಗವನ್ನು ಶುಭಾರಂಭದ ರಾಗ ಎನ್ನುತ್ತಾರೆ, ಕಚೇರಿಗಳು ಇದರಿಂದ ಶುರುವಾಗುವುದುಂಟು. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
+ },
+ {
+  "id": "programme/kn-midday-bhavageethe",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "midday",
+  "seconds": 14.8,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಇಂದಿನ ವಿಶೇಷ, ಭಾವಗೀತೆ. ಕವಿತೆಯೇ ಹಾಡಾಗುವುದು ಭಾವಗೀತೆಯ ಸೊಗಸು. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ, ನಿಮ್ಮ ಅಭಿರುಚಿಗೆ ತಕ್ಕಂತೆ ಆಯ್ಕೆಯಾಗುತ್ತೆ."
+ },
+ {
+  "id": "programme/kn-midday-madhyamavati",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "midday",
+  "seconds": 14.9,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಮಧ್ಯಾಹ್ನದ ರಾಗಗಳು. ಮಧ್ಯಮಾವತಿ ರಾಗವನ್ನು ಕಚೇರಿಯ ಮಂಗಳ ಮುಕ್ತಾಯಕ್ಕೆ ಹಾಡುವುದು ವಾಡಿಕೆ, ಅದರಲ್ಲಿ ಶಾಂತಿ ಇದೆ. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
+ },
+ {
+  "id": "programme/kn-dusk-kambhoji",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "dusk",
+  "seconds": 14.9,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಸಂಜೆಯ ರಾಗಗಳು. ಕಾಂಬೋಜಿ ರಾಗದಲ್ಲಿ ಚಿಂತನೆಯ ಗಾಂಭೀರ್ಯವಿದೆ. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ. ನಿಮ್ಮ ಅಭಿರುಚಿಗೆ ತಕ್ಕ ಹಾಡುಗಳನ್ನು ಈ ಸ್ಟೇಷನ್ ಕೊಡುತ್ತೆ."
+ },
+ {
+  "id": "programme/kn-dusk-bhavageethe",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "dusk",
+  "seconds": 17.3,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಇಂದಿನ ವಿಶೇಷ, ಭಾವಗೀತೆ. ಪ್ರಕೃತಿ, ಪ್ರೀತಿ, ನೆನಪುಗಳು ಭಾವಗೀತೆಯ ಮುಖ್ಯ ವಿಷಯಗಳು. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ. ಇಷ್ಟವಾದ ಹಾಡಿಗೆ ಹೃದಯ ಒತ್ತಿ."
+ },
+ {
+  "id": "programme/kn-dawn-mayamalavagowla",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "dawn",
+  "seconds": 13.7,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಮುಂಜಾನೆಯ ರಾಗಗಳು. ಮಾಯಾಮಾಳವಗೌಳ ರಾಗದಿಂದಲೇ ಕರ್ನಾಟಕ ಸಂಗೀತದ ಮೊದಲ ಪಾಠಗಳು ಶುರುವಾಗುತ್ತವೆ. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
+ },
+ {
+  "id": "programme/kn-evening-janapada",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "evening",
+  "seconds": 13.9,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಇಂದಿನ ವಿಶೇಷ, ಜಾನಪದ. ಡೊಳ್ಳು ಕುಣಿತದ ಬಡಿತ, ಯಕ್ಷಗಾನದ ಕಥಾಗಾಯನ ನಮ್ಮ ಮಣ್ಣಿನ ಸಂಗೀತ. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
+ },
+ {
+  "id": "programme/kn-night-vachana",
+  "kind": "programme",
+  "lang": "kn",
+  "daypart": "night",
+  "seconds": 15.5,
+  "rendered": true,
+  "text": "ನಿಯೋ ಎಫ್ಎಂ ನಲ್ಲಿ ಇಂದಿನ ವಿಶೇಷ, ವಚನ. ಬಸವಣ್ಣನಂತಹ ಶರಣರು ಹನ್ನೆರಡನೇ ಶತಮಾನದಲ್ಲಿ ಸರಳ ಮಾತಿನಲ್ಲಿ ವಚನಗಳನ್ನು ರಚಿಸಿದರು. ಇಲ್ಲಿನ ಪ್ರತಿ ಹಾಡನ್ನೂ ಎಐ ರೂಪಿಸಿದೆ."
  }
 ]
