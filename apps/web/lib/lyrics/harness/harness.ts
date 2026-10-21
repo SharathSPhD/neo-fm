@@ -98,7 +98,8 @@ export async function runHarness(cfg: HarnessConfig, input: HarnessInput, deps: 
     trace.push(`studio drafts: ${written.length}/${n} written by ${cfg.draftModel}`);
     if (written.length > 0) {
       const order = (deps.shuffle ?? ((xs) => xs))(written.map((_, i) => i));
-      const pick = written.length === 1 ? 0 : parseSelect(await deps.ask({ model: cfg.pickModel ?? CRITIC_MODEL, prompt: selectPrompt({ ...input, cands: order.map((i) => written[i]!) }), maxTokens: 400 }), order.length);
+      // Opus always thinks: a 400-token cap left the pick reply empty in the first live run, so the pick gets 3000.
+      const pick = written.length === 1 ? 0 : parseSelect(await deps.ask({ model: cfg.pickModel ?? CRITIC_MODEL, prompt: selectPrompt({ ...input, cands: order.map((i) => written[i]!) }), maxTokens: 3000 }), order.length);
       const chosen = pick === null ? 0 : written.length === 1 ? 0 : order[pick]!;
       trace.push(`studio pick: draft ${chosen + 1}${pick === null ? " (unparseable pick)" : ""}`);
       sourceDrafts = [written[chosen]!];
