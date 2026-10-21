@@ -565,7 +565,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           ))}
         </div>
         {moodChips}
-        {tasteIntake ? <StationIntake value={intake} onChange={setIntake} languageName={languageName} /> : null}
+        {tasteIntake ? <StationIntake value={intake} onChange={setIntake} languageName={languageName} offered={LANGS} /> : null}
         <button type="button" onClick={() => { if (tasteIntake) finishIntake(); setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-background">
           {t("station.setup.start")}
         </button>
