@@ -37,7 +37,7 @@ def estimate(js: list[dict]) -> float:
 
 
 def call(chunk: list[dict], max_usd: float) -> dict:
-    req = urllib.request.Request(URL, json.dumps({"model": MODEL, "system": L.SYSTEM, "max_tokens": 600, "max_usd": max_usd, "jobs": chunk}).encode(),
+    req = urllib.request.Request(URL, json.dumps({"model": MODEL, "system": L.SYSTEM, "max_tokens": 800, "max_usd": max_usd, "jobs": chunk}).encode(),
                                  {"authorization": f"Bearer {os.environ['MA_PROD_ADMIN_SECRET']}", "content-type": "application/json"})
     with urllib.request.urlopen(req, timeout=290) as r:
         return json.load(r)
