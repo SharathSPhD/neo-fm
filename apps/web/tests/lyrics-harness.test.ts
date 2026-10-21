@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCritique, parseSelect } from "../lib/lyrics/harness/critique";
 import { estimateArmUsd } from "../lib/lyrics/harness/cost";
-import { playbookFor } from "../lib/lyrics/harness/playbook";
 import { exemplarBlock, overlapRatio, retrieveExemplars, type Exemplar } from "../lib/lyrics/harness/exemplars";
 import { ARMS, runHarness, type HarnessDeps } from "../lib/lyrics/harness/harness";
 
