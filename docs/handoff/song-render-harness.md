@@ -73,3 +73,15 @@ Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native
 
 ## E7 (2026-10-20): Tamil and Telugu confirmed on a second brief
 occ-ta-2 and occ-te-2 with Claude-romanized lyrics, 2 renders each, sung-word match against native text: Tamil 93/98, Telugu 98/96. With E5, Tamil and Telugu are 93-100 over two briefs each, against about 65 for the current input; Kannada 97/99 (E6). AI-scored, small samples; accent and naturalness are unjudged (the Gemini flash single-listen rated everything 5/5).
+
+## E8 design (2026-10-21): kn/hi catalog-cue prompt arms, preference-first
+E3 showed English style text does not move diction, so E8 asks a different question: does a catalog-built cue line (instruments, tempo, tala feel, optional raga cue) change which render a listener prefers, with sung-word match only as a floor (>= 80, veto below).
+- **Style lines (English, from `strategy/indian-music-styles.json`, no wording chosen to dodge the safety screen):**
+  - kn-bhavageethe: "Kannada bhavageethe, soft sincere voice, harmonium, tabla, flute and violin, gentle strophic melody, kaharwa feel, 65-100 bpm"
+  - kn-film-pop: "Kannada film song, melodious pallavi, synth, guitar, dhol, strings, flute, 85-130 bpm"
+  - hindi-indie-folk: "Hindi indie folk-pop, acoustic guitar, cajon, gentle conversational vocal, 70-105 bpm"
+  - hindi-filmpop: "Contemporary Bollywood pop, catchy mukhda, synth, dhol, big chorus, 90-128 bpm"
+- **Arms:** A = stock style line from the brief; C = catalog line above plus a tala/raga cue (bhavageethe: Bhairavi-leaning, kaharwa; film-pop: no raga, dadra feel). Raga words carry a wordless-alap risk (lab R5, `PCE_RAGA_PROMPT`), so the sung-word floor is what catches it. Melodic-structure arms (ghazal, qawwali) wait on Urdu support.
+- **Free scoring first:** Gemini transcribeSung match (floor), CLAP text-audio on the English cue, Audiobox PQ, and the 5090 preference head (about 61.5% held-out) as a tie-break only. Holistic Gemini judge is not used (position-driven, arena #441).
+- **Pilot:** kn (occ-kn-1, occ-kn-2) and hi (occ-hi-1 with filmpop wording, occ-hi-2) x arms A and C x 1 render = 8 renders, about GBP 2 at the estimate (about GBP 4 if 2x low) plus under GBP 0.5 Gemini scoring. Hard stop at 8.
+- **Decision rule:** C becomes the default for a language only if the preference head and CLAP agree it is better on at least 3 of 4 pairs with no render under the 80 floor; otherwise A stays. Too few pairs for a claim either way: the point is to decide whether a larger run is worth it.
