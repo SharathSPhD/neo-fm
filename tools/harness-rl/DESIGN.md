@@ -48,3 +48,21 @@ Expect little signal at first (last user song job was 2026-10-19, 39 jobs total)
 3. Add `harness_policy` table + read path behind a flag (migration, needs S's apply); start with ta/mr/hi/kn challenger arms (romanize, refs6, native-script exemplars from the 400-song corpus) in the proxy env.
 4. Taste-card onboarding form and prior wiring, tested with emulator scripts.
 Any paid judging needs a tap card with the figure first.
+
+## Offline policy replay (2026-10-21, no spend)
+
+`apps/web/lib/harness-policy/simulate.ts` runs the real `pickArm` over N jobs and feeds it rewards bootstrapped from recorded judge scores (`tools/arena/data/battles.jsonl`: 38 harness-refs vs prod battles, 5-8 per language, plus synthetic reward pools). `tests/harness-policy-replay.test.ts` pins the properties below.
+
+| Check | Result |
+|---|---|
+| Challenger traffic cap | With refs rewarded 0.95 vs 0.5, refs share stays at or under max_share (0.15) + noise. Replaying the recorded battles per language (3000 jobs, challenger role): kn 0.07, hi 0.05, te 0.13, ta 0.03, mr 0.10. The cap holds even when a challenger looks perfect (te mean reward 1.00 on n=8 still gets 0.13). |
+| Convergence (two champions) | True 0.7 vs 0.4: late-run share 0.8, converged within 600 jobs. True 0.8 vs 0.5: late share 0.77 by job 199. True 0.65 vs 0.5: 0.63, converged only around job 3000. True 0.55 vs 0.5: indistinguishable (0.55, never converges). Thompson keeps exploring, so expect "mostly the better arm", not winner-take-all, at binary-reward noise. |
+| Equal arms | No runaway: shares stay near 0.5. |
+| Fallback | Policy off: every job returns the flag arm (source flags). Policy on but no rows for the language: same. No database is touched in either case. |
+| Recorded battles | kn and hi refs means are 0.44 and 0.36 (n=8, 7), below 0.5, so the policy would give them under 8% of traffic and would not promote them; te 1.00 (n=8) and mr 0.71 are promising but each is 7-8 battles, far too thin to promote without the eval gate. This matches the earlier gate results. |
+
+Takeaway: at about 7 battles per language the recorded data cannot support a promotion on its own. The policy's job at launch volume is to hold challengers at a capped share and collect listener rewards; promotion still goes through the eval gate.
+
+### Taste prior shared with STATION_TASTE
+
+`lib/harness-policy/taste.ts` reads the same `normaliseTaste` profile (`taste_profiles.stated`, saved via #487) and turns it into a per-arm nudge: form-heavy genres (ghazal, carnatic, hindustani, sufi, devotional, bhavageete, rabindrasangeet, folk) or a formal register lean on corpus refs (+0.025 per signal, cap 0.05); a purely Western profile leans on `live` (+0.02). It is added to the Thompson draw, only for listeners with the personalize consent, and halves every 10 of the listener's own settled observations of that arm. Tests show a cold-start tilt toward refs and that 30 songs of the listener's own results overrule it (refs picked under 10%). The prior is a guess about taste, not evidence, so it is deliberately smaller than one posterior standard deviation at n=40.
