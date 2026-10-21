@@ -5,7 +5,9 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { loadStatedTasteMany } from "../taste/store";
 import { sendNative, type FcmConfig } from "./fcm";
+import { nudgeTasteEnabled, tasteNudge } from "./nudge-taste";
 import { sendPush, type PushConfig, type PushResult } from "./push";
 import { NUDGE_LAST_KEY, renderNotification } from "./types";
 
@@ -15,6 +17,8 @@ export interface NudgeSummary {
   optedIn: number;
   skippedToday: number;
   sent: number;
+  /** Nudges built from a saved taste profile (NUDGE_TASTE), counted when composed. */
+  personalised: number;
   failed: number;
   removedSubscriptions: number;
 }
@@ -56,8 +60,9 @@ export async function runStationNudge(
   send: typeof sendPush = sendPush,
   now = Date.now(),
   native?: NudgeNativeOpts,
+  tasteAware = nudgeTasteEnabled(),
 ): Promise<NudgeSummary> {
-  const out: NudgeSummary = { optedIn: 0, skippedToday: 0, sent: 0, failed: 0, removedSubscriptions: 0 };
+  const out: NudgeSummary = { optedIn: 0, skippedToday: 0, sent: 0, personalised: 0, failed: 0, removedSubscriptions: 0 };
   const today = new Date(now).toISOString().slice(0, 10);
 
   const { data: rows, error } = await db
@@ -95,6 +100,8 @@ export async function runStationNudge(
   const sendApp = native?.send ?? sendNative;
 
   const langByUser = await listenerLanguages(db, due.map((r) => r.user_id));
+  // NUDGE_TASTE=1: copy and deep link follow the saved moods, languages and the daypart. Same opt-in and daily cap as the plain nudge.
+  const tasteByUser = tasteAware ? await loadStatedTasteMany(db, dueIds).catch(() => new Map()) : new Map();
   const dead = new Set<string>();
   const deadTokens = new Set<string>();
   for (const r of due) {
@@ -103,7 +110,11 @@ export async function runStationNudge(
     if (!subs.length && !tokens.length) continue;
     const msg = renderNotification({ type: "station_nudge", data: { lang: langByUser.get(r.user_id) }, count: 1 });
     const results: PushResult[] = [];
-    const payload = { title: msg.title, body: msg.body, url: msg.href, tag: "station-nudge" };
+    const personal = tasteAware ? tasteNudge(tasteByUser.get(r.user_id) ?? null, langByUser.get(r.user_id), now) : null;
+    if (personal) out.personalised++;
+    const payload = personal
+      ? { title: personal.title, body: personal.body, url: personal.href, tag: "station-nudge" }
+      : { title: msg.title, body: msg.body, url: msg.href, tag: "station-nudge" };
     if (cfg) {
       for (const s of subs) {
         const res = await send(cfg, s, payload);

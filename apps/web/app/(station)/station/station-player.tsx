@@ -157,7 +157,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ mixState = "off", anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null, tasteIntake = false }: { mixState?: "off" | "locked" | "on"; anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null; tasteIntake?: boolean }) {
+export function StationPlayer({ mixState = "off", anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null, tasteIntake = false, linkPrefs = null }: { mixState?: "off" | "locked" | "on"; anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null; tasteIntake?: boolean; linkPrefs?: { lang: string; moods: string[] } | null }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -256,10 +256,12 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
     }
     const saved = loadPrefs(mixState === "on" ? MAX_PASS_MOODS : MAX_MOODS);
     if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); if (mixState === "on") setMix((saved.mix ?? []).filter((p) => LANGS.includes(p.lang))); setOnboarded(true); }
+    // A nudge link carries its own language and moods, which win over the remembered ones.
+    if (linkPrefs) { setLang(linkPrefs.lang); setMoods(linkPrefs.moods); setOnboarded(true); }
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
     setReady(true);
-  }, [LANGS, initialStation, mixState, tasteIntake]);
+  }, [LANGS, initialStation, mixState, tasteIntake, linkPrefs]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
