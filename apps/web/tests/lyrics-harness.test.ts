@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseCritique, parseSelect } from "../lib/lyrics/harness/critique";
 import { estimateArmUsd } from "../lib/lyrics/harness/cost";
+import { playbookFor } from "../lib/lyrics/harness/playbook";
 import { exemplarBlock, overlapRatio, retrieveExemplars, type Exemplar } from "../lib/lyrics/harness/exemplars";
 import { ARMS, runHarness, type HarnessDeps } from "../lib/lyrics/harness/harness";
 
@@ -15,6 +16,12 @@ describe("exemplar retrieval", () => {
     const r = retrieveExemplars({ language: "Kannada", style: "kannada-folk", brief: "Farmers waiting for the first rain" }, 2, pool);
     expect(r.map((e) => e.id)).toEqual(["a", "b"]);
     expect(retrieveExemplars({ language: "Bengali", style: "x", brief: "rain" }, 3, pool)).toEqual([]);
+  });
+  it("serves the shipped English refs for an English country brief", () => {
+    const r = retrieveExemplars({ language: "English", style: "english-country", brief: "a diner closing after forty years" }, 3);
+    expect(r.length).toBe(3);
+    expect(r.every((e) => e.lang === "en")).toBe(true);
+    expect(playbookFor("English")).toContain("CRAFT RULES");
   });
   it("overlap guard flags an echoed exemplar", () => {
     const t = "ಕಾರುಣ್ಯದ ಮಳೆಯು ಸುರಿವ ತವಕದಿ ದಾರಿ ತೋರಿಸು ಕೃಷ್ಣ";
