@@ -23,6 +23,8 @@ The 38 real refs-vs-production battles split by language: te 8.0/8, mr 5.0/7, kn
 | **Listener env (live)** | listener taste card, daypart, language | style family, exemplar set, playlist slot | finish, replay, share, like, skip (taste.ts weights) | free, thin |
 Champions' outputs are cached per brief so each new arm costs one generation and one judge pair. The proxy judge must be validated first with `arena/validate.py` against the gate judges (agreement on the 138 judge-labelled pairs), otherwise it is just another gameable metric.
 
+**Proxy judge result (2026-10-21):** Haiku pairwise, both orders, on 40 of the 138 labelled pairs: 24 agree with the Claude+Gemini panel, 14 tie, 2 disagree (92% agreement excluding ties; est. USD 0.09). It never contradicts the panel, but 35% ties means it is a coarse filter: use it to drop clear losers, not to rank close arms. It needed a 2500-token cap (#471) because Haiku's thinking uses the budget.
+
 ## 4. Embedding in the CMA
 The CMA already routes jobs (language, tier, flags). Add a **policy table** (`harness_policy`: language x tier -> arm id + posterior counts), read at job start, replacing hand-set env flags like `PCE_HARNESS_REFS=te`.
 - **Serve**: Thompson-sample among promoted arms only (champion plus at most one challenger at 10-20% traffic). Log arm id and brief hash in `job_telemetry`.
