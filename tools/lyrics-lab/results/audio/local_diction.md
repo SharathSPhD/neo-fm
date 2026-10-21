@@ -17,7 +17,20 @@ Setup: `local_diction_asr.py` (faster-whisper large-v3, int8, CPU) transcribes t
 
 Whisper ranks stock above romanized, the opposite of Gemini (and of what the 6 stock vs 6 romanized gap showed: ~65 vs ~97). Whisper's language prior writes plausible native text even when the singing is off (lenient on stock), and misses sung Latin-input renders. With 6 clips, no ground truth for which is right, and stock Whisper only, this says: the open ASR does not reproduce the Gemini ordering, so it cannot replace Gemini for ranking romanization arms.
 
+## Full run, VAD off, all 24 renders (final)
+Pearson -0.23, Spearman -0.03 against Gemini. Mean unordered %, Gemini vs local:
+
+| lang | arm | n | Gemini | local |
+|---|---|---|---|---|
+| kn | stock | 2 | 62 | 82 |
+| kn | romanized | 2 | 98 | 69 |
+| ta | stock | 5 | 67 | 83 |
+| ta | romanized | 5 | 97 | 67 |
+| te | stock | 5 | 66 | 69 |
+| te | romanized | 5 | 97 | 67 |
+
+Whisper large-v3 is not a usable stand-in for Gemini on sung Kannada, Tamil or Telugu: it ranks the arms backwards. Keep Gemini transcribeSung for diction judging.
+
 ## Next options (not run)
-- Run the full 24 with VAD off (about 40 min CPU) for a proper correlation.
 - Indic ASR (Malayalam fine-tune Apache-2.0 for ml; IndicConformer pending HF access) for ml where Whisper writes 0% Malayalam script.
 - Human or second-model check on a handful of clips to decide which scorer tracks real diction.
