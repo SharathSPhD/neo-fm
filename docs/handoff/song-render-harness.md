@@ -88,3 +88,11 @@ E3 showed English style text does not move diction, so E8 asks a different quest
 
 ## E8 result (2026-10-21): sung-word match (floor only), 7 renders
 Kannada (stock input path, so diction is ~60 by design): occ-kn-1 A 62 / C 66; occ-kn-2 A 60 / C 66. Hindi: occ-hi-1 A 96, C refused by the screen; occ-hi-2 A 95 / C 97. The catalog cue never dropped a render under the floor and no wordless alap appeared in the transcripts' match, but diction does not say which arm sounds better. Preference scoring (CLAP, Audiobox, 5090 head) still to run on lab/render-harness/e8/*.mp3 (3 complete kn/hi pairs + 1 hi pair, A/C labels in filenames).
+
+## E9 design (2026-10-21): stronger cue, more pairs, blind pairwise judge
+E8 showed the mild catalog line barely changes the audio (CLAP cos 0.97-0.99, no free score separates it), so E9 tests a stronger cue on more pairs.
+- **Arms:** A = stock style line. S = strong cue: lead instrument named first, explicit bpm, tala feel and a separate "avoid" clause from the catalog `must_avoid` (kn bhavageethe: "lead flute over harmonium drone, tabla in kaharwa, 72 bpm, slow, no synth, no drum kit"; kn film-pop: "bright dhol and electric guitar lead, 118 bpm, big chorus"; hi indie-folk: "lead acoustic guitar fingerpicking with cajon, 88 bpm, intimate, no synth"; hi film-pop: "synth and dhol groove, 112 bpm, huge chorus"). No raga words (alap risk), no wording chosen to dodge the screen.
+- **Pairs:** kn occ-kn-1/2/3 and hi occ-hi-1/2, 2 renders per arm per brief to separate cue from render noise = 10 pairs, 20 renders. occ-hi-1 may be refused again by the screen (then it is dropped, not reworded). Test route does not apply prod romanization, so romanization is held out of the comparison (it is orthogonal; diction is a floor only).
+- **Judge:** Gemini blind pairwise in both orders, pair counted only if both orders agree (arena #441: position-driven otherwise); plus the free scorers (Audiobox, CLAP, preference head) and sung-word floor >= 80 for hi.
+- **Decision rule:** S becomes a candidate default for a language only if consistent-order wins >= 7 of the consistent pairs and no under-floor renders; otherwise style-line work stops and effort moves elsewhere (romanization, best-of-N).
+- **Cost:** 20 renders about GBP 5 (about GBP 10 if 2x low) plus about GBP 0.5 Gemini judging. Hard stop 20 renders.
