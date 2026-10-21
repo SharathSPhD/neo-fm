@@ -21,7 +21,8 @@ function verdict(j: ShowcaseJudge): string {
 
 function Scoreboard({ cases }: { cases: ShowcaseCase[] }) {
   return (
-    <table className="mt-4 w-full text-left text-sm">
+    <div className="mt-4 overflow-x-auto">
+    <table className="w-full min-w-[34rem] text-left text-sm">
       <thead>
         <tr className="text-foreground/60">
           <th className="py-1 pr-3 font-medium">Judge</th>
@@ -49,6 +50,7 @@ function Scoreboard({ cases }: { cases: ShowcaseCase[] }) {
         })}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -80,7 +82,7 @@ export default async function ShowcasePage(props: { searchParams: Promise<{ lang
         <li><b>Premium</b>: Opus polish with exemplars from our judged corpus.</li>
         <li><b>Studio</b>: Opus drafts, pick and polish. Not built or judged yet, so not shown.</li>
       </ul>
-      <nav className="mt-8 flex gap-2" aria-label="Language">
+      <nav className="mt-8 flex flex-wrap gap-2" aria-label="Language">
         {SHOWCASE_LANGS.map((l) => (
           <a
             key={l.code}

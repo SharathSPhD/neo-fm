@@ -18,6 +18,8 @@ npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.v
 
 `npm run week` (staging) checks /station/week and its API and share card, signed out and signed in at desktop and 390px. Needs STATION_WEEK on in staging.
 
+`npm run showcase` (staging first, then prod once the flag ships; public, no login) checks /lab/showcase: both language tabs, every case shows Standard and Premium lyrics, Claude and Gemini are scored in separate rows, Studio and English are labelled as not judged, and no overflow at 390px. Needs LYRIC_SHOWCASE_ENABLED=1 on the target; a 404 fails.
+
 `npm run features` checks the dedicate-this-hour link (banner, name cleaning, WhatsApp link) and that the push opt-in endpoints respond, on prod, no login needed.
 ```
 
