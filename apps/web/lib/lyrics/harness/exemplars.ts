@@ -3,7 +3,7 @@ import data from "./data/exemplars.json";
 export interface Exemplar { id: string; lang: string; style: string; brief: string; text: string; judge: number }
 
 const EXEMPLARS = data as Exemplar[];
-const NAME_TO_CODE: Record<string, string> = { kannada: "kn", tamil: "ta", telugu: "te", hindi: "hi", bengali: "bn", marathi: "mr", punjabi: "pa", gujarati: "gu", malayalam: "ml" };
+const NAME_TO_CODE: Record<string, string> = { kannada: "kn", tamil: "ta", telugu: "te", hindi: "hi", bengali: "bn", marathi: "mr", english: "en", punjabi: "pa", gujarati: "gu", malayalam: "ml" };
 
 export const langCode = (language: string): string => NAME_TO_CODE[language.toLowerCase()] ?? language.toLowerCase();
 const toks = (s: string): Set<string> => new Set(s.toLowerCase().match(/[a-z]{3,}/g) ?? []);
