@@ -16,7 +16,7 @@ export const ALMANAC_DAYS = [0, 1, 2, 3] as const;
 
 interface Festival {
   id: string;
-  /** Calendar dates (YYYY-MM-DD) from the published calendars; extend before the last one passes. Regional calendars differ, so only dates observed nationwide belong here. */
+  /** Calendar dates (YYYY-MM-DD) from the published calendars; extend before the last one passes. Dates are India time per Drik Panchang (diaspora days can differ by one, e.g. Bhai Dooj is 10 Nov in the UK); checked 2026-10-21, see PR #464. */
   dates: string[];
   name: Record<AlmanacLang, string>;
 }
@@ -27,7 +27,7 @@ export const FESTIVALS: readonly Festival[] = [
   { id: "bhai-dooj", dates: ["2026-11-11"], name: { hi: "भाई दूज", ta: "பாய் தூஜ்", te: "భాయ్ దూజ్", kn: "ಭಾಯಿ ದೂಜ್", bn: "ভাই ফোঁটা", en: "Bhai Dooj" } },
   { id: "christmas", dates: ["2026-12-25"], name: { hi: "क्रिसमस", ta: "கிறிஸ்துமஸ்", te: "క్రిస్మస్", kn: "ಕ್ರಿಸ್ಮಸ್", bn: "বড়দিন", en: "Christmas" } },
   { id: "new-year", dates: ["2027-01-01"], name: { hi: "नया साल", ta: "புத்தாண்டு", te: "కొత్త సంవత్సరం", kn: "ಹೊಸ ವರ್ಷ", bn: "নতুন বছর", en: "New Year" } },
-  { id: "pongal", dates: ["2027-01-14"], name: { hi: "पोंगल और संक्रांति", ta: "பொங்கல்", te: "సంక్రాంతి", kn: "ಸಂಕ್ರಾಂತಿ", bn: "পৌষ সংক্রান্তি", en: "Pongal and Sankranti" } },
+  { id: "pongal", dates: ["2027-01-15"], name: { hi: "पोंगल और संक्रांति", ta: "பொங்கல்", te: "సంక్రాంతి", kn: "ಸಂಕ್ರಾಂತಿ", bn: "পৌষ সংক্রান্তি", en: "Pongal and Sankranti" } },
   { id: "republic-day", dates: ["2027-01-26"], name: { hi: "गणतंत्र दिवस", ta: "குடியரசு தினம்", te: "గణతంత్ర దినోత్సవం", kn: "ಗಣರಾಜ್ಯೋತ್ಸವ", bn: "প্রজাতন্ত্র দিবস", en: "Republic Day" } },
 ];
 
