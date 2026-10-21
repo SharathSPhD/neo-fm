@@ -1,0 +1,24 @@
+name: prompt guard
+
+# A PR that changes a production lyric prompt must cite its eval-gate evidence in the description (scripts/prompt-guard-lib.mjs lists the
+# watched files). Runs again when the description is edited, so adding the "Eval-gate:" line clears it without a new push.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+jobs:
+  eval-gate-reference:
+    name: prompt guard (eval-gate reference)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - run: git fetch --no-tags origin "${{ github.base_ref }}"
+      - name: check watched prompt files against the PR description
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: node scripts/prompt-guard.mjs "origin/${{ github.base_ref }}"
