@@ -92,6 +92,11 @@ function daypart(hour: number): string {
 
 const IST_OFFSET_MS = 5.5 * 3_600_000;
 
+/** Daypart of a UTC timestamp (ms), read in India time. */
+export function daypartOfIst(ms: number): string {
+  return daypart(new Date(ms + IST_OFFSET_MS).getUTCHours());
+}
+
 /**
  * What the sponsor media kit sells, measured: spot starts by language, daypart (India time) and slot kind over the window,
  * plus the modelled value of sponsor spots at an assumed CPM range. No listener ids; counts only.
