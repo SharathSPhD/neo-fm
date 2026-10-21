@@ -22,6 +22,8 @@ import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { poolCdnUrl } from "@/lib/station/cdn";
 import { cdnWithinBudget, signals30d } from "@/lib/station/cdn-guard";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
+import { interleaveMix, parseMix, parsePassMoods, passMixEnabled } from "@/lib/station/lang-mix";
+import { hasPassPerks } from "@/lib/station/pass-perks";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
@@ -74,7 +76,12 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const lang = sp.get("lang");
   const station = findStation(sp.get("station"));
-  const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
+  // Pass perks (flag STATION_PASS_MIX): a language mix and up to four mood picks (`moods=calm,romantic`). Everyone else keeps `tags` as before.
+  const perks = passMixEnabled() && user ? await hasPassPerks(admin, user.id) : false;
+  const wantTags = [...new Set([
+    ...(sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8),
+    ...(perks ? parsePassMoods(sp.get("moods")) : []),
+  ])];
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), user ? 25 : 10);
 
   const fullPool = await loadPool();
@@ -102,7 +109,20 @@ export async function GET(req: NextRequest) {
   const instrumentals = sets ? pool.filter((t) => t.kind === "instrumental") : [];
   const vocalSlate = sets ? slate.filter((t) => t.kind !== "instrumental") : slate;
   // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later; sets need a wider list too.
-  const programmed = programQueue(vocalSlate, { ...programOpts, limit: steered || sets ? Math.min(limit * 3, 60) : limit });
+  const progLimit = steered || sets ? Math.min(limit * 3, 60) : limit;
+  // Pass perk (STATION_PASS_MIX): `langs=ta:60,hi:30` plays a weighted mix in runs. Each language is ranked and programmed on its own, then interleaved.
+  const mix = perks && sp.get("langs") && !lang
+    ? parseMix(sp.get("langs"), (c) => pool.some((t) => t.language === c && t.kind !== "instrumental"))
+    : [];
+  const programmed = mix.length > 1
+    ? interleaveMix(
+        mix.map((m) => ({
+          weight: m.weight,
+          tracks: programQueue(rankTracks(pool.filter((t) => t.kind !== "instrumental"), signals, { language: m.lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) }), { ...programOpts, rotation: { ...rotation, languageLocked: true }, limit: progLimit }),
+        })),
+        progLimit,
+      )
+    : programQueue(vocalSlate, { ...programOpts, limit: progLimit });
   const steeredList = steered || exclude ? steerQueue(programmed, pool, steer, exclude) : programmed;
   let setInfo = new Map<string, { id: string; index: number; size: number }>();
   let ranked = steeredList.slice(0, limit);
