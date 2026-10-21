@@ -45,3 +45,12 @@ describe("help FAQ", () => {
     expect(parseHelpLang(undefined)).toBe("en");
   });
 });
+
+describe("helpCopyFor", () => {
+  it("lists English only when ENGLISH_MAIN is on, and only in the English FAQ", async () => {
+    const { helpCopyFor } = await import("../lib/help/faq");
+    expect(helpCopyFor("en", false)).toBe(HELP_COPY.en);
+    expect(helpCopyFor("en", true).items.which.a).toMatch(/^English, Hindi, Tamil, Telugu, Kannada and Bengali/);
+    expect(helpCopyFor("hi", true)).toBe(HELP_COPY.hi);
+  });
+});

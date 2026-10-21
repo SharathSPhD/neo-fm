@@ -6,7 +6,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getUiLang } from "@/lib/i18n/server";
-import { HELP_COPY, HELP_LANGS, HELP_LANG_NAMES, MORE_LINKS, parseHelpLang, SECTIONS } from "@/lib/help/faq";
+import { HELP_LANGS, HELP_LANG_NAMES, helpCopyFor, MORE_LINKS, parseHelpLang, SECTIONS } from "@/lib/help/faq";
+import { englishMainEnabled } from "@/lib/languages/english-main";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/help" },
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
 export default async function HelpPage(props: { searchParams: Promise<{ lang?: string | string[] }> }) {
   const { lang: q } = await props.searchParams;
   const lang = parseHelpLang(q ?? (await getUiLang()));
-  const copy = HELP_COPY[lang];
+  const copy = helpCopyFor(lang, englishMainEnabled());
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-6 py-12">
       <header className="flex flex-col gap-3">

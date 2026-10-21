@@ -9,12 +9,15 @@
  */
 import type { MetadataRoute } from "next";
 
+import { englishMainEnabled } from "@/lib/languages/english-main";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "neo-fm",
     short_name: "neo-fm",
     description:
-      "Your personal 24/7 FM station. Music tuned to your taste, in Hindi, Tamil, " +
+      "Your personal 24/7 FM station. Music tuned to your taste, in " +
+      (englishMainEnabled() ? "English, Hindi, Tamil, " : "Hindi, Tamil, ") +
       "Telugu, Kannada, Bengali and more. All music is AI-generated.",
     id: "/",
     start_url: "/station",
