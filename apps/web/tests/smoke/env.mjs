@@ -16,5 +16,6 @@ export const smokeEnv = {
   // Finished features that ship dark on prod are exercised here so their path stays covered.
   STATION_DEDICATE: "1",
   STATION_PASS_MIX: "1",
+  STATION_NOW_PLAYING: "1",
   NEXT_TELEMETRY_DISABLED: "1",
 };

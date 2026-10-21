@@ -53,6 +53,24 @@ test.describe("station (signed out)", () => {
     expect(queues.every((u) => !u.includes("langs="))).toBe(true);
   });
 
+  test("now-playing view: cover, marker, up-next, sleep timer, and nothing wider than 390px", async ({ page }) => {
+    test.skip(REMOTE, "needs STATION_NOW_PLAYING on the local build");
+    await page.setViewportSize({ width: 390, height: 844 });
+    await startStation(page);
+    await expect(page.getByTestId("np-cover")).toBeVisible();
+    await expect(page.getByTestId("np-marker")).toHaveAttribute("data-kind", "track");
+    await expect(page.getByTestId("np-upnext")).toBeVisible();
+    const sleep = page.getByTestId("np-sleep");
+    await sleep.getByRole("button", { name: "15 min" }).click();
+    await expect(sleep.getByRole("button", { name: "15 min" })).toHaveAttribute("aria-pressed", "true");
+    await expect(sleep.getByRole("status")).toContainText("15");
+    await sleep.getByRole("button", { name: "Off" }).click();
+    await expect(sleep.getByRole("status")).toHaveCount(0);
+    const widths = await page.evaluate(() => ({ doc: document.documentElement.scrollWidth, win: window.innerWidth }));
+    expect(widths.doc).toBeLessThanOrEqual(widths.win);
+    await page.screenshot({ path: test.info().outputPath("now-playing-390.png"), fullPage: true });
+  });
+
   test("plays a track and shows what is playing", async ({ page }) => {
     await startStation(page);
     await expect.poll(() => page.evaluate(() => { const a = document.querySelector("audio"); return !!a && !a.paused; })).toBe(true);

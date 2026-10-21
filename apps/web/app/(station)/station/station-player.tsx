@@ -22,6 +22,9 @@ import { dedicateHourUrl } from "@/lib/station/dedicate";
 import { whatsappShareUrl } from "@/lib/station/share";
 import { togetherUrl } from "@/lib/station/together";
 import { takeFallback } from "@/lib/station/fallback";
+import { NowPlayingCover, SegmentMarker, SleepTimer, UpNextPeek } from "./now-playing";
+import { lockScreenText, segmentKind, upNext } from "@/lib/station/now-playing";
+import { sleepDue, sleepEndsAt, type SleepMinutes } from "@/lib/station/sleep-timer";
 import { clearMediaSession, setMediaHandlers, setMediaMetadata, setMediaPlaybackState } from "@/lib/player/media-session";
 
 interface Track {
@@ -154,7 +157,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ mixState = "off", anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { mixState?: "off" | "locked" | "on"; anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
+export function StationPlayer({ nowPlaying = false, mixState = "off", anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { nowPlaying?: boolean; mixState?: "off" | "locked" | "on"; anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -164,6 +167,10 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
   const globalPlayer = usePlayer();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [queue, setQueue] = useState<Track[]>([]);
+  // Sleep timer (flag STATION_NOW_PLAYING): the station stops at the end of the song that is playing when time runs out.
+  const [sleepEnds, setSleepEnds] = useState<number | null>(null);
+  const sleepRef = useRef<number | null>(null);
+  sleepRef.current = sleepEnds;
   const [lang, setLang] = useState<string>("");
   const [moods, setMoods] = useState<string[]>([]);
   const [mix, setMix] = useState<MixPick[]>([]);
@@ -345,6 +352,12 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
     if (isAd && kind === "finish" && current.ad) postAdEvent(current.ad.slotId, "complete");
     if (kind !== "error" && !notATrack) setPlayed((n) => n + 1);
     if (kind !== "error" && !notATrack) sendSignal(current.id, kind, audioRef.current, current.set);
+    if (kind === "finish" && sleepDue(sleepRef.current, Date.now())) {
+      audioRef.current?.pause();
+      setSleepEnds(null);
+      setNote(t("station.np.sleepDone"));
+      return;
+    }
     if (queue.length <= 2) {
       // Refill from the server so the tail reflects what was just skipped or finished.
       void refill(lang, moods, station);
@@ -401,7 +414,12 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
   controls.current.finish = () => advance("finish");
   useEffect(() => {
     if (!current) return;
-    setMediaMetadata({ title: current.title, artist: "neo-fm Station" });
+    if (nowPlaying) {
+      const text = lockScreenText(current, { ad: t("station.np.adBreak"), host: t("station.np.host"), language: languageName(current.language) });
+      setMediaMetadata({ title: text.title, artist: "neo-fm Station", album: text.album });
+    } else {
+      setMediaMetadata({ title: current.title, artist: "neo-fm Station" });
+    }
     setMediaHandlers({
       play: () => void audioRef.current?.play(),
       pause: () => audioRef.current?.pause(),
@@ -605,6 +623,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
       {current ? (
         <div className="glass flex flex-col gap-4 rounded-3xl p-5 sm:p-6">
           {hostLine ? <p role="status" className="text-sm italic text-foreground/70">{hostLine}</p> : null}
+          {nowPlaying && (isAd || isVoice) ? <SegmentMarker kind={segmentKind(current)} /> : null}
           {isAd && current.ad ? (
             <div className="flex flex-col gap-2" aria-label="Ad">
               <p className="flex items-center gap-2 text-xs text-foreground/80">
@@ -635,13 +654,21 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
           ) : (
             <>
               <div className="flex items-center gap-4">
-                <div className="orb" data-paused={blocked ? "true" : "false"} aria-hidden />
+                {nowPlaying ? (
+                  <NowPlayingCover id={current.id} style={current.tags[0]} paused={blocked} />
+                ) : (
+                  <div className="orb" data-paused={blocked ? "true" : "false"} aria-hidden />
+                )}
                 <div className="min-w-0">
-                  <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-accent">
-                    <span className="eq" aria-hidden><i /><i /><i /><i /></span>
-                    {t("station.title")}
-                  </p>
-                  <p className="mt-1 truncate text-xl font-semibold sm:text-2xl">{current.title}</p>
+                  {nowPlaying ? (
+                    <SegmentMarker kind="track" />
+                  ) : (
+                    <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-accent">
+                      <span className="eq" aria-hidden><i /><i /><i /><i /></span>
+                      {t("station.title")}
+                    </p>
+                  )}
+                  <p className={`mt-1 text-xl font-semibold sm:text-2xl ${nowPlaying ? "line-clamp-2 break-words" : "truncate"}`}>{current.title}</p>
                 </div>
               </div>
               <p className="text-xs text-foreground/80">
@@ -668,6 +695,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
             }}
             onError={onTrackError}
           />
+          {nowPlaying ? <UpNextPeek next={upNext(queue)?.track ?? null} /> : null}
           {queue[1]?.url ? <audio key={queue[1].id} src={queue[1].url} preload="auto" hidden aria-hidden="true" /> : null}
           {blocked ? (
             <button type="button" onClick={() => void audioRef.current?.play()} className="rounded-full bg-accent px-4 py-2 font-medium text-background">
@@ -705,6 +733,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
             <button type="button" onClick={() => chooseEnergy("down")} aria-pressed={energy === "down"} className="chip">{t("station.steer.calmer")}</button>
             <button type="button" onClick={() => chooseEnergy("up")} aria-pressed={energy === "up"} className="chip">{t("station.steer.livelier")}</button>
           </div>
+          {nowPlaying ? <SleepTimer endsAt={sleepEnds} onSet={(m: SleepMinutes | null) => setSleepEnds(m === null ? null : sleepEndsAt(m, Date.now()))} /> : null}
           {note ? <p role="status" className="text-sm">{note}</p> : null}
           {nudging ? (
             <div className="flex flex-col gap-2 rounded-sm border border-accent/40 bg-accent/10 p-3 text-sm">

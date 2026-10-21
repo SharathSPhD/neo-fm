@@ -6,6 +6,7 @@ import { betaLanguages, minPool, stationChipLanguages } from "@/lib/languages/re
 import { admittedLanguageCounts } from "@/lib/station/pool";
 import { cleanDedicatee, dedicateEnabled } from "@/lib/station/dedicate";
 import { passMixEnabled } from "@/lib/station/lang-mix";
+import { nowPlayingEnabled } from "@/lib/station/now-playing";
 import { findStation } from "@/lib/station/named";
 import { hasPassPerks } from "@/lib/station/pass-perks";
 import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
@@ -71,7 +72,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} />
+      <StationPlayer nowPlaying={nowPlayingEnabled()} mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} />
     </main>
   );
 }
