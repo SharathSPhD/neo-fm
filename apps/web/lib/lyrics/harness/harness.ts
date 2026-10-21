@@ -18,6 +18,11 @@ export interface HarnessConfig {
   edits?: boolean;
   /** polish model override (lab only); unset = the live polish model */
   model?: string;
+  /** Studio: the drafts are written by this model (lab only), `draftCount` of them, instead of taken from the input */
+  draftModel?: string;
+  draftCount?: number;
+  /** model that picks among the Studio drafts before the polish (default: the critic model) */
+  pickModel?: string;
 }
 
 export const ARMS: Record<string, HarnessConfig> = {
@@ -30,6 +35,8 @@ export const ARMS: Record<string, HarnessConfig> = {
   live_edits: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, edits: true },
   opus: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
   refs_opus: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
+  // Studio: three Opus drafts, an Opus pick, then the Opus refs polish. Not in production; gated against refs_opus and live first.
+  full_opus: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5", draftModel: "claude-opus-5-5", draftCount: 3, pickModel: "claude-opus-5-5" },
   full: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 3 },
 };
 
@@ -46,6 +53,8 @@ export interface HarnessDeps {
   ask: (a: { model: string; prompt: string; maxTokens: number }) => Promise<string>;
   /** true when `revised` beats `previous` under the blind both-orders pairwise judge */
   prefers: (a: { language: string; brief: string; revised: string; previous: string }) => Promise<boolean>;
+  /** Studio drafting: one draft from `draftModel` (only called when the arm sets it) */
+  draft?: (a: { model: string; language: string; style: string; brief: string; index: number; of: number }) => Promise<string>;
   /** deterministic shuffle so selection is blind to draft order and reproducible per brief */
   shuffle?: <T>(xs: T[]) => T[];
 }
@@ -82,7 +91,21 @@ export async function runHarness(cfg: HarnessConfig, input: HarnessInput, deps: 
     return cur;
   };
 
-  const drafts = input.drafts.slice(0, Math.max(1, cfg.candidates));
+  let sourceDrafts = input.drafts;
+  if (cfg.draftModel && cfg.draftCount && deps.draft) {
+    const n = cfg.draftCount;
+    const written = (await Promise.all(Array.from({ length: n }, (_, i) => deps.draft!({ model: cfg.draftModel!, language: input.language, style: input.style, brief: input.brief, index: i + 1, of: n }).catch(() => "")))).filter((d) => d.length >= 20);
+    trace.push(`studio drafts: ${written.length}/${n} written by ${cfg.draftModel}`);
+    if (written.length > 0) {
+      const order = (deps.shuffle ?? ((xs) => xs))(written.map((_, i) => i));
+      const pick = written.length === 1 ? 0 : parseSelect(await deps.ask({ model: cfg.pickModel ?? CRITIC_MODEL, prompt: selectPrompt({ ...input, cands: order.map((i) => written[i]!) }), maxTokens: 400 }), order.length);
+      const chosen = pick === null ? 0 : written.length === 1 ? 0 : order[pick]!;
+      trace.push(`studio pick: draft ${chosen + 1}${pick === null ? " (unparseable pick)" : ""}`);
+      sourceDrafts = [written[chosen]!];
+    }
+  }
+  const drafts = sourceDrafts.slice(0, Math.max(1, cfg.candidates));
+  if (drafts.length === 0) throw new Error("no drafts to polish");
   const finals: string[] = [];
   for (const d of drafts) finals.push(await refine(await deps.polish({ language: input.language, style: input.style, brief, lyrics: d })));
   if (finals.length === 1) return { lyrics: finals[0]!, trace };
