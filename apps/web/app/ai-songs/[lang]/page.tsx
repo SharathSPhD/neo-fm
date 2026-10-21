@@ -11,7 +11,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  LANGUAGE_PAGES,
+  activeLanguagePages,
   hreflangPaths,
   languagePageBySlug,
   languagePagePath,
@@ -29,7 +29,7 @@ export const dynamicParams = false;
 const TOP_COUNT = 12;
 
 export function generateStaticParams() {
-  return LANGUAGE_PAGES.map((p) => ({ lang: p.slug }));
+  return activeLanguagePages().map((p) => ({ lang: p.slug }));
 }
 
 export async function generateMetadata(props: { params: Promise<{ lang: string }> }): Promise<Metadata> {
@@ -143,7 +143,7 @@ export default async function LanguageLanding(props: { params: Promise<{ lang: s
       </p>
 
       <nav aria-label="Languages" className="flex flex-wrap gap-x-4 gap-y-2 border-t border-muted/30 pt-6 text-sm">
-        {LANGUAGE_PAGES.map((p) => (
+        {activeLanguagePages().map((p) => (
           <Link
             key={p.code}
             href={languagePagePath(p)}
