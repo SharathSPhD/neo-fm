@@ -14,6 +14,10 @@ npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.v
 
 `npm run taste` (staging, signed in) checks the English-first create page, the taste panel, that a song submitted with a taste set sends it, and that the station loads without page errors. It needs ENGLISH_MAIN, TASTE_BRIEF and STATION_PROGRAMMES on in staging. The song step reports a plan limit as info when an earlier queued test song still holds the QA user's concurrent slot (staging has no worker). Set `QA_TASTE_FRESH=1` to sign up a throwaway @neo-fm.test user through the app's own sign-up page instead, so a stuck test job cannot block it.
 
+`npm run taste-save` (staging, throwaway user) checks the saved taste profile: Save without consent shows the consent note, Save with consent persists, a reload with the browser copy cleared prefills from the server, and Forget clears it. Needs migration 0113 on staging.
+
+`npm run week` (staging) checks /station/week and its API and share card, signed out and signed in at desktop and 390px. Needs STATION_WEEK on in staging.
+
 `npm run features` checks the dedicate-this-hour link (banner, name cleaning, WhatsApp link) and that the push opt-in endpoints respond, on prod, no login needed.
 ```
 
