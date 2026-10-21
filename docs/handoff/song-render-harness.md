@@ -73,3 +73,49 @@ Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native
 
 ## E7 (2026-10-20): Tamil and Telugu confirmed on a second brief
 occ-ta-2 and occ-te-2 with Claude-romanized lyrics, 2 renders each, sung-word match against native text: Tamil 93/98, Telugu 98/96. With E5, Tamil and Telugu are 93-100 over two briefs each, against about 65 for the current input; Kannada 97/99 (E6). AI-scored, small samples; accent and naturalness are unjudged (the Gemini flash single-listen rated everything 5/5).
+
+## E8 design (2026-10-21): kn/hi catalog-cue prompt arms, preference-first
+E3 showed English style text does not move diction, so E8 asks a different question: does a catalog-built cue line (instruments, tempo, tala feel, optional raga cue) change which render a listener prefers, with sung-word match only as a floor (>= 80, veto below).
+- **Style lines (English, from `strategy/indian-music-styles.json`, no wording chosen to dodge the safety screen):**
+  - kn-bhavageethe: "Kannada bhavageethe, soft sincere voice, harmonium, tabla, flute and violin, gentle strophic melody, kaharwa feel, 65-100 bpm"
+  - kn-film-pop: "Kannada film song, melodious pallavi, synth, guitar, dhol, strings, flute, 85-130 bpm"
+  - hindi-indie-folk: "Hindi indie folk-pop, acoustic guitar, cajon, gentle conversational vocal, 70-105 bpm"
+  - hindi-filmpop: "Contemporary Bollywood pop, catchy mukhda, synth, dhol, big chorus, 90-128 bpm"
+- **Arms:** A = stock style line from the brief; C = catalog line above plus a tala/raga cue (bhavageethe: Bhairavi-leaning, kaharwa; film-pop: no raga, dadra feel). Raga words carry a wordless-alap risk (lab R5, `PCE_RAGA_PROMPT`), so the sung-word floor is what catches it. Melodic-structure arms (ghazal, qawwali) wait on Urdu support.
+- **Free scoring first:** Gemini transcribeSung match (floor), CLAP text-audio on the English cue, Audiobox PQ, and the 5090 preference head (about 61.5% held-out) as a tie-break only. Holistic Gemini judge is not used (position-driven, arena #441).
+- **Pilot:** kn (occ-kn-1, occ-kn-2) and hi (occ-hi-1 with filmpop wording, occ-hi-2) x arms A and C x 1 render = 8 renders, about GBP 2 at the estimate (about GBP 4 if 2x low) plus under GBP 0.5 Gemini scoring. Hard stop at 8.
+- **Decision rule:** C becomes the default for a language only if the preference head and CLAP agree it is better on at least 3 of 4 pairs with no render under the 80 floor; otherwise A stays. Too few pairs for a claim either way: the point is to decide whether a larger run is worth it.
+
+## E8 result (2026-10-21): sung-word match (floor only), 7 renders
+Kannada (stock input path, so diction is ~60 by design): occ-kn-1 A 62 / C 66; occ-kn-2 A 60 / C 66. Hindi: occ-hi-1 A 96, C refused by the screen; occ-hi-2 A 95 / C 97. The catalog cue never dropped a render under the floor and no wordless alap appeared in the transcripts' match, but diction does not say which arm sounds better. Preference scoring (CLAP, Audiobox, 5090 head) still to run on lab/render-harness/e8/*.mp3 (3 complete kn/hi pairs + 1 hi pair, A/C labels in filenames).
+
+## E9 design (2026-10-21): stronger cue, more pairs, blind pairwise judge
+E8 showed the mild catalog line barely changes the audio (CLAP cos 0.97-0.99, no free score separates it), so E9 tests a stronger cue on more pairs.
+- **Arms:** A = stock style line. S = strong cue: lead instrument named first, explicit bpm, tala feel and a separate "avoid" clause from the catalog `must_avoid` (kn bhavageethe: "lead flute over harmonium drone, tabla in kaharwa, 72 bpm, slow, no synth, no drum kit"; kn film-pop: "bright dhol and electric guitar lead, 118 bpm, big chorus"; hi indie-folk: "lead acoustic guitar fingerpicking with cajon, 88 bpm, intimate, no synth"; hi film-pop: "synth and dhol groove, 112 bpm, huge chorus"). No raga words (alap risk), no wording chosen to dodge the screen.
+- **Pairs:** kn occ-kn-1/2/3 and hi occ-hi-1/2, 2 renders per arm per brief to separate cue from render noise = 10 pairs, 20 renders. occ-hi-1 may be refused again by the screen (then it is dropped, not reworded). Test route does not apply prod romanization, so romanization is held out of the comparison (it is orthogonal; diction is a floor only).
+- **Judge:** Gemini blind pairwise in both orders, pair counted only if both orders agree (arena #441: position-driven otherwise); plus the free scorers (Audiobox, CLAP, preference head) and sung-word floor >= 80 for hi.
+- **Decision rule:** S becomes a candidate default for a language only if consistent-order wins >= 7 of the consistent pairs and no under-floor renders; otherwise style-line work stops and effort moves elsewhere (romanization, best-of-N).
+- **Cost:** 20 renders about GBP 5 (about GBP 10 if 2x low) plus about GBP 0.5 Gemini judging. Hard stop 20 renders.
+
+## English render path audit (2026-10-21)
+- **Finding:** the engine catalog (`lib/engine/styles.json`) is Indian styles only, so an English brief routed to nothing: no Lyria fragment, no form or metre notes. The song got the generic `"<family> <language> song, expressive vocals"` line, or whatever the lyrics agent wrote. `DB_FAMILY_DEFAULT` leaves "western" unrouted by design.
+- **Vocal and diction:** English needs no romanization or diction hints (`dictionHintsFor("en")` is empty, `singingScript` is a no-op on Latin lyrics), so the diction path is already fine. Voice choice (`voiceHint`) is language-independent.
+- **Change (flag `ENGLISH_STYLES=1`, default off):** `lib/engine/english-styles.ts` adds seven styles (pop, rock, R&B, hip-hop, country, indie folk, dance) with Lyria fragments (genre, bpm range, instruments, vocal and production cue) and lyric form/metre/avoid notes, routed by whole-word keyword (longest wins) for `en` only. A plain brief still routes to nothing. Wired through `styleOnly`/`styleRoutingOn` at the same two call sites as `PCE_STYLES`, so the poets, polisher and Lyria all see it.
+- **Defaults chosen from E3/E8 evidence:** style text does not move diction and the mild catalog cue barely changes audio, so fragments are concrete (instruments, tempo, vocal) and short, and no raga-style words exist for English. Whether they sound better is untested; a render A/B needs an S tap card and the English gate before any prod flag.
+## E8 free audio scores (2026-10-21): stock (a) vs catalog cue (c), kn/hi, 7 clips
+Scored with the open stack (Audiobox aesthetics CE/CU/PC/PQ; laion/larger_clap_music; the Music Arena preference head from #426, logit = head score difference). Run on CPU in a cloud session, nothing paid. Diction is the stored Gemini sung-word match. Head accuracy is only 61.5% held out, so read the preference column as a weak signal, not a verdict.
+
+| pair | diction a / c | Audiobox CE c-a | CU | PC | PQ | pref logit c-a | CLAP cos(a,c) |
+|---|---|---|---|---|---|---|---|
+| kn-1 | 62 / 66 | +0.15 | -0.03 | -0.23 | +0.09 | -0.49 | 0.971 |
+| kn-2 | 60 / 66 | -0.15 | -0.03 | +0.22 | -0.09 | -0.11 | 0.993 |
+| hi-2 | 95 / 97 | +0.13 | +0.04 | +0.26 | +0.11 | -0.72 | 0.986 |
+| hi-1 | 96 (a only) | | | | | | |
+
+Reading:
+- The catalog cue barely changes how the song sounds overall: CLAP similarity between a and c is 0.97 to 0.99 in all three pairs.
+- Diction is higher for c in all three pairs (+4, +6, +2). That is the only consistent signal, and it is within the render-to-render spread seen in E2 (several points on repeats), so 3 pairs do not prove it.
+- Audiobox is mixed: hi-2 improves on all four axes (small), kn-1 and kn-2 move in opposite directions. All differences are under 0.3 on a 10-point scale, near the noise of repeat renders.
+- The preference head leans slightly toward stock in all three pairs (c less preferred, logit -0.1 to -0.7, about 32% to 47% for c). With 61.5% head accuracy and 3 pairs this is not evidence against c either.
+- CLAP text similarity to an English style prompt is about 0 for every clip (as in the pool), so it cannot rank these.
+- Net: no free score separates stock from catalog cue beyond noise. Keep deciding on diction plus a validated blind pairwise listen, and only count it if it picks the same slot in both orders.

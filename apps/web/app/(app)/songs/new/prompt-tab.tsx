@@ -74,7 +74,7 @@ const VOICE_LABEL_KEY = {
 
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices, tasteBrief = false, englishMain = false }: { tasteBrief?: boolean; englishMain?: boolean; voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
+export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices, lyricGrades, tasteBrief = false, englishMain = false }: { lyricGrades?: { premium: number; studio: number }; tasteBrief?: boolean; englishMain?: boolean; voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
   // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
@@ -86,6 +86,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
   const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
   const [voice, setVoice] = useState<VoiceChoice>("station");
+  const [grade, setGrade] = useState<"standard" | "premium" | "studio">("standard");
   const [taste, setTaste] = useState<TasteBrief | undefined>();
   const shownVoices = voiceChoices?.filter((c) => !(c === "duet" && duetHeld(language)));
   const voiceNow: VoiceChoice = shownVoices?.includes(voice) ? voice : "station";
@@ -149,6 +150,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
         target_duration_seconds: duration,
         ...(voiceNow !== "station" ? { voice: { choice: voiceNow } } : {}),
         ...(tasteBrief && taste ? { taste } : {}),
+        ...(lyricGrades && grade !== "standard" && lyricGrades[grade] > 0 ? { lyric_grade: grade } : {}),
       }),
     });
 
@@ -338,6 +340,24 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             ))}
           </select>
           {voiceChoices.length <= 1 ? <p className="text-xs text-foreground/50">{t("prompt.voiceUpgrade")}</p> : null}
+        </div>
+      ) : null}
+
+      {lyricGrades ? (
+        <div className="flex flex-col gap-1.5 sm:max-w-xs">
+          <label htmlFor="prompt-grade" className="text-xs uppercase tracking-widest text-foreground/50">
+            {t("prompt.grade")}
+          </label>
+          <select
+            id="prompt-grade"
+            value={grade}
+            onChange={(e) => setGrade(e.target.value as "standard" | "premium" | "studio")}
+            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
+          >
+            <option value="standard">{t("prompt.gradeStandard")}</option>
+            <option value="premium" disabled={lyricGrades.premium <= 0}>{t("prompt.gradePremium")} ({t("prompt.gradeLeft").replace("{n}", String(lyricGrades.premium))})</option>
+            <option value="studio" disabled={lyricGrades.studio <= 0}>{t("prompt.gradeStudio")} ({t("prompt.gradeLeft").replace("{n}", String(lyricGrades.studio))})</option>
+          </select>
         </div>
       ) : null}
 

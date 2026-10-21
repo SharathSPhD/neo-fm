@@ -3,7 +3,7 @@
  *
  *   POST ?action=estimate  {arm, n}                                   Expected Claude USD for n songs. Spends nothing.
  *   POST ?action=run       {arm, cases:[{id,language,style,brief,drafts,playbook?}], max_usd}
- *                                                                     Final lyrics per case (drafts[0] is the engine's pick), trace and spend.
+ *                                                                     Final lyrics per case (drafts[0] is the engine's pick; arm full_opus writes its own, so drafts may be []), trace and spend.
  *   POST ?action=probe    {language, style, brief}                    No Claude. Reports PCE_HARNESS_REFS as this deployment reads it and whether the polish brief would get the refs block (same expression as lib/agent/process.ts).
  *   POST ?action=archive  {languages?:[name], limit?}                 No Claude. Distinct finished PCE/single lyrics from eval_runs (the lyric archive), newest first, for corpus harvesting.
  *   POST ?action=score    {items:[{id,language,brief,lyrics}], gemini?, max_usd}
@@ -30,6 +30,7 @@ import { ARMS, refsContext, runHarness } from "../../../../lib/lyrics/harness/ha
 import { POINTWISE_SYSTEM, parsePointwise, pointwisePrompt, type PointwiseItem } from "../../../../lib/lyrics/harness/pointwise";
 import { distillPrompt, playbookFor } from "../../../../lib/lyrics/harness/playbook";
 import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
+import { opusDraft } from "../../../../lib/lyrics/harness/studio";
 import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../../../../lib/lyrics/polish";
 
 export const dynamic = "force-dynamic";
@@ -132,6 +133,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const r = await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: c.drafts, playbook: c.playbook }, {
           polish: (a) => (cfg.edits ? polishLyricsEdits(client, a, template) : polishLyrics(client, a, template, undefined, cfg.model)),
           ask,
+          draft: (a) => opusDraft(client, a.model, a),
           prefers: async (a) => (await judgePair(client, a.language, a.brief, a.revised, a.previous)).winner === "pce",
           shuffle: (xs) => seededShuffle(xs, c.id),
         });
@@ -152,7 +154,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // template === null is the live arm; otherwise the harness arm on the same draft.
       polish: async (t, c) => t === null
         ? polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template)
-        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits(client, a, template) : polishLyrics(client, a, template, undefined, cfg.model)), ask, prefers: async () => true })).lyrics,
+        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits(client, a, template) : polishLyrics(client, a, template, undefined, cfg.model)), ask, draft: (a) => opusDraft(client, a.model, a), prefers: async () => true })).lyrics,
       judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
       judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
       spentUsd: () => meter.usd(),

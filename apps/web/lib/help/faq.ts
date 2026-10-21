@@ -267,3 +267,10 @@ const bn: Copy = {
 };
 
 export const HELP_COPY: Record<HelpLang, Copy> = { en, hi, ta, te, kn, mr, bn };
+
+/** With ENGLISH_MAIN on, the English FAQ lists English among the supported languages; other help languages are unchanged. */
+export function helpCopyFor(lang: HelpLang, englishMain: boolean): Copy {
+  const copy = HELP_COPY[lang];
+  if (lang !== "en" || !englishMain) return copy;
+  return { ...copy, items: { ...copy.items, which: { ...copy.items.which, a: copy.items.which.a.replace("Hindi, Tamil, Telugu, Kannada and Bengali, with lyrics in native script.", "English, Hindi, Tamil, Telugu, Kannada and Bengali, with lyrics in each language's own script.") } } };
+}

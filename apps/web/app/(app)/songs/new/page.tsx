@@ -10,6 +10,7 @@ import { createServerClient, createServiceRoleClient } from "@/lib/supabase/serv
 import type { UserTier } from "@/lib/agent/tiers";
 import { englishMainEnabled } from "@/lib/languages/english-main";
 import { tasteBriefEnabled } from "@/lib/taste/brief";
+import { gradeLeft, lyricGradesEnabled, readGradeBalance } from "@/lib/lyrics/grade";
 import { type VoiceChoice, voiceChoiceEnabled, voiceEntitlement } from "@/lib/voice";
 
 import { CreationCanvas } from "./creation-canvas";
@@ -39,6 +40,16 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
     voiceChoices = voiceEntitlement((row as { tier?: UserTier } | null)?.tier, pass).choices;
   }
 
+  // LYRIC_GRADES=1: the picker offers Premium/Studio only while a credit (monthly allowance or add-on) is left.
+  let lyricGrades: { premium: number; studio: number } | undefined;
+  if (lyricGradesEnabled()) {
+    const db = createServiceRoleClient();
+    const { data: row } = await db.from("users").select("tier").eq("id", data.user.id).maybeSingle();
+    const tier = ((row as { tier?: UserTier } | null)?.tier ?? "free") as UserTier;
+    const bal = await readGradeBalance(db, data.user.id);
+    lyricGrades = { premium: gradeLeft(tier, "premium", bal).total, studio: gradeLeft(tier, "studio", bal).total };
+  }
+
   // Every expansion language is labelled beta until a native read passes and its code is listed in LANG_REVIEWED.
   const expansion = enabledExpansionLanguages(process.env.LANG_WAVES);
   const beta = new Set(betaLanguages(expansion.map((l) => l.code), process.env.LANG_REVIEWED));
@@ -58,7 +69,7 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
           {t("gift.cta")}
         </Link>
       </header>
-      <CreationCanvas tasteBrief={tasteBriefEnabled()} englishMain={englishMainEnabled()} voiceChoices={voiceChoices} firstRun={firstRun} extraLanguages={extraLanguages} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
+      <CreationCanvas tasteBrief={tasteBriefEnabled()} englishMain={englishMainEnabled()} voiceChoices={voiceChoices} lyricGrades={lyricGrades} firstRun={firstRun} extraLanguages={extraLanguages} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>
   );
 }

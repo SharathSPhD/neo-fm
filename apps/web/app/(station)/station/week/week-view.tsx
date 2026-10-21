@@ -34,7 +34,7 @@ export function WeekView({ week }: { week: Week | null }) {
         setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
       }
     } catch (e) {
-      if ((e as { name?: string }).name !== "AbortError") setMsg("Couldn't prepare the image. Please try again.");
+      if ((e as { name?: string }).name !== "AbortError") setMsg(S.imageError);
     } finally {
       setBusy(false);
     }
@@ -55,7 +55,7 @@ export function WeekView({ week }: { week: Week | null }) {
             type="button"
             onClick={() => setLang(l)}
             aria-pressed={l === lang}
-            className={`rounded-full border px-3 py-1 text-sm ${l === lang ? "border-accent text-accent" : "border-muted/40 text-foreground/70"}`}
+            className="chip"
           >
             {UI_LANG_ENDONYM[l]}
           </button>
@@ -65,7 +65,7 @@ export function WeekView({ week }: { week: Week | null }) {
       {!week || week.empty ? (
         <div className="flex flex-col gap-3 rounded-md border border-muted/20 bg-muted/5 px-5 py-6">
           <p>{S.empty}</p>
-          <Link href="/station" className="text-accent underline-offset-4 hover:underline">{S.listen} →</Link>
+          <Link href="/station" className="inline-flex min-h-[44px] items-center text-accent underline-offset-4 hover:underline">{S.listen} →</Link>
         </div>
       ) : (
         <>
@@ -77,20 +77,20 @@ export function WeekView({ week }: { week: Week | null }) {
             ].map(([n, label]) => (
               <div key={String(label)} className="rounded-md border border-muted/20 bg-muted/5 px-4 py-3">
                 <dd className="text-3xl font-semibold text-accent">{Number(n).toLocaleString("en-IN")}</dd>
-                <dt className="text-xs text-foreground/60">{label}</dt>
+                <dt className="text-xs text-foreground/70">{label}</dt>
               </div>
             ))}
           </dl>
 
           {week.favourite ? (
             <section className="rounded-md border border-muted/20 bg-muted/5 px-5 py-4">
-              <h2 className="text-xs uppercase tracking-wider text-foreground/60">{S.favourite}</h2>
+              <h2 className="text-xs uppercase tracking-wider text-foreground/70">{S.favourite}</h2>
               <p className="text-xl font-medium">{week.favourite.title ?? "—"}</p>
             </section>
           ) : null}
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-xs uppercase tracking-wider text-foreground/60">{S.languages}</h2>
+            <h2 className="text-xs uppercase tracking-wider text-foreground/70">{S.languages}</h2>
             <ul className="flex flex-wrap gap-2">
               {week.languages.slice(0, 5).map((l) => (
                 <li key={l.language} className="rounded-full border border-accent/40 px-3 py-1 text-sm">{name(l.language)}</li>
@@ -100,7 +100,7 @@ export function WeekView({ week }: { week: Week | null }) {
 
           {week.moods.length ? (
             <section className="flex flex-col gap-2">
-              <h2 className="text-xs uppercase tracking-wider text-foreground/60">{S.moods}</h2>
+              <h2 className="text-xs uppercase tracking-wider text-foreground/70">{S.moods}</h2>
               <ul className="flex flex-wrap gap-2">
                 {week.moods.slice(0, 4).map((m) => (
                   <li key={m.mood} className="rounded-full border border-accent/40 px-3 py-1 text-sm">{moodLabel(m.mood, lang)}</li>
@@ -113,7 +113,7 @@ export function WeekView({ week }: { week: Week | null }) {
             type="button"
             onClick={share}
             disabled={busy}
-            className="self-start rounded-md bg-accent px-4 py-2 text-sm font-medium text-background disabled:opacity-60"
+            className="min-h-[44px] self-start rounded-md bg-accent px-5 text-sm font-medium text-background disabled:opacity-60"
           >
             {S.share}
           </button>

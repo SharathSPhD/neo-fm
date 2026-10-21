@@ -1,0 +1,781 @@
+{
+ "source": "lyrics-lab/harness-corpus2 refs_opus vs live, 2026-10-21",
+ "cases": [
+  {
+   "id": "hi-f1",
+   "lang": "hi",
+   "style": "hindi-folk",
+   "brief": "Teej swings under the neem tree, mehendi hands and a sister's laughter",
+   "standard": "[मुखड़ा]\nनीम तले झूला डोले, सावन रंग लाया\nमेहंदी रचे हाथों बहना का हँसना भाया\n\n[अंतरा]\nसखियाँ मल्हार गाएँ, हौले-हौले\nझूले पे चुनरी लहराए, पींग हिंडोले\nहरी चूड़ी खनके, पायल बोले\n\n[अंतरा]\nबहना संग मन सावन हो ले\nझूला ऊँचा, नीम की फुनगी छू ले\nपरदेसी पिया भी सुन ले",
+   "premium": "[मुखड़ा]\nनीम तले झूला डोले, तीज का दिन आया\nमेहंदी रचे हाथों से बहना ने पेंग बढ़ाया\n\n[अंतरा]\nसखियाँ छेड़ें कजरी, गूँज उठा है गाँव\nहरी चूड़ियाँ खनक उठीं, छम-छम बोले पाँव\nमेहंदी की ख़ुशबू घुल गई, नीम की ठंडी छाँव\n\n[अंतरा]\nबहना खिल-खिल हँस पड़ी, पेंग चढ़ी आकाश\nलाल हथेली खोल के बोली, \"गहरी रची है ख़ास\"\nउसकी हँसी पत्तों-सी झरकर बिछ गई नीम के पास",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 3.5,
+     "dims": {
+      "prosody": 0,
+      "diction": 1,
+      "imagery": 1,
+      "cultural": 0.5,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 2,
+     "dims": {
+      "prosody": -0.5,
+      "diction": 0.5,
+      "imagery": 1,
+      "cultural": 0,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f2",
+   "lang": "hi",
+   "style": "bollywood-ballad",
+   "brief": "A farewell at a small railway station, chai in clay cups and an unfinished sentence",
+   "standard": "मुखड़ा\nप्लेटफ़ॉर्म पे ठंडी चाय, मिट्टी के कुल्हड़ साथ,\nअधूरा रह गया वो लफ़्ज़, छूटा न तेरा हाथ।\n\nअंतरा\nगाड़ी की सीटी बोली, तुम उठे, मैं चुप रहा,\nजो कहना था कह न सका, वक़्त बस यूँ बह गया।\n\nअंतरा\nधुआँ उड़ा इंजन का, खिड़की पे रुकी नज़र,\nहर मोड़ पे लौटेगी चाय वाली शाम, वो सफ़र।",
+   "premium": "मुखड़ा\nछोटे से स्टेशन पे ठंडी चाय, दो कुल्हड़ साथ,\nअधूरी रह गई इक बात, हाथों में रहा हाथ।\n\nअंतरा\nगाड़ी ने दी सीटी, तुम उठे, मैं ठिठक गया,\nआधा जो कहना था, हलक में ही अटक गया।\n\nअंतरा\nइंजन का धुआँ उड़ा, खिड़की पे ठहरी नज़र,\nबेंच पे रखा रह गया, आधा कुल्हड़ बेख़बर।",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 1,
+      "cultural": 0.5,
+      "originality": 1.5
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 6.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f3",
+   "lang": "hi",
+   "style": "hindi-pop",
+   "brief": "A birthday song for Aanya, five years old, who talks to her shadow and the moon",
+   "standard": "[मुखड़ा]\nआन्या, आज है तेरी सालगिरह प्यारी,\nपाँच बरस की गुड़िया, सबसे न्यारी।\n\n[अंतरा]\nपरछाईं से करती है तू ढेरों बातें,\nचाँद मामा सुनते हैं, जागें सारी रातें,\nहर दिन नया सपना, हर रात नई कहानी,\n\n[मुखड़ा दोहराव]\nआन्या, आज है तेरी सालगिरह प्यारी,\nजियो हज़ार साल, तू चाँद की दुलारी।",
+   "premium": "[मुखड़ा]\nआन्या, आज है तेरा जन्मदिन प्यारा,\nपाँच मोमबत्ती जलीं, नाचे साया न्यारा।\n\n[अंतरा]\nपरछाईं से छत पर करती तू ढेरों बातें,\nचाँद मामा खिड़की से सुनते सारी रातें,\nतू फ़्रॉक घुमाए तो साया भी घूमे साथ में,\n[मुखड़ा दोहराव]\nआन्या, आज है तेरा जन्मदिन प्यारा,\nचाँद भी खिड़की पर बैठा, माँगे केक दोबारा।",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 1.5,
+     "dims": {
+      "prosody": -1,
+      "diction": -1,
+      "imagery": 1.5,
+      "cultural": 0.5,
+      "originality": 1.5
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 6.5,
+     "dims": {
+      "prosody": 0.5,
+      "diction": 0.5,
+      "imagery": 2,
+      "cultural": 0.5,
+      "originality": 3
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f4",
+   "lang": "hi",
+   "style": "hindustani",
+   "brief": "Late-night rain in old Delhi, a half-lit window and a voice on the radio",
+   "standard": "मुखड़ा\nरात भीगी, पुरानी दिल्ली की गली\nखिड़की पे आधी बुझी-सी रोशनी\nरेडियो पर इक आवाज़ पुरानी\nटीन की छत पे बूँदों की ज़ुबानी\n\nअंतरा\nछज्जे से टपकती हैं बूँदें धीमे-धीमे\nयादें बहती हैं जैसे गली का पानी\nदूर से आती है कोई धुन ऐसे\nजैसे लौटी हो कोई भूली कहानी",
+   "premium": "मुखड़ा\nरात भीगी है दिल्ली की पुरानी गलियों में\nआधी खिड़की पे जलती है पीली-सी रोशनी\nरेडियो पे बजता है कोई गीत पुराना\nछज्जे से बूँदें टपकें, कह दें अनकही\n\nअंतरा\nटीन की छत पर टप-टप गिरती हैं बूँदें\nयादें बहती हैं जैसे गली का पानी\nखरखराते रेडियो से आती है धुन यूँ\nजैसे लौटी हो कोई भूली कहानी",
+   "judges": {
+    "claude": {
+     "winner": "standard",
+     "diff": -2.5,
+     "dims": {
+      "prosody": -1,
+      "diction": -1,
+      "imagery": -0.5,
+      "cultural": 0,
+      "originality": 0
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "standard",
+     "diff": -3,
+     "dims": {
+      "prosody": -2,
+      "diction": -1,
+      "imagery": 0,
+      "cultural": 0,
+      "originality": 0
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f5",
+   "lang": "hi",
+   "style": "hindi-folk",
+   "brief": "Chhath morning at the river ghat, sun offerings and a mother's long fast",
+   "standard": "[मुखड़ा]\nघाट पे जागी भोर सुहानी, सूरज को अर्घ्य चढ़ाए माई\nव्रत की डोर बाँधी मन से, जय छठ मैया गाए माई\n\n[अंतरा]\nनदी किनारे दीप जले हैं, सूप में केला ईख सजे हैं\nअंजुरी भर जल, भीगी साड़ी, माँ की पलकें नम हैं\nनिर्जल व्रत में तपकर माई, संतान का सुख माँगे\nसूरज देव सुनो विनती, हर घर उजियारा जागे\n\n[मुखड़ा]\nघाट पे जागी भोर सुहानी, सूरज को अर्घ्य चढ़ाए माई\nव्रत की डोर बाँधी मन से, जय छठ मैया गाए माई",
+   "premium": "[मुखड़ा]\nठंडे जल में कमर तक ठाढ़ी, सूरज को अरघ चढ़ाए माई\nदो दिन की निर्जल काया ले, छठ मैया के गीत गाए माई\n\n[अंतरा]\nनदी किनारे दीप जले हैं, बाँस का सूप सजा है\nअंजुरी भर जल, भीगी साड़ी, नाक तक सिंदूर भरा है\nपूरब ताके, थर-थर काँपे, संतानों का सुख माँगे\nपानी पर जब लाली उतरे, माई के मुख पर भोर जागे\n\n[मुखड़ा]\nठंडे जल में कमर तक ठाढ़ी, सूरज को अरघ चढ़ाए माई\nदो दिन की निर्जल काया ले, छठ मैया के गीत गाए माई",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 7.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 9.5,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 2,
+      "imagery": 2,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f6",
+   "lang": "hi",
+   "style": "bollywood-ballad",
+   "brief": "A wedding vidaai song, a father at the gate, marigolds on the road",
+   "standard": "[Mukhda]\nदरवाज़े पे खड़ा हूँ, आँखों में नमी है,\nगेंदे बिछे हैं राह में, साँस थमी है।\nबिटिया मेरी, जा पिया के घर की ओर,\nमेरी दुआ चलेगी संग तेरे हर ओर।\n\n[Antara]\nआँगन में अब भी गूँजे आहट नन्हे पाँव की,\nहर गेंदा कहे, \"लौट आना, जब याद आए गाँव की।\"\nजिन कंधों पर बैठ के तूने मेला देखा था,\nआज उन्हीं हाथों ने डोली को सजाया था।",
+   "premium": "[Mukhda]\nदरवाज़े पे खड़ा हूँ, आँखों में नमी है,\nगेंदों से सजी गली, पर साँस थमी है।\nबिटिया मेरी, अब चल तू पिया के गाँव,\nमेरी दुआएँ बनें तेरे सर की छाँव।\n\n[Antara]\nनन्ही पायल की छनछन आँगन में अब भी बोले,\nहर गेंदा पग-पग कहता, \"आना जब मन डोले।\"\nजिन कंधों पर बैठ के तूने देखी थी रामलीला,\nआज उन्हीं पर डोली रख दी, रस्ता गेंदा-पीला।",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 4.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 0.5,
+      "imagery": 1,
+      "cultural": 1,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 8,
+     "dims": {
+      "prosody": 2,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1,
+      "originality": 1.5
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f7",
+   "lang": "hi",
+   "style": "hindi-pop",
+   "brief": "A road trip song to the hills with friends, cassette tape, chai, bad jokes",
+   "standard": "[मुखड़ा]\nचल यारो, पहाड़ों को निकलें आज\nकैसेट में बजने दो पुराने साज़\nकुल्हड़ की चाय, यारों का अपना अंदाज़\nबेतुके चुटकुलों पर हँसी का आग़ाज़\n\n[अंतरा]\nमोड़-मोड़ पे खिड़की से उड़ती हवा की बात\nबादल छूकर कहें, मस्तानी है बरसात\nअटकी कैसेट में वही धुन, गाएँ सब साथ\nहर मोड़ पे मंज़िल अपनी, हाथों में हाथ",
+   "premium": "[मुखड़ा]\nचल यारो, पहाड़ों की ओर निकलें आज\nपेंसिल से रील कसी, कैसेट ने छेड़ा साज़\nहाथों में कुल्हड़ वाली चाय, यारों की टोली साथ\nबासी-बासी चुटकुलों पर ठहाकों की बरसात\n\n[अंतरा]\nमोड़-मोड़ पर खिड़की से घुसकर ठंडी हवा करे बात\nधुंधले शीशे पर उँगली से लिख दी यारी की सौग़ात\nअटकी टेप पे बेसुरे हम, गाते जाएँ एक ही गीत\nचोटी पर आधी प्याली चाय, बाँटें पाँचों मीत",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 5.5,
+     "dims": {
+      "prosody": -1,
+      "diction": 1,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 6.5,
+     "dims": {
+      "prosody": -0.5,
+      "diction": 1,
+      "imagery": 2.5,
+      "cultural": 1.5,
+      "originality": 2
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f8",
+   "lang": "hi",
+   "style": "doha-inspired",
+   "brief": "Two original dohas (13+11 matra) on gratitude to teachers, new words only, then a refrain",
+   "standard": "दोहा\nगुरु दीपक मन में जले, मिटा अँधेरा घोर\nजीवन पथ उजला हुआ, मैंने पाई भोर\n\nदोहा\nगुरुवर तेरी छाँव में, पाया नव आलोक\nहर अक्षर में बस गया, तेरा ही हर श्लोक\n\nटेक\nगुरु चरणों में शीश है, कृतज्ञ मन का गान\nसीख-सीख में गुरु बसे, गुरु ही ज्ञान-निधान",
+   "premium": "दोहा\nगुरु खड़िया से लिख गए, तख्ती पर उजियार\nटाट बिछी थी धूल में, खुला ज्ञान का द्वार\n\nदोहा\nटेढ़ा अक्षर देख कर, गुरु ने थामा हाथ\nछुट्टी की घंटी बजी, रुके रहे वे साथ\n\nटेक\nगुरु चरणों में शीश है, आँखों में सम्मान\nहर अक्षर में गुरु बसे, गुरु ही ज्ञान-निधान",
+   "judges": {
+    "claude": {
+     "winner": "tie",
+     "diff": null,
+     "dims": null,
+     "unparsed": true
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 10,
+     "dims": {
+      "prosody": 0.5,
+      "diction": 2,
+      "imagery": 3,
+      "cultural": 1.5,
+      "originality": 3
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f9",
+   "lang": "hi",
+   "style": "hindustani",
+   "brief": "A winter evening in Lucknow, the smell of kebabs and a tune from a harmonium",
+   "standard": "मुखड़ा\nलखनऊ की सर्द शाम, उठी कबाब की महक\nहारमोनियम की धुन में, घुली-घुली सी चहक\n\nअंतरा\nगलियों में चाय की भाप, अँगीठी सुलगे धीमे-धीमे\nछेड़ो तो ज़रा सी तान, रात भी सुने धीमे-धीमे\nकोहरे में लिपटी बातें, यादें गुनगुनाएँ\nठंडी हवा में सुर घुलें, गिले सुलझाएँ",
+   "premium": "**मुखड़ा**\nलखनऊ की सर्द शाम, उठी कबाब की महक\nहारमोनियम की धुन में, अंगीठी की धीमी दहक\n\n**अंतरा**\nचौक में चाय की भाप, शॉल में सिमटे हाथ\nछेड़ दो ज़रा सी तान, रात भी बैठे साथ\nकोहरे में लिपटे क़िस्से, हौले से गुनगुनाएँ\nबुझते कोयलों पे आख़िरी सुर भी हाथ सेंक जाएँ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 4.5,
+     "dims": {
+      "prosody": 0.5,
+      "diction": 0.5,
+      "imagery": 1.5,
+      "cultural": 1,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 10.5,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 2,
+      "imagery": 2,
+      "cultural": 2,
+      "originality": 3
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f10",
+   "lang": "hi",
+   "style": "hindi-folk",
+   "brief": "Basant Panchami, yellow dupattas and kites over the rooftops",
+   "standard": "[मुखड़ा]\nपीली चुनर लहराए, बसंत आया आँगन में\nपतंग उड़े हर छत पर, डोर-सा मन उड़े गगन में\n\n[अंतरा]\nसरसों फूली खेतों में, पीला रंग बिखरा\nसखी के पीले दुपट्टे, हर कोना भी निखरा\nढोल बजे, गीत गूँजे, झूमे सारा गाँव\nडोर थामे बचपन दौड़े, पेच लड़े हर ठाँव\n\n[मुखड़ा]\nपीली चुनर लहराए, बसंत आया आँगन में\nपतंग उड़े हर छत पर, डोर-सा मन उड़े गगन में",
+   "premium": "[मुखड़ा]\nपीला दुपट्टा लहराए, बसंत आया आँगन में\nपतंग उड़े छत-छत पर, मन भी उड़े गगन में\n\n[अंतरा]\nसरसों फूली मेड़ों पर, पीला-पीला रंग खिला\nमाँ ने केसर-भात पकाया, सबको थोड़ा-थोड़ा मिला\nछत पर चरखी थामे भैया, \"वो काटा!\" चिल्लाए\nउलझी डोर में अटका दुपट्टा, दीदी हँसती जाए\n\n[मुखड़ा]\nपीला दुपट्टा लहराए, बसंत आया आँगन में\nपतंग उड़े छत-छत पर, मन भी उड़े गगन में",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 7.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 10,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 2,
+      "imagery": 2.5,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "hi-f11",
+   "lang": "hi",
+   "style": "bollywood-ballad",
+   "brief": "A long-distance love song, two time zones, video calls cut by the monsoon",
+   "standard": "[मुखड़ा]\nदो शहर, दो घड़ियाँ, बीच में बरसात है,\nस्क्रीन पे तेरा चेहरा, भीगी-सी रात है।\nकॉल कटी, बादल गरजा, रुका उसी ठौर,\nआधी आवाज़ तेरी, फिर भी साँस तेरी ओर।\n\n[अंतरा]\nयहाँ सुबह की चाय, वहाँ रात उतरी,\nमैं दो घंटे आगे, तू कहीं पीछे ठहरी।\nबारिश थमे तो नंबर मिलाना, जागा मिलूँगा,\nटीन की छत की बूँदों पे नाम तेरा लिखूँगा।",
+   "premium": "[मुखड़ा]\nदो शहर, दो घड़ियाँ, फिर भी एक ही धड़कन,\nस्क्रीन पे तेरा चेहरा, उस पर बूँदों की छन-छन।\nकॉल कटी जब बादल गरजा, मैं ठिठका रहा वहीं,\nआधी तेरी बात रुकी, आधी साँस कहीं।\n\n[अंतरा]\nयहाँ भोर की चाय उबलती, वहाँ ढलता चाँद,\nतेरी घड़ी दो घंटे आगे, पीछे रहती याद।\nमेह थमे तो लौट आना, फिर से फ़ोन मिलाएँगे,\nतब तक भीगे शीशे पर, उँगली से तेरा नाम बनाएँगे।",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 2,
+     "dims": {
+      "prosody": 0,
+      "diction": 0.5,
+      "imagery": 1,
+      "cultural": 0,
+      "originality": 0.5
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "standard",
+     "diff": -1,
+     "dims": {
+      "prosody": 0,
+      "diction": 0,
+      "imagery": -0.5,
+      "cultural": 0,
+      "originality": -0.5
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f1",
+   "lang": "kn",
+   "style": "kannada-folk",
+   "brief": "Fishermen at dawn on the Uttara Kannada coast, nets and a mother waiting on the shore",
+   "standard": "[ಪಲ್ಲವಿ]\nಮಂಜಿನ ಮುಂಜಾನೆ ಬಲೆಯ ಹೆಗಲೇರಿಸಿ, ಅಪ್ಪ ದೋಣಿ ತಳ್ಳಿದ\nಕೆಂಪಿನ ಅಲೆಯ ಮೇಲೆ ಹಾಡು ತೇಲಿಸಿ, ಹುಟ್ಟು ಹಾಕುತ ಸಾಗಿದ\n\n[ಚರಣ]\nದಡದಲಿ ನಿಂತ ಅಮ್ಮನ ಕಣ್ಣು ಕಡಲನೇ ನೋಡುತಿತ್ತು\nಉಪ್ಪಿನ ಗಾಳಿಗೆ ಬಲೆಯ ಗಂಟು ಬಿಡಿಸುತ ಕೈ ಕಾದಿತ್ತು\nಅಲೆಯೇ ಅಲೆಯೇ, ನನ್ನ ಕಂದನ ಮರಳಿ ತಾ",
+   "premium": "[ಪಲ್ಲವಿ]\nಬೆಳ್ಳಿ ಚುಕ್ಕಿ ಹೊತ್ತಿಗೆ ಬಲೆ ಹೊತ್ತು ಇಳಿದನು\nಕಾರವಾರದ ಅಲೆಗೆ ಹುಟ್ಟು ಹಾಕಿ ಸಾಗಿದನು\n\n[ಚರಣ]\nದಡದಲಿ ಅಮ್ಮನ ಕಣ್ಣು ಕಡಲನೆ ಕಾದಿತ್ತು\nಹರಿದ ಬಲೆಗೆ ಬೆರಳು ಮೌನ ಗಂಟು ಹಾಕಿತ್ತು\nಬಾರೋ ಅಲೆಯೇ ಮರಳಿ ತಾರೋ ನನ್ನ ಕಂದನ",
+   "judges": {
+    "claude": {
+     "winner": "tie",
+     "diff": -0.5,
+     "dims": {
+      "prosody": -1,
+      "diction": 0,
+      "imagery": 0,
+      "cultural": 0.5,
+      "originality": 0
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 8,
+     "dims": {
+      "prosody": 2,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f2",
+   "lang": "kn",
+   "style": "kannada-pop",
+   "brief": "A song for a college reunion in Mangaluru, old friends and the monsoon canteen",
+   "standard": "[ಪಲ್ಲವಿ]\nಮಳೆಯ ಹನಿಯಲಿ ನೆನೆದ ನೆನಪು\nಕ್ಯಾಂಟೀನ್ ಬೆಂಚಲಿ ಮತ್ತೆ ಕೂತೆವು\nಮಂಗಳೂರ ಗಾಳಿಯಲಿ ನಗೆ ತುಂಬಿದೆ\nಗೆಳೆಯರೇ ಬನ್ನಿ ಹಾಡೋಣ ಜೊತೆಗೆ\n\n[ಚರಣ]\nಚಹಾ ಕಪ್ಪಿನ ಆವಿಯಲಿ ಹಳೆಯ ಕಥೆ\nಗೋಳಿಬಜೆ ತಟ್ಟೆಯಲಿ ಹಂಚಿದ ನಗೆ\nಒಂದೇ ಛತ್ರಿ ಕೆಳಗೆ ನೆನೆದ ನಗುಗಳು\nಎದೆಯಲಿ ಇನ್ನೂ ಹಸಿರಾದ ದಿನಗಳು",
+   "premium": "[ಪಲ್ಲವಿ]\nಮಳೆಯಲಿ ನೆನೆದ ನೆನಪು ಮರಳಿದೆ\nಕ್ಯಾಂಟೀನ್ ಬೆಂಚಿನ ಮೇಲೆ ಗುಂಪು ಸೇರಿದೆ\nಮಂಗಳೂರ ಹೆಂಚಿನ ಮೇಲೆ ಮಳೆ ಕುಣಿದಿದೆ\nಬನ್ನಿ ಗೆಳೆಯರೇ, ಹಳೆಯ ಹಾಡು ಕರೆದಿದೆ\n\n[ಚರಣ]\nಚಹಾ ಆವಿಯಲಿ ಹಳೆಯ ಕಥೆ ಹೊಮ್ಮಿದೆ\nಬೆಂಚಿನ ಮೇಲೆ ಕೆತ್ತಿದ ಹೆಸರು ಕಾದಿದೆ\nಒಂದೇ ಛತ್ರಿಯಲಿ ನಾಲ್ವರ ನಗು ತೊಯ್ದಿದೆ\nಬಿಳಿ ಕೂದಲಲೂ ಹುಡುಗಾಟ ಉಳಿದಿದೆ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 2.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 0.5,
+      "imagery": 1,
+      "cultural": -1,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 3.5,
+     "dims": {
+      "prosody": 2,
+      "diction": 0,
+      "imagery": 1,
+      "cultural": -0.5,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f3",
+   "lang": "kn",
+   "style": "bhavageete",
+   "brief": "A mother tying jasmine in her daughter's hair before a first day at a city job",
+   "standard": "ಪಲ್ಲವಿ\nಮಲ್ಲಿಗೆ ಮುಡಿಸಿದೆ ಮಗಳೇ, ನಗರದ ಹಾದಿಗೆ ಹೊರಡು\nಅಮ್ಮನ ಕೈಯ ಘಮವು ನಿನ್ನ ಜಡೆಯಲಿ ನಗುತಿರಲಿ\n\nಚರಣ\nಮೊದಲ ದಿನದ ಬಸ್ಸಲಿ ಕನಸು ಅರಳಲಿ\nಬೆವರಿನ ಹನಿಯಲ್ಲೂ ಮಲ್ಲಿಗೆ ಘಮ ಉಳಿಯಲಿ\nಎಡವಿದರೆ ಎದ್ದು ನಿಲ್ಲು, ನೆನಪು ಜೊತೆಗಿರಲಿ\nಪೇಟೆಯ ಗದ್ದಲದಲೂ ನಿನ್ನ ಹೆಸರು ನಗಲಿ\nಸಂಜೆ ಬಾಗಿಲು ತೆರೆದಿದೆ, ದೀಪ ಕಾದಿದೆ\nಹೆಜ್ಜೆ ಹಾಕು ಮಗಳೇ, ಹಾರೈಕೆ ಜೊತೆಗಿದೆ",
+   "premium": "ಪಲ್ಲವಿ\nಮಲ್ಲಿಗೆ ದಂಡೆ ಮುಡಿಸಿದೆ ಮಗಳೇ, ಹೆರಳಿಗೆ ಗಂಟನು ಹಾಕಿದೆ\nಅಮ್ಮನ ಬೆರಳಿನ ಬಿಸುಪನು ಹೂವಿನ ಎಸಳಲಿ ಮುಚ್ಚಿಟ್ಟಿದೆ\n\nಚರಣ\nಕೊರಳಿನ ಗುರುತಿನ ಚೀಟಿಯ ಜೊತೆಗೆ ಮಲ್ಲಿಗೆ ಕಂಪು ತೂಗಲಿ\nಡಬ್ಬಿಯ ಅನ್ನದ ಮುಚ್ಚಳದಲ್ಲೂ ಅಮ್ಮನ ಕೈರುಚಿ ಉಳಿಯಲಿ\nಬಸ್ಸಿನ ಕಿಟಕಿಯ ಗಾಳಿಗೆ ಎಸಳು ಒಂದೊಂದಾಗಿ ಉದುರಲಿ\nಗಾಜಿನ ಕಟ್ಟಡ ಮೆಟ್ಟಿಲ ಮೇಲೂ ಊರಿನ ಘಮಲು ಹರಡಲಿ\nಹೊಸ್ತಿಲ ಬಳಿ ನಾ ನಗುತಲೆ ನಿಂತಿಹೆ, ಸೆರಗಿನ ಅಂಚು ಒದ್ದೆಯಾಗಿದೆ\nಸಂಜೆಗೆ ಬಾಡಿದ ದಂಡೆಯ ಕಾಯುತ ಬಾಗಿಲ ಹಣತೆ ಉರಿದಿದೆ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 9,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 3,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 9,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 2.5
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f4",
+   "lang": "kn",
+   "style": "kannada-devotional",
+   "brief": "Evening lamp at the tulsi katte, a grandmother's quiet prayer for the family",
+   "standard": "[ಪಲ್ಲವಿ]\nತುಳಸಿ ಕಟ್ಟೆಯ ಮುಂದೆ ದೀಪ ಹಚ್ಚಿದಳು ಅಜ್ಜಿ\nಮನೆಯ ಮಂದಿಯ ಸುಖಕೆ ಕೈ ಮುಗಿದಳು ಹರಸಿ\n\n[ಅನುಪಲ್ಲವಿ]\nಸಂಜೆಯ ಬೆಳಕಲಿ ಮೊಮ್ಮಕ್ಕಳ ನಗೆ\nತಾಯೇ ತುಳಸೀ, ನಮ್ಮನು ಸದಾ ನೀ ಕಾಯೆ\n\n[ಚರಣಂ]\nಹಣತೆ ಜ್ಯೋತಿ ಅಲುಗದಂತೆ ಮನೆ ನೆಮ್ಮದಿಯಿರಲಿ\nಅಣ್ಣ ತಮ್ಮ ಅಕ್ಕ ತಂಗಿ ಒಂದಾಗಿ ಸುಖದಿ ಬಾಳಲಿ\nನೋವು ಕಷ್ಟ ದೂರವಾಗಿ ಶಾಂತಿ ಇಲ್ಲಿ ನೆಲೆಸಲಿ\nಹರಿಯ ಕೃಪೆಯ ಬೆಳಕಿನಿಂದ ಈ ಮನೆ ಬೆಳಗಲಿ",
+   "premium": "[ಪಲ್ಲವಿ]\nತುಳಸಿಕಟ್ಟೆಗೆ ಅಜ್ಜಿ ಹಣತೆ ಇಟ್ಟಳು\nಸೆರಗ ತಲೆಗೆ ಹೊದ್ದು ಕೈಯ ಮುಗಿದಳು\n\n[ಅನುಪಲ್ಲವಿ]\nಅಂಗಳದಲ್ಲಿ ಮೊಮ್ಮಕ್ಕಳ ನಗು ಕೇಳಿತು\nತಾಯಿ ತುಳಸಿ ಕಾಯೆಂದು ತುಟಿ ನುಡಿಯಿತು\n\n[ಚರಣಂ]\nಹಣತೆ ಉರಿದು ಕತ್ತಲು ಸರಿಯಲಿ\nಅಣ್ಣ ತಂಗಿ ಒಂದೇ ತಟ್ಟೆಲಿ ಉಣಲಿ\nಪೇಟೆಯ ಮಗನ ಹಾದಿ ಹಸನಾಗಲಿ\nತುಳಸಿ ನೆರಳಲಿ ಮನೆ ತಣ್ಣಗಿರಲಿ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 7,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 2,
+      "cultural": 1,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 11.5,
+     "dims": {
+      "prosody": 2,
+      "diction": 2,
+      "imagery": 3,
+      "cultural": 1.5,
+      "originality": 3
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f5",
+   "lang": "kn",
+   "style": "kannada-folk",
+   "brief": "Harvest festival Sankranti in north Karnataka, sugarcane, ellu-bella and bullock carts",
+   "standard": "[ಪಲ್ಲವಿ]\nಸಂಕ್ರಾಂತಿ ಹಬ್ಬ ಬಂತು ಊರಿಗೆ ಸಂಭ್ರಮ ತಂತು\nಕಬ್ಬಿನ ಹೊಲದಲಿ ಬೆಲ್ಲದ ಘಮ ಬಂತು\nಎಳ್ಳು ಬೆಲ್ಲ ಹಂಚೋಣ ಬನ್ನಿ ನಗೋಣ\nಒಳ್ಳೆ ಮಾತಾಡಿ ಎಲ್ಲ ಕೂಡಿ ಬಾಳೋಣ\n\n[ಚರಣ]\nಎತ್ತಿನ ಬಂಡಿಯ ಗೆಜ್ಜೆ ಸದ್ದು ಕೇಳುತಿದೆ\nಹೊಲದ ಜೋಳ ರಾಶಿ ಮನೆ ತುಂಬ ಬಂದಿದೆ\nಅಂಗಳದ ರಂಗೋಲಿ ಹಬ್ಬಕೆ ಸಿಂಗರಿಸಿದೆ\nಕಬ್ಬಿನ ಜಲ್ಲೆ ಹಿಡಿದು ಊರೆಲ್ಲ ಕುಣಿದಿದೆ",
+   "premium": "[ಪಲ್ಲವಿ]\nಸಂಕ್ರಾಂತಿ ಹಬ್ಬ ಬಂತು, ಕಬ್ಬಿನ ಸಿಹಿ ಊರಿಗೆ ತಂತು\nಸಜ್ಜಿ ರೊಟ್ಟಿ ಬುತ್ತಿ ಗಂಟು ಹೊಲದ ಕಡೆ ಹೊಂಟಿತು\nಸಕ್ಕರೆ ಅಚ್ಚು ಕೈಯಲ್ಲಿ, ಮನೆ ಮನೆಗೆ ಹಂಚೋಣ\nಎಳ್ಳು ಬೆಲ್ಲ ತಿಂದು ಬನ್ನಿ, ಒಳ್ಳೆ ಮಾತು ಆಡೋಣ\n\n[ಚರಣ]\nಕೋಡಿಗೆ ಬಣ್ಣ, ಕೊರಳಿಗೆ ಗೆಜ್ಜೆ, ಗಾಡಿ ಹೊಳೆಗೆ ಹೊರಟಿದೆ\nಹೊಲದ ಜೋಳ ಬಂಗಾರ ಬಣ್ಣ, ಕಣದ ತುಂಬ ಹರಡಿದೆ\nಅಂಗಳದ ರಂಗೋಲಿ ಮೇಲೆ ಕಬ್ಬಿನ ಜಲ್ಲೆ ನಿಂತಿದೆ\nಮಕ್ಕಳ ಕೈಗೆ, ಗಲ್ಲದ ಮೇಲೆ ಬೆಲ್ಲದ ಅಂಟು ಮೆತ್ತಿದೆ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 7,
+     "dims": {
+      "prosody": 0,
+      "diction": 1,
+      "imagery": 2,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 10.5,
+     "dims": {
+      "prosody": 2,
+      "diction": 2,
+      "imagery": 2.5,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f6",
+   "lang": "kn",
+   "style": "kannada-pop",
+   "brief": "A birthday song for Vikram, who wakes early to fly kites on the terrace",
+   "standard": "ಪಲ್ಲವಿ\nವಿಕ್ರಮ್, ನಿನಗೆ ಹುಟ್ಟುಹಬ್ಬದ ಶುಭಾಶಯ\nಗಾಳಿಪಟದಂತೆ ಬಾನಿಗೇರಲಿ ನಿನ್ನ ಜಯ\n\nಚರಣ\nನಸುಕಿನಲ್ಲೇ ಎದ್ದು ನೀನು ಮಾಳಿಗೆ ಮೇಲೆ ನಿಂತಾಗ\nಬಣ್ಣದ ಪಟ ಬಾನಿಗೇರಿ ನಿನ್ನ ನೋಡಿ ನಗುವಾಗ\nದಾರ ಬಿಟ್ಟು ಮನ ಹಾರಿಬಿಡುವ ಘಳಿಗೆಯಲಿ\nಈ ವರುಷ ಇಡೀ ಆಕಾಶ ನಿನ್ನದೇ ಆಗಿರಲಿ\nಗೆಳೆಯರೆಲ್ಲ ಸೇರಿ ಕೇಕ್ ಕತ್ತರಿಸಿ ಹಾಡೋಣ\nನಗುವಿನ ಗಾಳಿಪಟ ಬಾನಿಗೆ ಹಾರಿಸೋಣ",
+   "premium": "ಪಲ್ಲವಿ\nಹುಟ್ಟುಹಬ್ಬ ವಿಕ್ರಮ್, ಮಾಳಿಗೆ ಬೆಳಗಾಗಿದೆ\nನಿನ್ನ ಹೆಸರಲಿ ಗಾಳಿಪಟ ಹಾರಾಡಿದೆ\n\nಚರಣ\nಕೋಳಿ ಕೂಗೋ ಮುನ್ನ ಚರಕಿ ಕೈಯಲ್ಲಿದೆ\nಮಾಂಜಾ ದಾರ ಬೆರಳ ಮೇಲೆ ಗೆರೆ ಎಳೆದಿದೆ\nಪಕ್ಕದ ಮನೆ ಪಟದ ಜೊತೆ ಪೇಚು ಬಿದ್ದಿದೆ\nಅಮ್ಮ ಕರೆದ ಕಾಫಿ ಲೋಟ ಅಲ್ಲೇ ಆರಿದೆ\nಗೆಳೆಯರೆಲ್ಲ ಬನ್ನಿ ಮೇಲೆ, ಕೇಕು ಹಂಚೋಣ\nಬಾನ ತುಂಬ ವಿಕ್ರಮ್ ಪಟವ ಹಾರಿಸೋಣ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 7.5,
+     "dims": {
+      "prosody": 0,
+      "diction": 1,
+      "imagery": 2.5,
+      "cultural": 2,
+      "originality": 2
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 12,
+     "dims": {
+      "prosody": 2,
+      "diction": 2,
+      "imagery": 3,
+      "cultural": 2,
+      "originality": 3
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f7",
+   "lang": "kn",
+   "style": "kannada-light-classical",
+   "brief": "A song about a Hampi sunset, ruined stone chariot and a returning traveller",
+   "standard": "[ಪಲ್ಲವಿ]\nಹಂಪೆಯ ಸಂಜೆ ಕೆಂಪಾಗಿ ಹೊಳೆಯಿತು\nಕಲ್ತೇರ ನೆರಳು ನೆಲಕೆ ಚಾಚಿತು\n\n[ಅನುಪಲ್ಲವಿ]\nದೂರದ ದಾರಿ ಸವೆದ ಪಯಣಿಗ ಬಂದನು\nಹಳೆಯ ಕನಸು ಕಣ್ಣಲಿ ಮತ್ತೆ ಚಿಗುರಿತು\n\n[ಚರಣ]\nಕಂಬಗಳ ನಡುವೆ ಗಾಳಿ ಸ್ವರವ ಮೀಟಿತು\nಮರಳಿ ಬಾ ಎಂಬ ಕರೆ ಎದೆಯಲುಳಿಯಿತು",
+   "premium": "[ಪಲ್ಲವಿ]\nಹಂಪಿಯ ಸಂಜೆ ಬಂಡೆಯ ಮೇಲೆ ಕೆಂಪಾಗಿದೆ\nಕಲ್ಲಿನ ರಥದ ನೆರಳು ಉದ್ದ ಚಾಚಿದೆ\n\n[ಅನುಪಲ್ಲವಿ]\nಸವೆದ ಹೆಜ್ಜೆ ತುಂಗೆ ದಡಕೆ ಮರಳಿದೆ\nಹರಿಗೋಲು ಕಾದಿದೆ, ಹುಟ್ಟು ಮೌನವಾಗಿದೆ\n\n[ಚರಣ]\nಕಲ್ಲ ಕಂಬದಿ ಗಾಳಿ ಸರಿಗಮ ಮೀಟಿದೆ\nಮರಳಿ ಬಾ ಎಂಬ ದನಿ ಅಲ್ಲೇ ಉಳಿದಿದೆ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 4,
+     "dims": {
+      "prosody": 0,
+      "diction": 0,
+      "imagery": 1,
+      "cultural": 2,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 5.5,
+     "dims": {
+      "prosody": 0,
+      "diction": 0.5,
+      "imagery": 2,
+      "cultural": 2,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f8",
+   "lang": "kn",
+   "style": "devaranama-inspired",
+   "brief": "A devotional song about a long walk to Udupi, tired feet, steady heart, new words only",
+   "standard": "[Pallavi]\nಉಡುಪಿಗೆ ದಾರಿ ದೂರ, ಕಾಲು ದಣಿದು ನಡೆದೆ\nಎದೆಯು ಗಟ್ಟಿ ನಿಂತಿದೆ, ಹೆಜ್ಜೆ ಹೆಜ್ಜೆಯೂ ಹಾಡಿದೆ\n\n[Anupallavi]\nಕೃಷ್ಣಾ ನಿನ್ನ ನೆನೆಯುತ ಧೂಳಿನಲ್ಲಿ ಸಾಗಿದೆ\nಬೆವರ ಹನಿ ಹೊಸ ನುಡಿ ನಿನಗೆ ಸಲ್ಲಿದೆ\n\n[Charanam]\nಸಾಕು ಸಾಕು ಎನ್ನದೆ ಮುಂದೆ ಮುಂದೆ ನಡೆಯುವೆ\nಕಾಲ ಬೊಬ್ಬೆ ಒಡೆದರೂ ಹರಿನಾಮ ಹಾಡುವೆ\nಗೋಪಾಲಕೃಷ್ಣನ ಗುಡಿಗೆ ಮನ ಕಾತರಿಸಿದೆ\nಎದೆಯಲಿ ಹೊಸ ಹಾಡು ಹೊನಲು ಹರಿದಿದೆ",
+   "premium": "[Pallavi]\nಉಡುಪಿ ದಾರಿ ದೂರ, ಪಾದ ಬೊಬ್ಬೆ ಎದ್ದಿದೆ\nಎದೆಯು ಮಾತ್ರ ಗಟ್ಟಿ, ಹೆಜ್ಜೆ ಹಾಡು ಹಾಡಿದೆ\n\n[Anupallavi]\nಕೃಷ್ಣ ನಿನ್ನ ನೆನೆಯುತ ಧೂಳ ದಾರಿ ಸಾಗಿದೆ\nಬೆವರೆ ತುಳಸಿ ಮಾಲೆ, ನಿನ್ನ ಪಾದ ಸೇರಿದೆ\n\n[Charanam]\nಸಾಕು ಸಾಕು ಎನ್ನದೆ ಮುಂದೆ ಮುಂದೆ ನಡೆಯುವೆ\nಚಪ್ಪಲಿ ಪಟ್ಟಿ ಕಿತ್ತರೂ ಬರಿಗಾಲಲೆ ಬರುವೆ\nಕನಕನ ಕಿಂಡಿ ನೆನೆದು ಕಣ್ಣು ಹಾದಿ ಕಾದಿದೆ\nಮಠದ ಗಂಟೆ ದನಿಗೆ ಎದೆಯ ತಾಳ ಸೇರಿದೆ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 5.5,
+     "dims": {
+      "prosody": 0,
+      "diction": 0,
+      "imagery": 2,
+      "cultural": 2,
+      "originality": 1.5
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 7.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 1.5
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f9",
+   "lang": "kn",
+   "style": "kannada-folk",
+   "brief": "Village jatre night, bangles and balloons, a child lost then found",
+   "standard": "ಪಲ್ಲವಿ\nಜಾತ್ರೆಯ ರಾತ್ರಿ ಬಳೆಗಳ ಸದ್ದು ಬಲೂನು ಬಾನಲ್ಲಿ ತೇಲಿತು\nತಪ್ಪಿದ ಕಂದ ಕೈಗೆ ಸಿಕ್ಕಿತು ಅಮ್ಮನ ಎದೆಯಲಿ ಹಾಡಿತು\n\nಚರಣ\nಗೌರಮ್ಮ ತೇರ ಕೆಳಗೆ ನಿಂತು ಮಗನ ಹೆಸರ ಕೂಗಿದಳು\nಕಣ್ಣೀರ ಒರೆಸಿ ನಕ್ಕಳು, ಬಳೆಯ ಕೈಯಲಿ ಎತ್ತಿಕೊಂಡಳು",
+   "premium": "ಪಲ್ಲವಿ\nಜಾತ್ರೆ ರಾತ್ರಿ ಬಳೆಯ ಸದ್ದು ಮೊಳಗಿತು\nಬಣ್ಣದ ಬಲೂನು ಗಾಳಿಯಲಿ ತೇಲಿತು\n\nಚರಣ\nತೇರಡಿ ಗೌರಮ್ಮ ಮಗನ ಕೂಗಿದಳು\nಬಲೂನಿನ ಕಂದನ ಅಪ್ಪಿ ಅತ್ತು ನಕ್ಕಳು",
+   "judges": {
+    "claude": {
+     "winner": "standard",
+     "diff": -3,
+     "dims": {
+      "prosody": 0,
+      "diction": -1,
+      "imagery": -1,
+      "cultural": -1,
+      "originality": 0
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 3.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 0.5,
+      "cultural": 0,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f10",
+   "lang": "kn",
+   "style": "bhavageete",
+   "brief": "A letter from a soldier to his village near Belagavi, rain on the tin roof",
+   "standard": "ಪಲ್ಲವಿ\nತಗಡಿನ ಸೂರಿನ ಮೇಲೆ ಮಳೆ ಹಾಡಿದೆ\nಊರ ನೆನಪು ಹನಿಹನಿಯಾಗಿ ಸುರಿದಿದೆ\nಬರೆದ ಕಾಗದ ಬೆಳಗಾವಿ ತಲುಪಲಿ\nಅಂಗಳದ ಮಳೆಯಲಿ ಅಮ್ಮ ಓದಲಿ\n\nಚರಣ\nಗಡಿಯ ಕಾವಲಲ್ಲಿ ರಾತ್ರಿ ಕಳೆದಿದೆ\nಹೊಲದ ಮಣ್ಣ ಘಮ ಮೂಗಿಗೆ ಬಂದಿದೆ\nಹಣತೆ ಹಚ್ಚಿ ಬಾಗಿಲಲ್ಲಿ ಕಾದಿರಿ\nಮಳೆ ನಿಂತ ಸಂಜೆ ನಾನೇ ಬಂದು ನಿಲ್ಲುವೆ",
+   "premium": "ಪಲ್ಲವಿ\nಊರಿನ ನೆನಪು ಮಳೆಹನಿಯಾಗಿದೆ\nತಗಡಿನ ಸೂರಲಿ ತಾಳವ ಹಾಕಿದೆ\nಕಂದೀಲ ಬೆಳಕಲಿ ಲೇಖನಿ ಓಡಿದೆ\nಬೆಳಗಾವಿ ಮಣ್ಣಿನ ಘಮ ಕರೆದಿದೆ\n\nಚರಣ\nಹಗಲೂ ಇರುಳೂ ಗಡಿ ಕಾವಲು ಸಾಗಿದೆ\nಜೇಬಲಿ ತಂಗಿಯ ಬಳೆಚೂರು ಮಿನುಗಿದೆ\nಬಾಗಿಲ ಹಣತೆಯು ಆರದೆ ಉರಿಯಲಿ\nಮಳೆ ನಿಂತ ದಿನ ನನ್ನ ಹೆಜ್ಜೆ ಕೇಳಲಿ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 4,
+     "dims": {
+      "prosody": 1,
+      "diction": 0,
+      "imagery": 1.5,
+      "cultural": 0.5,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 8,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1,
+      "originality": 2
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f11",
+   "lang": "kn",
+   "style": "kannada-pop",
+   "brief": "A friendship song for two girls who share a bicycle on a Mysuru road",
+   "standard": "ಪಲ್ಲವಿ\nಒಂದೇ ಸೈಕಲ್ಲಿನಲ್ಲಿ ಇಬ್ಬರ ಪಯಣ\nಮೈಸೂರ ಹಾದಿಲಿ ನಗೆಯ ತೋರಣ\nನೀನು ಹಿಂದೆ ಕೂತು ಕೈ ಬೀಸುವೆ\nನಾನು ಮುಂದೆ ಗಂಟೆ ಬಾರಿಸುವೆ\n\nಚರಣ\nತಿರುವಲ್ಲಿ ನಿಲ್ಲದೆ ಜೊತೆ ತುಳಿಯೋಣ\nಬಿದ್ದರೂ ಬೇಸರಿಸದೆ ನಗುತ ಏಳೋಣ\nಚಾಮುಂಡಿ ಬೆಟ್ಟದ ಗಾಳಿಯು ಹಾಡಲಿ\nಮಲ್ಲಿಗೆ ಘಮ ನಮ್ಮ ನಂಟು ಬೆಳೆಯಲಿ",
+   "premium": "ಪಲ್ಲವಿ\nಒಂದೇ ಸೈಕಲ್ಲಿನಲಿ ನಮ್ಮಿಬ್ಬರ ಪಯಣ\nಮೈಸೂರ ರಸ್ತೆಯಲಿ ಬೆಲ್ಲಿನ ಟ್ರಿಣ ಟ್ರಿಣ\nನೀನು ತುಳಿ ಗೆಳತಿ, ನಾ ಹಿಂದೆ ಕೂರುವೆ\nನಿನ್ನ ಜಡೆ ಹಿಡಿದು ಹಾಡನು ಗುನುಗುವೆ\n\nಚರಣ\nತಿರುವಿನಲ್ಲಿ ನಿಲ್ಲದೆ ತುಳಿಯೋಣ ಬಾ\nಬಿದ್ದರೆ ಮೊಣಕಾಲು ಒರೆಸಿ ಏಳೋಣ ಬಾ\nಕುಕ್ಕರಹಳ್ಳಿ ಕೆರೆಯ ತಂಗಾಳಿ ಬೀಸಲಿ\nನಮ್ಮ ಜಡೆಯ ಮಲ್ಲಿಗೆ ಜೊತೆಗೇ ತೂಗಲಿ",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 4.5,
+     "dims": {
+      "prosody": 0.5,
+      "diction": 1,
+      "imagery": 1,
+      "cultural": 1,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 8,
+     "dims": {
+      "prosody": 1.5,
+      "diction": 1.5,
+      "imagery": 2,
+      "cultural": 1.5,
+      "originality": 1.5
+     },
+     "unparsed": false
+    }
+   }
+  },
+  {
+   "id": "kn-f12",
+   "lang": "kn",
+   "style": "vachana-inspired",
+   "brief": "A short free-verse devotional about the work of hands being worship, new words only",
+   "standard": "[ಪಲ್ಲವಿ]\nಕೈಯ ದುಡಿತವೇ ಪೂಜೆಯಯ್ಯಾ,\nಬೆವರಿನ ಹನಿಯೇ ಹೂವಯ್ಯಾ.\n\n[ಚರಣ]\nಹೊಲದ ಮಣ್ಣು ಹದವಾಗಲಿ,\nನೇಯ್ದ ನೂಲೇ ನಾಮವಾಗಲಿ.\nಕುಂಬಾರನ ಚಕ್ರದಲ್ಲಿ ನಿನ್ನ ನಗು,\nಕಮ್ಮಾರನ ಕುಲುಮೆಯಲಿ ನಿನ್ನ ಬೆಳಕು.\n\n[ಪಲ್ಲವಿ]\nಕೈಯ ದುಡಿತವೇ ಪೂಜೆಯಯ್ಯಾ,\nಬೆವರಿನ ಹನಿಯೇ ಹೂವಯ್ಯಾ.",
+   "premium": "[ಪಲ್ಲವಿ]\nಕೈಗಳ ದುಡಿತವೇ ಪೂಜೆಯಯ್ಯಾ,\nಬೆವರಿನ ಹನಿಗಳೇ ಹೂವಯ್ಯಾ.\n\n[ಚರಣ]\nಉತ್ತ ಹೊಲದ ಮಣ್ಣೇ ಮಡಿಯಾಗಲಿ,\nಮಗ್ಗದ ನೂಲೇ ಜಪಮಾಲೆಯಾಗಲಿ.\nಕುಂಬಾರನ ಚಕ್ರವೇ ಪ್ರದಕ್ಷಿಣೆಯಾಗಲಿ,\nಕಮ್ಮಾರನ ಕಿಡಿಯೇ ಆರತಿಯಾಗಲಿ.\n\n[ಪಲ್ಲವಿ]\nಕೈಗಳ ದುಡಿತವೇ ಪೂಜೆಯಯ್ಯಾ,\nಬೆವರಿನ ಹನಿಗಳೇ ಹೂವಯ್ಯಾ.",
+   "judges": {
+    "claude": {
+     "winner": "premium",
+     "diff": 5.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 0.5,
+      "imagery": 1.5,
+      "cultural": 1.5,
+      "originality": 1
+     },
+     "unparsed": false
+    },
+    "gemini": {
+     "winner": "premium",
+     "diff": 5.5,
+     "dims": {
+      "prosody": 1,
+      "diction": 1,
+      "imagery": 1.5,
+      "cultural": 1,
+      "originality": 1
+     },
+     "unparsed": false
+    }
+   }
+  }
+ ]
+}
