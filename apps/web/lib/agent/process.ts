@@ -178,6 +178,8 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
       const stages: Record<string, number> = {};
+      // Lever record for the prod quality monitor (job_telemetry.metrics.quality); filled where each lever is decided.
+      const quality: Record<string, unknown> = { tier: String(userRow?.tier ?? "free") };
       const cost = new CostCollector();
       const timed = async <T,>(name: string, fn: () => Promise<T>): Promise<T> => {
         const t0 = Date.now();
@@ -238,6 +240,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const refs = refsCtx?.text ?? "";
         // Which exemplars rode along, so refs-pool pruning can later be judged from production logs at no cost.
         if (refsCtx?.ids.length) log(`refs lang=${langCode(doc.language)} ids=${refsCtx.ids.join(",")}`);
+        Object.assign(quality, { arm: harnessPick.arm.id, source: harnessPick.source, premium: !!premiumModel, refs_ids: refsCtx?.ids ?? [] });
         const finalPolishBrief = refs ? `${polishBrief}\n\n${refs}` : polishBrief;
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
@@ -280,6 +283,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
         })) : null;
         if (claudeRomanLanguages().has(doc.language)) log(claudeRoman ? `claude-roman used lang=${doc.language} sample=${romanSample(claudeRoman)}` : `claude-roman fallback lang=${doc.language}`);
+        quality.roman = claudeRomanLanguages().has(doc.language) ? (claudeRoman ? "used" : "fallback") : "off";
         const sung = claudeRoman ?? (ss?.romanized ? ss.text : a.lyrics);
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
         const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, tasteStyle, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
@@ -337,7 +341,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
           timed("qa", () => qaDiction(db, job.id, doc.language, geminiKey, cost.qa)),
           timed("line_timings", () => qaLineTimings(db, job.id, doc.language, geminiKey, targetS)),
         ]);
-        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: embedderUsed(!!safeEmbedUrl(process.env.EMBED_URL), cascade), stages_ms: stages }, cost);
+        await recordTelemetry(db, job.id, { plan: plan.agent, language: doc.language, style: doc.style_family, target_s: doc.document_json.target_duration_seconds ?? null, started_at: job.started_at ?? null, cascade, diction_match_pct: qa?.matchPct ?? null, ...(quality.arm ? { quality } : {}), qa_model: process.env.GEMINI_QA_MODEL ?? "gemini-3.8-flash", embedder: embedderUsed(!!safeEmbedUrl(process.env.EMBED_URL), cascade), stages_ms: stages }, cost);
       }
     } catch (e) {
       const msg = String((e as Error).message ?? e).slice(0, 300);
