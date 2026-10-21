@@ -19,6 +19,7 @@ import { FunnelBeacon } from "@/components/funnel-beacon";
 import { getBillingConfigOrNull, isBillingEnabled } from "@/lib/billing/config";
 import { passMonthlyTracks, readOwnStationPass } from "@/lib/billing/pass";
 import { serverI18n } from "@/lib/i18n/server";
+import { passMixEnabled } from "@/lib/station/lang-mix";
 import type { UiKey } from "@/lib/i18n/ui-strings";
 import { QualityEvidenceSummary } from "@/components/marketing/quality-evidence";
 import { createServerClient } from "@/lib/supabase/server";
@@ -230,6 +231,7 @@ export default async function PricingPage() {
           <span className="text-3xl font-medium">{STATION_PASS_PRICE}<span className="text-base text-foreground/60"> {t("pricing.pass.perMonth")}</span></span>
           <p className="text-sm text-foreground/70">{t("pricing.pass.desc")}</p>
           <p className="text-sm text-foreground/70">{t("pricing.pass.perks", { n: passMonthlyTracks() })}</p>
+          {passMixEnabled() ? <a href="/pricing/pass" className="w-fit text-sm underline">{t("passpage.title")}</a> : null}
           {hasPass ? (
             <>
               <p data-testid="pass-owned" className="text-sm font-medium text-accent">{t("pricing.pass.owned")}</p>
