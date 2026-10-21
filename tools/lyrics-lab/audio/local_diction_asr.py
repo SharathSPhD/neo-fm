@@ -18,6 +18,12 @@ def fetch(a, cache="diction_audio"):
     if not os.path.exists(p): subprocess.run(["curl", "-sfL", "-o", p, a], check=True)
     return p
 
+def load_audio(path):
+    """16 kHz mono float32 via ffmpeg, so a mismatched PyAV build cannot break decoding."""
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-f", "f32le", "-ac", "1", "-ar", "16000", "-"], check=True, capture_output=True).stdout
+    return np.frombuffer(raw, dtype=np.float32)
+
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument("manifest"); ap.add_argument("out")
     ap.add_argument("--systems", default="ml=whisper_ml_ft,default=whisper_v3"); a = ap.parse_args()
@@ -29,10 +35,10 @@ def main():
     for r in rows:
         sysname = pick.get(r["language"], pick["default"])
         if sysname not in models: models[sysname] = WhisperModel(MODELS[sysname], device=os.environ.get("ASR_DEVICE", "cuda"), compute_type=os.environ.get("ASR_COMPUTE", "float16"))
-        m = models[sysname]; t0 = time.time(); path = fetch(r["audio"])
-        segs, _ = m.transcribe(path, language=LANG_CODE.get(r["language"]), vad_filter=True, beam_size=5)
+        m = models[sysname]; t0 = time.time(); audio = load_audio(fetch(r["audio"]))
+        segs, _ = m.transcribe(audio, language=LANG_CODE.get(r["language"]), vad_filter=os.environ.get("ASR_VAD", "1") == "1", beam_size=5)
         text = "\n".join(s.text.strip() for s in segs if s.text.strip())
-        det = m.transcribe(path, beam_size=1)[1]
+        det = m.transcribe(audio, beam_size=1)[1]
         out.append({**r, "transcript": text, "system": sysname, "lang_detected": det.language, "sec": round(time.time() - t0, 1)})
         print(r["id"], sysname, len(text), flush=True)
     json.dump(out, open(a.out, "w"), ensure_ascii=False, indent=1)
