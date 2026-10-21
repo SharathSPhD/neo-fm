@@ -11,6 +11,8 @@ import { usePlayer } from "@/components/player/player-provider";
 import { ReportButton } from "@/components/report-button";
 import { expansionLanguage } from "@/lib/languages/registry";
 import { UI_LANG_ENDONYM, type UiKey, isUiLang } from "@/lib/i18n/ui-strings";
+import { StationMix } from "./station-mix";
+import { mixActive, mixParam, type MixPick } from "@/lib/station/mix-picks";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
@@ -132,9 +134,11 @@ const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string; langs?: string | null } = {}) {
   const q = new URLSearchParams({ limit: "10" });
-  if (language) q.set("lang", language);
+  // A running mix wins over the single-language chip (the server ignores `langs` when `lang` is present).
+  if (extra.langs) q.set("langs", extra.langs);
+  else if (language) q.set("lang", language);
   if (energy) q.set("energy", energy);
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
@@ -149,7 +153,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
+export function StationPlayer({ mixState = "off", anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { mixState?: "off" | "locked" | "on"; anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -161,6 +165,10 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   const [queue, setQueue] = useState<Track[]>([]);
   const [lang, setLang] = useState<string>("");
   const [moods, setMoods] = useState<string[]>([]);
+  const [mix, setMix] = useState<MixPick[]>([]);
+  // Refills and steering read the mix through a ref, like the energy steer, so a pick never restarts those callbacks.
+  const mixRef = useRef<string | null>(null);
+  mixRef.current = mixState === "on" ? mixParam(mix) : null;
   // A named station ("Subah", "Raat", "Diwali Radio"); empty means the listener's own station.
   const [station, setStation] = useState<string>(initialStation);
   // "ready" flips once the saved choice has been read; "onboarded" is false on a first visit until Start is pressed.
@@ -217,7 +225,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: { ...adParams(), ...voiceParams() } }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, langs: mixRef.current, ads: { ...adParams(), ...voiceParams() } }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -232,17 +240,17 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
 
   useEffect(() => {
     const saved = loadPrefs();
-    if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); setOnboarded(true); }
+    if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); if (mixState === "on") setMix((saved.mix ?? []).filter((p) => LANGS.includes(p.lang))); setOnboarded(true); }
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
     setReady(true);
-  }, [LANGS, initialStation]);
+  }, [LANGS, initialStation, mixState]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
-    savePrefs({ lang, moods });
+    savePrefs({ lang, moods, mix });
     void refill(lang, moods, station);
-  }, [ready, onboarded, lang, moods, station, refill]);
+  }, [ready, onboarded, lang, moods, station, mix, refill]);
 
   // Start playback when the head of the queue changes; stop the app-wide player so two songs never overlap.
   useEffect(() => {
@@ -412,7 +420,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { like: likeId, exclude: current.id, tags: moods, station, ads: { ...adParams(), ...voiceParams() } }));
+      const res = await fetch(queueUrl(lang, next, { langs: mixRef.current, like: likeId, exclude: current.id, tags: moods, station, ads: { ...adParams(), ...voiceParams() } }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -569,14 +577,17 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           <button
             key={l || "all"}
             type="button"
-            aria-pressed={lang === l}
-            onClick={() => setLang(l)}
+            aria-pressed={lang === l && !mixActive(mix)}
+            onClick={() => { setLang(l); setMix([]); }}
             className="chip"
           >
             {l ? languageName(l) : t("station.lang.all")}{betaLangs.includes(l) ? " (beta)" : ""}
           </button>
         ))}
       </div>
+      {mixState !== "off" ? (
+        <StationMix state={mixState} langs={LANGS.filter(Boolean)} picks={mix} name={(c) => languageName(c) + (betaLangs.includes(c) ? " (beta)" : "")} onChange={setMix} />
+      ) : null}
       {moodChips}
 
       {loading && !current ? <p>{t("station.loading")}</p> : null}

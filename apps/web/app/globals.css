@@ -362,7 +362,8 @@ a:focus {
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .chip:hover { border-color: hsl(var(--accent) / 0.6); }
-.chip[aria-pressed="true"] {
+.chip[aria-pressed="true"],
+.chip[aria-checked="true"] {
   background: hsl(var(--accent));
   border-color: hsl(var(--accent));
   color: hsl(var(--background));

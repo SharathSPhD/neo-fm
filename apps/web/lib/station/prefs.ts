@@ -1,4 +1,5 @@
 import { EXPANSION_LANGUAGES } from "../languages/registry";
+import { cleanMix, type MixPick } from "./mix-picks";
 
 /** The listener's station choice (language and up to two moods), remembered in this browser only. */
 export const PREFS_KEY = "neo-fm:station-prefs:v1";
@@ -14,17 +15,20 @@ export interface StationPrefs {
   /** "" means all languages. */
   lang: string;
   moods: string[];
+  /** Station pass language mix; empty when the listener has none. */
+  mix?: MixPick[];
 }
 
 export function parsePrefs(raw: string | null): StationPrefs | null {
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw) as { lang?: unknown; moods?: unknown };
+    const v = JSON.parse(raw) as { lang?: unknown; moods?: unknown; mix?: unknown };
     const lang = typeof v.lang === "string" && SAVED_LANGS.includes(v.lang) ? v.lang : "";
     const moods = Array.isArray(v.moods)
       ? v.moods.filter((m): m is string => (STATION_MOODS as readonly string[]).includes(m as string)).slice(0, MAX_MOODS)
       : [];
-    return { lang, moods: [...new Set(moods)] };
+    const mix = cleanMix(v.mix, SAVED_LANGS);
+    return { lang, moods: [...new Set(moods)], ...(mix.length ? { mix } : {}) };
   } catch {
     return null;
   }

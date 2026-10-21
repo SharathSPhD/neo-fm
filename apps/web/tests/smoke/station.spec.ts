@@ -41,6 +41,18 @@ async function skip(page: Page) {
 test.use({ bypassCSP: !REMOTE });
 
 test.describe("station (signed out)", () => {
+  test("offers the pass language mix as a link, never as a picker, and sends no langs", async ({ page }) => {
+    test.skip(REMOTE, "needs STATION_PASS_MIX on the local build");
+    const queues: string[] = [];
+    page.on("request", (r) => { if (r.url().includes("/api/station/queue")) queues.push(r.url()); });
+    await startStation(page);
+    const locked = page.getByTestId("mix-locked");
+    await expect(locked).toHaveAttribute("href", "/pricing");
+    await expect(page.getByTestId("station-mix")).toHaveCount(0);
+    expect(queues.length).toBeGreaterThan(0);
+    expect(queues.every((u) => !u.includes("langs="))).toBe(true);
+  });
+
   test("plays a track and shows what is playing", async ({ page }) => {
     await startStation(page);
     await expect.poll(() => page.evaluate(() => { const a = document.querySelector("audio"); return !!a && !a.paused; })).toBe(true);
