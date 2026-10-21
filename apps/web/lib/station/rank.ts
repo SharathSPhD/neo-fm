@@ -18,6 +18,8 @@ export interface PoolTrack {
   durationSeconds?: number | null;
   /** Migration 0104: lead voice from the voice judge. Absent or null means untagged; programming then ignores voice. */
   voice?: "female" | "male" | "mixed" | null;
+  /** Migration 0116: which lyric pipeline wrote the track. Absent means standard. */
+  grade?: "standard" | "premium" | "studio";
 }
 
 export type StationSignalKind = "play" | "like" | "skip" | "replay" | "share" | "finish";

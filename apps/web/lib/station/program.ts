@@ -5,6 +5,7 @@
  */
 import type { PoolTrack, StationSignal } from "./rank";
 import { clashes, transitionCost } from "./flow";
+import { gradeAllowed, type GradeMix } from "../lyrics/grade";
 import { allowed, RELAXATION, type RotationState } from "./rotation";
 
 export type Daypart = "dawn" | "morning" | "midday" | "evening" | "dusk" | "night";
@@ -97,7 +98,14 @@ export interface ProgramContext {
   rotation?: RotationState;
   /** Occasion themes to favour regardless of the calendar (named stations, e.g. Diwali Radio). */
   themes?: readonly string[];
+  /** Lyric-grade blend for this listener (STATION_GRADES, lib/lyrics/grade.ts TIER_BLEND); omit for no grade rule. */
+  mix?: GradeMix;
 }
+
+/** Grades are a soft share over this many recent plays; a track under its share gets a small bonus, one over it is held back. */
+const GRADE_WINDOW = 20;
+const GRADE_BONUS = 1;
+const gradeOf = (t: PoolTrack) => t.grade ?? "standard";
 
 function pickPool(preferred: PoolTrack[], all: PoolTrack[], state: RotationState, out: PoolTrack[]): PoolTrack[] {
   for (const rules of RELAXATION) {
@@ -125,8 +133,14 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
     return a && a === b && a !== "mixed" ? a : null;
   };
   const lastPlayed = () => out[out.length - 1] ?? ctx.rotation?.history[ctx.rotation.history.length - 1];
+  const gradeBonus = (t: PoolTrack) => {
+    const g = gradeOf(t);
+    if (!ctx.mix || g === "standard" || ctx.mix[g] <= 0) return 0;
+    const recent = [...(ctx.rotation?.history ?? []), ...out].slice(-GRADE_WINDOW);
+    return recent.filter((p) => gradeOf(p) === g).length / Math.max(recent.length, 1) < ctx.mix[g] ? GRADE_BONUS : 0;
+  };
   const score = (t: PoolTrack) =>
-    daypartFit(t, part) + (rankBonus.get(t.id) ?? 0) - (t.voice && t.voice === voiceRun(out) ? VOICE_RUN_PENALTY : 0) - TRANSITION_WEIGHT * transitionCost(lastPlayed(), t);
+    daypartFit(t, part) + (rankBonus.get(t.id) ?? 0) + gradeBonus(t) - (t.voice && t.voice === voiceRun(out) ? VOICE_RUN_PENALTY : 0) - TRANSITION_WEIGHT * transitionCost(lastPlayed(), t);
 
   const remaining = [...ranked];
   const out: PoolTrack[] = [];
@@ -140,7 +154,10 @@ export function programQueue(ranked: PoolTrack[], ctx: ProgramContext): PoolTrac
     // Clips come first: they are filtered out (when anything else is left) before any other rule runs.
     const played = [...(ctx.rotation?.history ?? []), ...out];
     const fullOnly = remaining.filter((t) => clipAllowed(t, played));
-    const eligible = fullOnly.length > 0 ? fullOnly : remaining;
+    const base = fullOnly.length > 0 ? fullOnly : remaining;
+    const recentGrades = played.slice(-GRADE_WINDOW).map(gradeOf);
+    const graded = ctx.mix ? base.filter((t) => gradeAllowed(gradeOf(t), recentGrades, ctx.mix!)) : base;
+    const eligible = graded.length > 0 ? graded : base;
     const arcOk = PEAK.has(part) && prev && isSlow(prev) ? eligible.filter((t) => !isSlow(t)) : eligible;
     const arcPool = arcOk.length > 0 ? arcOk : eligible;
     // Flow: drop candidates that clash with the previous track (devotional into dance, low energy into high) while any other exists.
