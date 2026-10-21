@@ -184,3 +184,35 @@ describe("POST /api/station/ad-event", () => {
     expect(world.inserted).toHaveLength(0);
   });
 });
+
+describe("break boundaries and the pass upsell in the queue", () => {
+  const PASS = "41f1e639-1111-4222-8333-44445555bbbb";
+  const seen3 = "&seen=41f1e639-1111-4222-8333-44445555c001,41f1e639-1111-4222-8333-44445555c002,41f1e639-1111-4222-8333-44445555c003";
+  const passRow = () => slotRow({ id: PASS, cta_url: "/pricing", headline: "Hear the station without breaks", weight: 1 });
+  const adIds = async (qs = "", ua?: string) =>
+    ((await (await GET(new NextRequest(`http://x/api/station/queue?limit=8&hour=10${qs}`, ua ? { headers: { "user-agent": ua } } : undefined))).json()) as { tracks: Item[] }).tracks.filter((x) => x.type === "ad").map((x) => x.ad!.slotId);
+
+  it("serves no break with ADS_BREAK_BOUNDARIES on when the slice has no segment boundary", async () => {
+    vi.stubEnv("ADS_BREAK_BOUNDARIES", "1");
+    expect(await adIds()).toEqual([]);
+  });
+
+  it("is unchanged with the flag off", async () => {
+    expect(await adIds()).toEqual([SLOT]);
+  });
+
+  it("shows the pass creative after the 3rd break for Free web listeners, behind ADS_PASS_UPSELL", async () => {
+    world.slots = [slotRow({ weight: 100000 }), passRow()];
+    expect(await adIds(`&played=9${seen3}`)).toEqual([SLOT]);
+    vi.stubEnv("ADS_PASS_UPSELL", "1");
+    expect(await adIds(`&played=9${seen3}`)).toEqual([PASS]);
+    expect(await adIds("&played=9")).toEqual([SLOT]);
+  });
+
+  it("never upsells inside the app shell", async () => {
+    world.slots = [slotRow({ weight: 100000 }), passRow()];
+    vi.stubEnv("ADS_PASS_UPSELL", "1");
+    expect(await adIds(`&played=9${seen3}`, "Mozilla/5.0 NeoFmApp/0.5.0 (android)")).toEqual([SLOT]);
+  });
+});
+

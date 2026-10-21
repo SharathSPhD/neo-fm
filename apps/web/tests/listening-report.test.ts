@@ -62,4 +62,16 @@ describe("listeningReport", () => {
     expect(r.by_language.kn!.ad_completion_rate).toBe(0.5);
     expect(r.by_daypart.morning!.ad_starts).toBe(3);
   });
+
+  it("splits Free listeners by ad holdout arm and leaves others out", () => {
+    const rows = listeners(MIN_LISTENERS * 2);
+    const arm = (u: string) => (Number(u.slice(1)) < MIN_LISTENERS ? "holdout" : Number(u.slice(1)) < MIN_LISTENERS * 2 - 1 ? "exposed" : null);
+    const r = listeningReport(rows, lang, [], [], 7, arm);
+    expect(r.by_arm.holdout!.listeners).toBe(MIN_LISTENERS);
+    expect(r.by_arm.holdout!.suppressed).toBe(false);
+    expect(r.by_arm.exposed!.listeners).toBe(MIN_LISTENERS - 1);
+    expect(r.by_arm.exposed!.suppressed).toBe(true);
+    expect(listeningReport(rows, lang, [], [], 7).by_arm).toEqual({});
+  });
 });
+

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { AD_CAPS, TIER_CAPS, adHoldoutPct, inAdHoldout, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
+import { AD_CAPS, TIER_CAPS, boundaryFlags, isPassSlot, passUpsellDue, adHoldoutPct, inAdHoldout, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
 import { parseAdState } from "../lib/station/ads-server";
-import { adInventory, retentionGuardrail, summarizeAds } from "../lib/ops/ads-report";
+import { adInventory, passUpsellStats, retentionGuardrail, summarizeAds } from "../lib/ops/ads-report";
 
 const NOW = Date.parse("2026-11-05T10:00:00Z");
 const slot = (o: Partial<AdSlot> = {}): AdSlot => ({
@@ -262,5 +262,67 @@ describe("ad inventory report", () => {
     expect(r.byDaypart).toEqual({ morning: 2, dusk: 1 });
     expect(r.bySlotKind).toEqual({ house: 1, sponsor: 2 });
     expect(r.sponsorValueInr).toEqual({ cpmLow: 100, cpmHigh: 500, low: 0, high: 1 });
+  });
+});
+
+describe("break boundaries", () => {
+  const voice = (kind: string) => ({ type: "voice", voice: { kind } });
+  const trk = (set?: { index: number; size: number }) => ({ set: set ? { id: "A", ...set } : undefined });
+
+  it("flags a track only after a programme or Almanac segment or the last track of a set", () => {
+    const { positions, flags } = boundaryFlags([trk(), voice("host-link"), trk(), voice("programme"), trk(), voice("almanac"), trk({ index: 0, size: 2 }), trk({ index: 1, size: 2 }), trk(), trk()]);
+    expect(positions).toEqual([0, 2, 4, 6, 7, 8, 9]);
+    expect(flags).toEqual([false, false, true, true, false, true, false]);
+  });
+
+  it("places a break only at a boundary, sliding past other positions, and none when the slice has none", () => {
+    const t = [{ tags: ["calm"] }, { tags: ["calm"] }, { tags: ["calm"], boundaryBefore: true }, { tags: ["calm"] }, { tags: ["calm"] }];
+    expect(placeAd(slot(), t, { played: 0, sinceBreak: 1000, tier: "free", boundariesOnly: true })).toBe(2);
+    expect(placeAd(slot(), t, { played: 0, sinceBreak: 1000, tier: "free" })).toBe(2);
+    expect(placeAd(slot(), t, { played: 10, sinceBreak: 10, tier: "free", boundariesOnly: true })).toBe(2);
+    expect(placeAd(slot(), t.map((x) => ({ tags: x.tags })), { played: 10, sinceBreak: 10, tier: "free", boundariesOnly: true })).toBeNull();
+    expect(placeAd(slot(), t.map((x) => ({ tags: x.tags })), { played: 10, sinceBreak: 10, tier: "free" })).toBe(0);
+  });
+
+  it("still keeps the tier spacing and never splits a set at a boundary", () => {
+    const t = [{ tags: [], boundaryBefore: true }, { tags: [], boundaryBefore: true, joinedToPrev: true }, { tags: [], boundaryBefore: true }];
+    expect(placeAd(slot(), t, { played: 10, sinceBreak: 10, tier: "free", boundariesOnly: true })).toBe(0);
+    expect(placeAd(slot(), t, { played: 10, sinceBreak: 5, tier: "free", boundariesOnly: true })).toBe(2);
+    expect(placeAd(slot(), t, { played: 10, sinceBreak: 2, tier: "free", boundariesOnly: true })).toBeNull();
+  });
+});
+
+describe("Station pass upsell", () => {
+  const passSlot = slot({ id: "pass", ctaUrl: "/pricing", weight: 1 });
+  const gift = slot({ id: "gift", ctaUrl: "/gift", weight: 1000 });
+
+  it("is due after the 3rd break and every 3rd after, for Free web listeners only", () => {
+    expect([0, 1, 2, 3, 4, 5, 6].map((n) => passUpsellDue(n, "free", false))).toEqual([false, false, false, true, false, false, true]);
+    expect(passUpsellDue(3, "free", true)).toBe(false);
+    expect(passUpsellDue(3, "creator", false)).toBe(false);
+    expect(passUpsellDue(3, "pro", false)).toBe(false);
+    expect(passUpsellDue(3, null, false)).toBe(false);
+  });
+
+  it("recognises only house ads pointing at pricing", () => {
+    expect(isPassSlot(passSlot)).toBe(true);
+    expect(isPassSlot(gift)).toBe(false);
+    expect(isPassSlot(slot({ kind: "sponsor", ctaUrl: "/pricing" }))).toBe(false);
+  });
+
+  it("narrows the break to the pass creative, and falls back when none is eligible", () => {
+    expect(pickAd([gift, passSlot], long, ctx({ passUpsell: true }), () => 0.5)?.slot.id).toBe("pass");
+    expect(pickAd([gift, passSlot], long, ctx({ passUpsell: false }), () => 0.5)?.slot.id).toBe("gift");
+    expect(pickAd([gift], long, ctx({ passUpsell: true }), () => 0)?.slot.id).toBe("gift");
+    expect(pickAd([gift, passSlot], long, ctx({ passUpsell: true, perCreativeToday: { pass: 3 } }), () => 0)?.slot.id).toBe("gift");
+  });
+});
+
+describe("pass upsell report", () => {
+  it("counts starts, completes and taps on house ads that point at pricing", () => {
+    const slots = [{ id: "p", kind: "house", cta_url: "/pricing" }, { id: "g", kind: "house", cta_url: "/gift" }, { id: "x", kind: "sponsor", cta_url: "/pricing" }];
+    const ev = ["p:start", "p:start", "p:complete", "p:tap", "g:start", "x:start"].map((e) => ({ slot_id: e.split(":")[0]!, event: e.split(":")[1]! }));
+    expect(passUpsellStats(slots, ev)).toEqual({ slots: 1, starts: 2, completes: 1, taps: 1, tapRate: 0.5 });
+    expect(passUpsellStats([], []).tapRate).toBeNull();
   });
 });
