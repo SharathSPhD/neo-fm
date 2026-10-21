@@ -12,8 +12,8 @@ import { estimatedCostGbp } from "../agent/lyria";
 
 type Env = Record<string, string | undefined>;
 
-/** Default personal tracks per month on the pass (about USD 0.46 each, see docs/handoff/cost-per-listener-hour.md). */
-export const DEFAULT_PASS_MONTHLY_TRACKS = 4;
+/** Default personal tracks per month on the pass (about USD 0.46 each, see docs/handoff/cost-per-listener-hour.md). Two, not four: at INR 149 (about GBP 1.08 net) four full renders cost more than the pass earns (strategy/station-pass-and-lake.md). */
+export const DEFAULT_PASS_MONTHLY_TRACKS = 2;
 const MAX_PASS_MONTHLY_TRACKS = 30;
 
 /** `STATION_PASS_MONTHLY_TRACKS` overrides the default; anything unusable falls back to it. */
