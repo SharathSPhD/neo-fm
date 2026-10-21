@@ -2,7 +2,7 @@
  * POST /api/admin/lyrics-teacher (Bearer ADMIN_SECRET)
  * Body: { model: "claude-sonnet-5-5" | "claude-haiku-5-5", system?, max_tokens?, max_usd?, jobs: [{ id, prompt, n? }] }
  * Generates n completions per job on prod's own Anthropic key (the same route CMA uses) for the lyrics lab's teacher data.
- * Bounded: <=60 jobs, <=160 generations, <=800 output tokens each, refuses when the list-price estimate exceeds max_usd
+ * Bounded: <=60 jobs, <=160 generations, <=800 output tokens each (2500 for Haiku), refuses when the list-price estimate exceeds max_usd
  * (default 1, hard cap 6) and stops early when metered spend reaches it. Nothing is stored; prompt text is not logged.
  * Returns { results: { [id]: string[] }, estimate_usd, spend } where spend is the metered token usage (see lib/eval/cost).
  */
