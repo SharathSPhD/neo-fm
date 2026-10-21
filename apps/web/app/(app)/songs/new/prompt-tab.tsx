@@ -323,7 +323,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
 
       {voiceChoices ? (
         <div className="flex flex-col gap-1.5 sm:max-w-xs">
-          <label htmlFor="prompt-voice" className="text-xs uppercase tracking-widest text-foreground/50">
+          <label htmlFor="prompt-voice" className="text-xs uppercase tracking-widest text-foreground/70">
             {t("prompt.voice")}
           </label>
           <select
@@ -339,20 +339,20 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
               </option>
             ))}
           </select>
-          {voiceChoices.length <= 1 ? <p className="text-xs text-foreground/50">{t("prompt.voiceUpgrade")}</p> : null}
+          {voiceChoices.length <= 1 ? <p className="text-xs text-foreground/70">{t("prompt.voiceUpgrade")}</p> : null}
         </div>
       ) : null}
 
       {lyricGrades ? (
         <div className="flex flex-col gap-1.5 sm:max-w-xs">
-          <label htmlFor="prompt-grade" className="text-xs uppercase tracking-widest text-foreground/50">
+          <label htmlFor="prompt-grade" className="text-xs uppercase tracking-widest text-foreground/70">
             {t("prompt.grade")}
           </label>
           <select
             id="prompt-grade"
             value={grade}
             onChange={(e) => setGrade(e.target.value as "standard" | "premium" | "studio")}
-            className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
+            className="min-h-[44px] rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
           >
             <option value="standard">{t("prompt.gradeStandard")}</option>
             <option value="premium" disabled={lyricGrades.premium <= 0}>{t("prompt.gradePremium")} ({t("prompt.gradeLeft").replace("{n}", String(lyricGrades.premium))})</option>

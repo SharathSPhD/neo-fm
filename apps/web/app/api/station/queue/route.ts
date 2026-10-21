@@ -30,6 +30,7 @@ import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { parseTasteParam } from "@/lib/station/intake";
 import { stationTasteEnabled, tasteBias, tasteHostNote } from "@/lib/station/taste-bias";
 import type { TasteBrief } from "@/lib/taste/brief";
 import { loadStatedTaste } from "@/lib/taste/store";
@@ -97,10 +98,14 @@ export async function GET(req: NextRequest) {
   let prior: ReturnType<typeof tasteBias> | undefined;
   let savedTaste: TasteBrief | null = null;
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
-  if (user && stationTasteEnabled()) {
+  if (stationTasteEnabled()) {
     try {
-      const stated = await loadStatedTaste(admin, user.id);
-      if (stated.status === "ok" && stated.taste) savedTaste = stated.taste;
+      if (user) {
+        const stated = await loadStatedTaste(admin, user.id);
+        if (stated.status === "ok" && stated.taste) savedTaste = stated.taste;
+      }
+      // No saved profile (signed out, or never saved): the first-run intake rides along as `taste=`, closed vocabularies only.
+      savedTaste ??= parseTasteParam(sp.get("taste"));
       if (savedTaste) prior = tasteBias(savedTaste, { hour: clock.hour, languageLocked: !!lang });
     } catch { /* the prior is optional: rank without it */ }
   }

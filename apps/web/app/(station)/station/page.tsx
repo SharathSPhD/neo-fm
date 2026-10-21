@@ -8,6 +8,7 @@ import { cleanDedicatee, dedicateEnabled } from "@/lib/station/dedicate";
 import { passMixEnabled } from "@/lib/station/lang-mix";
 import { findStation } from "@/lib/station/named";
 import { hasPassPerks } from "@/lib/station/pass-perks";
+import { stationTasteEnabled } from "@/lib/station/taste-bias";
 import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
 
 import { StationPlayer } from "./station-player";
@@ -71,7 +72,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} />
+      <StationPlayer mixState={mixState} anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} tasteIntake={stationTasteEnabled()} />
     </main>
   );
 }
