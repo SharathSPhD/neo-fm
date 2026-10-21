@@ -17,7 +17,8 @@
  */
 import { NextResponse, type NextRequest } from "next/server";
 
-import { adsEnabled } from "@/lib/station/ads";
+import { adsEnabled, boundaryFlags, breakBoundariesEnabled, type MixedItem } from "@/lib/station/ads";
+import { parseAppShell } from "@/lib/native/app-shell";
 import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { poolCdnUrl } from "@/lib/station/cdn";
 import { cdnWithinBudget, signals30d } from "@/lib/station/cdn-guard";
@@ -167,19 +168,35 @@ export async function GET(req: NextRequest) {
     )
   ).filter((t) => t !== null);
   let out: Array<(typeof tracks)[number] | ReturnType<typeof voiceItem> | NonNullable<Awaited<ReturnType<typeof adForQueue>>>["item"]> = tracks;
-  if (adsEnabled() && tracks.length > 1) {
+  const applyAds = async () => {
+    if (!(adsEnabled() && out.length > 1)) return;
     try {
-      const ad = await adForQueue({ admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour, tracks: tracks.map((t, i) => ({ tags: t.tags, joinedToPrev: i > 0 && !!t.set && t.set.id === tracks[i - 1]!.set?.id })) });
-      if (ad) out = [...tracks.slice(0, ad.index), ad.item, ...tracks.slice(ad.index)];
+      const boundaries = breakBoundariesEnabled();
+      // With boundaries on, voice segments are already in `out`; the ad is placed against the tracks only and spliced in by position.
+      const { positions, flags } = boundaryFlags(out as MixedItem[]);
+      const trackItems = positions.map((i) => out[i] as (typeof tracks)[number]);
+      const ad = await adForQueue({
+        admin, userId: user?.id ?? null, state: parseAdState(sp), language: lang, hour: clock.hour,
+        tracks: trackItems.map((t, i) => ({ tags: t.tags, joinedToPrev: i > 0 && !!t.set && t.set.id === trackItems[i - 1]!.set?.id, boundaryBefore: flags[i] })),
+        boundariesOnly: boundaries,
+        inAppShell: parseAppShell(req.headers.get("user-agent")) !== null,
+      });
+      if (ad) {
+        const at = positions[ad.index] ?? out.length;
+        out = [...out.slice(0, at), ad.item, ...out.slice(at)];
+      }
     } catch { /* ads are optional: serve the plain queue */ }
-  }
-  if (voiceLinksEnabled() && out.length > 1) {
+  };
+  const applyVoice = () => {
+    if (!(voiceLinksEnabled() && out.length > 1)) return;
     try {
       // Spoken links are static files; they go in after any ad so the two never touch.
       const slots = out.map((t, i) => ({ language: t.language, type: "type" in t ? t.type : undefined, kind: "kind" in t ? t.kind : undefined, joinedToPrev: i > 0 && "set" in t && !!t.set && "set" in out[i - 1]! && (out[i - 1] as { set?: { id: string } }).set?.id === t.set.id }));
       const v = pickVoice([...VOICE_LINES, ...programmeLines(), ...almanacLines()], slots, { hour: clock.hour, language: lang, state: parseVoiceState(sp), timeChecks: timeChecksEnabled(), almanacIds: almanacIdsFor(new Date().getUTCFullYear(), clock.month, clock.day) });
       if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
     } catch { /* voice links are optional: serve the queue as it is */ }
-  }
+  };
+  // ADS_BREAK_BOUNDARIES=1 needs the voice segments placed first so a break can follow a programme or Almanac segment.
+  if (breakBoundariesEnabled()) { applyVoice(); await applyAds(); } else { await applyAds(); applyVoice(); }
   return NextResponse.json({ tracks: out }, prior ? { headers: { "x-station-taste": "applied" } } : undefined);
 }
