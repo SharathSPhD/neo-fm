@@ -28,6 +28,8 @@ The CMA already routes jobs (language, tier, flags). Add a **policy table** (`ha
 - **Promote**: only through the eval gate. A bandit may reallocate traffic between already-gated arms; it never invents a prod prompt. A GEPA-style proposer can write candidate prompts into a queue, but each still needs the gate.
 - **Safety**: moderation, no voice cloning and the spend guards sit outside the policy; the policy cannot disable them. Kill switch is the existing flag (unset to fall back to the champion).
 
+**Migration safety:** the read path must degrade gracefully. If `harness_policy` is missing or empty, the CMA uses today's env flags (`PCE_HARNESS_REFS`, etc.) unchanged, so code can merge before S applies the migration.
+
 **Policy row shape** (language x tier -> arm): `{language, tier, arm_id, model, exemplars, playbook, drafts_k, challenger_arm, challenger_share, a, b}`. `model` lets the premium lyrics work (Opus/Sonnet tiers) be an arm like any other, judged and promoted through the same gate; tier is part of the context, so a Pro polish model never leaks to Free.
 
 ## 5. Online, user-specific tuning
