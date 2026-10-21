@@ -1,9 +1,9 @@
-/** GET /api/admin/ads[?days=7] -- house-ad starts, completes and taps per slot (Bearer admin). Read-only; empty before migration 0099. */
+/** GET /api/admin/ads[?days=7] -- house-ad starts, completes and taps per slot, spot inventory by language and daypart with a modelled sponsor value, and the next-day-return guardrail (Bearer admin). Read-only; empty before migration 0099. */
 import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
-import { retentionGuardrail, summarizeAds } from "../../../../lib/ops/ads-report";
+import { adInventory, retentionGuardrail, summarizeAds } from "../../../../lib/ops/ads-report";
 import { inAdHoldout } from "../../../../lib/station/ads";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   try {
     const [slots, events] = await Promise.all([
       db.from("ad_slots").select("id,headline,kind,languages,active").limit(200),
-      db.from("ad_events").select("slot_id,event").gte("created_at", since).limit(20_000),
+      db.from("ad_events").select("slot_id,event,created_at").gte("created_at", since).limit(20_000),
     ]);
     // A missing table reads as an empty report, so the panel can ship before the migration.
     if (slots.error || events.error) return NextResponse.json({ window_days: days, slots: [] });
@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       window_days: days,
       slots: summarizeAds((slots.data ?? []) as never, (events.data ?? []) as never),
+      inventory: adInventory((slots.data ?? []) as never, (events.data ?? []) as never, days),
       retention_guardrail: guardrail,
     });
   } catch {
