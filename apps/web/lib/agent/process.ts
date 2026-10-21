@@ -15,6 +15,7 @@ import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
 import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
+import { lyricGradesEnabled, gradeFromMetadata, modelForGrade } from "../lyrics/grade";
 import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
@@ -224,7 +225,10 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
         const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
         // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts); off by default.
-        const premiumModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
+        // LYRIC_GRADES=1: the grade the listener spent a credit on (set at request time) decides the model, and the env list is not consulted.
+        const premiumModel = lyricGradesEnabled()
+          ? modelForGrade(gradeFromMetadata(doc.document_json.metadata))
+          : premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
         const refsCtx = refsLangs.includes(langCode(doc.language)) || premiumModel
           ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language))
           : null;

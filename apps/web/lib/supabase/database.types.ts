@@ -998,6 +998,22 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: string
       }
+      grant_lyric_addon: {
+        Args: { p_grade: string; p_session_id: string; p_songs: number; p_user_id: string }
+        Returns: undefined
+      }
+      lyric_grade_state: {
+        Args: { p_since: string; p_user_id: string }
+        Returns: { grade: string; allowance_used: number; addon_left: number }[]
+      }
+      spend_lyric_grade: {
+        Args: { p_allowance: number; p_grade: string; p_ref: string; p_since: string; p_user_id: string }
+        Returns: string
+      }
+      refund_lyric_grade: {
+        Args: { p_ref: string; p_user_id: string }
+        Returns: undefined
+      }
       grant_song_pack: {
         Args: { p_session_id: string; p_sku: string; p_songs: number; p_user_id: string }
         Returns: undefined

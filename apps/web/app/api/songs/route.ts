@@ -49,6 +49,8 @@ import { getLogger } from "../../../lib/obs/log";
 import { requireUser } from "../../../lib/supabase/auth";
 import { createServiceRoleClient } from "../../../lib/supabase/server";
 import { groupIdFor } from "../../../lib/song/language-version";
+import type { UserTier } from "../../../lib/agent/tiers";
+import { lyricGradesEnabled, readGradeBalance, refundGrade, resolveGrade, spendGrade, type PaidGrade } from "../../../lib/lyrics/grade";
 import { normaliseTaste, tasteBriefEnabled, tasteScreenText } from "../../../lib/taste/brief";
 import type { Json } from "../../../lib/supabase/database.types";
 
@@ -298,6 +300,24 @@ export async function POST(request: NextRequest) {
   // The DGX worker's PWM sidecar reads metadata.prompt and generates
   // section lyrics before calling music-inference. The prompt never reaches
   // the music model directly — only the generated lyrics do.
+  const trace_id = randomUUID();
+  const attempt_id = randomUUID();
+
+  // LYRIC_GRADES=1: Premium/Studio lyrics are spent from the listener's allowance or add-on credit before the job exists,
+  // and given back if the job cannot be created. Any ledger problem leaves the song Standard.
+  let gradeSpent: { db: ReturnType<typeof createServiceRoleClient>; ref: string } | null = null;
+  let lyricGrade: "standard" | PaidGrade = "standard";
+  if (parsed.data.prompt && lyricGradesEnabled()) {
+    const db = createServiceRoleClient();
+    const { data: urow } = await db.from("users").select("tier").eq("id", user.id).maybeSingle();
+    const tier = ((urow as { tier?: UserTier } | null)?.tier ?? "free") as UserTier;
+    const granted = resolveGrade(tier, parsed.data.lyric_grade, song_document.language, await readGradeBalance(db, user.id));
+    if (granted !== "standard" && (await spendGrade(db, user.id, tier, granted, attempt_id))) {
+      lyricGrade = granted;
+      gradeSpent = { db, ref: attempt_id };
+    }
+  }
+
   if (parsed.data.prompt) {
     song_document = {
       ...song_document,
@@ -306,6 +326,7 @@ export async function POST(request: NextRequest) {
         prompt: parsed.data.prompt,
         ...(parsed.data.voice ? { voice: parsed.data.voice } : {}),
         ...(taste ? { taste } : {}),
+        ...(lyricGrade !== "standard" ? { lyric_grade: lyricGrade } : {}),
       },
     };
   }
@@ -313,8 +334,6 @@ export async function POST(request: NextRequest) {
   // ----- 2. atomic create_song_job RPC ----------------------------------
   // Bundles: per-user advisory lock, quota check, song_document insert,
   // jobs insert, pgmq enqueue. All-or-nothing.
-  const trace_id = randomUUID();
-  const attempt_id = randomUUID();
 
   const { data: rpcData, error: rpcErr } = await supabase.rpc(
     "create_song_job",
@@ -330,6 +349,7 @@ export async function POST(request: NextRequest) {
     } as never,
   );
 
+  if (rpcErr && gradeSpent) await refundGrade(gradeSpent.db, user.id, gradeSpent.ref);
   if (rpcErr) {
     const msg = rpcErr.message ?? "";
     // Quota and capacity rejections are expected outcomes; anything else is a fault worth a log line.
@@ -391,6 +411,7 @@ export async function POST(request: NextRequest) {
   // create_song_job returns SETOF (...); supabase-js wraps that as a single
   // array. Defensive-pick the first row.
   const row = Array.isArray(rpcData) ? rpcData[0] : null;
+  if (!row && gradeSpent) await refundGrade(gradeSpent.db, user.id, gradeSpent.ref);
   if (!row) {
     return NextResponse.json(
       { error: "create_song_job_failed" },
@@ -423,6 +444,7 @@ export async function POST(request: NextRequest) {
       status: row.status,
       song_id: row.song_id,
       ...(versionLinked === false ? { warning: "version_link_failed" } : {}),
+      ...(parsed.data.lyric_grade && lyricGradesEnabled() ? { lyric_grade: lyricGrade } : {}),
     },
     { status: 202 },
   );
