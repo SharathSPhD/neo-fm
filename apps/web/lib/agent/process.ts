@@ -19,7 +19,7 @@ import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
-import { extractIntent, intentBlock, lyriaFragment, styleOnly, type IntentSpec } from "../engine/intent";
+import { extractIntent, intentBlock, lyriaFragment, styleOnly, styleRoutingOn, type IntentSpec } from "../engine/intent";
 import { languageNote } from "../engine/lang-notes";
 import { judgeAndRetry } from "../engine/judge";
 import { voiceChoiceFor, voiceHint } from "../voice";
@@ -184,7 +184,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       let postRenderFrom = 0;
       const intent = process.env.PCE_INTENT === "1" ? await timed("intent", () => intentFor(db, job.song_document_id, doc)) : undefined;
       // PCE_STYLES: route the style without a model call; ignored when the full intent is on (it already carries the genre).
-      const styled = !intent && process.env.PCE_STYLES === "1" ? styleOnly({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }) : null;
+      const styled = !intent && styleRoutingOn(doc.language) ? styleOnly({ prompt: doc.document_json.metadata?.prompt ?? "", language: doc.language, styleFamily: doc.style_family }) : null;
       // PCE_LANG_NOTES: per-language craft note (Marathi); off until it wins the eval gate.
       const langNote = process.env.PCE_LANG_NOTES === "1" ? languageNote(doc.language) : "";
       if (styled) trace.push(`styles routed genre=${styled.genre || "none"}`);
