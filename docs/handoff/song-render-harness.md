@@ -73,3 +73,21 @@ Kannada occ-kn-1: Claude romanization 97/99 against 63/60 for the current native
 
 ## E7 (2026-10-20): Tamil and Telugu confirmed on a second brief
 occ-ta-2 and occ-te-2 with Claude-romanized lyrics, 2 renders each, sung-word match against native text: Tamil 93/98, Telugu 98/96. With E5, Tamil and Telugu are 93-100 over two briefs each, against about 65 for the current input; Kannada 97/99 (E6). AI-scored, small samples; accent and naturalness are unjudged (the Gemini flash single-listen rated everything 5/5).
+
+## E8 free audio scores (2026-10-21): stock (a) vs catalog cue (c), kn/hi, 7 clips
+Scored with the open stack (Audiobox aesthetics CE/CU/PC/PQ; laion/larger_clap_music; the Music Arena preference head from #426, logit = head score difference). Run on CPU in a cloud session, nothing paid. Diction is the stored Gemini sung-word match. Head accuracy is only 61.5% held out, so read the preference column as a weak signal, not a verdict.
+
+| pair | diction a / c | Audiobox CE c-a | CU | PC | PQ | pref logit c-a | CLAP cos(a,c) |
+|---|---|---|---|---|---|---|---|
+| kn-1 | 62 / 66 | +0.15 | -0.03 | -0.23 | +0.09 | -0.49 | 0.971 |
+| kn-2 | 60 / 66 | -0.15 | -0.03 | +0.22 | -0.09 | -0.11 | 0.993 |
+| hi-2 | 95 / 97 | +0.13 | +0.04 | +0.26 | +0.11 | -0.72 | 0.986 |
+| hi-1 | 96 (a only) | | | | | | |
+
+Reading:
+- The catalog cue barely changes how the song sounds overall: CLAP similarity between a and c is 0.97 to 0.99 in all three pairs.
+- Diction is higher for c in all three pairs (+4, +6, +2). That is the only consistent signal, and it is within the render-to-render spread seen in E2 (several points on repeats), so 3 pairs do not prove it.
+- Audiobox is mixed: hi-2 improves on all four axes (small), kn-1 and kn-2 move in opposite directions. All differences are under 0.3 on a 10-point scale, near the noise of repeat renders.
+- The preference head leans slightly toward stock in all three pairs (c less preferred, logit -0.1 to -0.7, about 32% to 47% for c). With 61.5% head accuracy and 3 pairs this is not evidence against c either.
+- CLAP text similarity to an English style prompt is about 0 for every clip (as in the pool), so it cannot rank these.
+- Net: no free score separates stock from catalog cue beyond noise. Keep deciding on diction plus a validated blind pairwise listen, and only count it if it picks the same slot in both orders.
