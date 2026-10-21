@@ -49,6 +49,7 @@ import { getLogger } from "../../../lib/obs/log";
 import { requireUser } from "../../../lib/supabase/auth";
 import { createServiceRoleClient } from "../../../lib/supabase/server";
 import { groupIdFor } from "../../../lib/song/language-version";
+import { normaliseTaste, tasteBriefEnabled, tasteScreenText } from "../../../lib/taste/brief";
 import type { Json } from "../../../lib/supabase/database.types";
 
 export const dynamic = "force-dynamic";
@@ -189,6 +190,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Taste brief (TASTE_BRIEF=1): its free-text background is screened like the prompt, before any job exists.
+  const taste = tasteBriefEnabled() && parsed.data.prompt ? normaliseTaste(parsed.data.taste) : null;
+  if (taste) {
+    const text = tasteScreenText(taste);
+    const verdict = text ? await screenRequest(text, "brief", { lang: parsed.data.language }) : null;
+    if (verdict && !verdict.allowed) {
+      return NextResponse.json(
+        { error: "content_policy", category: verdict.category, message: verdict.reason },
+        { status: verdict.category === "moderation_unavailable" ? 503 : 422 },
+      );
+    }
+  }
+
   // New-language version: the parent must be visible to the caller (RLS: own,
   // or published) and in a different language. Checked before any job exists.
   let versionParent: { id: string; version_group: string | null } | null = null;
@@ -291,6 +305,7 @@ export async function POST(request: NextRequest) {
         ...(song_document.metadata ?? {}),
         prompt: parsed.data.prompt,
         ...(parsed.data.voice ? { voice: parsed.data.voice } : {}),
+        ...(taste ? { taste } : {}),
       },
     };
   }

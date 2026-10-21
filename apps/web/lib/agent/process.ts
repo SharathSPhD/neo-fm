@@ -32,6 +32,7 @@ import { bestOfEnabled, bestOfOptions } from "../render/config";
 import { dictionScorer } from "../render/scorers";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
 import { hasPersonalizationConsent, loadTaste } from "../personalization/load";
+import { tasteBriefEnabled, tasteBriefText, tasteFromMetadata, tasteStyleHint } from "../taste/brief";
 import { tagMp3 } from "../audio/id3-tag";
 import { siteBase } from "../social/site";
 import { embedEngine, embedderUsed, safeEmbedUrl } from "./embed-url";
@@ -165,7 +166,11 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         planForTier((userRow?.tier as UserTier | undefined) ?? "free", (userRow as { agent_plan?: string | null } | null)?.agent_plan),
         hasPass,
       );
-      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string; voice?: unknown }; target_duration_seconds?: number } };
+      const doc = docRow as { language: string; style_family: string; document_json: { metadata?: { prompt?: string; voice?: unknown; taste?: unknown }; target_duration_seconds?: number } };
+      // TASTE_BRIEF: the listener's own genre/mood/instrument picks ride with the prompt to lyrics and, as a sound hint, to the render.
+      const taste = tasteBriefEnabled() ? tasteFromMetadata(doc.document_json.metadata) : null;
+      const tasteText = taste ? tasteBriefText(taste) : "";
+      const tasteStyle = taste ? tasteStyleHint(taste) : "";
       let tasteCard = "";
       try { if (await hasPersonalizationConsent(db, job.user_id)) tasteCard = (await loadTaste(db, job.user_id)).card; } catch { /* personalization is optional */ }
       // Per-stage wall-clock (ms) for job_telemetry.metrics.stages_ms. Only stages observed in this tick are recorded.
@@ -193,7 +198,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
       const brief = {
         language: doc.language, styleFamily: doc.style_family,
         targetSeconds: doc.document_json.target_duration_seconds ?? 30,
-        prompt: doc.document_json.metadata?.prompt ?? "",
+        prompt: [doc.document_json.metadata?.prompt ?? "", tasteText].filter(Boolean).join("\n\n"),
         tasteCard: tasteCard || undefined,
         engine: embedEngine(job.id),
         intent,
@@ -213,7 +218,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         if (!v.allowed) throw new SafetyRefusal(v.reason);
         // The structured intent (PCE_INTENT) is extracted once per job; polish sees it as part of the brief and the judge reads against it.
         const savedIntent = brief.intent;
-        const polishBrief = savedIntent ? `${doc.document_json.metadata?.prompt ?? ""}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${doc.document_json.metadata?.prompt ?? ""}\n${styled?.note || langNote}` : doc.document_json.metadata?.prompt ?? "";
+        const polishBrief = savedIntent ? `${brief.prompt}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${brief.prompt}\n${styled?.note || langNote}` : brief.prompt;
         // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
         // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
         const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
@@ -262,7 +267,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         if (claudeRomanLanguages().has(doc.language)) log(claudeRoman ? `claude-roman used lang=${doc.language} sample=${romanSample(claudeRoman)}` : `claude-roman fallback lang=${doc.language}`);
         const sung = claudeRoman ?? (ss?.romanized ? ss.text : a.lyrics);
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
-        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
+        const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, tasteStyle, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });
         // The gender cue is followed about 5 times in 6 (docs/voice-diversity.md), so a paid choice is checked and re-rendered once on a miss.
         const renderChecked = async () => (await renderWithVoiceCheck(voice.choice, render, (r) => judgeLeadGender(r.audio, r.mimeType, geminiKey))).result;
         // RENDER_BEST_OF (default off): re-render once when the first take sings the lyrics badly, keep the better. Retries go through the same spend guard.

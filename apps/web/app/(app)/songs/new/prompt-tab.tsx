@@ -12,7 +12,10 @@ import { createBrowserSupabase } from "@/lib/supabase/client";
 
 import { duetHeld, type VoiceChoice } from "@/lib/voice";
 
+import type { TasteBrief } from "@/lib/taste/brief";
+
 import { FirstRunGuide } from "./first-run-guide";
+import { TastePanel } from "./taste-panel";
 
 type StyleFamily =
   | "western"
@@ -71,7 +74,7 @@ const VOICE_LABEL_KEY = {
 
 const GUIDE_DISMISSED_KEY = "neo-fm:first-run-dismissed";
 
-export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices }: { voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
+export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [], voiceChoices, tasteBrief = false, englishMain = false }: { tasteBrief?: boolean; englishMain?: boolean; voiceChoices?: readonly VoiceChoice[]; showGuide?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: Language } }) {
   const router = useRouter();
   const { t, lang: uiLang } = useUiLang();
   // An idea chosen on /ideas pre-fills the box and skips the first-run guide (the choice is already made).
@@ -83,6 +86,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
   const [language, setLanguage] = useState<Language>(initialIdea?.language ?? "hi");
   const [duration, setDuration] = useState<Duration>(30);
   const [voice, setVoice] = useState<VoiceChoice>("station");
+  const [taste, setTaste] = useState<TasteBrief | undefined>();
   const shownVoices = voiceChoices?.filter((c) => !(c === "duet" && duetHeld(language)));
   const voiceNow: VoiceChoice = shownVoices?.includes(voice) ? voice : "station";
   const [error, setError] = useState<string | null>(null);
@@ -100,7 +104,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
   // Seed the song language from the saved UI language the first time the
   // guide mounts, so a returning visitor who chose Tamil lands on Tamil.
   useEffect(() => {
-    if (showGuide && !initialIdea && isUiLang(uiLang) && uiLang !== "en") {
+    if (showGuide && !initialIdea && isUiLang(uiLang) && (uiLang !== "en" || englishMain)) {
       setLanguage(uiLang);
       if (!styleTouched) setStyleFamily(DEFAULT_STYLE[uiLang]);
     }
@@ -144,6 +148,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
         style_family: styleFamily,
         target_duration_seconds: duration,
         ...(voiceNow !== "station" ? { voice: { choice: voiceNow } } : {}),
+        ...(tasteBrief && taste ? { taste } : {}),
       }),
     });
 
@@ -277,7 +282,7 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
             onChange={(e) => { const l = e.target.value as Language; setLanguage(l); if (!styleTouched) setStyleFamily(DEFAULT_STYLE[l]); }}
             className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base outline-hidden focus:border-accent"
           >
-            {LANGUAGE_OPTIONS.map((o) => (
+            {(englishMain ? [...LANGUAGE_OPTIONS].sort((a, b) => Number(b.value === "en") - Number(a.value === "en")) : LANGUAGE_OPTIONS).map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>
@@ -311,6 +316,8 @@ export function PromptTab({ showGuide = false, initialIdea, extraLanguages = [],
           </select>
         </div>
       </div>
+
+      {tasteBrief ? <TastePanel onChange={setTaste} /> : null}
 
       {voiceChoices ? (
         <div className="flex flex-col gap-1.5 sm:max-w-xs">
