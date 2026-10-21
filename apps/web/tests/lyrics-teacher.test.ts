@@ -23,9 +23,11 @@ describe("planTeacher", () => {
     const hi = planTeacher({ model: "claude-sonnet-5-5", max_usd: 99, jobs: [job("a")] });
     expect(hi.ok && hi.plan.maxUsd).toBe(6);
   });
-  it("caps max_tokens at 800 and rejects bad job fields", () => {
+  it("caps max_tokens at 800 (2500 for Haiku, whose thinking counts against it) and rejects bad job fields", () => {
     const r = planTeacher({ model: "claude-haiku-5-5", max_tokens: 9999, jobs: [job("a", 1)] });
-    expect(r.ok && r.plan.maxTokens).toBe(800);
+    expect(r.ok && r.plan.maxTokens).toBe(2500);
+    const s = planTeacher({ model: "claude-sonnet-5-5", max_tokens: 9999, jobs: [job("a", 1)] });
+    expect(s.ok && s.plan.maxTokens).toBe(800);
     expect(planTeacher({ model: "claude-haiku-5-5", jobs: [{ id: "", prompt: "x", n: 1 }] }).ok).toBe(false);
     expect(planTeacher({ model: "claude-haiku-5-5", jobs: [{ id: "a", prompt: "x", n: 9 }] }).ok).toBe(false);
   });
