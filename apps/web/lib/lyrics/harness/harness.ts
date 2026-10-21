@@ -52,10 +52,10 @@ export interface HarnessDeps {
 
 export interface HarnessResult { lyrics: string; trace: string[] }
 /** The corpus context appended to the polish brief: craft notes for the language plus judge-picked exemplars ("" when neither exists). */
-export function refsContext(input: { language: string; style: string; brief: string }, exemplars: number, playbook: string): { text: string; exemplars: number } {
+export function refsContext(input: { language: string; style: string; brief: string }, exemplars: number, playbook: string): { text: string; exemplars: number; ids: string[] } {
   const ex = exemplars > 0 ? retrieveExemplars(input, exemplars) : [];
   const text = [playbook && `CRAFT NOTES (${input.language}; distilled from lyrics that judges preferred):\n${playbook}`, exemplarBlock(ex)].filter(Boolean).join("\n\n");
-  return { text, exemplars: ex.length };
+  return { text, exemplars: ex.length, ids: ex.map((e) => e.id) };
 }
 
 const CRITIC_MODEL = "claude-sonnet-5-5";
@@ -65,7 +65,7 @@ export async function runHarness(cfg: HarnessConfig, input: HarnessInput, deps: 
   const playbook = cfg.playbook ? (input.playbook || playbookFor(input.language)) : "";
   const ctx = refsContext(input, cfg.exemplars, playbook);
   const brief = ctx.text ? `${input.brief}\n\n${ctx.text}` : input.brief;
-  if (ctx.exemplars || playbook) trace.push(`context: ${ctx.exemplars} exemplars${playbook ? " + playbook" : ""}`);
+  if (ctx.exemplars || playbook) trace.push(`context: ${ctx.exemplars} exemplars${ctx.ids.length ? ` [${ctx.ids.join(",")}]` : ""}${playbook ? " + playbook" : ""}`);
 
   const refine = async (first: string): Promise<string> => {
     let cur = first;

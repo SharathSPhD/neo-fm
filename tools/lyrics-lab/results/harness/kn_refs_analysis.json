@@ -1,0 +1,252 @@
+{
+ "summary": {
+  "exemplar_det_mean": 88.7,
+  "shortlist_det_mean": 52.0,
+  "shortlist_by_author": {
+   "Vachanakaras (12c Sharanas)": [
+    40,
+    53.7
+   ],
+   "Kanaka Dasa": [
+    40,
+    51.7
+   ],
+   "Nagachandra": [
+    40,
+    50.5
+   ],
+   "Purandara Dasa": [
+    3,
+    55.9
+   ],
+   "Muddana": [
+    3,
+    47.5
+   ],
+   "Nagarasa": [
+    1,
+    56.3
+   ],
+   "Sri Vijaya": [
+    1,
+    41.7
+   ],
+   "Sarvajna": [
+    1,
+    57.3
+   ]
+  },
+  "shortlist_tier": {
+   "B": 80,
+   "A": 49
+  },
+  "det_vs_margin_pearson_n3plus": [
+   6,
+   0.45
+  ]
+ },
+ "n_briefs": 12,
+ "briefs": [
+  {
+   "id": "kn-f3",
+   "margin": 9,
+   "ex": [
+    "kn-3c9770dd79",
+    "kn-5222c17d32",
+    "kn-12ba73453f"
+   ]
+  },
+  {
+   "id": "kn-f1",
+   "margin": 3.75,
+   "ex": [
+    "kn-596bc9270c",
+    "kn-5222c17d32",
+    "kn-da7b067e91"
+   ]
+  },
+  {
+   "id": "kn-f2",
+   "margin": 3.0,
+   "ex": [
+    "kn-596bc9270c",
+    "kn-da7b067e91",
+    "kn-00f56497af"
+   ]
+  },
+  {
+   "id": "kn-f6",
+   "margin": 9.75,
+   "ex": [
+    "kn-da7b067e91",
+    "kn-00f56497af",
+    "kn-6b5d6c2de2"
+   ]
+  },
+  {
+   "id": "kn-f4",
+   "margin": 9.25,
+   "ex": [
+    "kn-dca382b759",
+    "kn-da7b067e91",
+    "kn-00f56497af"
+   ]
+  },
+  {
+   "id": "kn-f5",
+   "margin": 8.75,
+   "ex": [
+    "kn-5222c17d32",
+    "kn-da7b067e91",
+    "kn-596bc9270c"
+   ]
+  },
+  {
+   "id": "kn-f9",
+   "margin": 0.25,
+   "ex": [
+    "kn-5222c17d32",
+    "kn-6b5d6c2de2",
+    "kn-75e078fe52"
+   ]
+  },
+  {
+   "id": "kn-f7",
+   "margin": 4.75,
+   "ex": [
+    "kn-00f56497af",
+    "kn-082772f2ad",
+    "kn-12ba73453f"
+   ]
+  },
+  {
+   "id": "kn-f10",
+   "margin": 6,
+   "ex": [
+    "kn-6b5d6c2de2",
+    "kn-263e974a48",
+    "kn-dca382b759"
+   ]
+  },
+  {
+   "id": "kn-f8",
+   "margin": 6.5,
+   "ex": [
+    "kn-5222c17d32",
+    "kn-cbad972a2e",
+    "kn-dca382b759"
+   ]
+  },
+  {
+   "id": "kn-f12",
+   "margin": 5.5,
+   "ex": [
+    "kn-dca382b759",
+    "kn-5222c17d32",
+    "kn-da7b067e91"
+   ]
+  },
+  {
+   "id": "kn-f11",
+   "margin": 6.25,
+   "ex": [
+    "kn-78a017968c",
+    "kn-b9230c87c5",
+    "kn-5222c17d32"
+   ]
+  }
+ ],
+ "per_exemplar": [
+  {
+   "id": "kn-3c9770dd79",
+   "n": 1,
+   "mean_margin": 9
+  },
+  {
+   "id": "kn-12ba73453f",
+   "n": 2,
+   "mean_margin": 6.88
+  },
+  {
+   "id": "kn-dca382b759",
+   "n": 4,
+   "mean_margin": 6.81
+  },
+  {
+   "id": "kn-00f56497af",
+   "n": 4,
+   "mean_margin": 6.69
+  },
+  {
+   "id": "kn-da7b067e91",
+   "n": 6,
+   "mean_margin": 6.67
+  },
+  {
+   "id": "kn-cbad972a2e",
+   "n": 1,
+   "mean_margin": 6.5
+  },
+  {
+   "id": "kn-78a017968c",
+   "n": 1,
+   "mean_margin": 6.25
+  },
+  {
+   "id": "kn-b9230c87c5",
+   "n": 1,
+   "mean_margin": 6.25
+  },
+  {
+   "id": "kn-263e974a48",
+   "n": 1,
+   "mean_margin": 6
+  },
+  {
+   "id": "kn-5222c17d32",
+   "n": 7,
+   "mean_margin": 5.71
+  },
+  {
+   "id": "kn-6b5d6c2de2",
+   "n": 3,
+   "mean_margin": 5.33
+  },
+  {
+   "id": "kn-596bc9270c",
+   "n": 3,
+   "mean_margin": 5.17
+  },
+  {
+   "id": "kn-082772f2ad",
+   "n": 1,
+   "mean_margin": 4.75
+  },
+  {
+   "id": "kn-75e078fe52",
+   "n": 1,
+   "mean_margin": 0.25
+  }
+ ],
+ "exemplars_never_retrieved": [
+  "kn-d684b1d35e",
+  "kn-caede4e661",
+  "kn-1b927dd260",
+  "kn-fae4b27ab8",
+  "kn-a74507e4ff",
+  "kn-e8c757e3c6",
+  "kn-4fc41bfafe",
+  "kn-6f70e755fe",
+  "kn-5518a664e5",
+  "kn-895b22a00b",
+  "kn-67bed08c2f",
+  "kn-ae126d4d33",
+  "kn-36c06f81b4",
+  "kn-9b466115df",
+  "kn-6f6e6a99e1",
+  "kn-6125e47332",
+  "kn-baf3b3d2ea"
+ ],
+ "n_exemplars": 31,
+ "shortlist_n": 129
+}
