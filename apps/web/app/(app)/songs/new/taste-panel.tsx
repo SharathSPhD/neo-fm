@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { tasteLabel } from "@/lib/taste/labels";
 import {
   BACKGROUND_MAX_CHARS,
   TASTE_ENERGY,
@@ -19,7 +20,7 @@ import {
 const STORAGE_KEY = "neo-fm:taste-brief";
 const MAX_PICKS = 4;
 
-function Chips({ label, options, value, onChange }: { label: string; options: readonly string[]; value: readonly string[]; onChange: (next: string[]) => void }) {
+function Chips({ label, options, value, onChange, show }: { show: (token: string) => string; label: string; options: readonly string[]; value: readonly string[]; onChange: (next: string[]) => void }) {
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className="text-xs uppercase tracking-widest text-foreground/50">{label}</legend>
@@ -38,7 +39,7 @@ function Chips({ label, options, value, onChange }: { label: string; options: re
                 on ? "border-accent bg-accent/15 text-accent" : "border-foreground/15 text-foreground/70 hover:border-foreground/30",
               ].join(" ")}
             >
-              {o}
+              {show(o)}
             </button>
           );
         })}
@@ -47,13 +48,13 @@ function Chips({ label, options, value, onChange }: { label: string; options: re
   );
 }
 
-function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: readonly string[] }) {
+function Select({ label, value, onChange, options, show }: { show: (token: string) => string; label: string; value: string; onChange: (v: string) => void; options: readonly string[] }) {
   return (
     <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/50">
       {label}
       <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2 text-sm normal-case tracking-normal text-foreground outline-hidden focus:border-accent">
         <option value="">-</option>
-        {options.map((o) => <option key={o} value={o}>{o}</option>)}
+        {options.map((o) => <option key={o} value={o}>{show(o)}</option>)}
       </select>
     </label>
   );
@@ -64,7 +65,8 @@ function Select({ label, value, onChange, options }: { label: string; value: str
  * change, and remembers the last choice in this browser only, so the next song starts from it.
  */
 export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefined) => void }) {
-  const { t } = useUiLang();
+  const { t, lang } = useUiLang();
+  const show = (token: string) => tasteLabel(token, lang);
   const [genres, setGenres] = useState<string[]>([]);
   const [moods, setMoods] = useState<string[]>([]);
   const [instruments, setInstruments] = useState<string[]>([]);
@@ -137,14 +139,14 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
       <summary className="cursor-pointer text-sm font-medium">{t("taste.title")}</summary>
       <div className="mt-4 flex flex-col gap-5">
         <p className="text-xs text-foreground/50 leading-relaxed">{t("taste.hint")}</p>
-        <Chips label={t("taste.genres")} options={TASTE_GENRES} value={genres} onChange={setGenres} />
-        <Chips label={t("taste.moods")} options={TASTE_MOODS} value={moods} onChange={setMoods} />
-        <Chips label={t("taste.instruments")} options={TASTE_INSTRUMENTS} value={instruments} onChange={setInstruments} />
-        <Chips label={t("taste.era")} options={TASTE_ERAS} value={eras} onChange={setEras} />
+        <Chips show={show} label={t("taste.genres")} options={TASTE_GENRES} value={genres} onChange={setGenres} />
+        <Chips show={show} label={t("taste.moods")} options={TASTE_MOODS} value={moods} onChange={setMoods} />
+        <Chips show={show} label={t("taste.instruments")} options={TASTE_INSTRUMENTS} value={instruments} onChange={setInstruments} />
+        <Chips show={show} label={t("taste.era")} options={TASTE_ERAS} value={eras} onChange={setEras} />
         <div className="grid gap-4 sm:grid-cols-3">
-          <Select label={t("taste.energy")} value={energy} onChange={setEnergy} options={TASTE_ENERGY} />
-          <Select label={t("taste.register")} value={register} onChange={setRegister} options={TASTE_REGISTERS} />
-          <Select label={t("taste.setting")} value={setting} onChange={setSetting} options={TASTE_SETTINGS} />
+          <Select show={show} label={t("taste.energy")} value={energy} onChange={setEnergy} options={TASTE_ENERGY} />
+          <Select show={show} label={t("taste.register")} value={register} onChange={setRegister} options={TASTE_REGISTERS} />
+          <Select show={show} label={t("taste.setting")} value={setting} onChange={setSetting} options={TASTE_SETTINGS} />
         </div>
         <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/50">
           {t("taste.background")}
