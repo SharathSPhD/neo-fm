@@ -15,6 +15,8 @@ import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
 import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
+import { EMPTY_INTAKE, intakeBrief, loadIntake, saveIntake, selectionFromBrief, type IntakeSelection } from "@/lib/station/intake";
+import { StationIntake } from "./station-intake";
 import { tagShareUrl } from "@/lib/share/tag";
 import { dedicateHourUrl } from "@/lib/station/dedicate";
 import { whatsappShareUrl } from "@/lib/station/share";
@@ -132,7 +134,7 @@ const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string; taste?: string } = {}) {
   const q = new URLSearchParams({ limit: "10" });
   if (language) q.set("lang", language);
   if (energy) q.set("energy", energy);
@@ -141,6 +143,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
   for (const [k, v] of Object.entries(extra.ads ?? {})) q.set(k, v);
   if (extra.station) q.set("station", extra.station);
+  if (extra.taste) q.set("taste", extra.taste);
   // The server programs by the listener's own clock; fall back silently if the browser will not say.
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -149,7 +152,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   return `/api/station/queue?${q}`;
 }
 
-export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null }) {
+export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = [], initialStation = "", dedicate = false, dedicatedTo = null, tasteIntake = false }: { anonymous?: boolean; extraLangs?: string[]; betaLangs?: string[]; initialStation?: string; dedicate?: boolean; dedicatedTo?: string | null; tasteIntake?: boolean }) {
   const extraKey = extraLangs.join(",");
   const LANGS = useMemo(() => [...BASE_LANGS, ...(extraKey ? extraKey.split(",") : [])], [extraKey]);
   // Anonymous listeners are not stored: no per-listener signals leave the browser.
@@ -174,6 +177,9 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   const [queueError, setQueueError] = useState(false);
   const [plays, setPlays] = useState(0);
   const [energy, setEnergy] = useState<Energy | null>(null);
+  // STATION_TASTE=1: the first-run intake (languages, moods, energy). The saved brief rides along with every queue request.
+  const [intake, setIntake] = useState<IntakeSelection>(EMPTY_INTAKE);
+  const tasteParam = useRef<string>("");
   // Refills read it through a ref so a chip tap never restarts the language effect.
   const energyRef = useRef<Energy | null>(null);
   const errorsInARow = useRef(0);
@@ -217,7 +223,7 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, ads: { ...adParams(), ...voiceParams() } }));
+      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, taste: tasteParam.current, ads: { ...adParams(), ...voiceParams() } }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -231,12 +237,17 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
   }, [adParams, voiceParams]);
 
   useEffect(() => {
+    if (tasteIntake) {
+      const brief = loadIntake();
+      tasteParam.current = brief ? JSON.stringify(brief) : "";
+      setIntake(selectionFromBrief(brief));
+    }
     const saved = loadPrefs();
     if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); setOnboarded(true); }
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
     setReady(true);
-  }, [LANGS, initialStation]);
+  }, [LANGS, initialStation, tasteIntake]);
 
   useEffect(() => {
     if (!ready || !onboarded) return;
@@ -511,6 +522,16 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
     </div>
   );
 
+  /** Keeps the intake in this browser, sends it with the queue, and saves it to the profile when signed in (no consent: browser copy only). */
+  function finishIntake() {
+    const brief = intakeBrief(intake);
+    saveIntake(brief);
+    tasteParam.current = brief ? JSON.stringify(brief) : "";
+    if (brief && !anonymous) {
+      void fetch("/api/me/taste/stated", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ taste: brief }) }).catch(() => undefined);
+    }
+  }
+
   async function shareStation() {
     const named = NAMED_STATIONS.find((n) => n.slug === station);
     if (!named) return;
@@ -544,7 +565,8 @@ export function StationPlayer({ anonymous = false, extraLangs = [], betaLangs = 
           ))}
         </div>
         {moodChips}
-        <button type="button" onClick={() => { setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-background">
+        {tasteIntake ? <StationIntake value={intake} onChange={setIntake} languageName={languageName} /> : null}
+        <button type="button" onClick={() => { if (tasteIntake) finishIntake(); setOnboarded(true); sendFunnelEvent("onboarding_done", { once: true }); }} className="self-start rounded-full bg-accent px-5 py-2.5 font-medium text-background">
           {t("station.setup.start")}
         </button>
       </section>

@@ -6,6 +6,7 @@ import { betaLanguages, minPool, stationChipLanguages } from "@/lib/languages/re
 import { admittedLanguageCounts } from "@/lib/station/pool";
 import { cleanDedicatee, dedicateEnabled } from "@/lib/station/dedicate";
 import { findStation } from "@/lib/station/named";
+import { stationTasteEnabled } from "@/lib/station/taste-bias";
 import { createServerClient } from "@/lib/supabase/server";
 
 import { StationPlayer } from "./station-player";
@@ -63,7 +64,7 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
           ? t("station.intro.anon")
           : t("station.intro.user")}
       </p>
-      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} />
+      <StationPlayer anonymous={anonymous} extraLangs={extraLangs} betaLangs={betaLanguages(extraLangs, process.env.LANG_REVIEWED)} initialStation={initialStation} dedicate={dedicate} dedicatedTo={dedicatedTo} tasteIntake={stationTasteEnabled()} />
     </main>
   );
 }

@@ -12,7 +12,8 @@
     "taste": "node taste.js",
     "week": "node week.js",
     "taste-save": "node taste-save.js",
-    "station-taste": "node station-taste.js"
+    "station-taste": "node station-taste.js",
+    "station-intake": "node station-intake.js"
   },
   "dependencies": {
     "playwright-core": "^1.64.1"

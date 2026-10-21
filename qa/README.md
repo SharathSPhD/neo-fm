@@ -18,6 +18,8 @@ npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.v
 
 `npm run station-taste` (staging, throwaway user) checks STATION_TASTE: with no saved profile the queue has no `x-station-taste` header; after saving a profile it is `applied` and tracks carrying a saved mood say so in their host line; after Forget it is gone. Needs STATION_TASTE on in staging and migration 0113. Reports info and exits 0 when the staging queue itself answers 5xx.
 
+`npm run station-intake` (staging, signed out, 390px) checks the first-run taste intake on /station: three rows, three taps pressed, the picks stored in the browser and sent as `taste=` (closed vocabularies, no free text), the queue answers `x-station-taste: applied`, and a junk `taste=` is ignored. Needs STATION_TASTE on in staging.
+
 `npm run week` (staging) checks /station/week and its API and share card, signed out and signed in at desktop and 390px. Needs STATION_WEEK on in staging.
 
 `npm run features` checks the dedicate-this-hour link (banner, name cleaning, WhatsApp link) and that the push opt-in endpoints respond, on prod, no login needed.
