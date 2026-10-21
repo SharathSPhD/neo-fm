@@ -7,10 +7,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
-<<<<<<< HEAD
 import { inAdHoldout } from "../../../../lib/station/ads";
-=======
->>>>>>> origin/main
 import { listeningReport } from "../../../../lib/ops/listening-report";
 
 export const dynamic = "force-dynamic";
@@ -58,7 +55,6 @@ export async function GET(req: NextRequest) {
   } catch { /* ad cells stay empty */ }
   if (slots.error || events.error) { slots = { data: [] }; events = { data: [] }; }
 
-<<<<<<< HEAD
   // Free signed-in listeners only: the holdout is defined for them (lib/station/ads.ts).
   const free = new Set<string>();
   try {
@@ -67,8 +63,5 @@ export async function GET(req: NextRequest) {
   } catch { /* no arm split */ }
   const armOf = (id: string) => (free.has(id) ? (inAdHoldout(id) ? "holdout" : "exposed") : null);
   const report = listeningReport(rows, trackLanguage, (events.data ?? []) as never, (slots.data ?? []) as never, days, armOf);
-=======
-  const report = listeningReport(rows, trackLanguage, (events.data ?? []) as never, (slots.data ?? []) as never, days);
->>>>>>> origin/main
   return NextResponse.json({ ...report, truncated: rows.length >= SIGNAL_CAP });
 }

@@ -137,7 +137,6 @@ export function adInventory(
     sponsorValueInr: { cpmLow: cpm.low, cpmHigh: cpm.high, low: value(cpm.low), high: value(cpm.high) },
   };
 }
-<<<<<<< HEAD
 
 export interface PassUpsellStats { slots: number; starts: number; completes: number; taps: number; tapRate: number | null }
 
@@ -156,5 +155,3 @@ export function passUpsellStats(
   }
   return { slots: pass.size, starts, completes, taps, tapRate: starts > 0 ? Math.round((taps / starts) * 1000) / 1000 : null };
 }
-=======
->>>>>>> origin/main
