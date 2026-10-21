@@ -38,3 +38,9 @@ Caveats: prompts that name tabla or dhol also name genres and other instruments,
 2. Paired instrument A/B above, then add a tested instrument line to the Lyria style text for carnatic and hindustani presets.
 3. Gate Tamil and Bengali (Tamil Wikisource is mostly post-1965 authors; needs a stricter list).
 4. Western English: add MusicBrainz/AcousticBrainz tag data (feature-only) and curated pre-1929 US popular songs from Library of Congress sheet music.
+
+## Song-form ref candidates (10-21)
+- `pad_refs.py`: hi pad/doha/kirtan pages from proofread Wikisource (Ratnakar 303, Kabir Granthavali 175+44, Bhramar-geet-sar 33, Vinay Patrika 20 ...), 588 pages with lyricmetrics det >= 60. Output `corpus/refs/hi.jsonl` (tier B).
+- kn: Wikisource proofread pages are scholarly prose; song-form comes from the gated main-namespace set. `corpus/refs/kn.jsonl` = 1315 units det >= 50, of which Kanaka Dasa kirtanas 264, mostly unrhymed vachanas otherwise. Purandara Dasa is only 4 pages on Wikisource: more kn kirtana volume needs a licensed source.
+- `wikisource_songs.py`: title-prefix extractor (finds almost nothing; the collections transclude Page-namespace text).
+- `wikidata_songs.py`: CC0 song facts; Indian-language coverage is thin (kn 3, hi 1, ta 10, te 11, ml 51, gu 565, en 8172). MusicBrainz/Saraga remain the metadata route for Indian film and raga facts.
