@@ -28,6 +28,7 @@ import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
+import { almanacIdsFor, almanacLines } from "@/lib/station/almanac";
 import { programmeLines } from "@/lib/station/programmes";
 import { parseVoiceState, pickVoice, timeChecksEnabled, voiceItem, voiceLinksEnabled, VOICE_LINES } from "@/lib/station/voice-links";
 import { arrangeSets, crossfadeFor, setsEnabled } from "@/lib/station/sets";
@@ -143,7 +144,7 @@ export async function GET(req: NextRequest) {
     try {
       // Spoken links are static files; they go in after any ad so the two never touch.
       const slots = out.map((t, i) => ({ language: t.language, type: "type" in t ? t.type : undefined, kind: "kind" in t ? t.kind : undefined, joinedToPrev: i > 0 && "set" in t && !!t.set && "set" in out[i - 1]! && (out[i - 1] as { set?: { id: string } }).set?.id === t.set.id }));
-      const v = pickVoice([...VOICE_LINES, ...programmeLines()], slots, { hour: clock.hour, language: lang, state: parseVoiceState(sp), timeChecks: timeChecksEnabled() });
+      const v = pickVoice([...VOICE_LINES, ...programmeLines(), ...almanacLines()], slots, { hour: clock.hour, language: lang, state: parseVoiceState(sp), timeChecks: timeChecksEnabled(), almanacIds: almanacIdsFor(new Date().getUTCFullYear(), clock.month, clock.day) });
       if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
     } catch { /* voice links are optional: serve the queue as it is */ }
   }
