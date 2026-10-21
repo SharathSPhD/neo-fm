@@ -11,11 +11,13 @@ import { createServerClient } from "@/lib/supabase/server";
 import { StationPlayer } from "./station-player";
 
 const TITLE = "Your personal 24/7 FM station";
-const DESCRIPTION = "Music tuned to your taste that never stops. Hindi, Tamil, Telugu, Kannada and Bengali first. All music is AI-generated.";
+const stationDescription = () =>
+  `Music tuned to your taste that never stops. ${englishMainEnabled() ? "English, Hindi, Tamil, Telugu, Kannada and Bengali" : "Hindi, Tamil, Telugu, Kannada and Bengali first"}. All music is AI-generated.`;
 
 // The default card comes from opengraph-image.tsx next to this file; a named station points at its own card.
 export async function generateMetadata({ searchParams }: { searchParams?: Promise<{ s?: string }> }): Promise<Metadata> {
   const station = findStation((await searchParams)?.s);
+  const DESCRIPTION = stationDescription();
   if (!station) {
     return {
       title: "neo-fm Station, your 24/7 personal FM",
