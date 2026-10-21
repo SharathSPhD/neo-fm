@@ -11,7 +11,7 @@ vi.mock("../lib/pool/r2", () => ({
   },
 }));
 
-import { POST, SHOWCASE_NAME } from "../app/api/admin/showcase-mirror/route";
+import { POST } from "../app/api/admin/showcase-mirror/route";
 
 const mp3 = (n = 1000) => Buffer.concat([Buffer.from("ID3"), Buffer.alloc(n)]);
 const post = (qs: string, body: Buffer | string = mp3(), auth = "Bearer ok") =>
@@ -30,9 +30,9 @@ describe("POST /api/admin/showcase-mirror", () => {
     expect(r2.calls).toHaveLength(0);
   });
 
-  it("accepts only plain lowercase mp3 names", () => {
-    expect(SHOWCASE_NAME.test("e3-ta-a-1.mp3")).toBe(true);
-    for (const bad of ["../x.mp3", "A.mp3", "a.wav", "a/b.mp3", ".mp3", "a b.mp3"]) expect(SHOWCASE_NAME.test(bad)).toBe(false);
+  it("accepts only plain lowercase mp3 names", async () => {
+    expect((await post("name=e3-ta-a-1.mp3")).status).toBe(200);
+    for (const bad of ["../x.mp3", "A.mp3", "a.wav", "a%2Fb.mp3", ".mp3", "a%20b.mp3"]) expect((await post(`name=${bad}`)).status).toBe(400);
   });
 
   it("stores the body under showcase/<name>", async () => {

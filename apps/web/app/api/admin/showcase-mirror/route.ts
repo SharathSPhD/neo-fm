@@ -12,7 +12,7 @@ import { r2Configured, r2Request } from "../../../../lib/pool/r2";
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
-export const SHOWCASE_NAME = /^[a-z0-9][a-z0-9-]{0,80}\.mp3$/;
+const SHOWCASE_NAME = /^[a-z0-9][a-z0-9-]{0,80}\.mp3$/;
 const MAX_BYTES = 4 * 1024 * 1024;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
