@@ -59,7 +59,7 @@ jobs:
           node-version: 20
       # Fails on: table without RLS, SECURITY DEFINER without search_path or revoke, view without `revoke ... from anon`.
       - run: node scripts/check-migrations-security.mjs
-      - run: node --test scripts/tests/check-migrations-security.test.mjs
+      - run: node --test scripts/tests/check-migrations-security.test.mjs scripts/tests/lake-refresh-plan.test.mjs
 
   rls-audit:
     name: rls audit (anon + authenticated vs other users' rows)
