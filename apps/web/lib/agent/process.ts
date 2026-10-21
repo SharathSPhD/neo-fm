@@ -11,10 +11,11 @@ import { hostAdvance } from "../cascade/host-run";
 import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from "../cascade/host-io";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
-import { ARMS, refsContext } from "../lyrics/harness/harness";
+import { chooseHarnessArm } from "../harness-policy/runtime";
+import { refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
-import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
+import { OPUS_POLISH_MODEL, livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
 import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
@@ -221,12 +222,14 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const savedIntent = brief.intent;
         const polishBrief = savedIntent ? `${brief.prompt}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${brief.prompt}\n${styled?.note || langNote}` : brief.prompt;
         // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
-        // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
-        const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-        // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts); off by default.
-        const premiumModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
-        const refsCtx = refsLangs.includes(langCode(doc.language)) || premiumModel
-          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language))
+        // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts).
+        // HARNESS_POLICY=1 lets the harness_policy table choose the arm per language, tier and listener instead; both flags stay the fallback. All off by default.
+        const premiumFlagModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
+        const harnessPick = await chooseHarnessArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: langCode(doc.language), tier: String(userRow?.tier ?? "free"), premiumModel: premiumFlagModel });
+        if (harnessPick.source === "policy" || process.env.HARNESS_POLICY === "1") log(`harness arm=${harnessPick.arm.id} source=${harnessPick.source} (${harnessPick.reason})`);
+        const premiumModel = harnessPick.arm.model === "opus" ? OPUS_POLISH_MODEL : undefined;
+        const refsCtx = harnessPick.arm.exemplars > 0
+          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, harnessPick.arm.exemplars, harnessPick.arm.playbook ? playbookFor(doc.language) : "")
           : null;
         const refs = refsCtx?.text ?? "";
         // Which exemplars rode along, so refs-pool pruning can later be judged from production logs at no cost.
