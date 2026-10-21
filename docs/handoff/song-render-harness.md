@@ -102,3 +102,20 @@ E8 showed the mild catalog line barely changes the audio (CLAP cos 0.97-0.99, no
 - **Vocal and diction:** English needs no romanization or diction hints (`dictionHintsFor("en")` is empty, `singingScript` is a no-op on Latin lyrics), so the diction path is already fine. Voice choice (`voiceHint`) is language-independent.
 - **Change (flag `ENGLISH_STYLES=1`, default off):** `lib/engine/english-styles.ts` adds seven styles (pop, rock, R&B, hip-hop, country, indie folk, dance) with Lyria fragments (genre, bpm range, instruments, vocal and production cue) and lyric form/metre/avoid notes, routed by whole-word keyword (longest wins) for `en` only. A plain brief still routes to nothing. Wired through `styleOnly`/`styleRoutingOn` at the same two call sites as `PCE_STYLES`, so the poets, polisher and Lyria all see it.
 - **Defaults chosen from E3/E8 evidence:** style text does not move diction and the mild catalog cue barely changes audio, so fragments are concrete (instruments, tempo, vocal) and short, and no raga-style words exist for English. Whether they sound better is untested; a render A/B needs an S tap card and the English gate before any prod flag.
+## E8 free audio scores (2026-10-21): stock (a) vs catalog cue (c), kn/hi, 7 clips
+Scored with the open stack (Audiobox aesthetics CE/CU/PC/PQ; laion/larger_clap_music; the Music Arena preference head from #426, logit = head score difference). Run on CPU in a cloud session, nothing paid. Diction is the stored Gemini sung-word match. Head accuracy is only 61.5% held out, so read the preference column as a weak signal, not a verdict.
+
+| pair | diction a / c | Audiobox CE c-a | CU | PC | PQ | pref logit c-a | CLAP cos(a,c) |
+|---|---|---|---|---|---|---|---|
+| kn-1 | 62 / 66 | +0.15 | -0.03 | -0.23 | +0.09 | -0.49 | 0.971 |
+| kn-2 | 60 / 66 | -0.15 | -0.03 | +0.22 | -0.09 | -0.11 | 0.993 |
+| hi-2 | 95 / 97 | +0.13 | +0.04 | +0.26 | +0.11 | -0.72 | 0.986 |
+| hi-1 | 96 (a only) | | | | | | |
+
+Reading:
+- The catalog cue barely changes how the song sounds overall: CLAP similarity between a and c is 0.97 to 0.99 in all three pairs.
+- Diction is higher for c in all three pairs (+4, +6, +2). That is the only consistent signal, and it is within the render-to-render spread seen in E2 (several points on repeats), so 3 pairs do not prove it.
+- Audiobox is mixed: hi-2 improves on all four axes (small), kn-1 and kn-2 move in opposite directions. All differences are under 0.3 on a 10-point scale, near the noise of repeat renders.
+- The preference head leans slightly toward stock in all three pairs (c less preferred, logit -0.1 to -0.7, about 32% to 47% for c). With 61.5% head accuracy and 3 pairs this is not evidence against c either.
+- CLAP text similarity to an English style prompt is about 0 for every clip (as in the pool), so it cannot rank these.
+- Net: no free score separates stock from catalog cue beyond noise. Keep deciding on diction plus a validated blind pairwise listen, and only count it if it picks the same slot in both orders.

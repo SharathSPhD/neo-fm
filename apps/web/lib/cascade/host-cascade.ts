@@ -83,6 +83,12 @@ export function candidateK(env = process.env): number {
   return Number.isInteger(k) && k >= 2 && k <= 8 ? k : 4;
 }
 
+/** PCE_DRAFTS_K="kn,hi" (language codes, default off): those languages draft 3 candidates instead of K. Lab: 3 vs 6 drafts, kn+hi, 9-3-4 for 3. */
+export function draftsK(K: number, language: string, env: Readonly<Record<string, string | undefined>> = process.env): number {
+  const langs = (env.PCE_DRAFTS_K ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+  return langs.includes(language.toLowerCase()) ? Math.min(K, 3) : K;
+}
+
 export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidateK(), env: Readonly<Record<string, string | undefined>> = process.env): Promise<HostSong> {
   // Intent extraction runs beside the plan call (both Haiku, independent), so it adds no wall-clock.
   const intentP = b.intent ? Promise.resolve(b.intent) : env.PCE_INTENT === "1" ? extractIntent({ prompt: b.prompt, language: b.language, styleFamily: b.styleFamily }, (a) => d.complete({ ...a }) ) : Promise.resolve(undefined);
@@ -101,7 +107,7 @@ export async function hostCascade(b: HostBrief, d: HostCascadeDeps, K = candidat
     constraint: words(plan.constraint || `${b.styleFamily} song in ${b.language}, about ${lines} short lines, singable`, 24),
     must_avoid: strs(plan.must_avoid, 6),
     aspects: strs(plan.aspects, 4),
-    K: env.PCE_PROSODY_SELECT === "1" ? Math.min(K, 4) : K, seed: 0,
+    K: env.PCE_PROSODY_SELECT === "1" ? Math.min(draftsK(K, b.language, env), 4) : draftsK(K, b.language, env), seed: 0,
     ...(env.PCE_PROSODY_SELECT === "1" ? { prosody_select: true } : {}),
   };
   const intent = await intentP;
