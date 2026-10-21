@@ -1,5 +1,5 @@
 import { mulberry32 } from "./bandit";
-import { pickArm, type PolicyRow, type StatRow } from "./policy";
+import { pickArm, type PolicyArm, type PolicyRow, type StatRow } from "./policy";
 
 /** Offline replay of the policy: the real pickArm, fed rewards drawn from recorded judge scores. No database, no model calls. */
 export interface SimInput {
@@ -15,6 +15,9 @@ export interface SimInput {
   tastePrior?: Record<string, number>;
   /** fixed number of leading jobs from one listener whose own stats are kept apart from the language posterior */
   listener?: boolean;
+  /** render arms (render.ts RENDER_ARMS) and their flag fallback; omitted for the lyric arms */
+  registry?: Record<string, PolicyArm>;
+  fallbackArm?: PolicyArm;
 }
 
 export interface SimResult {
@@ -41,7 +44,7 @@ export function simulate(i: SimInput): SimResult {
   const picks: string[] = [];
   const lateFrom = Math.floor(i.jobs * 0.8);
   for (let j = 0; j < i.jobs; j++) {
-    const p = pickArm({ env, language, tier, rows: i.rows, global: [...g.values()], user: i.listener ? [...u.values()] : [], tastePrior: i.tastePrior, seed: (rng() * 2 ** 32) >>> 0 });
+    const p = pickArm({ env, language, tier, rows: i.rows, global: [...g.values()], user: i.listener ? [...u.values()] : [], tastePrior: i.tastePrior, registry: i.registry, fallbackArm: i.fallbackArm, seed: (rng() * 2 ** 32) >>> 0 });
     sources[p.source] = (sources[p.source] ?? 0) + 1;
     const id = p.arm.id;
     picks.push(id);

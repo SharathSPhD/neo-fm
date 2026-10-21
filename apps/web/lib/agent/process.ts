@@ -12,6 +12,8 @@ import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { chooseHarnessArm } from "../harness-policy/runtime";
+import { applyRenderArm, chooseRenderArm } from "../harness-policy/render";
+import { routeEnglishStyle } from "../engine/english-styles";
 import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
@@ -30,7 +32,7 @@ import { dictionVerdict, gateMode } from "../diction/gate";
 import { alignLines, toPayload, transcribeTimed } from "../diction/timestamps";
 import { singableLines } from "../lyrics/singable";
 import { renderBestOf } from "../render/best-of";
-import { CLAUDE_ROMAN_MODEL, claudeRomanize, claudeRomanLanguages, romanSample } from "../diction/claude-roman";
+import { CLAUDE_ROMAN_MODEL, claudeRomanize, romanSample } from "../diction/claude-roman";
 import { bestOfEnabled, bestOfOptions } from "../render/config";
 import { dictionScorer } from "../render/scorers";
 import { ROMAN_HINT, singingScript } from "../diction/romanize";
@@ -275,11 +277,16 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         if (frag && !a.stylePrompt.includes(frag)) a = { ...a, stylePrompt: `${a.stylePrompt} ${frag}`.trim() };
         const ss = process.env.DICTION_ROMAN === "0" ? null : singingScript(a.lyrics);
         // DICTION_CLAUDE_ROMAN (default off, per-language list): Latin-only lines written by Claude replace the native-plus-ITRANS script; null keeps the mechanical one.
-        const claudeRoman = claudeRomanLanguages().has(doc.language) ? await timed("claude_roman", () => claudeRomanize(a.lyrics, doc.language, async (prompt) => {
+        // HARNESS_POLICY (default off): the render arm (Claude romanization on/off, English style fragment) comes from harness_policy; off or on any failure it is exactly what DICTION_CLAUDE_ROMAN / ENGLISH_STYLES say.
+        const renderPick = await chooseRenderArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: doc.language, tier: String(userRow?.tier ?? "free") });
+        if (renderPick.source === "policy" || process.env.HARNESS_POLICY === "1") log(`render arm=${renderPick.arm.id} source=${renderPick.source} (${renderPick.reason})`);
+        if (renderPick.source === "policy") a = { ...a, stylePrompt: applyRenderArm(renderPick.arm, doc.language, a.stylePrompt, doc.language === "en" ? routeEnglishStyle(String(doc.document_json.metadata?.prompt ?? ""))?.lyria : undefined) };
+        const wantClaudeRoman = renderPick.arm.roman === "claude";
+        const claudeRoman = wantClaudeRoman ? await timed("claude_roman", () => claudeRomanize(a.lyrics, doc.language, async (prompt) => {
           const res = await anthropicClient().messages.create({ model: CLAUDE_ROMAN_MODEL, max_tokens: 2000, messages: [{ role: "user", content: prompt }] });
           return res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("");
         })) : null;
-        if (claudeRomanLanguages().has(doc.language)) log(claudeRoman ? `claude-roman used lang=${doc.language} sample=${romanSample(claudeRoman)}` : `claude-roman fallback lang=${doc.language}`);
+        if (wantClaudeRoman) log(claudeRoman ? `claude-roman used lang=${doc.language} sample=${romanSample(claudeRoman)}` : `claude-roman fallback lang=${doc.language}`);
         const sung = claudeRoman ?? (ss?.romanized ? ss.text : a.lyrics);
         const voice = voiceChoiceFor(doc.document_json.metadata?.voice, userRow?.tier as UserTier | undefined, hasPass, process.env, doc.language);
         const render = () => generateMusic({ ...a, lyrics: sung, stylePrompt: [a.stylePrompt, tasteStyle, voiceHint(voice), dictionHintsFor(doc.language), !claudeRoman && ss?.romanized ? ROMAN_HINT : ""].filter(Boolean).join(" ") }, { guard: spendGuard(db, { userId: job.user_id, userCapGbp: plan.userLyriaCapGbp }), dailyCap: dailyCap(db, "lyria", "user"), breaker: lyriaBreaker, apiKey: geminiKey });

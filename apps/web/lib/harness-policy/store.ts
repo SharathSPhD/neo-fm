@@ -24,7 +24,7 @@ export async function recordChoice(db: SupabaseClient, c: { job_id: string; user
 }
 
 /** Add `wins`/`losses` to one posterior, creating the row on first use. Low volume, so read-then-write is fine. */
-async function bump(db: SupabaseClient, scope: { user_id: string | null; language: string; tier: string; arm_id: string }, wins: number, losses: number): Promise<void> {
+export async function bump(db: SupabaseClient, scope: { user_id: string | null; language: string; tier: string; arm_id: string }, wins: number, losses: number): Promise<void> {
   let q = db.from("harness_arm_stats").select("id,a,b").eq("language", scope.language).eq("tier", scope.tier).eq("arm_id", scope.arm_id);
   q = scope.user_id ? q.eq("user_id", scope.user_id) : q.is("user_id", null);
   const { data } = await q.limit(1);
