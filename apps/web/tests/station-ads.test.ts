@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AD_CAPS, TIER_CAPS, adHoldoutPct, inAdHoldout, adItem, adLabel, eligibleSlots, pickAd, placeAd, tracksBeforeBreak, weightedPick, type AdContext, type AdSlot } from "../lib/station/ads";
 import { parseAdState } from "../lib/station/ads-server";
-import { retentionGuardrail, summarizeAds } from "../lib/ops/ads-report";
+import { adInventory, retentionGuardrail, summarizeAds } from "../lib/ops/ads-report";
 
 const NOW = Date.parse("2026-11-05T10:00:00Z");
 const slot = (o: Partial<AdSlot> = {}): AdSlot => ({
@@ -238,5 +238,29 @@ describe("retention guardrail", () => {
     const r = retentionGuardrail([...h2.users, ...paid], [...h2.plays, ...mk(40, "e", 0.1).plays], (id) => id.startsWith("h"), now);
     expect(r.exposed.users).toBe(0);
     expect(retentionGuardrail(h2.users, h2.plays, () => true, now - 4 * D).holdout.users).toBe(0);
+  });
+});
+
+describe("ad inventory report", () => {
+  it("counts spot starts by language, India-time daypart and kind, and values sponsor starts at the CPM range", () => {
+    const slots = [
+      { id: "h", kind: "house", languages: ["kn"] },
+      { id: "s", kind: "sponsor", languages: ["hi"] },
+    ];
+    const ev = (slot_id: string, event: string, iso: string) => ({ slot_id, event, created_at: iso });
+    // 02:30Z is 08:00 IST (morning); 13:30Z is 19:00 IST (dusk).
+    const r = adInventory(slots, [
+      ev("h", "start", "2026-11-05T02:30:00Z"),
+      ev("s", "start", "2026-11-05T02:30:00Z"),
+      ev("s", "start", "2026-11-05T13:30:00Z"),
+      ev("s", "complete", "2026-11-05T13:30:00Z"),
+      ev("gone", "start", "2026-11-05T13:30:00Z"),
+    ], 2, { low: 100, high: 500 });
+    expect(r.starts).toBe(3);
+    expect(r.startsPerDay).toBe(1.5);
+    expect(r.byLanguage).toEqual({ kn: 1, hi: 2 });
+    expect(r.byDaypart).toEqual({ morning: 2, dusk: 1 });
+    expect(r.bySlotKind).toEqual({ house: 1, sponsor: 2 });
+    expect(r.sponsorValueInr).toEqual({ cpmLow: 100, cpmHigh: 500, low: 0, high: 1 });
   });
 });

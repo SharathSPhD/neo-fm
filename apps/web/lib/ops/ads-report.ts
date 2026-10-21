@@ -67,3 +67,68 @@ export function retentionGuardrail(
   const breach = holdout.users >= MIN_COHORT && exposed.users >= MIN_COHORT && relativeDropPct !== null && relativeDropPct > 10;
   return { holdout, exposed, relativeDropPct, breach };
 }
+
+export interface AdInventory {
+  windowDays: number;
+  /** Spot starts in the window (house and sponsor). */
+  starts: number;
+  startsPerDay: number;
+  byLanguage: Record<string, number>;
+  byDaypart: Record<string, number>;
+  bySlotKind: Record<string, number>;
+  /** Modelled value of sponsor-kind starts only (house ads earn nothing), at an assumed CPM in INR. */
+  sponsorValueInr: { cpmLow: number; cpmHigh: number; low: number; high: number };
+}
+
+/** Listener-local hour to daypart, same boundaries as lib/station/program.ts daypartOf. */
+function daypart(hour: number): string {
+  if (hour >= 5 && hour < 8) return "dawn";
+  if (hour >= 8 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 16) return "midday";
+  if (hour >= 16 && hour < 19) return "evening";
+  if (hour >= 19 && hour < 21) return "dusk";
+  return "night";
+}
+
+const IST_OFFSET_MS = 5.5 * 3_600_000;
+
+/**
+ * What the sponsor media kit sells, measured: spot starts by language, daypart (India time) and slot kind over the window,
+ * plus the modelled value of sponsor spots at an assumed CPM range. No listener ids; counts only.
+ */
+export function adInventory(
+  slots: { id: string; kind: string; languages: string[] | null }[],
+  events: { slot_id: string; event: string; created_at: string }[],
+  windowDays: number,
+  cpm: { low: number; high: number } = { low: 80, high: 250 },
+): AdInventory {
+  const byId = new Map(slots.map((s) => [s.id, s]));
+  const byLanguage: Record<string, number> = {};
+  const byDaypart: Record<string, number> = {};
+  const bySlotKind: Record<string, number> = {};
+  let starts = 0;
+  let sponsorStarts = 0;
+  for (const e of events) {
+    if (e.event !== "start") continue;
+    const t = Date.parse(e.created_at);
+    const s = byId.get(e.slot_id);
+    if (Number.isNaN(t) || !s) continue;
+    starts += 1;
+    const lang = s.languages?.[0] ?? "any";
+    byLanguage[lang] = (byLanguage[lang] ?? 0) + 1;
+    const part = daypart(new Date(t + IST_OFFSET_MS).getUTCHours());
+    byDaypart[part] = (byDaypart[part] ?? 0) + 1;
+    bySlotKind[s.kind] = (bySlotKind[s.kind] ?? 0) + 1;
+    if (s.kind === "sponsor") sponsorStarts += 1;
+  }
+  const value = (c: number) => Math.round((sponsorStarts * c) / 1000);
+  return {
+    windowDays,
+    starts,
+    startsPerDay: Math.round((starts / Math.max(1, windowDays)) * 10) / 10,
+    byLanguage,
+    byDaypart,
+    bySlotKind,
+    sponsorValueInr: { cpmLow: cpm.low, cpmHigh: cpm.high, low: value(cpm.low), high: value(cpm.high) },
+  };
+}
