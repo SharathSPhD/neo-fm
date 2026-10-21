@@ -11,10 +11,11 @@ import { hostAdvance } from "../cascade/host-run";
 import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from "../cascade/host-io";
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
+import { chooseHarnessArm } from "../harness-policy/runtime";
 import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
-import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
+import { OPUS_POLISH_MODEL, livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
 import { lyricGradesEnabled, gradeFromMetadata, modelForGrade } from "../lyrics/grade";
 import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
@@ -222,15 +223,17 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const savedIntent = brief.intent;
         const polishBrief = savedIntent ? `${brief.prompt}\n${intentBlock(savedIntent)}` : (styled?.note || langNote) ? `${brief.prompt}\n${styled?.note || langNote}` : brief.prompt;
         // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
-        // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
-        const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-        // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts); off by default.
-        // LYRIC_GRADES=1: the grade the listener spent a credit on (set at request time) decides the model, and the env list is not consulted.
-        const premiumModel = lyricGradesEnabled()
-          ? modelForGrade(gradeFromMetadata(doc.document_json.metadata))
-          : premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
-        const refsCtx = refsLangs.includes(langCode(doc.language)) || premiumModel
-          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language))
+        // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts).
+        // HARNESS_POLICY=1 lets the harness_policy table choose the arm per language, tier and listener instead; both flags stay the fallback. All off by default.
+        // LYRIC_GRADES=1: a song whose listener spent a Premium/Studio credit (grade in the metadata) always gets Opus plus refs, and the env list is not consulted.
+        const gradeModel = lyricGradesEnabled() ? modelForGrade(gradeFromMetadata(doc.document_json.metadata)) : undefined;
+        const premiumFlagModel = lyricGradesEnabled() ? undefined : premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
+        const harnessPick = await chooseHarnessArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: langCode(doc.language), tier: String(userRow?.tier ?? "free"), premiumModel: premiumFlagModel });
+        if (harnessPick.source === "policy" || process.env.HARNESS_POLICY === "1") log(`harness arm=${harnessPick.arm.id} source=${harnessPick.source} (${harnessPick.reason})`);
+        const premiumModel = gradeModel ?? (harnessPick.arm.model === "opus" ? OPUS_POLISH_MODEL : undefined);
+        const refsArm = gradeModel ? { exemplars: ARMS.refs!.exemplars, playbook: true } : harnessPick.arm;
+        const refsCtx = refsArm.exemplars > 0
+          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, refsArm.exemplars, refsArm.playbook ? playbookFor(doc.language) : "")
           : null;
         const refs = refsCtx?.text ?? "";
         // Which exemplars rode along, so refs-pool pruning can later be judged from production logs at no cost.

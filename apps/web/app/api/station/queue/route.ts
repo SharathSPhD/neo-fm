@@ -22,11 +22,16 @@ import { adForQueue, parseAdState } from "@/lib/station/ads-server";
 import { poolCdnUrl } from "@/lib/station/cdn";
 import { cdnWithinBudget, signals30d } from "@/lib/station/cdn-guard";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
+import { interleaveMix, parseMix, parsePassMoods, passMixEnabled } from "@/lib/station/lang-mix";
+import { hasPassPerks } from "@/lib/station/pass-perks";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { stationTasteEnabled, tasteBias, tasteHostNote } from "@/lib/station/taste-bias";
+import type { TasteBrief } from "@/lib/taste/brief";
+import { loadStatedTaste } from "@/lib/taste/store";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { almanacIdsFor, almanacLines } from "@/lib/station/almanac";
 import { programmeLines } from "@/lib/station/programmes";
@@ -74,7 +79,12 @@ export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const lang = sp.get("lang");
   const station = findStation(sp.get("station"));
-  const wantTags = (sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8);
+  // Pass perks (flag STATION_PASS_MIX): a language mix and up to four mood picks (`moods=calm,romantic`). Everyone else keeps `tags` as before.
+  const perks = passMixEnabled() && user ? await hasPassPerks(admin, user.id) : false;
+  const wantTags = [...new Set([
+    ...(sp.get("tags") ?? "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean).slice(0, 8),
+    ...(perks ? parsePassMoods(sp.get("moods")) : []),
+  ])];
   const limit = Math.min(Math.max(Number(sp.get("limit")) || 10, 1), user ? 25 : 10);
 
   const fullPool = await loadPool();
@@ -82,9 +92,19 @@ export async function GET(req: NextRequest) {
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
-  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
-  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) });
+  // STATION_TASTE=1: the saved taste profile (moods, genres, energy, language mix) becomes a small ranking prior.
+  let prior: ReturnType<typeof tasteBias> | undefined;
+  let savedTaste: TasteBrief | null = null;
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
+  if (user && stationTasteEnabled()) {
+    try {
+      const stated = await loadStatedTaste(admin, user.id);
+      if (stated.status === "ok" && stated.taste) savedTaste = stated.taste;
+      if (savedTaste) prior = tasteBias(savedTaste, { hour: clock.hour, languageLocked: !!lang });
+    } catch { /* the prior is optional: rank without it */ }
+  }
+  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
+  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40), prior });
   const city = cityFromHeader(req.headers.get("x-vercel-ip-city"));
   const { exclude, ...steer } = parseSteer(sp);
   const steered = Boolean(steer.energy || steer.moreLike);
@@ -102,7 +122,20 @@ export async function GET(req: NextRequest) {
   const instrumentals = sets ? pool.filter((t) => t.kind === "instrumental") : [];
   const vocalSlate = sets ? slate.filter((t) => t.kind !== "instrumental") : slate;
   // A steer re-orders a wider programmed list, so the nudge can pull in tracks the wheel would have placed later; sets need a wider list too.
-  const programmed = programQueue(vocalSlate, { ...programOpts, limit: steered || sets ? Math.min(limit * 3, 60) : limit });
+  const progLimit = steered || sets ? Math.min(limit * 3, 60) : limit;
+  // Pass perk (STATION_PASS_MIX): `langs=ta:60,hi:30` plays a weighted mix in runs. Each language is ranked and programmed on its own, then interleaved.
+  const mix = perks && sp.get("langs") && !lang
+    ? parseMix(sp.get("langs"), (c) => pool.some((t) => t.language === c && t.kind !== "instrumental"))
+    : [];
+  const programmed = mix.length > 1
+    ? interleaveMix(
+        mix.map((m) => ({
+          weight: m.weight,
+          tracks: programQueue(rankTracks(pool.filter((t) => t.kind !== "instrumental"), signals, { language: m.lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) }), { ...programOpts, rotation: { ...rotation, languageLocked: true }, limit: progLimit }),
+        })),
+        progLimit,
+      )
+    : programQueue(vocalSlate, { ...programOpts, limit: progLimit });
   const steeredList = steered || exclude ? steerQueue(programmed, pool, steer, exclude) : programmed;
   let setInfo = new Map<string, { id: string; index: number; size: number }>();
   let ranked = steeredList.slice(0, limit);
@@ -126,7 +159,7 @@ export async function GET(req: NextRequest) {
         const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
         const url = cdnUrl ?? signed;
         if (!url) return null;
-        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
+        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id, note: savedTaste ? tasteHostNote(savedTaste, t, t.language, clock.hour) : null });
         const info = setInfo.get(t.id);
         const fade = crossfadeFor(info);
         return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
@@ -148,5 +181,5 @@ export async function GET(req: NextRequest) {
       if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
     } catch { /* voice links are optional: serve the queue as it is */ }
   }
-  return NextResponse.json({ tracks: out });
+  return NextResponse.json({ tracks: out }, prior ? { headers: { "x-station-taste": "applied" } } : undefined);
 }

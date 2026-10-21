@@ -16,6 +16,12 @@ describe("exemplar retrieval", () => {
     expect(r.map((e) => e.id)).toEqual(["a", "b"]);
     expect(retrieveExemplars({ language: "Bengali", style: "x", brief: "rain" }, 3, pool)).toEqual([]);
   });
+  it("serves the shipped English refs for an English country brief", () => {
+    const r = retrieveExemplars({ language: "English", style: "english-country", brief: "a diner closing after forty years" }, 3);
+    expect(r.length).toBe(3);
+    expect(r.every((e) => e.lang === "en")).toBe(true);
+    expect(playbookFor("English")).toContain("CRAFT RULES");
+  });
   it("overlap guard flags an echoed exemplar", () => {
     const t = "ಕಾರುಣ್ಯದ ಮಳೆಯು ಸುರಿವ ತವಕದಿ ದಾರಿ ತೋರಿಸು ಕೃಷ್ಣ";
     expect(overlapRatio(t, t)).toBe(1);

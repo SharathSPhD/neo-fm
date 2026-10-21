@@ -37,6 +37,8 @@ export interface RankOptions {
   limit?: number;
   /** Deterministic jitter source so a station does not repeat the same order; tests pass a fixed one. */
   random?: () => number;
+  /** Extra score per track from a saved taste profile (lib/station/taste-bias.ts); a bounded cold-start prior. */
+  prior?: (t: PoolTrack) => number;
 }
 
 const HALF_LIFE_MS = 14 * 86_400_000;
@@ -51,7 +53,7 @@ const MIN_ENGAGED_FOR_MIX = 5;
 const decay = (ageMs: number) => Math.pow(0.5, Math.max(0, ageMs) / HALF_LIFE_MS);
 
 export function rankTracks(pool: PoolTrack[], signals: StationSignal[], opts: RankOptions = {}): PoolTrack[] {
-  const { language = null, wantTags = [], limit = 20, random = Math.random } = opts;
+  const { language = null, wantTags = [], limit = 20, random = Math.random, prior } = opts;
   const byId = new Map(pool.map((t) => [t.id, t]));
 
   // What the listener's signals say about tags and languages; signals on tracks no longer in the pool still count.
@@ -107,6 +109,7 @@ export function rankTracks(pool: PoolTrack[], signals: StationSignal[], opts: Ra
     score += 0.5 * (langAffinity.get(t.language) ?? 0);
     score += trackAdj.get(t.id) ?? 0;
     score += langScore(t.language);
+    if (prior) score += prior(t);
     if (!touched.has(t.id)) score += EXPLORE_BONUS;
     const heard = lastHeard.get(t.id);
     if (heard !== undefined && heard < RECENT_PLAY_MS) score -= 10 * (1 - heard / RECENT_PLAY_MS);

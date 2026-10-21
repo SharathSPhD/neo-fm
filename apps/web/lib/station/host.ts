@@ -62,12 +62,14 @@ export interface HostLineInput {
   city?: string | null;
   /** Seed for wording variation, normally the track id. */
   seed: string;
+  /** Optional extra sentence (the saved-taste mood note, lib/station/taste-bias.ts); appended as is. */
+  note?: string | null;
 }
 
-export function hostLine({ hour, language, city, seed }: HostLineInput): string {
+export function hostLine({ hour, language, city, seed, note }: HostLineInput): string {
   const lang = hostLang(language);
   const greeting = GREETING[lang][daypartOf(hour)];
-  return `${greeting}${city ? `, ${city}` : ""}. ${TAGLINES[lang][pick(seed)]}`;
+  return `${greeting}${city ? `, ${city}` : ""}. ${TAGLINES[lang][pick(seed)]}${note ? ` ${note}` : ""}`;
 }
 
 /**
