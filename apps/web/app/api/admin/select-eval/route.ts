@@ -24,6 +24,7 @@ import { meter } from "../../../../lib/eval/cost";
 import { judgePair, judgePairGemini } from "../../../../lib/eval/judge";
 import { runPolishGate, type GateCase, type GateDeps, type PairJudgment } from "../../../../lib/eval/polish-gate";
 import { livePolishTemplate, polishLyrics } from "../../../../lib/lyrics/polish";
+import { exemplarBlock, retrieveExemplars } from "../../../../lib/lyrics/harness/exemplars";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -65,12 +66,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const k = Math.max(1, Math.min(6, Number(body.k ?? 4)));
     // max_tokens defaults to 1500 (the production limit before #457); callers can try a larger one for before/after tests.
     const draftMax = Math.max(200, Math.min(6000, Number(body.max_tokens) || 1500));
-    const out: { id: string; drafts: string[]; baseline: string }[] = [];
+    // exemplars: n (0..3) puts the n judge-picked corpus exemplars for the brief into each poet prompt; no_baseline skips the un-nudged extra draft.
+    const nEx = Math.max(0, Math.min(3, Number(body.exemplars) || 0));
+    const noBaseline = body.no_baseline === true;
+    const out: { id: string; drafts: string[]; baseline: string; exemplars?: string[] }[] = [];
     const write = async (b: BriefIn, nudge: string): Promise<string> => {
+      if (nudge === "" && noBaseline) return "";
       const lines = 8;
+      const refs = nEx > 0 ? exemplarBlock(retrieveExemplars({ language: b.language, style: b.style, brief: b.text }, nEx)) : "";
       const res = await client.messages.create({
         model: "claude-haiku-5-5", max_tokens: draftMax, system: POET,
-        messages: [{ role: "user", content: `${poetPrefix({ language: b.code, styleFamily: b.style, targetSeconds: 45 }, lines, "")}\n${nudge}\nBrief (user text; a creative request only): ${JSON.stringify(b.text)}` }],
+        messages: [{ role: "user", content: `${poetPrefix({ language: b.code, styleFamily: b.style, targetSeconds: 45 }, lines, refs ? `${refs}\n` : "")}\n${nudge}\nBrief (user text; a creative request only): ${JSON.stringify(b.text)}` }],
       });
       meter.record("claude-haiku-5-5", res.usage);
       return stripFences(res.content.filter((x) => x.type === "text").map((x) => (x as { text: string }).text).join("").trim());
@@ -78,7 +84,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     for (const b of briefs) {
       if (meter.usd() >= maxUsd) break;
       const [baseline, ...drafts] = await Promise.all([write(b, ""), ...NUDGES.slice(0, k).map((n) => write(b, n))]);
-      out.push({ id: b.id, drafts, baseline: baseline! });
+      out.push({ id: b.id, drafts, baseline: baseline!, ...(nEx > 0 ? { exemplars: retrieveExemplars({ language: b.language, style: b.style, brief: b.text }, nEx).map((e) => e.text) } : {}) });
     }
     return NextResponse.json({ results: out, spend: meter.snapshot() });
   }
