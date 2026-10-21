@@ -47,7 +47,7 @@ test.describe("station (signed out)", () => {
     page.on("request", (r) => { if (r.url().includes("/api/station/queue")) queues.push(r.url()); });
     await startStation(page);
     const locked = page.getByTestId("mix-locked");
-    await expect(locked).toHaveAttribute("href", "/pricing");
+    await expect(locked).toHaveAttribute("href", "/pricing/pass");
     await expect(page.getByTestId("station-mix")).toHaveCount(0);
     expect(queues.length).toBeGreaterThan(0);
     expect(queues.every((u) => !u.includes("langs="))).toBe(true);

@@ -31,7 +31,7 @@ export function StationMix({
     // Store rules: no steering app users to an outside purchase, so the shell shows nothing (see lib/native/app-shell.ts).
     if (shell) return null;
     return (
-      <Link href="/pricing" className="chip self-start" data-testid="mix-locked">
+      <Link href="/pricing/pass" className="chip self-start" data-testid="mix-locked">
         {t("station.mix.locked")}
       </Link>
     );

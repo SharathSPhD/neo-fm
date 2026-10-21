@@ -14,7 +14,7 @@ const render = (state: "on" | "locked", picks: { lang: string; weight: 1 | 2 | 3
 describe("StationMix", () => {
   it("shows only a link to the pass when locked", () => {
     const html = render("locked");
-    expect(html).toContain('href="/pricing"');
+    expect(html).toContain('href="/pricing/pass"');
     expect(html).not.toContain("station-mix");
   });
 
