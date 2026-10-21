@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { extractJson, hostCascade, type CascadeReply, type HostBrief, type HostCascadeDeps } from "../lib/cascade/host-cascade";
+import { draftsK, extractJson, hostCascade, type CascadeReply, type HostBrief, type HostCascadeDeps } from "../lib/cascade/host-cascade";
 import { hostAdvance, type HostRunDeps } from "../lib/cascade/host-run";
 import { SpendCapError } from "../lib/agent/lyria";
 import type { RunRow, RunStore } from "../lib/agent/runner";
@@ -94,6 +94,16 @@ describe("hostCascade", () => {
     expect(song.lyrics).toBeTruthy();
     expect(seenTokens.length).toBe(9); // 4 drafts + 1 retry + 4 revisions
     expect(new Set(seenTokens)).toEqual(new Set([4000]));
+  });
+
+  it("PCE_DRAFTS_K drafts 3 candidates for the listed languages only", async () => {
+    expect(draftsK(6, "kn", {})).toBe(6);
+    expect(draftsK(6, "kn", { PCE_DRAFTS_K: "kn,hi" })).toBe(3);
+    expect(draftsK(6, "ta", { PCE_DRAFTS_K: "kn,hi" })).toBe(6);
+    expect(draftsK(2, "kn", { PCE_DRAFTS_K: "kn" })).toBe(2);
+    const f = fakes();
+    await hostCascade({ ...brief, language: "kn" }, f.deps, 6, { PCE_DRAFTS_K: "kn" });
+    expect((f.deps.cascade as ReturnType<typeof vi.fn>).mock.calls[0]![0].brief.K).toBe(3);
   });
 
   it("extractJson tolerates prose and fences", () => {
