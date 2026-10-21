@@ -6,7 +6,7 @@ import { isLiveSubscriptionStatus } from "@/lib/billing/checkout-guard";
 import { hasStationPass } from "@/lib/billing/pass";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-import { AD_CAPS, adItem, inAdHoldout, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
+import { AD_CAPS, adAudioEnabled, adItem, inAdHoldout, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
@@ -54,7 +54,8 @@ async function loadSlots(admin: Admin): Promise<AdSlot[]> {
       .select("*")
       .eq("active", true)) as Rows;
     if (res.error || !res.data) return [];
-    return res.data.map(rowToSlot);
+    const slots = res.data.map(rowToSlot);
+    return adAudioEnabled() ? slots : slots.map((s) => (s.audioPath ? { ...s, audioPath: null, durationSeconds: null } : s));
   } catch {
     return [];
   }

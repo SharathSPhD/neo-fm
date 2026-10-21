@@ -106,10 +106,21 @@ describe("ads in GET /api/station/queue", () => {
   });
 
   it("Pro never gets an audio spot", async () => {
+    vi.stubEnv("ADS_AUDIO_ENABLED", "1");
     vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
     world.slots = [slotRow({ audio_path: "ads/a.mp3", duration_seconds: 10 })];
     world.tier = "pro";
     expect((await items("&played=0")).some((x) => x.type === "ad")).toBe(false);
+  });
+
+  it("serves an audio spot as a card until ADS_AUDIO_ENABLED=1", async () => {
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    world.slots = [slotRow({ audio_path: "ads/a.mp3", duration_seconds: 10 })];
+    const off = (await items("&played=0")).find((x) => x.type === "ad");
+    expect(off?.url).toBe("");
+    vi.stubEnv("ADS_AUDIO_ENABLED", "1");
+    const on = (await items("&played=0")).find((x) => x.type === "ad");
+    expect(on?.url).toBe("https://signed/ads/a.mp3");
   });
 
   it("a Station pass beats every other tier: no ads", async () => {
