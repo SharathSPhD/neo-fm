@@ -1,13 +1,13 @@
 // English-first create page, taste panel and one English song with a taste set, on STAGING only (signed in).
 // Needs ENGLISH_MAIN, TASTE_BRIEF and STATION_PROGRAMMES on in staging. Staging has no worker, so the song is only queued.
-// Env: QA_STAGING_URL, QA_STAGING_EMAIL, QA_STAGING_PASSWORD. Refuses prod hosts.
+// Env: QA_STAGING_URL, QA_STAGING_EMAIL, QA_STAGING_PASSWORD, or QA_TASTE_FRESH=1 to sign up a throwaway @neo-fm.test user instead. Refuses prod hosts.
 const { chromium } = require('playwright-core');
 const { chromiumPath } = require('./common');
 
 const base = (process.env.QA_STAGING_URL || 'https://neo-fm-staging.vercel.app').replace(/\/$/, '');
 const email = process.env.QA_STAGING_EMAIL;
 const pw = process.env.QA_STAGING_PASSWORD;
-if (!email || !pw || /(^|\/\/)(www\.)?neo-fm\.com|neo-fm-web\.vercel\.app/.test(base)) {
+if ((!process.env.QA_TASTE_FRESH && (!email || !pw)) || /(^|\/\/)(www\.)?neo-fm\.com|neo-fm-web\.vercel\.app/.test(base)) {
   console.error('refusing: need a staging URL (never prod) and QA_STAGING_EMAIL / QA_STAGING_PASSWORD');
   process.exit(2);
 }
@@ -17,11 +17,21 @@ if (!email || !pw || /(^|\/\/)(www\.)?neo-fm\.com|neo-fm-web\.vercel\.app/.test(
   const p = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
   let bad = 0;
   const check = (ok, msg) => { if (!ok) bad++; console.log(ok ? 'ok  ' : 'FAIL', msg); };
-  for (let a = 0; a < 2; a++) { try { await p.goto(base + '/sign-in', { waitUntil: 'load', timeout: 60000 }); break; } catch (e) { if (a) throw e; } }
-  await p.fill('input[name=email]', email);
-  await p.fill('input[name=password]', pw);
-  await Promise.all([p.waitForURL((u) => !/sign-in/.test(u.pathname), { timeout: 30000 }).catch(() => {}), p.click('button[type=submit]')]);
-  if (/sign-in/.test(new URL(p.url()).pathname)) { console.log('FAIL sign-in'); process.exit(1); }
+  if (process.env.QA_TASTE_FRESH) {
+    // Throwaway staging user through the app's own sign-up page, so the QA user's queued test song cannot hold the concurrent slot.
+    const rnd = Math.random().toString(36).slice(2, 10);
+    await p.goto(base + '/sign-up', { waitUntil: 'load', timeout: 60000 });
+    await p.fill('input[name=email]', `qa-taste-${rnd}@neo-fm.test`);
+    await p.fill('input[name=password]', `Qa-${rnd}-${Math.random().toString(36).slice(2, 10)}`);
+    await Promise.all([p.waitForURL((u) => !/sign-up/.test(u.pathname), { timeout: 30000 }).catch(() => {}), p.click('button[type=submit]')]);
+    if (/sign-up/.test(new URL(p.url()).pathname)) { console.log('FAIL fresh sign-up did not sign in (email confirmation required?)', (await p.locator('[role=alert],[role=status]').allTextContents()).join(' | ').slice(0, 120)); process.exit(1); }
+  } else {
+    for (let a = 0; a < 2; a++) { try { await p.goto(base + '/sign-in', { waitUntil: 'load', timeout: 60000 }); break; } catch (e) { if (a) throw e; } }
+    await p.fill('input[name=email]', email);
+    await p.fill('input[name=password]', pw);
+    await Promise.all([p.waitForURL((u) => !/sign-in/.test(u.pathname), { timeout: 30000 }).catch(() => {}), p.click('button[type=submit]')]);
+    if (/sign-in/.test(new URL(p.url()).pathname)) { console.log('FAIL sign-in'); process.exit(1); }
+  }
 
   await p.goto(base + '/songs/new', { waitUntil: 'load', timeout: 60000 });
   await p.waitForSelector('#prompt-language', { timeout: 20000 });
