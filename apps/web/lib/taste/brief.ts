@@ -8,7 +8,7 @@
  * Artist names are deliberately not a field: the rights screen refuses imitation, so taste is described by genre,
  * mood, instruments and era instead.
  */
-import { LanguageSchema } from "@neo-fm/song-doc";
+import type { Language } from "@neo-fm/song-doc";
 import { z } from "zod";
 
 export const TASTE_GENRES = [
@@ -38,6 +38,10 @@ export const TASTE_ENERGY = ["calm", "medium", "high"] as const;
 export const BACKGROUND_MAX_CHARS = 200;
 const MAX_PICKS = 4;
 
+// Mirrors song-doc's LanguageSchema without a runtime import: the managed-agents CI job runs without the packages built,
+// and `satisfies` keeps the list from drifting to a code song-doc lacks.
+const LANGUAGE_CODES = ["en", "hi", "kn", "ta", "bn", "te", "sa", "mr", "pa", "gu", "ml", "bho", "or", "ur", "as"] as const satisfies readonly Language[];
+
 const pick = <T extends readonly [string, ...string[]]>(vocab: T) => z.array(z.enum(vocab)).max(MAX_PICKS).optional();
 
 export const TasteBriefSchema = z.object({
@@ -48,7 +52,7 @@ export const TasteBriefSchema = z.object({
   eras: pick(TASTE_ERAS),
   energy: z.enum(TASTE_ENERGY).optional(),
   /** Languages they listen in (song-doc codes). Stored for the per-user tuning; the song's own language is set separately. */
-  languages: z.array(LanguageSchema).max(MAX_PICKS).optional(),
+  languages: z.array(z.enum(LANGUAGE_CODES)).max(MAX_PICKS).optional(),
   /** Lyric register they prefer. */
   register: z.enum(TASTE_REGISTERS).optional(),
   /** City, village or diaspora background, for imagery. */
