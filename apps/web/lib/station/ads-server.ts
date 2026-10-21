@@ -6,7 +6,7 @@ import { isLiveSubscriptionStatus } from "@/lib/billing/checkout-guard";
 import { hasStationPass } from "@/lib/billing/pass";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
-import { AD_CAPS, adAudioEnabled, adItem, inAdHoldout, passUpsellDue, passUpsellEnabled, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
+import { AD_CAPS, adAudioEnabled, adsPaidFreeEnabled, adItem, inAdHoldout, passUpsellDue, passUpsellEnabled, pickAd, rowToSlot, spotSeconds, type AdContext, type AdItem, type AdSlot, type AdTier } from "./ads";
 
 type Admin = ReturnType<typeof createServiceRoleClient>;
 type Rows = { data: Record<string, unknown>[] | null; error?: unknown };
@@ -86,7 +86,7 @@ async function loadHistory(admin: Admin, userId: string, slots: AdSlot[], now: n
 }
 
 /**
- * The listener's ad tier: null for the Station pass (no ads, wins over any other entitlement), otherwise the lightest
+ * The listener's ad tier: null for the Station pass (no ads, wins over any other entitlement) and, with ADS_PAID_FREE=1, for Creator and Pro, otherwise the lightest
  * applicable tier row. Signed-out listeners, and any lookup that fails, are "free" (ads-revenue.md section 11).
  * hasStationPass is false when migration 0098 is not applied.
  */
@@ -99,10 +99,12 @@ export async function adTierFor(admin: Admin, userId: string | null): Promise<Ad
       (admin.from("user_billing").select("status").eq("user_id", userId).maybeSingle()) as unknown as Promise<{ data: { status?: string } | null }>,
     ]);
     const tier = u.data?.tier ?? "free";
-    if (tier === "pro") return "pro";
-    if (tier === "creator") return "creator";
+    const paidFree = adsPaidFreeEnabled();
+    if (tier === "pro") return paidFree ? null : "pro";
+    if (tier === "creator") return paidFree ? null : "creator";
     // A live subscription on a tier row we do not know yet still gets the lighter Creator row, not the Free one.
-    return isLiveSubscriptionStatus(b.data?.status) ? "creator" : "free";
+    if (isLiveSubscriptionStatus(b.data?.status)) return paidFree ? null : "creator";
+    return "free";
   } catch {
     return "free";
   }
