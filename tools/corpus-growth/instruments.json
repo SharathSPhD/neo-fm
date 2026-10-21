@@ -1,0 +1,59 @@
+{
+  "_note": "Instrument taxonomy for prompting and evaluation. Name = what to write in a Lyria/Gemini style prompt; commons = Wikimedia Commons search terms for licence-clean reference clips.",
+  "carnatic": [
+    {"name": "veena (saraswati veena)", "commons": "saraswati veena", "role": "melody/drone-pluck"},
+    {"name": "mridangam", "commons": "mridangam", "role": "percussion"},
+    {"name": "violin (carnatic style)", "commons": "carnatic violin", "role": "melody"},
+    {"name": "ghatam", "commons": "ghatam", "role": "percussion"},
+    {"name": "kanjira", "commons": "kanjira", "role": "percussion"},
+    {"name": "morsing", "commons": "morsing", "role": "percussion"},
+    {"name": "flute (bansuri/venu)", "commons": "venu flute", "role": "melody"},
+    {"name": "nadaswaram", "commons": "nadaswaram", "role": "melody (temple/wedding)"},
+    {"name": "thavil", "commons": "thavil", "role": "percussion (temple/wedding)"},
+    {"name": "tanpura", "commons": "tanpura", "role": "drone"}
+  ],
+  "hindustani": [
+    {"name": "sitar", "commons": "sitar", "role": "melody"},
+    {"name": "sarod", "commons": "sarod", "role": "melody"},
+    {"name": "tabla", "commons": "tabla", "role": "percussion"},
+    {"name": "bansuri", "commons": "bansuri", "role": "melody"},
+    {"name": "sarangi", "commons": "sarangi", "role": "melody/vocal-shadow"},
+    {"name": "harmonium", "commons": "harmonium", "role": "accompaniment"},
+    {"name": "shehnai", "commons": "shehnai", "role": "melody (ceremony)"},
+    {"name": "santoor", "commons": "santoor", "role": "melody"},
+    {"name": "pakhawaj", "commons": "pakhawaj", "role": "percussion (dhrupad)"},
+    {"name": "tanpura", "commons": "tanpura", "role": "drone"}
+  ],
+  "folk_regional": [
+    {"name": "dholak", "commons": "dholak", "role": "percussion (folk, qawwali, film)"},
+    {"name": "dhol", "commons": "dhol drum", "role": "percussion (punjabi, bhangra)"},
+    {"name": "ektara", "commons": "ektara", "role": "baul/folk drone"},
+    {"name": "dotara", "commons": "dotara", "role": "bengali folk"},
+    {"name": "khol", "commons": "khol drum", "role": "kirtan"},
+    {"name": "pung / dhak", "commons": "dhak drum", "role": "bengal/assam"},
+    {"name": "tumbi", "commons": "tumbi", "role": "punjabi folk"},
+    {"name": "algoza", "commons": "algoza", "role": "punjabi folk"},
+    {"name": "thappu / parai", "commons": "parai drum", "role": "tamil folk"},
+    {"name": "udukku", "commons": "udukku", "role": "tamil folk"},
+    {"name": "kombu / ranasinga", "commons": "kombu horn", "role": "south indian processional"},
+    {"name": "tamte / halagi", "commons": "halagi drum", "role": "kannada folk"},
+    {"name": "dollu kunitha drum", "commons": "dollu kunitha", "role": "kannada folk"},
+    {"name": "gopichand / yaktara", "commons": "gopichand instrument", "role": "baul"},
+    {"name": "mandolin (indian style)", "commons": "mandolin srinivas", "role": "melody (carnatic crossover)"},
+    {"name": "rudra veena", "commons": "rudra veena", "role": "dhrupad"},
+    {"name": "jal tarang", "commons": "jal tarang", "role": "melody"},
+    {"name": "dilruba / esraj", "commons": "dilruba", "role": "melody"}
+  ],
+  "western": [
+    {"name": "acoustic guitar", "commons": "acoustic guitar", "role": "rhythm"},
+    {"name": "electric guitar", "commons": "electric guitar", "role": "lead/rhythm"},
+    {"name": "piano", "commons": "piano", "role": "harmony"},
+    {"name": "upright bass", "commons": "double bass", "role": "bass"},
+    {"name": "drum kit", "commons": "drum kit", "role": "percussion"},
+    {"name": "banjo", "commons": "banjo", "role": "folk/country"},
+    {"name": "fiddle", "commons": "fiddle", "role": "folk/country"},
+    {"name": "harmonica", "commons": "harmonica", "role": "blues/folk"},
+    {"name": "string quartet", "commons": "string quartet", "role": "ensemble"},
+    {"name": "brass section", "commons": "brass band", "role": "ensemble"}
+  ]
+}
