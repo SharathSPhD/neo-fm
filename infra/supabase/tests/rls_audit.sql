@@ -101,6 +101,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('harness_policy',       'service', null,      null, 'per-language harness arms and traffic caps; admin route with the service role only'),
   ('harness_arm_stats',     'service', 'user_id', null, 'bandit posteriors, per language and per listener; service role only'),
   ('harness_arm_choices',   'service', 'user_id', null, 'which harness arm each job ran and its settled reward; service role only'),
+  ('harness_render_choices','service', 'user_id', null, 'which render arm each job ran, its diction match and settled reward; service role only'),
   ('provider_daily_usage',  'service', null,      null, null),
   ('pool_tracks',           'service', null,      null, 'station pool; the station route reads admitted rows with the service role'),
   ('song_listens',          'service', null,      null, 'anonymous play/share events; creators read aggregates via security definer functions'),
@@ -157,6 +158,7 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('referral_codes',        'code',         '''abcdefgh'''),
   ('referrals',              'code',         '''abcdefgh'''),
   ('harness_arm_choices',   'source',       '''policy'''),
+  ('harness_render_choices','source',       '''policy'''),
   ('referrals',              'receiver_id',  '''bbbbbbbb-0000-4000-8000-00000000000b'''), -- sender <> receiver
   ('song_packs',             'sku',          '''single'''),
   ('song_packs',             'songs_total',  '1'),

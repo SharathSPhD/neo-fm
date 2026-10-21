@@ -66,3 +66,31 @@ Takeaway: at about 7 battles per language the recorded data cannot support a pro
 ### Taste prior shared with STATION_TASTE
 
 `lib/harness-policy/taste.ts` reads the same `normaliseTaste` profile (`taste_profiles.stated`, saved via #487) and turns it into a per-arm nudge: form-heavy genres (ghazal, carnatic, hindustani, sufi, devotional, bhavageete, rabindrasangeet, folk) or a formal register lean on corpus refs (+0.025 per signal, cap 0.05); a purely Western profile leans on `live` (+0.02). It is added to the Thompson draw, only for listeners with the personalize consent, and halves every 10 of the listener's own settled observations of that arm. Tests show a cold-start tilt toward refs and that 30 songs of the listener's own results overrule it (refs picked under 10%). The prior is a guess about taste, not evidence, so it is deliberately smaller than one posterior standard deviation at n=40.
+
+## Render-side arms (2026-10-21, no spend)
+
+Same table, caps, fallback and Thompson draw, behind `HARNESS_POLICY=1`. Render arm ids start with `r_` so they never mix with the lyric arms (`pickArm` takes a registry; a row whose arm is not in the registry is ignored).
+
+| Arm | What it does | Flag equivalent (the fallback) |
+|---|---|---|
+| `r_mech` | native lines plus the mechanical ITRANS guide (today's default) | language not in `DICTION_CLAUDE_ROMAN` |
+| `r_claude` | Claude-written Latin lines (claudeRomanize) | language in `DICTION_CLAUDE_ROMAN` |
+| `r_en_plain` / `r_en_styles` | English only: without / with the routed English style fragment (`lib/engine/english-styles.ts`) | `ENGLISH_STYLES` off / on |
+
+Style-cue sets: the plumbing exists (`arm.cue` into `CUE_SETS`, applied by `applyRenderArm`), but `CUE_SETS` is deliberately empty. E8 showed the mild catalog cue barely changes the audio (CLAP cos 0.97-0.99) and E9, the stronger cue with a blind pairwise judge, has not run, so no wording has earned a place; a winner is added in code review with an arm that points at it.
+
+Reward: the stored Gemini sung-word match from `agent_runs.diction_qa.matchPct` (100 -> 1, the 80 gate -> 0.6, 50 or less -> 0) at weight 0.5, plus the same listener events as the lyric arms at weight 0.2. `settleRenderChoices` settles each job once after 24 h (admin `settle` with `kind:"render"`). Choices are recorded in the new `harness_render_choices` table (migration 0115); a missing table makes the choice fall back to the flags.
+
+Integration (`lib/agent/process.ts`): the arm is chosen once before the sung text is built. With the policy off the arm is derived from the env flags and nothing else changes (no DB access, no prompt change). With it on, the arm's romanization choice replaces the `DICTION_CLAUDE_ROMAN` check and a policy-sourced English arm adds or removes the routed fragment. Operator control: `/api/admin/harness-policy` actions take `kind:"render"` (or an `r_` arm_id) for state, report, pick, promote, retire, judge and settle.
+
+### Replay on the E-series data
+
+Rewards are the recorded sung-word matches (E5/E6/E7 Claude romanization vs native-plus-ITRANS; E8 for the cue), turned into rewards and bootstrapped through the real `pickArm` for 3000 jobs.
+
+| Lang | mean reward mech (n) | claude (n) | Claude as capped challenger: share | Both champions: late share, converged at job |
+|---|---|---|---|---|
+| kn | 0.22 (4) | 0.96 (2) | 0.138 | 0.98, 199 |
+| ta | 0.39 (2) | 0.93 (5) | 0.130 | 0.94, 199 |
+| te | 0.31 (2) | 0.94 (5) | 0.131 | 0.96, 199 |
+
+Reading: the cap holds (about 0.13-0.14 against max_share 0.15) even though Claude romanization looks far better, and once it is a champion the bandit moves nearly all songs to it within the first 200 jobs. The sample is 2-5 renders per cell, one or two briefs per language, AI-scored, so the data justifies running it as a small-share challenger (which is what the policy does) rather than concluding anything beyond what E5-E7 already say. Hindi has no Claude-romanization data (native script already scores about 95), and English has no render data at all, so `r_en_*` has only the mechanical tests. The mild catalog cue (kn 62/60 vs 66/66) leaves the bandit mixed, as expected from E8.

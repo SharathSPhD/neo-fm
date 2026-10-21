@@ -39,19 +39,23 @@ export interface PickInput {
   /** this listener's own posteriors; empty for anonymous or non-consenting users */
   user: StatRow[];
   premiumModel?: string;
+  /** Arm registry and flag-derived fallback for a decision other than the lyric polish (render.ts); defaults to the lyric arms. */
+  registry?: Record<string, PolicyArm>;
+  fallbackArm?: PolicyArm;
   /** per-arm cold-start nudge from the saved taste profile (taste.ts tasteArmPrior); fades with the listener's own data */
   tastePrior?: Record<string, number>;
   seed: number;
 }
 
 export function pickArm(i: PickInput): Pick {
-  const fallback = (reason: string): Pick => ({ arm: flagArm(i.env, i.language, i.premiumModel), source: "flags", reason });
+  const registry = i.registry ?? POLICY_ARMS;
+  const fallback = (reason: string): Pick => ({ arm: i.fallbackArm ?? flagArm(i.env, i.language, i.premiumModel), source: "flags", reason });
   if (!policyEnabled(i.env)) return fallback("HARNESS_POLICY off");
-  const rows = i.rows.filter((r) => r.language === i.language && (r.tier === i.tier || r.tier === "*") && POLICY_ARMS[r.arm_id]);
+  const rows = i.rows.filter((r) => r.language === i.language && (r.tier === i.tier || r.tier === "*") && registry[r.arm_id]);
   // Opus arms are paid-tier only: a Free listener never gets one, whatever the table says.
-  const eligible = rows.filter((r) => !POLICY_ARMS[r.arm_id]!.model || PAID_TIERS.has(i.tier));
+  const eligible = rows.filter((r) => !registry[r.arm_id]!.model || PAID_TIERS.has(i.tier));
   if (eligible.length === 0) return fallback("no policy rows for this language and tier");
-  if (eligible.length === 1) return { arm: POLICY_ARMS[eligible[0]!.arm_id]!, source: "policy", reason: "single promoted arm" };
+  if (eligible.length === 1) return { arm: registry[eligible[0]!.arm_id]!, source: "policy", reason: "single promoted arm" };
 
   const rng = mulberry32(i.seed);
   const g = new Map(i.global.map((s) => [s.arm_id, s]));
@@ -68,7 +72,7 @@ export function pickArm(i: PickInput): Pick {
     const s = sampleBeta(post, rng) + fadedPrior(i.tastePrior, r.arm_id, u.get(r.arm_id) ? u.get(r.arm_id)!.a + u.get(r.arm_id)!.b - 2 : 0);
     if (s > bestScore) { bestScore = s; best = r; }
   }
-  return { arm: POLICY_ARMS[best.arm_id]!, source: "policy", reason: `thompson over ${pool.map((r) => r.arm_id).join(",")}` };
+  return { arm: registry[best.arm_id]!, source: "policy", reason: `thompson over ${pool.map((r) => r.arm_id).join(",")}` };
 }
 
 /** Stable per-job seed so a retried job keeps the arm it started with. */
