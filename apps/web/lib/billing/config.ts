@@ -19,6 +19,7 @@ import "server-only";
 export type BillableTier = "creator" | "pro";
 export type BillingInterval = "month" | "year";
 export type PackSku = "single" | "three";
+export type AddonGrade = "premium" | "studio";
 
 /** Songs a pack grants. Server-side truth: the webhook derives this from the purchased price id, never from metadata. */
 export const PACK_SONGS: Record<PackSku, number> = { single: 1, three: 3 };
@@ -31,6 +32,8 @@ export interface BillingConfig {
   /** Optional: unset means that plan/pack is simply not offered. */
   annualPrices: Partial<Record<BillableTier, string>>;
   packPrices: Partial<Record<PackSku, string>>;
+  /** One-off lyric-grade add-ons (+INR 29 Premium, +INR 99 Studio); unset means not offered. Test-mode keys only, like the pass. */
+  addonPrices: Partial<Record<AddonGrade, string>>;
   /**
    * Station pass price id. Test-mode only: unset, or ignored under a live key, until S sets the live price. The webhook
    * stores it as its own entitlement (station_passes, migration 0098) and never touches the user's tier.
@@ -75,6 +78,12 @@ function readEnv(): BillingConfig | null {
       single: process.env.STRIPE_PRICE_PACK_SINGLE_ID || undefined,
       three: process.env.STRIPE_PRICE_PACK_THREE_ID || undefined,
     },
+    addonPrices: secretKey.startsWith("sk_test_")
+      ? {
+          premium: process.env.STRIPE_PRICE_ADDON_PREMIUM_ID || undefined,
+          studio: process.env.STRIPE_PRICE_ADDON_STUDIO_ID || undefined,
+        }
+      : {},
     stationPassPrice: secretKey.startsWith("sk_test_") ? process.env.STRIPE_PRICE_STATION_PASS_ID || undefined : undefined,
     packUpi: process.env.STRIPE_PACK_UPI === "1",
     // A live key never offers mandates until the UPI AutoPay compliance items (MANUAL-STEPS step 13) are signed off.
@@ -121,6 +130,12 @@ export function getPackForPriceId(priceId: string | null | undefined): PackSku |
   if (!priceId) return null;
   const packs = getBillingConfigOrNull()?.packPrices ?? {};
   return (Object.keys(packs) as PackSku[]).find((sku) => packs[sku] === priceId) ?? null;
+}
+
+export function getAddonForPriceId(priceId: string | null | undefined): AddonGrade | null {
+  if (!priceId) return null;
+  const prices = getBillingConfigOrNull()?.addonPrices ?? {};
+  return (Object.keys(prices) as AddonGrade[]).find((g) => prices[g] === priceId) ?? null;
 }
 
 export function getTierForPriceId(

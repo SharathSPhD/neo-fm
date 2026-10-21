@@ -32,7 +32,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
-import { getBillingConfigOrNull, getPackForPriceId, getTierForPriceId, PACK_SONGS } from "@/lib/billing/config";
+import { ADDON_SONGS } from "@/lib/lyrics/grade";
+import { getAddonForPriceId, getBillingConfigOrNull, getPackForPriceId, getTierForPriceId, PACK_SONGS } from "@/lib/billing/config";
 import { isMissingFunction } from "@/lib/billing/pass";
 import { getStripe } from "@/lib/billing/stripe";
 import { createServiceRoleClient } from "@/lib/supabase/server";
@@ -272,6 +273,21 @@ async function applyPackPurchase(session: Stripe.Checkout.Session): Promise<{ us
   if (!userId) return { skipped: "no_user_id_metadata" };
 
   const items = await getStripe().checkout.sessions.listLineItems(session.id, { limit: 10 });
+  const addon = items.data.map((li) => getAddonForPriceId(li.price?.id)).find((v) => v !== null) ?? null;
+  if (addon) {
+    // Lyric-grade add-on (migration 0115): credit comes from the price actually purchased; idempotent on the session id.
+    const { error: addonErr } = await createServiceRoleClient().rpc("grant_lyric_addon", {
+      p_user_id: userId,
+      p_session_id: session.id,
+      p_grade: addon,
+      p_songs: ADDON_SONGS[addon],
+    });
+    if (addonErr) {
+      if ((addonErr as { code?: string }).code === "23503") return { skipped: "user_deleted" };
+      throw new Error(`grant_lyric_addon: ${addonErr.message}`);
+    }
+    return { user_id: userId, pack: `addon_${addon}` };
+  }
   const sku = items.data.map((li) => getPackForPriceId(li.price?.id)).find((v) => v !== null) ?? null;
   if (!sku) return { skipped: "not_a_pack_price" };
 

@@ -31,6 +31,8 @@ export const CreateSongRequestSchema = z
     voice: z.object({ choice: z.enum(VOICE_CHOICES), style: z.enum(VOICE_STYLES).optional() }).optional(),
     /** Genre, mood, instruments and background alongside the prompt (lib/taste). Ignored unless TASTE_BRIEF=1. */
     taste: TasteBriefSchema.optional(),
+    /** Lyric grade (lib/lyrics/grade). Granted only against a credit; ignored unless LYRIC_GRADES=1. */
+    lyric_grade: z.enum(["standard", "premium", "studio"]).optional(),
   })
   .superRefine((value, ctx) => {
     const has_doc = !!value.song_document;

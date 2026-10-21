@@ -32,8 +32,11 @@ export interface ListeningReport {
   overall: ListeningCell;
   by_language: Record<string, ListeningCell>;
   by_daypart: Record<string, ListeningCell>;
+<<<<<<< HEAD
   /** Free signed-in listeners split by the ad holdout: "holdout" hears no ads, "exposed" hears breaks (and the pass upsell). Empty without an arm lookup. */
   by_arm: Record<string, ListeningCell>;
+=======
+>>>>>>> origin/main
   /** Ad starts and completes carry no listener ids, so ad cells are keyed by the slot's first language ("any" if none). */
   notes: string[];
 }
@@ -79,12 +82,18 @@ export function listeningReport(
   adEvents: ListeningAdEvent[],
   adSlots: ListeningAdSlot[],
   windowDays: number,
+<<<<<<< HEAD
   armOf: (userId: string) => "exposed" | "holdout" | null = () => null,
+=======
+>>>>>>> origin/main
 ): ListeningReport {
   const overall = bucket();
   const langs = new Map<string, Bucket>();
   const parts = new Map<string, Bucket>();
+<<<<<<< HEAD
   const arms = new Map<string, Bucket>();
+=======
+>>>>>>> origin/main
   const get = (m: Map<string, Bucket>, k: string) => { let b = m.get(k); if (!b) { b = bucket(); m.set(k, b); } return b; };
 
   const byUser = new Map<string, { t: number; kind: string; lang: string }[]>();
@@ -97,7 +106,10 @@ export function listeningReport(
   }
 
   for (const [user, list] of byUser) {
+<<<<<<< HEAD
     const arm = armOf(user);
+=======
+>>>>>>> origin/main
     list.sort((a, b) => a.t - b.t);
     let cur: (Session & { langs: Map<string, number> }) | null = null;
     const close = () => {
@@ -110,7 +122,10 @@ export function listeningReport(
         overall.sessions.push(session);
         get(langs, session.language).sessions.push(session);
         get(parts, daypartOfIst(session.startMs)).sessions.push(session);
+<<<<<<< HEAD
         if (arm) get(arms, arm).sessions.push(session);
+=======
+>>>>>>> origin/main
       }
       cur = null;
     };
@@ -124,7 +139,10 @@ export function listeningReport(
       }
       if (e.kind === "play" || e.kind === "skip") {
         const targets = [overall, get(langs, e.lang), get(parts, daypartOfIst(e.t))];
+<<<<<<< HEAD
         if (arm) targets.push(get(arms, arm));
+=======
+>>>>>>> origin/main
         for (const b of targets) {
           b.users.add(user);
           if (e.kind === "play") b.plays += 1; else b.skips += 1;
@@ -154,12 +172,18 @@ export function listeningReport(
     overall: cell(overall),
     by_language: out(langs),
     by_daypart: out(parts),
+<<<<<<< HEAD
     by_arm: out(arms),
+=======
+>>>>>>> origin/main
     notes: [
       `Cells with fewer than ${MIN_LISTENERS} distinct listeners are suppressed.`,
       "A session ends after a 30 minute pause. Session length runs from the first to the last play or skip signal, so it undercounts the final track.",
       "Session language is the language of most of its plays. Daypart is India time at the session start (skips and plays use their own time).",
+<<<<<<< HEAD
       "by_arm compares Free signed-in listeners held out from ads with those who hear them; ad cells do not apply to the holdout.",
+=======
+>>>>>>> origin/main
       "Ad cells by language use the slot's first language; house ads for any language count under 'any' and in overall and daypart only.",
     ],
   };

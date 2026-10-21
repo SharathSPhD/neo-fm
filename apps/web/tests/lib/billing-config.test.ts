@@ -58,9 +58,26 @@ describe("isBillingEnabled", () => {
       prices: { creator: "price_creator_123", pro: "price_pro_456" },
       annualPrices: {},
       packPrices: {},
+      addonPrices: {},
       packUpi: false,
       subscriptionUpi: false,
     });
+  });
+
+  it("maps lyric-grade add-on prices on a test key and never offers them on a live key", async () => {
+    Object.assign(process.env, FULL_ENV, { STRIPE_PRICE_ADDON_PREMIUM_ID: "price_ap", STRIPE_PRICE_ADDON_STUDIO_ID: "price_as" });
+    try {
+      const m = await loadConfig();
+      expect(m.getAddonForPriceId("price_ap")).toBe("premium");
+      expect(m.getAddonForPriceId("price_as")).toBe("studio");
+      expect(m.getAddonForPriceId("price_other")).toBeNull();
+      process.env.STRIPE_SECRET_KEY = "sk_live_full";
+      vi.resetModules();
+      expect((await loadConfig()).getAddonForPriceId("price_ap")).toBeNull();
+    } finally {
+      delete process.env.STRIPE_PRICE_ADDON_PREMIUM_ID;
+      delete process.env.STRIPE_PRICE_ADDON_STUDIO_ID;
+    }
   });
 
   it("offers subscription UPI only with the flag AND a test-mode key", async () => {

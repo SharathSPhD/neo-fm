@@ -23,7 +23,7 @@ const MAX_PICKS = 4;
 function Chips({ label, options, value, onChange, show }: { show: (token: string) => string; label: string; options: readonly string[]; value: readonly string[]; onChange: (next: string[]) => void }) {
   return (
     <fieldset className="flex flex-col gap-1.5">
-      <legend className="text-xs uppercase tracking-widest text-foreground/50">{label}</legend>
+      <legend className="text-xs uppercase tracking-widest text-foreground/70">{label}</legend>
       <div className="flex flex-wrap gap-1.5">
         {options.map((o) => {
           const on = value.includes(o);
@@ -35,7 +35,7 @@ function Chips({ label, options, value, onChange, show }: { show: (token: string
               disabled={!on && value.length >= MAX_PICKS}
               onClick={() => onChange(on ? value.filter((x) => x !== o) : [...value, o])}
               className={[
-                "min-h-[36px] rounded-full border px-3 text-xs transition disabled:opacity-40",
+                "min-h-[44px] rounded-full border px-3.5 text-sm transition disabled:opacity-40",
                 on ? "border-accent bg-accent/15 text-accent" : "border-foreground/15 text-foreground/70 hover:border-foreground/30",
               ].join(" ")}
             >
@@ -50,9 +50,9 @@ function Chips({ label, options, value, onChange, show }: { show: (token: string
 
 function Select({ label, value, onChange, options, show }: { show: (token: string) => string; label: string; value: string; onChange: (v: string) => void; options: readonly string[] }) {
   return (
-    <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/50">
+    <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/70">
       {label}
-      <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2 text-sm normal-case tracking-normal text-foreground outline-hidden focus:border-accent">
+      <select value={value} onChange={(e) => onChange(e.target.value)} className="rounded-xl border border-foreground/15 bg-foreground/5 min-h-[44px] px-3.5 py-2 text-base normal-case tracking-normal text-foreground outline-hidden focus:border-accent">
         <option value="">-</option>
         {options.map((o) => <option key={o} value={o}>{show(o)}</option>)}
       </select>
@@ -138,7 +138,7 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
     <details className="rounded-xl border border-foreground/10 bg-foreground/[0.03] p-4">
       <summary className="cursor-pointer text-sm font-medium">{t("taste.title")}</summary>
       <div className="mt-4 flex flex-col gap-5">
-        <p className="text-xs text-foreground/50 leading-relaxed">{t("taste.hint")}</p>
+        <p className="text-xs text-foreground/70 leading-relaxed">{t("taste.hint")}</p>
         <Chips show={show} label={t("taste.genres")} options={TASTE_GENRES} value={genres} onChange={setGenres} />
         <Chips show={show} label={t("taste.moods")} options={TASTE_MOODS} value={moods} onChange={setMoods} />
         <Chips show={show} label={t("taste.instruments")} options={TASTE_INSTRUMENTS} value={instruments} onChange={setInstruments} />
@@ -148,7 +148,7 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
           <Select show={show} label={t("taste.register")} value={register} onChange={setRegister} options={TASTE_REGISTERS} />
           <Select show={show} label={t("taste.setting")} value={setting} onChange={setSetting} options={TASTE_SETTINGS} />
         </div>
-        <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/50">
+        <label className="flex flex-col gap-1.5 text-xs uppercase tracking-widest text-foreground/70">
           {t("taste.background")}
           <textarea
             value={background}
@@ -161,8 +161,8 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
         </label>
         {canSave ? (
           <div className="flex flex-wrap items-center gap-3">
-            <button type="button" onClick={save} className="min-h-[36px] rounded-md border border-accent/40 bg-accent/10 px-3 text-xs font-medium text-accent hover:bg-accent/20">{t("taste.save")}</button>
-            <button type="button" onClick={forget} className="min-h-[36px] px-2 text-xs text-foreground/60 underline hover:text-foreground">{t("taste.forget")}</button>
+            <button type="button" onClick={save} className="min-h-[44px] rounded-md border border-accent/40 bg-accent/10 px-3 text-xs font-medium text-accent hover:bg-accent/20">{t("taste.save")}</button>
+            <button type="button" onClick={forget} className="min-h-[44px] px-2 text-xs text-foreground/60 underline hover:text-foreground">{t("taste.forget")}</button>
             {note ? <span role="status" className="text-xs text-foreground/70">{note}</span> : null}
           </div>
         ) : null}

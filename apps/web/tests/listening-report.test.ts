@@ -62,6 +62,7 @@ describe("listeningReport", () => {
     expect(r.by_language.kn!.ad_completion_rate).toBe(0.5);
     expect(r.by_daypart.morning!.ad_starts).toBe(3);
   });
+<<<<<<< HEAD
 
   it("splits Free listeners by ad holdout arm and leaves others out", () => {
     const rows = listeners(MIN_LISTENERS * 2);
@@ -75,3 +76,6 @@ describe("listeningReport", () => {
   });
 });
 
+=======
+});
+>>>>>>> origin/main

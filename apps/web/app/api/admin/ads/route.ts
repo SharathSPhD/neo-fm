@@ -3,7 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
+<<<<<<< HEAD
 import { adInventory, passUpsellStats, retentionGuardrail, summarizeAds } from "../../../../lib/ops/ads-report";
+=======
+import { adInventory, retentionGuardrail, summarizeAds } from "../../../../lib/ops/ads-report";
+>>>>>>> origin/main
 import { inAdHoldout } from "../../../../lib/station/ads";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +23,11 @@ export async function GET(req: NextRequest) {
   const db = serviceClient() as unknown as { from: (t: string) => { select: (c: string) => { eq: (k: string, v: string) => { gte: (k: string, v: string) => { limit: (n: number) => Promise<Rows> } }; gte: (k: string, v: string) => { limit: (n: number) => Promise<Rows> }; limit: (n: number) => Promise<Rows> } } };
   try {
     const [slots, events] = await Promise.all([
+<<<<<<< HEAD
       db.from("ad_slots").select("id,headline,kind,languages,active,cta_url").limit(200),
+=======
+      db.from("ad_slots").select("id,headline,kind,languages,active").limit(200),
+>>>>>>> origin/main
       db.from("ad_events").select("slot_id,event,created_at").gte("created_at", since).limit(20_000),
     ]);
     // A missing table reads as an empty report, so the panel can ship before the migration.
@@ -38,7 +46,10 @@ export async function GET(req: NextRequest) {
       window_days: days,
       slots: summarizeAds((slots.data ?? []) as never, (events.data ?? []) as never),
       inventory: adInventory((slots.data ?? []) as never, (events.data ?? []) as never, days),
+<<<<<<< HEAD
       pass_upsell: passUpsellStats((slots.data ?? []) as never, (events.data ?? []) as never),
+=======
+>>>>>>> origin/main
       retention_guardrail: guardrail,
     });
   } catch {
