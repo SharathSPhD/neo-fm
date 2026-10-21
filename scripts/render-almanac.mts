@@ -37,6 +37,8 @@ for (const l of todo) {
   const wav = join(wavDir, `${l.id.split("/")[1]}.wav`);
   if (!existsSync(wav)) {
     if (calls >= reserved) { console.error(`reserved ${reserved} calls used up at ${l.id}`); break; }
+    // Tier 1 allows 10 TTS requests a minute: pace the calls instead of failing on the 429.
+    if (calls > 0) await new Promise((r) => setTimeout(r, 6500));
     calls++;
     try {
       const i = await client.interactions.create({
