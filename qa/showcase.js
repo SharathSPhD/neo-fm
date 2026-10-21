@@ -17,7 +17,7 @@ const { chromiumPath, base } = require('./common');
       const r = await p.goto(`${base}/lab/showcase?lang=${lang}`, { waitUntil: 'domcontentloaded' });
       if (!r || r.status() !== 200) { check(false, `${name} ${lang} status ${r && r.status()} (is LYRIC_SHOWCASE_ENABLED=1 on this host?)`); continue; }
       check((await p.locator('h1').innerText()).includes('Lyric quality showcase'), `${name} ${lang} heading`);
-      const arts = p.locator('article');
+      const arts = p.locator('section:not([aria-label]) article');
       check((await arts.count()) === expected, `${name} ${lang} shows ${expected} cases (${await arts.count()})`);
       const full = await arts.evaluateAll((els) => els.every((e) => { const t = e.innerText; return /Standard/.test(t) && /Premium/.test(t) && e.querySelectorAll('pre').length === 2 && [...e.querySelectorAll('pre')].every((x) => x.innerText.trim().length > 50); }));
       check(full, `${name} ${lang} every case has Standard and Premium lyrics`);
@@ -28,6 +28,14 @@ const { chromiumPath, base } = require('./common');
       const over = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
       check(over <= 1, `${name} ${lang} no horizontal overflow (${over}px)`);
     }
+    const songs = p.locator('section[aria-label="Songs"]');
+    check((await songs.count()) === 1, `${name} Songs section present`);
+    check((await songs.locator('article').count()) === 3, `${name} three input-script groups`);
+    check((await songs.locator('tbody tr').count()) === 3, `${name} three style-cue rows`);
+    const noClips = (await songs.locator('audio').count()) === 0;
+    const hosted = (await songs.getByText('audio not hosted on this host').count()) === 0;
+    check(noClips ? !hosted : (await songs.locator('audio').count()) === 20, `${name} audio players: all 20 clips or an honest "not hosted" note`);
+    check(/sung-word match/.test(await songs.innerText()) && /small samples/.test(await songs.innerText()), `${name} songs section labels the score and the sample size`);
     check(errs.length === 0, `${name} no page errors${errs.length ? ': ' + errs[0] : ''}`);
     await ctx.close();
   }

@@ -1,0 +1,156 @@
+{
+ "source": "lab/render-harness E3-E8, 2026-10-20/21",
+ "romanization": [
+  {
+   "brief": "occ-ta-1",
+   "lang": "ta",
+   "language": "Tamil",
+   "lyrics": "வாழை இலை வளைவில் மணமகன் ஊர்வலம் வருது\nதாலி ஒளிரும், ஊரே சேர்ந்து மகிழ்ந்து பாடுது\nபெரியவர் கைகள் தலைமேல் ஆசி பொழியுது\nஅரிசி மஞ்சள் தூவி நெஞ்சம் நிறையுது\nமேளம் முழங்க நல்ல நேரம் வந்தாச்சு\nஇரு குடும்பமும் ஒன்றாய் சேர்ந்து வாழ்க",
+   "stock": [
+    {
+     "clip": "e3-ta-a-1",
+     "diction": 64
+    },
+    {
+     "clip": "e3-ta-a-2",
+     "diction": 75
+    }
+   ],
+   "romanized": [
+    {
+     "clip": "e5-ta-rom-1",
+     "diction": 95
+    },
+    {
+     "clip": "e5-ta-rom-2",
+     "diction": 97
+    },
+    {
+     "clip": "e5-ta-rom-3",
+     "diction": 100
+    }
+   ]
+  },
+  {
+   "brief": "occ-te-1",
+   "lang": "te",
+   "language": "Telugu",
+   "lyrics": "పసుపు పూసిన చేతులతో పెళ్లికూతురు మెరిసెను\nముత్తైదువులు చుట్టూ చేరి మంగళగీతాలు పాడిరి\nనలుగు పెట్టి అమ్మలు చేతులకు పసుపు రాసిరి\nగాజుల సవ్వడి మధ్య ఆడబిడ్డలు నవ్వులు చిందించిరి\nఈ పెళ్లి పందిరిలో పసుపు వెలుగు పొంగెను\nకొత్త జీవితానికి దీవెనలు అందించెను",
+   "stock": [
+    {
+     "clip": "e3-te-a-1",
+     "diction": 64
+    },
+    {
+     "clip": "e3-te-a-2",
+     "diction": 67
+    }
+   ],
+   "romanized": [
+    {
+     "clip": "e5-te-rom-1",
+     "diction": 97
+    },
+    {
+     "clip": "e5-te-rom-2",
+     "diction": 100
+    },
+    {
+     "clip": "e5-te-rom-3",
+     "diction": 93
+    }
+   ]
+  },
+  {
+   "brief": "occ-kn-1",
+   "lang": "kn",
+   "language": "Kannada",
+   "lyrics": "ನಾದಸ್ವರ ಮೊಳಗಿದೆ, ಮಗಳೇ ನಗುತ ಹೊರಡು ನೀ\nಅಮ್ಮನ ಆಶೀರ್ವಾದ ನಿನ್ನ ಜೊತೆಗೆ ಬರಲಿ\nಹೆತ್ತವ್ವನ ಕೈ ತಲೆಯ ಮೇಲೆ, ಕಣ್ಣಲ್ಲಿ ಹನಿ ನೀರು\nಹೊಸ ಮನೆಯ ಬೆಳಕಾಗು ನೀನು, ಇದೇ ನಮ್ಮ ಹಾರೈಕೆ\nಅರಿಶಿಣ ಕುಂಕುಮ ಹಚ್ಚಿ ಬಾಗಿಲ ದಾಟಿ ನಡೆ\nಸಂಭ್ರಮದ ಸುಮಧುರ ರಾಗ ನಿನ್ನ ಹಿಂದೆ ಹರಡಲಿ",
+   "stock": [
+    {
+     "clip": "e6-kn-stock-1",
+     "diction": 63
+    },
+    {
+     "clip": "e6-kn-stock-2",
+     "diction": 60
+    }
+   ],
+   "romanized": [
+    {
+     "clip": "e6-kn-rom-1",
+     "diction": 97
+    },
+    {
+     "clip": "e6-kn-rom-2",
+     "diction": 99
+    }
+   ]
+  }
+ ],
+ "cue": [
+  {
+   "brief": "occ-kn-1",
+   "lang": "kn",
+   "language": "Kannada",
+   "stock": {
+    "clip": "e8-occ-kn-1-a",
+    "diction": 62
+   },
+   "cue": {
+    "clip": "e8-occ-kn-1-c",
+    "diction": 66
+   },
+   "scores": {
+    "audiobox_ce": 0.15,
+    "audiobox_cu": -0.03,
+    "audiobox_pc": -0.23,
+    "audiobox_pq": 0.09,
+    "pref_logit": -0.49,
+    "clap_cos": 0.971
+   }
+  },
+  {
+   "brief": "occ-kn-2",
+   "lang": "kn",
+   "language": "Kannada",
+   "stock": {
+    "clip": "e8-occ-kn-2-a",
+    "diction": 60
+   },
+   "cue": {
+    "clip": "e8-occ-kn-2-c",
+    "diction": 66
+   },
+   "scores": {
+    "audiobox_ce": -0.15,
+    "audiobox_cu": -0.03,
+    "audiobox_pc": 0.22,
+    "audiobox_pq": -0.09,
+    "pref_logit": -0.11,
+    "clap_cos": 0.993
+   }
+  },
+  {
+   "brief": "occ-hi-2",
+   "lang": "hi",
+   "language": "Hindi",
+   "stock": {
+    "clip": "e8-occ-hi-2-a",
+    "diction": 95
+   },
+   "cue": {
+    "clip": "e8-occ-hi-2-c",
+    "diction": 97
+   },
+   "scores": {
+    "audiobox_ce": 0.13,
+    "audiobox_cu": 0.04,
+    "audiobox_pc": 0.26,
+    "audiobox_pq": 0.11,
+    "pref_logit": -0.72,
+    "clap_cos": 0.986
+   }
+  }
+ ]
+}

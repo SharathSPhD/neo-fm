@@ -1,3 +1,5 @@
+import { poolCdnUrl } from "../station/cdn";
+import audioRaw from "./showcase-audio.json";
 import raw from "./showcase-data.json";
 
 /** Judge verdict for one case, from the Premium side: "premium" = Premium won, "standard" = Standard won. */
@@ -68,3 +70,34 @@ export function signP(wins: number, losses: number): number {
   }
   return Math.min(1, (2 * p) / 2 ** n);
 }
+
+export interface AudioRender {
+  clip: string;
+  /** Gemini sung-word match against the written lyrics, 0-100. AI-scored; says nothing about accent or naturalness. */
+  diction: number;
+}
+export interface RomanizationGroup {
+  brief: string;
+  lang: string;
+  language: string;
+  lyrics: string;
+  stock: AudioRender[];
+  romanized: AudioRender[];
+}
+export interface CuePair {
+  brief: string;
+  lang: string;
+  language: string;
+  stock: AudioRender;
+  cue: AudioRender;
+  /** Free-scorer deltas, cue minus stock. pref_logit is the 61.5%-accurate preference head. */
+  scores: { audiobox_ce: number; audiobox_cu: number; audiobox_pc: number; audiobox_pq: number; pref_logit: number; clap_cos: number };
+}
+
+export const showcaseAudio = (): { romanization: RomanizationGroup[]; cue: CuePair[] } =>
+  audioRaw as unknown as { romanization: RomanizationGroup[]; cue: CuePair[] };
+
+/** Clips live in the pool R2 bucket under showcase/; with POOL_CDN_BASE unset the page shows scores only. */
+export const clipUrl = (clip: string, base = process.env.POOL_CDN_BASE): string | null => poolCdnUrl(`showcase/${clip}.mp3`, base);
+
+export const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
