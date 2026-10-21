@@ -29,6 +29,9 @@ import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
+import { stationTasteEnabled, tasteBias, tasteHostNote } from "@/lib/station/taste-bias";
+import type { TasteBrief } from "@/lib/taste/brief";
+import { loadStatedTaste } from "@/lib/taste/store";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { almanacIdsFor, almanacLines } from "@/lib/station/almanac";
 import { programmeLines } from "@/lib/station/programmes";
@@ -89,9 +92,19 @@ export async function GET(req: NextRequest) {
   if (pool.length === 0) return NextResponse.json({ tracks: [] });
 
   const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
-  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
-  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40) });
+  // STATION_TASTE=1: the saved taste profile (moods, genres, energy, language mix) becomes a small ranking prior.
+  let prior: ReturnType<typeof tasteBias> | undefined;
+  let savedTaste: TasteBrief | null = null;
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
+  if (user && stationTasteEnabled()) {
+    try {
+      const stated = await loadStatedTaste(admin, user.id);
+      if (stated.status === "ok" && stated.taste) savedTaste = stated.taste;
+      if (savedTaste) prior = tasteBias(savedTaste, { hour: clock.hour, languageLocked: !!lang });
+    } catch { /* the prior is optional: rank without it */ }
+  }
+  // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
+  const slate = rankTracks(pool, signals, { language: lang, wantTags: station ? [...new Set([...wantTags, ...station.tags])] : wantTags, limit: Math.max(limit * 4, 40), prior });
   const city = cityFromHeader(req.headers.get("x-vercel-ip-city"));
   const { exclude, ...steer } = parseSteer(sp);
   const steered = Boolean(steer.energy || steer.moreLike);
@@ -146,7 +159,7 @@ export async function GET(req: NextRequest) {
         const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
         const url = cdnUrl ?? signed;
         if (!url) return null;
-        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
+        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id, note: savedTaste ? tasteHostNote(savedTaste, t, t.language, clock.hour) : null });
         const info = setInfo.get(t.id);
         const fade = crossfadeFor(info);
         return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
@@ -168,5 +181,5 @@ export async function GET(req: NextRequest) {
       if (v) out = [...out.slice(0, v.index), voiceItem(v.line, Math.random().toString(36).slice(2, 8)), ...out.slice(v.index)];
     } catch { /* voice links are optional: serve the queue as it is */ }
   }
-  return NextResponse.json({ tracks: out });
+  return NextResponse.json({ tracks: out }, prior ? { headers: { "x-station-taste": "applied" } } : undefined);
 }
