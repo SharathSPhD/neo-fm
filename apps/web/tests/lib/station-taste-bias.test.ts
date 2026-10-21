@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { rankTracks, type PoolTrack, type StationSignal } from "../../lib/station/rank";
-import { daypartOf, stationTasteEnabled, tasteBias } from "../../lib/station/taste-bias";
+import { hostLine } from "../../lib/station/host";
+import { daypartOf, stationTasteEnabled, tasteBias, tasteHostNote } from "../../lib/station/taste-bias";
 
 const track = (id: string, language: string, tags: string[], extra: Partial<PoolTrack> = {}): PoolTrack => ({ id, language, tags, ...extra });
 const fixed = () => 0;
@@ -67,5 +68,26 @@ describe("rankTracks with a taste prior", () => {
       { trackId: "carn", kind: "skip", ageMs: 1000 },
     ];
     expect(rankTracks(pool, signals, { random: fixed, prior })[0]!.id).toBe("rock");
+  });
+});
+
+describe("tasteHostNote and hostLine", () => {
+  const taste = { v: 1 as const, moods: ["calm" as const], daypart_moods: { evening: "romantic" as const } };
+
+  it("names a saved mood the track really carries, preferring the daypart mood", () => {
+    expect(tasteHostNote(taste, { tags: ["calm", "romantic"] }, "en", 19)).toBe("For your romantic mood.");
+    expect(tasteHostNote(taste, { tags: ["calm"] }, "en", 19)).toBe("For your calm mood.");
+  });
+
+  it("uses the translated mood label and stays silent when nothing matches or the language has no template", () => {
+    expect(tasteHostNote(taste, { tags: ["calm"] }, "hi", 10)).toBe("आपके शांत मूड के लिए।");
+    expect(tasteHostNote(taste, { tags: ["rock"] }, "en", 10)).toBeNull();
+    expect(tasteHostNote(taste, { tags: ["calm"] }, "pa", 10)).toBeNull();
+  });
+
+  it("is appended to the host line only when given", () => {
+    const base = hostLine({ hour: 19, language: "en", seed: "x" });
+    expect(hostLine({ hour: 19, language: "en", seed: "x", note: null })).toBe(base);
+    expect(hostLine({ hour: 19, language: "en", seed: "x", note: "For your calm mood." })).toBe(`${base} For your calm mood.`);
   });
 });

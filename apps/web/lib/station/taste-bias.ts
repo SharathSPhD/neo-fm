@@ -5,6 +5,7 @@
  */
 import type { PoolTrack } from "./rank";
 import type { TasteBrief } from "@/lib/taste/brief";
+import { tasteLabel } from "@/lib/taste/labels";
 
 export function stationTasteEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.STATION_TASTE === "1";
@@ -52,4 +53,29 @@ export function tasteBias(taste: TasteBrief, opts: TasteBiasOptions): (t: PoolTr
     if (langs.size && t.kind !== "instrumental" && langs.has(t.language)) score += LANGUAGE_BONUS;
     return Math.min(score, TOTAL_CAP);
   };
+}
+
+/** "For your calm mood." per language; machine-translated like the rest of the host copy, pending native review. Languages without a template get no note. */
+const MOOD_NOTE: Readonly<Record<string, (mood: string) => string>> = {
+  en: (m) => `For your ${m} mood.`,
+  hi: (m) => `आपके ${m} मूड के लिए।`,
+  mr: (m) => `तुमच्या ${m} मूडसाठी.`,
+  ta: (m) => `உங்கள் ${m} மனநிலைக்காக.`,
+  te: (m) => `మీ ${m} మూడ్ కోసం.`,
+  kn: (m) => `ನಿಮ್ಮ ${m} ಮನಸ್ಥಿತಿಗಾಗಿ.`,
+  bn: (m) => `আপনার ${m} মেজাজের জন্য।`,
+};
+
+/**
+ * Extra sentence for a track's host line when the track carries a mood the listener saved (the daypart mood first), so the
+ * line only ever says something true about the track. Null when nothing matches or the language has no template.
+ * Spoken links are pre-rendered audio and cannot be personalised, so this covers the text host line only.
+ */
+export function tasteHostNote(taste: TasteBrief, track: Pick<PoolTrack, "tags">, language: string, hour: number): string | null {
+  const template = MOOD_NOTE[language];
+  if (!template) return null;
+  const dayMood = taste.daypart_moods?.[daypartOf(hour)];
+  const candidates: string[] = dayMood ? [dayMood, ...(taste.moods ?? [])] : [...(taste.moods ?? [])];
+  const mood = candidates.find((m) => track.tags.includes(m.toLowerCase()));
+  return mood ? template(tasteLabel(mood, language)) : null;
 }

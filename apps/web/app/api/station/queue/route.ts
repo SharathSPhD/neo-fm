@@ -27,7 +27,8 @@ import { loadPool } from "@/lib/station/pool";
 import { resolveClock } from "@/lib/station/clock";
 import { familiarIds, programQueue } from "@/lib/station/program";
 import { rankTracks } from "@/lib/station/rank";
-import { stationTasteEnabled, tasteBias } from "@/lib/station/taste-bias";
+import { stationTasteEnabled, tasteBias, tasteHostNote } from "@/lib/station/taste-bias";
+import type { TasteBrief } from "@/lib/taste/brief";
 import { loadStatedTaste } from "@/lib/taste/store";
 import { TRACK_SEPARATION_MS } from "@/lib/station/rotation";
 import { almanacIdsFor, almanacLines } from "@/lib/station/almanac";
@@ -86,11 +87,13 @@ export async function GET(req: NextRequest) {
   const signals = user ? rowsToSignals(await loadSignalRows(admin, user.id)) : [];
   // STATION_TASTE=1: the saved taste profile (moods, genres, energy, language mix) becomes a small ranking prior.
   let prior: ReturnType<typeof tasteBias> | undefined;
+  let savedTaste: TasteBrief | null = null;
   const clock = resolveClock(sp.get("tz"), sp.get("hour"));
   if (user && stationTasteEnabled()) {
     try {
       const stated = await loadStatedTaste(admin, user.id);
-      if (stated.status === "ok" && stated.taste) prior = tasteBias(stated.taste, { hour: clock.hour, languageLocked: !!lang });
+      if (stated.status === "ok" && stated.taste) savedTaste = stated.taste;
+      if (savedTaste) prior = tasteBias(savedTaste, { hour: clock.hour, languageLocked: !!lang });
     } catch { /* the prior is optional: rank without it */ }
   }
   // Rank a wide slate, then let the clock wheel pick and order what actually plays at this hour.
@@ -136,7 +139,7 @@ export async function GET(req: NextRequest) {
         const signed = cdnUrl ? null : (await admin.storage.from("tracks").createSignedUrl(t.audioPath.replace(/^tracks\//, ""), URL_TTL_SECONDS)).data?.signedUrl;
         const url = cdnUrl ?? signed;
         if (!url) return null;
-        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id });
+        const host = hostLine({ hour: clock.hour, language: t.language, city, seed: t.id, note: savedTaste ? tasteHostNote(savedTaste, t, t.language, clock.hour) : null });
         const info = setInfo.get(t.id);
         const fade = crossfadeFor(info);
         return { id: t.id, title: t.title, language: t.language, tags: t.tags, durationSeconds: t.durationSeconds, host, url, ...(t.kind === "instrumental" ? { kind: "instrumental" as const } : {}), ...(info && fade ? { set: { id: info.id, index: info.index, size: info.size }, ...fade } : {}) };
