@@ -9,8 +9,9 @@
 import raw from "./voice-lines.json";
 import { daypartOf, type Daypart } from "./program";
 import { poolCdnUrl } from "./cdn";
+import { allAlmanacLines } from "./almanac";
 
-export type VoiceKind = "host-link" | "ident-daypart" | "time-check" | "ident-station" | "programme";
+export type VoiceKind = "host-link" | "ident-daypart" | "time-check" | "ident-station" | "programme" | "almanac";
 
 export interface VoiceLine {
   id: string;
@@ -66,7 +67,7 @@ const int = (v: string | null, max: number) => {
   return Number.isFinite(n) && n >= 0 ? Math.min(Math.floor(n), max) : 0;
 };
 
-const KNOWN_IDS = new Set(VOICE_LINES.map((l) => l.id));
+const KNOWN_IDS = new Set([...VOICE_LINES, ...allAlmanacLines()].map((l) => l.id));
 
 export function parseVoiceState(sp: URLSearchParams): VoiceClientState {
   const played = int(sp.get("played"), 10_000);
@@ -85,6 +86,8 @@ export interface VoiceContext {
   language: string | null;
   state: VoiceClientState;
   timeChecks?: boolean;
+  /** Ids of today's almanac countdown lines (lib/station/almanac.ts); empty or absent when the almanac is off. */
+  almanacIds?: string[];
 }
 
 /** A queue item as the placement rules see it: vocal tracks speak their own language, instrumentals have none. */
@@ -105,6 +108,7 @@ function candidates(lines: VoiceLine[], ctx: VoiceContext, lang: string, kind: V
     if (l.kind !== kind || l.lang !== lang || ctx.state.seen.includes(l.id)) return false;
     if (kind === "host-link" || kind === "ident-daypart" || kind === "programme") return l.daypart === part;
     if (kind === "time-check") return l.hour === ctx.hour;
+    if (kind === "almanac") return ctx.almanacIds?.includes(l.id) ?? false;
     return true;
   });
 }
@@ -115,8 +119,12 @@ export function chooseLine(lines: VoiceLine[], ctx: VoiceContext, lang: string, 
   const wanted: VoiceKind[] = [];
   // A time check follows the first break whenever the hour has moved on since the last one.
   if (ctx.timeChecks && breaks > 0 && lastCheckHour !== ctx.hour) wanted.push("time-check");
-  // A programme (lib/station/programmes.ts) takes every PROGRAMME_EVERY-th break when lines exist; otherwise the break is a normal one.
-  if (breaks % PROGRAMME_EVERY === PROGRAMME_EVERY - 1) wanted.push("programme");
+  // The feature slot (every PROGRAMME_EVERY-th break) alternates between today's almanac countdown and a programme
+  // (lib/station/programmes.ts); whichever has no line yet gives way to the other, and then to a normal break.
+  if (breaks % PROGRAMME_EVERY === PROGRAMME_EVERY - 1) {
+    const almanacFirst = Math.floor(breaks / PROGRAMME_EVERY) % 2 === 0;
+    wanted.push(...(almanacFirst ? (["almanac", "programme"] as const) : (["programme", "almanac"] as const)));
+  }
   // Every fresh session starts at break 0, and a daypart has only three idents, so a fixed greeting-first rule played the same
   // three lines to every new listener; the opening break picks between a greeting and a link at random instead.
   const first = breaks === 0 && rand() >= 0.5 ? "host-link" : ROTATION[breaks % ROTATION.length]!;
