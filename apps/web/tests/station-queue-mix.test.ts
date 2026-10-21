@@ -16,7 +16,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 const LANGS = ["hi", "ta", "kn"];
 vi.mock("@/lib/station/pool", () => ({
-  loadPool: async () => Array.from({ length: 45 }, (_, i) => ({ id: `v${i}`, language: LANGS[i % 3]!, tags: ["calm"], title: `V${i}`, audioPath: `tracks/v${i}.mp3`, durationSeconds: 60, kind: "vocal" })),
+  loadPool: async () => Array.from({ length: 45 }, (_, i) => ({ id: `v${i}`, language: LANGS[i % 3]!, tags: [Math.floor(i / 3) % 2 === 0 ? "calm" : "joyful"], title: `V${i}`, audioPath: `tracks/v${i}.mp3`, durationSeconds: 60, kind: "vocal" })),
 }));
 
 import { requireUser } from "@/lib/supabase/auth";
@@ -56,5 +56,15 @@ describe("language mix in GET /api/station/queue", () => {
     vi.stubEnv("STATION_PASS_MIX", "1");
     vi.mocked(requireUser).mockResolvedValue(NextResponse.json({ error: "unauthorized" }, { status: 401 }));
     expect(new Set(await langsOf("&langs=ta,hi")).size).toBe(3);
+  });
+
+  it("applies mood picks only for pass perks", async () => {
+    const pick = async () => (await (await GET(new NextRequest("http://x/api/station/queue?limit=6&hour=10&lang=hi&moods=joyful"))).json()) as { tracks: { tags: string[] }[] };
+    const free = await pick();
+    world.pass = true;
+    const pass = await pick();
+    const joy = (r: { tracks: { tags: string[] }[] }) => r.tracks.filter((t) => t.tags.includes("joyful")).length;
+    expect(joy(pass)).toBeGreaterThanOrEqual(joy(free));
+    expect(pass.tracks.length).toBeGreaterThan(0);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { interleaveMix, parseMix, passMixEnabled } from "../lib/station/lang-mix";
+import { interleaveMix, parseMix, parsePassMoods, passMixEnabled } from "../lib/station/lang-mix";
 
 const known = (c: string) => ["hi", "ta", "kn", "en"].includes(c);
 
@@ -41,5 +41,12 @@ describe("passMixEnabled", () => {
   it("is off unless STATION_PASS_MIX=1", () => {
     expect(passMixEnabled({})).toBe(false);
     expect(passMixEnabled({ STATION_PASS_MIX: "1" })).toBe(true);
+  });
+});
+
+describe("parsePassMoods", () => {
+  it("keeps only pool moods, de-duplicated, at most four", () => {
+    expect(parsePassMoods("Calm, romantic,calm,spicy,joyful,festive,playful")).toEqual(["calm", "romantic", "joyful", "festive"]);
+    expect(parsePassMoods(undefined)).toEqual([]);
   });
 });

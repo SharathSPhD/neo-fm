@@ -51,3 +51,12 @@ export function interleaveMix<T>(lists: { weight: number; tracks: readonly T[] }
   }
   return out;
 }
+
+/** Moods a pass listener may pick (the closed pool vocabulary, lib/pool/tags.ts POOL_MOODS); anything else is dropped. */
+export const PASS_MOODS = ["devotional", "joyful", "nostalgic", "romantic", "festive", "calm", "energetic", "melancholic", "celebratory", "playful"] as const;
+export const MAX_PASS_MOODS = 4;
+
+export function parsePassMoods(raw: string | null | undefined): string[] {
+  const ok = (m: string) => (PASS_MOODS as readonly string[]).includes(m);
+  return [...new Set((raw ?? "").split(",").map((m) => m.trim().toLowerCase()).filter(ok))].slice(0, MAX_PASS_MOODS);
+}
