@@ -81,6 +81,14 @@ export function breakBoundariesEnabled(): boolean {
   return process.env.ADS_BREAK_BOUNDARIES === "1";
 }
 
+/**
+ * ADS_PAID_FREE=1: paid listeners (Creator, Pro, or a live subscription) hear no ads at all, like the Station pass
+ * (strategy/station-pass-and-lake.md). Without it they keep the lighter ad rows in TIER_CAPS.
+ */
+export function adsPaidFreeEnabled(): boolean {
+  return process.env.ADS_PAID_FREE === "1";
+}
+
 /** ADS_PASS_UPSELL=1: after the 3rd break of a session, Free web listeners get the Station pass house ad in the next break. */
 export function passUpsellEnabled(): boolean {
   return process.env.ADS_PASS_UPSELL === "1";

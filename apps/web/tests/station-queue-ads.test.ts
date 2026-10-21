@@ -99,6 +99,20 @@ describe("ads in GET /api/station/queue", () => {
     expect((await items("&played=30&since=4&adAge=900")).some((x) => x.type === "ad")).toBe(false);
   });
 
+  it("with ADS_PAID_FREE=1 Creator, Pro and live subscribers hear no ads; Free still does", async () => {
+    vi.stubEnv("ADS_PAID_FREE", "1");
+    vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
+    for (const tier of ["creator", "pro"]) {
+      world.tier = tier;
+      expect((await items("&played=0")).some((x) => x.type === "ad")).toBe(false);
+    }
+    world.tier = "free";
+    world.billing = "active";
+    expect((await items("&played=0")).some((x) => x.type === "ad")).toBe(false);
+    world.billing = null;
+    expect((await items("&played=0")).some((x) => x.type === "ad")).toBe(true);
+  });
+
   it("treats a live subscription on an unknown tier as Creator, not Free", async () => {
     vi.mocked(requireUser).mockResolvedValue({ user: { id: "u1" } } as never);
     world.billing = "active";
