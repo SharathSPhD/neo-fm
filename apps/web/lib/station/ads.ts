@@ -68,6 +68,11 @@ export function adsEnabled(): boolean {
   return process.env.ADS_ENABLED === "1";
 }
 
+/** Audio spots play only with ADS_AUDIO_ENABLED=1; without it a slot that has audio is served as a card, so spoken spots can be turned on or off apart from the cards. */
+export function adAudioEnabled(): boolean {
+  return process.env.ADS_AUDIO_ENABLED === "1";
+}
+
 /** Share of signed-in listeners (0-50) who never get ads, so next-day return can be compared against a control. ADS_HOLDOUT_PCT, default 10. */
 export function adHoldoutPct(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env.ADS_HOLDOUT_PCT;

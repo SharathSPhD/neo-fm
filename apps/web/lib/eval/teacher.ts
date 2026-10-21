@@ -28,7 +28,8 @@ export function planTeacher(body: unknown, r = rates()): { ok: true; plan: Teach
   }
   const calls = jobs.reduce((a, j) => a + j.n, 0);
   if (calls > MAX_CALLS) return { ok: false, error: `at most ${MAX_CALLS} generations per request` };
-  const maxTokens = Math.min(Math.max(Number(b.max_tokens) || 600, 100), 800);
+  // Haiku thinks before it writes and thinking counts against max_tokens (PCE probe 2026-10-20: 7 of 12 calls cut off at 1500), so it gets a higher cap
+  const maxTokens = Math.min(Math.max(Number(b.max_tokens) || 600, 100), model === "claude-haiku-5-5" ? 2500 : 800);
   const maxUsd = Math.min(Number(b.max_usd) > 0 ? Number(b.max_usd) : 1, HARD_MAX_USD);
   const system = typeof b.system === "string" && b.system.trim() ? b.system.slice(0, MAX_PROMPT_CHARS) : undefined;
   const rate = r[model]!;

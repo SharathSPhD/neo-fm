@@ -4,6 +4,7 @@ on:
   pull_request:
     paths: ["apps/mobile/**", ".github/workflows/mobile-ios.yml"]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read

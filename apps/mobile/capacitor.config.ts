@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 // The shell loads the live site, so web releases reach the apps at once (see docs/RELEASE-POLICY.md).
 // NEO_FM_SHELL_URL points a debug build at a preview deployment.
-const url = process.env.NEO_FM_SHELL_URL ?? "https://www.neo-fm.com";
+const url = process.env.NEO_FM_SHELL_URL || "https://www.neo-fm.com";
 
 const config: CapacitorConfig = {
   appId: "com.neofm.app",

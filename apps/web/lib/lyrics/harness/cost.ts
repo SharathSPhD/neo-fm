@@ -7,7 +7,7 @@ const usd = (r: Rate, i: number, o: number) => (i * r.in + o * r.out) / 1e6;
 
 /** Expected Claude USD per song for an arm, assuming every refinement round runs and is judged (the upper bound). */
 export function estimateArmUsd(cfg: HarnessConfig, r = rates()): number {
-  const s = r["claude-sonnet-5-5"]!;
+  const s = r[cfg.model ?? "claude-sonnet-5-5"]!;
   const ctx = cfg.exemplars * EXEMPLAR + (cfg.playbook ? PLAYBOOK : 0);
   const polish = usd(s, 400 + LYRIC + ctx, cfg.edits ? EDIT_OUT : LYRIC);
   const round = usd(s, 500 + LYRIC + (cfg.playbook ? PLAYBOOK : 0), CRITIC_OUT) + usd(s, 500 + LYRIC + CRITIC_OUT, LYRIC) + (cfg.guard ? 2 * usd(s, JUDGE.in, JUDGE.out) : 0);

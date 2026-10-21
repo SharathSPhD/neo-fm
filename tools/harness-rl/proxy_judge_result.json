@@ -1,0 +1,9 @@
+{
+ "pairs": 40,
+ "agree_with_panel": 24,
+ "ties": 14,
+ "disagree": 2,
+ "agreement_excl_ties": 0.923,
+ "empty_or_unparsed": 0,
+ "est_spent_usd": 0.089
+}

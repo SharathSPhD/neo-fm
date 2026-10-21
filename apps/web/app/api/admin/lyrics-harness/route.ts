@@ -70,8 +70,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const language = String(body.language ?? ""), style = String(body.style ?? ""), brief = String(body.brief ?? "");
     const flag = process.env.PCE_HARNESS_REFS ?? "";
     const enabled = flag.split(",").map((x) => x.trim()).filter(Boolean).includes(langCode(language));
-    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0 };
-    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
+    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0, ids: [] as string[] };
+    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, exemplar_ids: refs.ids, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
   }
 
   if (action === "archive") {
@@ -130,7 +130,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (meter.usd() >= maxUsd) { out.push({ id: c.id, lyrics: null, trace: [], error: "budget" }); return; }
       try {
         const r = await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: c.drafts, playbook: c.playbook }, {
-          polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template),
+          polish: (a) => (cfg.edits ? polishLyricsEdits(client, a, template) : polishLyrics(client, a, template, undefined, cfg.model)),
           ask,
           prefers: async (a) => (await judgePair(client, a.language, a.brief, a.revised, a.previous)).winner === "pce",
           shuffle: (xs) => seededShuffle(xs, c.id),
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       // template === null is the live arm; otherwise the harness arm on the same draft.
       polish: async (t, c) => t === null
         ? polishLyrics(client, { language: c.language, style: c.style, brief: c.brief, lyrics: c.draft }, template)
-        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits : polishLyrics)(client, a, template), ask, prefers: async () => true })).lyrics,
+        : (await runHarness(cfg, { language: c.language, style: c.style, brief: c.brief, drafts: [c.draft] }, { polish: (a) => (cfg.edits ? polishLyricsEdits(client, a, template) : polishLyrics(client, a, template, undefined, cfg.model)), ask, prefers: async () => true })).lyrics,
       judge: (x, polished) => judgePair(client, x.language, x.brief, polished, x.baseline) as Promise<PairJudgment>,
       judgeGemini: gkey ? (x, polished) => judgePairGemini(x.language, x.brief, polished, x.baseline, gkey) : undefined,
       spentUsd: () => meter.usd(),

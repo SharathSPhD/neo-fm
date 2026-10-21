@@ -16,6 +16,8 @@ export interface HarnessConfig {
   candidates: number;
   /** polish returns only the changed lines (PCE_POLISH_EDITS) instead of the whole lyric */
   edits?: boolean;
+  /** polish model override (lab only); unset = the live polish model */
+  model?: string;
 }
 
 export const ARMS: Record<string, HarnessConfig> = {
@@ -26,6 +28,8 @@ export const ARMS: Record<string, HarnessConfig> = {
   refs_revise: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 1 },
   pick3: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 3 },
   live_edits: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, edits: true },
+  opus: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
+  refs_opus: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
   full: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 3 },
 };
 
@@ -48,10 +52,10 @@ export interface HarnessDeps {
 
 export interface HarnessResult { lyrics: string; trace: string[] }
 /** The corpus context appended to the polish brief: craft notes for the language plus judge-picked exemplars ("" when neither exists). */
-export function refsContext(input: { language: string; style: string; brief: string }, exemplars: number, playbook: string): { text: string; exemplars: number } {
+export function refsContext(input: { language: string; style: string; brief: string }, exemplars: number, playbook: string): { text: string; exemplars: number; ids: string[] } {
   const ex = exemplars > 0 ? retrieveExemplars(input, exemplars) : [];
   const text = [playbook && `CRAFT NOTES (${input.language}; distilled from lyrics that judges preferred):\n${playbook}`, exemplarBlock(ex)].filter(Boolean).join("\n\n");
-  return { text, exemplars: ex.length };
+  return { text, exemplars: ex.length, ids: ex.map((e) => e.id) };
 }
 
 const CRITIC_MODEL = "claude-sonnet-5-5";
@@ -61,7 +65,7 @@ export async function runHarness(cfg: HarnessConfig, input: HarnessInput, deps: 
   const playbook = cfg.playbook ? (input.playbook || playbookFor(input.language)) : "";
   const ctx = refsContext(input, cfg.exemplars, playbook);
   const brief = ctx.text ? `${input.brief}\n\n${ctx.text}` : input.brief;
-  if (ctx.exemplars || playbook) trace.push(`context: ${ctx.exemplars} exemplars${playbook ? " + playbook" : ""}`);
+  if (ctx.exemplars || playbook) trace.push(`context: ${ctx.exemplars} exemplars${ctx.ids.length ? ` [${ctx.ids.join(",")}]` : ""}${playbook ? " + playbook" : ""}`);
 
   const refine = async (first: string): Promise<string> => {
     let cur = first;

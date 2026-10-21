@@ -7,14 +7,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LANGUAGE_ARTICLES, articlePath } from "@/lib/seo/language-articles";
-import { LANGUAGE_PAGES, languagePageBySlug, languagePagePath } from "@/lib/seo/language-pages";
+import { activeLanguagePages, languagePageBySlug, languagePagePath } from "@/lib/seo/language-pages";
 import { articleLd, jsonLdString } from "@/lib/seo/jsonld";
 import { siteUrl } from "@/lib/seo/site";
 
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return LANGUAGE_PAGES.map((p) => ({ lang: p.slug }));
+  return activeLanguagePages().map((p) => ({ lang: p.slug }));
 }
 
 export async function generateMetadata(props: { params: Promise<{ lang: string }> }): Promise<Metadata> {

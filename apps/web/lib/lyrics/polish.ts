@@ -4,6 +4,8 @@ import { summariseAnthropicUsage, type TokenUsage } from "../cost/usage";
 import { meter } from "../eval/cost";
 
 export const POLISH_MODEL = "claude-sonnet-5-5";
+/** Premium-lyrics candidate (lab arms only; not used by prod polish). */
+export const OPUS_POLISH_MODEL = "claude-opus-5-5";
 
 /** Placeholders every polish template must contain (validated before a candidate is stored). */
 export const POLISH_PLACEHOLDERS = ["{{language}}", "{{style}}", "{{brief}}", "{{lyrics}}"] as const;
@@ -38,10 +40,13 @@ export async function polishLyrics(
   a: { language: string; style: string; brief: string; lyrics: string },
   template: string = DEFAULT_POLISH_TEMPLATE,
   onUsage?: (u: TokenUsage) => void,
+  model: string = POLISH_MODEL,
 ): Promise<string> {
-  const res = await client.messages.create({ model: POLISH_MODEL, max_tokens: 8000, messages: [{ role: "user", content: fill(template, a) }] });
-  onUsage?.(summariseAnthropicUsage(POLISH_MODEL, res.usage));
-  meter.record(POLISH_MODEL, res.usage);
+  // Opus 5.5 always thinks (default effort medium): pin it so a premium-polish run is reproducible.
+  const effort = model === OPUS_POLISH_MODEL ? { output_config: { effort: "medium" } } : {};
+  const res = await client.messages.create({ model, max_tokens: 8000, messages: [{ role: "user", content: fill(template, a) }], ...effort } as Parameters<Anthropic["messages"]["create"]>[0]) as Anthropic.Message;
+  onUsage?.(summariseAnthropicUsage(model, res.usage));
+  meter.record(model, res.usage);
   const out = res.content.filter((b) => b.type === "text").map((b) => (b as { text: string }).text).join("").trim();
   if (out.length < 20) throw new Error(`empty polish output (stop=${res.stop_reason})`);
   return out;

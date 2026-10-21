@@ -96,8 +96,9 @@ describe("refsContext (PCE_HARNESS_REFS)", () => {
   it("builds craft notes plus exemplars for Telugu and nothing for a language without data", () => {
     const te = refsContext({ language: "Telugu", style: "telugu-folk", brief: "Farmers sowing seed at the first monsoon showers" }, 3, playbookFor("Telugu"));
     expect(te.exemplars).toBe(3);
+    expect(te.ids).toHaveLength(3);
     expect(te.text).toMatch(/CRAFT NOTES[\s\S]*QUALITY REFERENCES/);
-    expect(refsContext({ language: "Bengali", style: "bengali-folk", brief: "rain" }, 3, playbookFor("Bengali"))).toEqual({ text: "", exemplars: 0 });
+    expect(refsContext({ language: "Bengali", style: "bengali-folk", brief: "rain" }, 3, playbookFor("Bengali"))).toEqual({ text: "", exemplars: 0, ids: [] });
   });
 });
 

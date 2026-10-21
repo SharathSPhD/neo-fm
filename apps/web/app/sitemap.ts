@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { articlePath } from "@/lib/seo/language-articles";
-import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
+import { activeLanguagePages, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
 import { poolTracksIndexable, trackIndexable } from "@/lib/seo/pool-tracks";
 import { PUBLIC_PATHS, siteUrl } from "@/lib/seo/site";
 import { loadPool } from "@/lib/station/pool";
@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // The landing page is the English member of the hreflang cluster.
     ...(p.path === "/" ? { alternates: { languages } } : {}),
   }));
-  for (const l of LANGUAGE_PAGES) {
+  for (const l of activeLanguagePages()) {
     pages.push({
       url: `${base}${languagePagePath(l)}`,
       changeFrequency: "daily",

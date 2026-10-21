@@ -25,6 +25,36 @@ export interface LanguageArticle {
 }
 
 export const LANGUAGE_ARTICLES: Record<LanguagePage["code"], LanguageArticle> = {
+  en: {
+    title: "How neo-fm makes a song | AI songs in English",
+    description: "How a sentence or two becomes a full English song, and where the AI does the work.",
+    h1: "How neo-fm makes a song",
+    intro: "Here is how a sentence or two becomes a full English song, and where the AI is involved.",
+    sections: [
+      { heading: "1. You describe the song", body: "Tell us the mood, the moment and the sound. A sentence or two is enough, and you can add genre, instruments, era and a little about yourself." },
+      {
+        heading: "2. Safety check first",
+        body: "Before anything is made, your description is checked by fixed rules and an AI reviewer. Requests to imitate a real artist's voice or reproduce an existing song's lyrics are stopped. If a check cannot run, the song is not made.",
+      },
+      {
+        heading: "3. Lyrics are written for your brief",
+        body: "Our lyric engine writes several drafts, scores them for originality and fit to your brief, and picks the best. A further pass polishes the meter and the wording.",
+      },
+      {
+        heading: "4. A singer performs them",
+        body: "Once the lyrics are ready, the music and vocals are rendered by Google's Lyria model. The voice is entirely AI-generated, not a human singer, and we label every song as AI-made.",
+      },
+      {
+        heading: "5. Checking the pronunciation",
+        body: "After the song is made we transcribe it and compare it with your lyrics line by line, so you can see where the singer drifted.",
+      },
+    ],
+    honestHeading: "An honest word about AI",
+    honest: "This is an AI-made song. Sometimes a word or a rhythm will be off. Every public song has a report link. When you share a song, please keep the AI-made label.",
+    cta: "Make your song",
+    back: "← Back to the English page",
+    readMore: "How neo-fm makes a song",
+  },
   hi: {
     title: "neo-fm गाना कैसे बनाता है | हिन्दी में AI गीत",
     description: "आपके दो वाक्यों से हिन्दी का पूरा गाना कैसे बनता है, और इसमें AI कहाँ काम करता है।",

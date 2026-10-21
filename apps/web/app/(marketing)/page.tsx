@@ -11,7 +11,7 @@ import { SongOfTheDay } from "@/components/song-of-the-day";
 import Link from "next/link";
 
 
-import { LANGUAGE_PAGES, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
+import { activeLanguagePages, hreflangPaths, languagePagePath } from "@/lib/seo/language-pages";
 import { jsonLdString } from "@/lib/seo/jsonld";
 
 /**
@@ -210,7 +210,7 @@ async function Footer() {
   return (
     <footer className="mx-auto max-w-6xl px-6 py-12 text-sm text-foreground/60">
       <nav aria-label="Songs by language" className="mb-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        {LANGUAGE_PAGES.map((l) => (
+        {activeLanguagePages().map((l) => (
           <Link
             key={l.code}
             href={languagePagePath(l)}

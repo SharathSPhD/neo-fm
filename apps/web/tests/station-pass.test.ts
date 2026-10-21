@@ -6,24 +6,24 @@ import { DEFAULT_PASS_MONTHLY_TRACKS, hasStationPass, isMissingFunction, passLyr
 describe("pass allowance", () => {
   it("defaults to four personal tracks a month and reads an override", () => {
     expect(passMonthlyTracks({})).toBe(DEFAULT_PASS_MONTHLY_TRACKS);
-    expect(DEFAULT_PASS_MONTHLY_TRACKS).toBe(4);
+    expect(DEFAULT_PASS_MONTHLY_TRACKS).toBe(2);
     expect(passMonthlyTracks({ STATION_PASS_MONTHLY_TRACKS: "6" })).toBe(6);
     expect(passMonthlyTracks({ STATION_PASS_MONTHLY_TRACKS: "0" })).toBe(0);
   });
   it("ignores unusable overrides", () => {
-    for (const v of ["", "abc", "-1", "2.5", "999"]) expect(passMonthlyTracks({ STATION_PASS_MONTHLY_TRACKS: v })).toBe(4);
+    for (const v of ["", "abc", "-1", "2.5", "999"]) expect(passMonthlyTracks({ STATION_PASS_MONTHLY_TRACKS: v })).toBe(2);
   });
   it("turns the allowance into a Lyria envelope at the full-render estimate", () => {
-    expect(passLyriaCapGbp({})).toBe(1);
+    expect(passLyriaCapGbp({})).toBe(0.5);
     expect(passLyriaCapGbp({ STATION_PASS_MONTHLY_TRACKS: "2", LYRIA_COST_GBP_FULL: "0.3" })).toBe(0.6);
   });
 });
 
 describe("withPassCap", () => {
-  it("raises a free listener's envelope to four renders", () => {
+  it("raises a free listener's envelope to two renders", () => {
     const free = planForTier("free", null, {} as NodeJS.ProcessEnv);
     expect(free.userLyriaCapGbp).toBe(0.3);
-    expect(withPassCap(free, true, {}).userLyriaCapGbp).toBe(1);
+    expect(withPassCap(free, true, {}).userLyriaCapGbp).toBe(0.5);
   });
   it("changes nothing without a pass, and never lowers a bigger envelope", () => {
     const free = planForTier("free", null, {} as NodeJS.ProcessEnv);
