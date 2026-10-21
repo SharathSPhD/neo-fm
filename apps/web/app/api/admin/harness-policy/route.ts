@@ -2,6 +2,7 @@
  * /api/admin/harness-policy -- operator and QA hook for the harness policy (Bearer ADMIN_SECRET). No model calls, no spend.
  *
  *   POST {action:"state", language?}                               Policy rows, global posteriors and open choices; also whether HARNESS_POLICY is on in this deployment.
+ *   POST {action:"report", days?}                                   Per-arm posterior (mean, interval, n), songs and traffic share over the last `days` (default 7), settled rewards. Feeds /admin/harness.
  *   POST {action:"pick", language, tier, user_id?, seed?}           Dry run of the arm choice (nothing is recorded). Same code path the polish step uses.
  *   POST {action:"promote", language, tier?, arm_id, role?, max_share?}   Adds or updates a harness_policy row. Only for arms that passed the eval gate.
  *   POST {action:"retire", language, tier?, arm_id}                 Removes a row (the flags decide again if none are left).
@@ -13,6 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { serviceClient } from "../../../../lib/agent/adapters";
 import { checkAdminBearer } from "../../../../lib/agent/auth";
 import { POLICY_ARMS, pickArm, policyEnabled, seedFor } from "../../../../lib/harness-policy/policy";
+import { armReport } from "../../../../lib/harness-policy/report";
 import { addJudgeResult, loadPolicyRows, loadStats, settleChoices } from "../../../../lib/harness-policy/store";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +39,16 @@ export async function POST(req: NextRequest) {
     const { data: stats } = await q;
     const { count } = await db.from("harness_arm_choices").select("job_id", { count: "exact", head: true }).is("settled_at", null);
     return NextResponse.json({ enabled: policyEnabled(process.env), arms: Object.keys(POLICY_ARMS), rows, stats: stats ?? [], open_choices: count ?? 0 });
+  }
+  if (action === "report") {
+    const days = Math.min(90, Math.max(1, num(b?.days) || 7));
+    const since = new Date(Date.now() - days * 86400_000).toISOString();
+    const [{ data: stats }, { data: choices }] = await Promise.all([
+      db.from("harness_arm_stats").select("language,tier,arm_id,a,b").is("user_id", null),
+      db.from("harness_arm_choices").select("language,tier,arm_id,source,settled_at,reward").gte("created_at", since).limit(5000),
+    ]);
+    const norm = (s: { language: string; tier: string; arm_id: string; a: number; b: number }) => ({ ...s, a: Number(s.a), b: Number(s.b) });
+    return NextResponse.json({ enabled: policyEnabled(process.env), days, rows: armReport(((stats ?? []) as Parameters<typeof norm>[0][]).map(norm), (choices ?? []) as Parameters<typeof armReport>[1]), policy: await loadPolicyRows(db) });
   }
   if (action === "pick") {
     if (!language) return NextResponse.json({ error: "language required" }, { status: 400 });

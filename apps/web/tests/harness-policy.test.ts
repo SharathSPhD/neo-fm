@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { mean, mulberry32, sampleBeta, shrink } from "../lib/harness-policy/bandit";
 import { flagArm, pickArm, seedFor, type PolicyRow } from "../lib/harness-policy/policy";
+import { armReport } from "../lib/harness-policy/report";
 import { songReward } from "../lib/harness-policy/reward";
 import { chooseHarnessArm } from "../lib/harness-policy/runtime";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -82,5 +83,26 @@ describe("chooseHarnessArm", () => {
     const p = await chooseHarnessArm(throwingDb, { env: { HARNESS_POLICY: "1" }, jobId: "j", userId: "u", language: "kn", tier: "free", premiumModel: undefined });
     expect(p.source).toBe("flags");
     expect(p.arm.id).toBe("live");
+  });
+});
+
+describe("armReport", () => {
+  it("joins posteriors with traffic share per language and tier", () => {
+    const rows = armReport(
+      [{ language: "kn", tier: "*", arm_id: "refs", a: 9, b: 3 }],
+      [
+        { language: "kn", tier: "*", arm_id: "live", source: "policy", settled_at: null, reward: null },
+        { language: "kn", tier: "*", arm_id: "live", source: "policy", settled_at: "2026-10-21", reward: 0.8 },
+        { language: "kn", tier: "*", arm_id: "refs", source: "flags", settled_at: null, reward: null },
+      ],
+    );
+    const live = rows.find((r) => r.arm_id === "live")!;
+    expect(live.songs).toBe(2);
+    expect(live.share).toBeCloseTo(2 / 3);
+    expect(live.avgReward).toBeCloseTo(0.8);
+    const refs = rows.find((r) => r.arm_id === "refs")!;
+    expect(refs.mean).toBeCloseTo(0.75);
+    expect(refs.n).toBeCloseTo(10);
+    expect(refs.viaPolicy).toBe(0);
   });
 });
