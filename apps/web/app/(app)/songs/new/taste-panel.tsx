@@ -74,22 +74,51 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
   const [energy, setEnergy] = useState("");
   const [background, setBackground] = useState("");
 
+  const [note, setNote] = useState<string | null>(null);
+  const [canSave, setCanSave] = useState(true);
+
+  function apply(saved: TasteBrief) {
+    setGenres(saved.genres ?? []);
+    setMoods(saved.moods ?? []);
+    setInstruments(saved.instruments ?? []);
+    setEras(saved.eras ?? []);
+    setRegister(saved.register ?? "");
+    setSetting(saved.setting ?? "");
+    setEnergy(saved.energy ?? "");
+    setBackground(saved.background ?? "");
+  }
+
+  // The saved profile wins; this browser's last choice fills in first, and stays when saving is not available yet.
   useEffect(() => {
     try {
-      const saved = normaliseTaste(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "null"));
-      if (!saved) return;
-      setGenres(saved.genres ?? []);
-      setMoods(saved.moods ?? []);
-      setInstruments(saved.instruments ?? []);
-      setEras(saved.eras ?? []);
-      setRegister(saved.register ?? "");
-      setSetting(saved.setting ?? "");
-      setEnergy(saved.energy ?? "");
-      setBackground(saved.background ?? "");
+      const local = normaliseTaste(JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "null"));
+      if (local) apply(local);
     } catch {
       // storage blocked or unreadable: start empty
     }
+    fetch("/api/me/taste/stated")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j: { taste?: unknown; available?: boolean } | null) => {
+        if (!j) return;
+        if (j.available === false) setCanSave(false);
+        const saved = normaliseTaste(j.taste);
+        if (saved) apply(saved);
+      })
+      .catch(() => undefined);
   }, []);
+
+  async function save() {
+    const taste = normaliseTaste({ v: 1, genres, moods, instruments, eras, register: register || undefined, setting: setting || undefined, energy: energy || undefined, background });
+    if (!taste) return;
+    const res = await fetch("/api/me/taste/stated", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ taste }) }).catch(() => null);
+    setNote(res?.ok ? t("taste.saved") : res?.status === 403 ? t("taste.consentNeeded") : t("taste.saveFailed"));
+  }
+
+  async function forget() {
+    await fetch("/api/me/taste/stated", { method: "DELETE" }).catch(() => null);
+    setGenres([]); setMoods([]); setInstruments([]); setEras([]); setRegister(""); setSetting(""); setEnergy(""); setBackground("");
+    setNote(null);
+  }
 
   useEffect(() => {
     const taste = normaliseTaste({ v: 1, genres, moods, instruments, eras, register: register || undefined, setting: setting || undefined, energy: energy || undefined, background });
@@ -128,6 +157,13 @@ export function TastePanel({ onChange }: { onChange: (taste: TasteBrief | undefi
             className="rounded-xl border border-foreground/15 bg-foreground/5 px-3.5 py-2.5 text-base normal-case tracking-normal text-foreground outline-hidden focus:border-accent resize-none"
           />
         </label>
+        {canSave ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" onClick={save} className="min-h-[36px] rounded-md border border-accent/40 bg-accent/10 px-3 text-xs font-medium text-accent hover:bg-accent/20">{t("taste.save")}</button>
+            <button type="button" onClick={forget} className="min-h-[36px] px-2 text-xs text-foreground/60 underline hover:text-foreground">{t("taste.forget")}</button>
+            {note ? <span role="status" className="text-xs text-foreground/70">{note}</span> : null}
+          </div>
+        ) : null}
       </div>
     </details>
   );
