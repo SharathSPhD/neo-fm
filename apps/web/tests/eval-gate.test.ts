@@ -36,7 +36,7 @@ describe("cost estimate and meter", () => {
     meter.reset();
     meter.record("claude-sonnet-5-5", { input_tokens: 1_000_000, output_tokens: 0 });
     meter.record("claude-sonnet-5-5", undefined);
-    expect(meter.usd()).toBe(3);
+    expect(meter.usd()).toBe(2);
     expect(meter.snapshot().by_model["claude-sonnet-5-5"]!.calls).toBe(2);
     meter.reset();
   });

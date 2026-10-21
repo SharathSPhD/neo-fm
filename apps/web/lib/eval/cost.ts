@@ -1,14 +1,14 @@
 /**
  * Spend estimate and meter for the offline eval gate (self-improve evaluate, pce-eval).
  * Rates are USD per million tokens and ASSUMED list prices: override with EVAL_RATES_JSON
- * ({"claude-sonnet-5-5":{"in":3,"out":15}}) and calibrate against the `spend` block the gate reports after a run.
+ * ({"claude-sonnet-5-5":{"in":2,"out":10}}) and calibrate against the `spend` block the gate reports after a run.
  */
 export interface Rate { in: number; out: number }
 
 const DEFAULT_RATES: Record<string, Rate> = {
-  "claude-sonnet-5-5": { in: 3, out: 15 },
-  "claude-haiku-5-5": { in: 1, out: 5 },
-  "claude-opus-5-5": { in: 5, out: 25 },
+  "claude-sonnet-5-5": { in: 2, out: 10 },
+  "claude-haiku-5-5": { in: 0.1, out: 0.5 },
+  "claude-opus-5-5": { in: 4, out: 20 },
 };
 
 export function rates(env: NodeJS.ProcessEnv = process.env): Record<string, Rate> {

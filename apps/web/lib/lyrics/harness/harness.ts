@@ -16,6 +16,8 @@ export interface HarnessConfig {
   candidates: number;
   /** polish returns only the changed lines (PCE_POLISH_EDITS) instead of the whole lyric */
   edits?: boolean;
+  /** polish model override (lab only); unset = the live polish model */
+  model?: string;
 }
 
 export const ARMS: Record<string, HarnessConfig> = {
@@ -26,6 +28,8 @@ export const ARMS: Record<string, HarnessConfig> = {
   refs_revise: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 1 },
   pick3: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 3 },
   live_edits: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, edits: true },
+  opus: { exemplars: 0, playbook: false, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
+  refs_opus: { exemplars: 3, playbook: true, rounds: 0, guard: false, candidates: 1, model: "claude-opus-5-5" },
   full: { exemplars: 3, playbook: true, rounds: 2, guard: true, candidates: 3 },
 };
 
