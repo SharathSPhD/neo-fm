@@ -15,6 +15,7 @@ import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
 import { livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
+import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
 import { dictionHintsFor, scoreTranscriptUnordered } from "../diction";
@@ -222,14 +223,18 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
         // Telugu only until other languages win the gate (lyrics-lab/harness/DESIGN.md); off by default.
         const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-        const refs = refsLangs.includes(langCode(doc.language))
+        // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts); off by default.
+        const premiumModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
+        const refs = refsLangs.includes(langCode(doc.language)) || premiumModel
           ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language)).text
           : "";
         const finalPolishBrief = refs ? `${polishBrief}\n\n${refs}` : polishBrief;
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
           try {
-            a = { ...a, lyrics: await timed("polish", async () => (process.env.PCE_POLISH_EDITS === "1" ? polishLyricsEdits : polishLyrics)(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
+            a = { ...a, lyrics: await timed("polish", async () => premiumModel
+              ? polishLyrics(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish, premiumModel)
+              : (process.env.PCE_POLISH_EDITS === "1" ? polishLyricsEdits : polishLyrics)(anthropicClient(), { language: doc.language, style: doc.style_family, brief: finalPolishBrief, lyrics: a.lyrics }, await livePolishTemplate(db), cost.polish)) };
             const v2 = await screenRequest(a.lyrics, "lyrics");
             if (!v2.allowed) throw new SafetyRefusal(v2.reason);
             await db.from("agent_runs").update({ polished_lyrics: a.lyrics }).eq("job_id", job.id);
