@@ -7,7 +7,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 
 const PKG = "com.neofm.app";
-const ORIGIN = process.env.NEO_FM_SHELL_URL ?? "https://www.neo-fm.com";
+const ORIGIN = process.env.NEO_FM_SHELL_URL || "https://www.neo-fm.com";
 const OUT = process.argv[2] ?? "journey-out";
 mkdirSync(OUT, { recursive: true });
 const adbRaw = (...a) => execFileSync("adb", a, { encoding: "utf8" }).trim();

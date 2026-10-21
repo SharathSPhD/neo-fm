@@ -1,0 +1,186 @@
+name: mobile-train
+
+# The mobile half of the release train (docs/RELEASE-POLICY.md, strategy/release-train.md). The web train (staging e2e, then
+# prod) tells mobile "the web release passed" by dispatching this workflow with the live commit. A MAJOR release then
+# runs: shell on staging in the Android emulator, iOS simulator, then the production build is released with no approval
+# step. Android also goes to Google Play (internal, then a staged production rollout) once the Play secrets exist.
+
+on:
+  workflow_dispatch:
+    inputs:
+      web_sha:
+        description: "Live web commit that passed prod smoke (empty = main HEAD)"
+        required: false
+        default: ""
+      force:
+        description: "Treat this as MAJOR even if the policy says minor"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Run the staging checks only; build and release nothing"
+        type: boolean
+        default: false
+  push:
+    tags: ["web-prod-pass/*"]
+  schedule:
+    - cron: "23 */6 * * *" # fallback: catches a missed dispatch
+  pull_request:
+    paths: [".github/workflows/mobile-train.yml", "apps/mobile/scripts/train-detect.sh", "apps/mobile/scripts/play-release.py"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-train
+  cancel-in-progress: false
+
+env:
+  STAGING_URL: https://neo-fm-staging.vercel.app
+  PROD_URL: https://www.neo-fm.com
+
+jobs:
+  detect:
+    name: is this a MAJOR release for mobile?
+    runs-on: ubuntu-latest
+    outputs:
+      major: ${{ steps.d.outputs.major }}
+      reason: ${{ steps.d.outputs.reason }}
+      next_tag: ${{ steps.d.outputs.next_tag }}
+      sha: ${{ steps.d.outputs.sha }}
+      dry: ${{ steps.mode.outputs.dry }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.web_sha || '' }}
+      - name: Mode
+        id: mode
+        run: |
+          # Pull requests exercise the staging checks only; nothing is built for release or published.
+          if [ "${{ github.event_name }}" = "pull_request" ] || [ "${{ inputs.dry_run }}" = "true" ]; then echo "dry=true" >> "$GITHUB_OUTPUT"; else echo "dry=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Web is healthy (prod and staging)
+        if: github.event_name != 'pull_request'
+        run: |
+          for u in "$PROD_URL" "$STAGING_URL"; do
+            st="$(curl -fsS "$u/api/health" | python3 -c 'import json,sys;print(json.load(sys.stdin).get("status"))')"
+            echo "$u health: $st"
+            [ "$st" = "ok" ] || { echo "::error::$u is not healthy; the mobile train waits for the next signal"; exit 1; }
+          done
+      - name: Decide
+        id: d
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          FORCE: ${{ (inputs.force || github.event_name == 'pull_request') && '1' || '0' }}
+        run: |
+          bash apps/mobile/scripts/train-detect.sh | tee -a "$GITHUB_OUTPUT"
+          {
+            echo "### Mobile train"
+            echo "- major: $(grep '^major=' "$GITHUB_OUTPUT" | tail -1 | cut -d= -f2)"
+            echo "- reason: $(grep '^reason=' "$GITHUB_OUTPUT" | tail -1 | cut -d= -f2-)"
+            echo "- next tag: $(grep '^next_tag=' "$GITHUB_OUTPUT" | tail -1 | cut -d= -f2)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  android-staging:
+    name: Android shell on staging (emulator e2e)
+    needs: detect
+    if: needs.detect.outputs.major == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/mobile-android.yml
+    with:
+      shell_url: https://neo-fm-staging.vercel.app
+    secrets: inherit
+
+  ios-simulator:
+    name: iOS simulator and WebKit checks
+    needs: detect
+    if: needs.detect.outputs.major == 'true'
+    uses: ./.github/workflows/mobile-ios.yml
+
+  android-release:
+    name: Android production build, emulator check and release
+    needs: [detect, android-staging, ios-simulator]
+    if: needs.detect.outputs.major == 'true' && needs.detect.outputs.dry != 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/mobile-android.yml
+    with:
+      release_tag: ${{ needs.detect.outputs.next_tag }}
+    secrets: inherit
+
+  play:
+    name: Google Play (internal, then staged production)
+    needs: [detect, android-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.detect.outputs.sha }}
+      - name: Is Google Play set up?
+        id: cfg
+        env:
+          PLAY: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          KS: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$PLAY" ] && [ -n "$KS" ]; then echo "on=true" >> "$GITHUB_OUTPUT"; else
+            echo "on=false" >> "$GITHUB_OUTPUT"
+            echo "### Google Play: not set up" >> "$GITHUB_STEP_SUMMARY"
+            echo "Needs a Play Console app for com.neofm.app, a service account with release rights, and the PLAY_SERVICE_ACCOUNT_JSON secret. The APK release above still went out." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: pnpm/action-setup@v4
+        if: steps.cfg.outputs.on == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.on == 'true'
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        if: steps.cfg.outputs.on == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build and sign the bundle
+        if: steps.cfg.outputs.on == 'true'
+        env:
+          GS_B64: ${{ secrets.ANDROID_GOOGLE_SERVICES_JSON_B64 }}
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          TAG: ${{ needs.detect.outputs.next_tag }}
+        run: |
+          pnpm install --frozen-lockfile=false
+          if [ -n "$GS_B64" ]; then echo "$GS_B64" | base64 -d > apps/mobile/android/app/google-services.json; fi
+          cd apps/mobile && npx cap sync android
+          cd android && ./gradlew bundleRelease --no-daemon -PneofmVersionName="${TAG#mobile-v}" -PneofmVersionCode="$(( $(date +%s) / 60 ))"
+          KS="$RUNNER_TEMP/beta.p12"; echo "$KS_B64" | base64 -d > "$KS"
+          AAB=app/build/outputs/bundle/release/app-release.aab
+          jarsigner -keystore "$KS" -storetype pkcs12 -storepass "$KS_PASS" -keypass "$KEY_PASS" "$AAB" "$KEY_ALIAS"
+          cp "$AAB" "$GITHUB_WORKSPACE/neo-fm.aab"; rm -f "$KS"
+      - name: Internal track, then staged production rollout
+        if: steps.cfg.outputs.on == 'true' && needs.detect.outputs.dry != 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          TAG: ${{ needs.detect.outputs.next_tag }}
+        run: |
+          python3 -m pip install --quiet google-auth requests
+          python3 apps/mobile/scripts/play-release.py --aab neo-fm.aab --name "${TAG#mobile-v}" --production-fraction 0.2
+
+  summary:
+    name: Train result
+    needs: [detect, android-staging, ios-simulator, android-release, play]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write the result
+        run: |
+          {
+            echo "### Mobile train result"
+            echo "- major: ${{ needs.detect.outputs.major }} (${{ needs.detect.outputs.reason }})"
+            echo "- Android on staging: ${{ needs.android-staging.result }}"
+            echo "- iOS simulator: ${{ needs.ios-simulator.result }}"
+            echo "- Android release: ${{ needs.android-release.result }}"
+            echo "- Google Play: ${{ needs.play.result }}"
+            echo "- iOS store submission: blocked until there is an Apple Developer account"
+          } >> "$GITHUB_STEP_SUMMARY"

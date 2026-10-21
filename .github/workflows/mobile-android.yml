@@ -11,12 +11,24 @@ on:
         description: "Publish a GitHub prerelease with this tag (e.g. mobile-v0.1.0); leave empty to only build"
         required: false
         default: ""
+  # The mobile release train (mobile-train.yml) calls this twice: once with the shell pointed at staging (e2e only) and
+  # once at production with a release tag.
+  workflow_call:
+    inputs:
+      shell_url:
+        description: "Site the shell loads (empty = production)"
+        type: string
+        default: ""
+      release_tag:
+        description: "Publish a GitHub prerelease with this tag; empty = build and test only"
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 concurrency:
-  group: mobile-android-${{ github.ref }}
+  group: mobile-android-${{ github.ref }}-${{ inputs.shell_url || 'prod' }}
   cancel-in-progress: true
 
 jobs:
@@ -44,9 +56,15 @@ jobs:
           echo "$GS_B64" | base64 -d > apps/mobile/android/app/google-services.json
       - name: Sync and build
         working-directory: apps/mobile
+        env:
+          NEO_FM_SHELL_URL: ${{ inputs.shell_url }}
+          TAG: ${{ inputs.release_tag }}
         run: |
+          # A tagged build carries its version (name from the tag, code = minutes since the epoch, so it only goes up).
+          VER_ARGS=""
+          if [ -n "$TAG" ]; then VER_ARGS="-PneofmVersionName=${TAG#mobile-v} -PneofmVersionCode=$(( $(date +%s) / 60 ))"; fi
           npx cap sync android
-          cd android && ./gradlew assembleDebug --no-daemon
+          cd android && ./gradlew assembleDebug --no-daemon $VER_ARGS
       - name: Name the APK
         run: cp apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk neo-fm-beta.apk
       - name: Sign with the stable beta key (when its secrets exist)
@@ -67,12 +85,12 @@ jobs:
           rm -f "$KS"
       - uses: actions/upload-artifact@v4
         with:
-          name: neo-fm-beta-apk
+          name: neo-fm-beta-apk-${{ inputs.shell_url && 'staging' || 'prod' }}
           path: neo-fm-beta.apk
 
   release:
     name: attach APK to the GitHub Release
-    if: startsWith(github.ref, 'refs/tags/mobile-v') || github.event.inputs.release_tag != ''
+    if: startsWith(github.ref, 'refs/tags/mobile-v') || inputs.release_tag != ''
     needs: [apk, emulator-smoke]
     runs-on: ubuntu-latest
     permissions:
@@ -80,12 +98,12 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: neo-fm-beta-apk
+          name: neo-fm-beta-apk-${{ inputs.shell_url && 'staging' || 'prod' }}
       - name: Create release and upload
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.event.inputs.release_tag || github.ref_name }}
+          TAG: ${{ inputs.release_tag || github.ref_name }}
         run: |
           gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --target "$GITHUB_SHA" --prerelease --title "neo-fm beta $TAG" --notes "Beta APK for sideloading. Allow 'install unknown apps' for your browser, then open the file."
           gh release upload "$TAG" neo-fm-beta.apk --clobber
@@ -101,7 +119,7 @@ jobs:
           node-version: 22
       - uses: actions/download-artifact@v4
         with:
-          name: neo-fm-beta-apk
+          name: neo-fm-beta-apk-${{ inputs.shell_url && 'staging' || 'prod' }}
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -115,6 +133,7 @@ jobs:
           QA_STAGING_EMAIL: ${{ secrets.QA_STAGING_EMAIL }}
           QA_STAGING_PASSWORD: ${{ secrets.QA_STAGING_PASSWORD }}
           GH_TOKEN: ${{ github.token }}
+          NEO_FM_SHELL_URL: ${{ inputs.shell_url }}
         with:
           api-level: 35
           arch: x86_64
@@ -123,6 +142,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: emulator-smoke-evidence
+          name: emulator-smoke-evidence-${{ inputs.shell_url && 'staging' || 'prod' }}
           path: smoke-out/
           if-no-files-found: ignore
