@@ -35,3 +35,16 @@ describe("station mix picks", () => {
     expect(parsePrefs(JSON.stringify({ lang: "ta", moods: [] }))).toEqual({ lang: "ta", moods: [] });
   });
 });
+
+import { toggleMood, MAX_PASS_MOODS } from "@/lib/station/prefs";
+
+describe("pass mood cap", () => {
+  it("keeps four moods for pass holders and two otherwise", () => {
+    const raw = JSON.stringify({ lang: "", moods: ["joyful", "calm", "romantic", "devotional", "energetic"] });
+    expect(parsePrefs(raw)?.moods).toHaveLength(2);
+    expect(parsePrefs(raw, MAX_PASS_MOODS)?.moods).toHaveLength(4);
+  });
+  it("drops the oldest pick past the cap", () => {
+    expect(toggleMood(["a", "b", "c", "d"], "e", 4)).toEqual(["b", "c", "d", "e"]);
+  });
+});

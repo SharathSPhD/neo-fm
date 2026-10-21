@@ -16,7 +16,7 @@ import { mixActive, mixParam, type MixPick } from "@/lib/station/mix-picks";
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
 import { reportClientError } from "@/lib/obs/report-client-error";
 import { STATION_AUDIO_FAILED, STATION_QUEUE_EMPTY } from "@/lib/ops/station-health";
-import { loadPrefs, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
+import { loadPrefs, MAX_MOODS, MAX_PASS_MOODS, savePrefs, STATION_MOODS, toggleMood } from "@/lib/station/prefs";
 import { tagShareUrl } from "@/lib/share/tag";
 import { dedicateHourUrl } from "@/lib/station/dedicate";
 import { whatsappShareUrl } from "@/lib/station/share";
@@ -134,7 +134,7 @@ const NUDGE_AFTER = 3;
 
 type Energy = "up" | "down";
 
-function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; ads?: Record<string, string>; station?: string; langs?: string | null } = {}) {
+function queueUrl(language: string, energy: Energy | null, extra: { like?: string; exclude?: string; tags?: string[]; moods?: string[]; ads?: Record<string, string>; station?: string; langs?: string | null } = {}) {
   const q = new URLSearchParams({ limit: "10" });
   // A running mix wins over the single-language chip (the server ignores `langs` when `lang` is present).
   if (extra.langs) q.set("langs", extra.langs);
@@ -143,6 +143,7 @@ function queueUrl(language: string, energy: Energy | null, extra: { like?: strin
   if (extra.like) q.set("like", extra.like);
   if (extra.exclude) q.set("exclude", extra.exclude);
   if (extra.tags?.length) q.set("tags", extra.tags.join(","));
+  if (extra.moods?.length) q.set("moods", extra.moods.join(","));
   for (const [k, v] of Object.entries(extra.ads ?? {})) q.set(k, v);
   if (extra.station) q.set("station", extra.station);
   // The server programs by the listener's own clock; fall back silently if the browser will not say.
@@ -168,6 +169,9 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
   const [mix, setMix] = useState<MixPick[]>([]);
   // Refills and steering read the mix through a ref, like the energy steer, so a pick never restarts those callbacks.
   const mixRef = useRef<string | null>(null);
+  // Pass holders send up to four moods as `moods=`; everyone else keeps `tags` with two.
+  const maxMoods = mixState === "on" ? MAX_PASS_MOODS : MAX_MOODS;
+  const moodQuery = useCallback((m: string[]) => (mixState === "on" ? { moods: m } : { tags: m }), [mixState]);
   mixRef.current = mixState === "on" ? mixParam(mix) : null;
   // A named station ("Subah", "Raat", "Diwali Radio"); empty means the listener's own station.
   const [station, setStation] = useState<string>(initialStation);
@@ -225,7 +229,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
     setLoading(true);
     setQueueError(false);
     try {
-      const res = await fetch(queueUrl(language, energyRef.current, { tags: wanted, station: stationSlug, langs: mixRef.current, ads: { ...adParams(), ...voiceParams() } }));
+      const res = await fetch(queueUrl(language, energyRef.current, { ...moodQuery(wanted), station: stationSlug, langs: mixRef.current, ads: { ...adParams(), ...voiceParams() } }));
       if (!res.ok) throw new Error(`queue ${res.status}`);
       const data = (await res.json()) as { tracks?: Track[] };
       setQueue(data.tracks ?? []);
@@ -236,10 +240,10 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
       setQueueError(true);
     }
     setLoading(false);
-  }, [adParams, voiceParams]);
+  }, [adParams, voiceParams, moodQuery]);
 
   useEffect(() => {
-    const saved = loadPrefs();
+    const saved = loadPrefs(mixState === "on" ? MAX_PASS_MOODS : MAX_MOODS);
     if (saved) { setLang(LANGS.includes(saved.lang) ? saved.lang : ""); setMoods(saved.moods); if (mixState === "on") setMix((saved.mix ?? []).filter((p) => LANGS.includes(p.lang))); setOnboarded(true); }
     // A station link is a choice in itself: skip the first-visit picker.
     if (initialStation) setOnboarded(true);
@@ -420,7 +424,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
   async function steerTail(next: Energy | null, likeId?: string) {
     if (!current) return;
     try {
-      const res = await fetch(queueUrl(lang, next, { langs: mixRef.current, like: likeId, exclude: current.id, tags: moods, station, ads: { ...adParams(), ...voiceParams() } }));
+      const res = await fetch(queueUrl(lang, next, { langs: mixRef.current, like: likeId, exclude: current.id, ...moodQuery(moods), station, ads: { ...adParams(), ...voiceParams() } }));
       const data = (await res.json()) as { tracks?: Track[] };
       if (data.tracks?.length) setQueue((q) => (q[0]?.id === current.id ? [q[0], ...data.tracks!] : q));
     } catch { /* keep the current queue */ }
@@ -490,7 +494,7 @@ export function StationPlayer({ mixState = "off", anonymous = false, extraLangs 
           key={m}
           type="button"
           aria-pressed={moods.includes(m)}
-          onClick={() => setMoods((cur) => toggleMood(cur, m))}
+          onClick={() => setMoods((cur) => toggleMood(cur, m, maxMoods))}
           className="chip"
         >
           {t(MOOD_LABEL[m])}
