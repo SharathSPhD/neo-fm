@@ -70,8 +70,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const language = String(body.language ?? ""), style = String(body.style ?? ""), brief = String(body.brief ?? "");
     const flag = process.env.PCE_HARNESS_REFS ?? "";
     const enabled = flag.split(",").map((x) => x.trim()).filter(Boolean).includes(langCode(language));
-    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0 };
-    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
+    const refs = enabled ? refsContext({ language, style, brief }, ARMS.refs!.exemplars, playbookFor(language)) : { text: "", exemplars: 0, ids: [] as string[] };
+    return NextResponse.json({ flag, language_code: langCode(language), enabled, exemplars: refs.exemplars, exemplar_ids: refs.ids, refs_chars: refs.text.length, refs_head: refs.text.slice(0, 160) });
   }
 
   if (action === "archive") {

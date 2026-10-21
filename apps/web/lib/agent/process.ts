@@ -225,9 +225,12 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         const refsLangs = (process.env.PCE_HARNESS_REFS ?? "").split(",").map((x) => x.trim()).filter(Boolean);
         // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts); off by default.
         const premiumModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
-        const refs = refsLangs.includes(langCode(doc.language)) || premiumModel
-          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language)).text
-          : "";
+        const refsCtx = refsLangs.includes(langCode(doc.language)) || premiumModel
+          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, ARMS.refs!.exemplars, playbookFor(doc.language))
+          : null;
+        const refs = refsCtx?.text ?? "";
+        // Which exemplars rode along, so refs-pool pruning can later be judged from production logs at no cost.
+        if (refsCtx?.ids.length) log(`refs lang=${langCode(doc.language)} ids=${refsCtx.ids.join(",")}`);
         const finalPolishBrief = refs ? `${polishBrief}\n\n${refs}` : polishBrief;
         // Engine-mode songs get a Sonnet prosody/diction polish (eval: PCE+polish beat best-of-6+polish 7-3); sung text = stored text.
         if (embedEngine(job.id) && process.env.PCE_POLISH !== "0") {
