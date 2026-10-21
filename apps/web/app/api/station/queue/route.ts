@@ -23,6 +23,7 @@ import { poolCdnUrl } from "@/lib/station/cdn";
 import { cdnWithinBudget, signals30d } from "@/lib/station/cdn-guard";
 import { cityFromHeader, hostLine } from "@/lib/station/host";
 import { interleaveMix, parseMix, parsePassMoods, passMixEnabled } from "@/lib/station/lang-mix";
+import { listenerMix } from "@/lib/station/grade-mix";
 import { hasPassPerks } from "@/lib/station/pass-perks";
 import { findStation, stationPool } from "@/lib/station/named";
 import { loadPool } from "@/lib/station/pool";
@@ -116,7 +117,9 @@ export async function GET(req: NextRequest) {
     recentIds: new Set(plays.filter((x) => x.ageMs < TRACK_SEPARATION_MS).map((x) => x.trackId)),
     languageLocked: !!lang,
   };
-  const programOpts = { ...clock, ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), rotation };
+  // STATION_GRADES=1: the listener's Premium/Studio share of the lake (lib/station/grade-mix.ts).
+  const mixGrades = await listenerMix(admin, user?.id ?? null);
+  const programOpts = { ...clock, ...(mixGrades ? { mix: mixGrades } : {}), ...(station?.pinHour !== undefined ? { hour: station.pinHour } : {}), themes: station?.themes, familiar: familiarIds(signals), rotation };
   const sets = setsEnabled();
   // Instrumentals are language-neutral ('zxx'), so a language-locked listener still gets them; ranked and programmed apart from the vocals.
   const instrumentals = sets ? pool.filter((t) => t.kind === "instrumental") : [];

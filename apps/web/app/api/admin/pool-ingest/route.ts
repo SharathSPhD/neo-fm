@@ -56,6 +56,8 @@ interface FileMeta {
   score_only?: boolean;
   diction_u?: number; diction_verdict?: DictionVerdict; judge_overall?: number;
   kind?: "vocal" | "instrumental";
+  /** Migration 0116: lyric grade of the lyrics behind this render (default standard; the column is only written for graded tracks). */
+  lyric_grade?: "standard" | "premium" | "studio";
   /** Optional hand tags; when absent they are derived from mood, genre and theme. */
   energy?: string; daypart?: string[];
 }
@@ -128,6 +130,7 @@ async function ingestFile(db: Db, form: FormData, geminiKey: string | undefined)
     daypart: dayparts.length ? dayparts : derived.daypart,
     judge_overall: meta.judge_overall ?? null,
     ...(instrumental ? { kind: "instrumental", vocals_absent: vocalsAbsent } : {}),
+    ...(!instrumental && (meta.lyric_grade === "premium" || meta.lyric_grade === "studio") ? { lyric_grade: meta.lyric_grade } : {}),
   }, qa, instrumental ? passesInstrumentalAdmission(vocalsAbsent) : undefined);
   return NextResponse.json({ id: meta.id, path, ...qa, ...(instrumental ? { vocals_absent: vocalsAbsent } : {}), ...r });
 }
