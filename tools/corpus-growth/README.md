@@ -44,3 +44,5 @@ Caveats: prompts that name tabla or dhol also name genres and other instruments,
 - kn: Wikisource proofread pages are scholarly prose; song-form comes from the gated main-namespace set. `corpus/refs/kn.jsonl` = 1315 units det >= 50, of which Kanaka Dasa kirtanas 264, mostly unrhymed vachanas otherwise. Purandara Dasa is only 4 pages on Wikisource: more kn kirtana volume needs a licensed source.
 - `wikisource_songs.py`: title-prefix extractor (finds almost nothing; the collections transclude Page-namespace text).
 - `wikidata_songs.py`: CC0 song facts; Indian-language coverage is thin (kn 3, hi 1, ta 10, te 11, ml 51, gu 565, en 8172). MusicBrainz/Saraga remain the metadata route for Indian film and raga facts.
+- Hindi ghazal: `refs/hi.jsonl` gains 55 Diwan-e-Ghalib pages (det 50-75, form=ghazal). Hindi Wikisource has no Mir, Zafar or Zauq; those need Urdu Wikisource (Urdu script) or a licensed Devanagari edition.
+- Licence-ask email drafts (Saregama, IPRS, Dasa Sahitya custodians) are at /mnt/project-files/corpus/outreach/licence-ask-drafts.md, drafts only, never sent.
