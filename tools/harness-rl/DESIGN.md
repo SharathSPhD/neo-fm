@@ -12,6 +12,8 @@ The 38 real refs-vs-production battles split by language: te 8.0/8, mr 5.0/7, kn
 1. Search over few arms (<=4 per language), seeded by what already worked, not wide prompt sweeps.
 2. Use a cheap proxy reward for exploration and the paid two-family judge only to confirm (below).
 
+**Focus languages (S, 2026-10-21): Kannada and Hindi first, others added over time.** Both are where production is already strong (refs vs production: kn 3.5/8, hi 2.5/7; the formal Hindi gate failed on a ceiling effect), so the first policy rows are kn and hi, each with the champion plus one challenger, and the search spends its judged calls there. Candidate challengers: native-script exemplars from the 400-song corpus used at the Haiku draft step, Claude romanization (live for kn), and a stronger polish model for the premium tier. Because a ceiling hides differences, compare challengers on hard briefs (named people, occasions, folk forms) rather than the average brief.
+
 ## 3. Environments
 | Env | State/context | Arms | Reward | Cost |
 |---|---|---|---|---|
