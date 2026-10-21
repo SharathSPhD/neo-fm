@@ -3,10 +3,12 @@
  * language rather than translated from a template: the page is meant to
  * be found by, and make sense to, someone searching in that language.
  */
+import { englishMainEnabled } from "../languages/english-main";
+
 
 export interface LanguagePage {
   /** Language code stored on song documents and used as hreflang. */
-  code: "hi" | "mr" | "ta" | "te" | "kn" | "bn";
+  code: "en" | "hi" | "mr" | "ta" | "te" | "kn" | "bn";
   slug: string;
   /** Name in English, for the English-language admin and sitemap surfaces. */
   english: string;
@@ -160,10 +162,39 @@ export const LANGUAGE_PAGES: readonly LanguagePage[] = [
   },
 ];
 
+/** English page, live only with ENGLISH_MAIN=1 (lib/languages/english-main.ts), so LANGUAGE_PAGES stays the six Indian-language pages. */
+export const ENGLISH_PAGE: LanguagePage = {
+  code: "en",
+  slug: "english",
+  english: "English",
+  native: "English",
+  title: "Make AI songs in English: pop, rock, hip-hop and more | neo-fm",
+  h1: "Make your own song in English",
+  intro:
+    "Describe the mood, the moment and the sound. neo-fm writes original English lyrics, in pop, rock, hip-hop, country, R&B, indie folk and more, then sings them in an AI voice.",
+  points: [
+    "Original English lyrics written for your brief, never copied from an existing song",
+    "Several drafts are scored and the best one is polished",
+    "Pick genre, mood, instruments and era, from acoustic guitar to sitar and tabla",
+    "Every song is clearly labelled as AI-made, with no voice cloning",
+  ],
+  cta: "Make your song",
+  listen: "Listen to the free station",
+  browse: "Browse all songs",
+  songsHeading: "Community songs in English",
+  empty: "English songs will appear here soon. Make the first one.",
+  play: "▶ Play",
+};
+
+/** The pages in play for this environment: the six, plus English when ENGLISH_MAIN is on. */
+export function activeLanguagePages(env: NodeJS.ProcessEnv = process.env): readonly LanguagePage[] {
+  return englishMainEnabled(env) ? [ENGLISH_PAGE, ...LANGUAGE_PAGES] : LANGUAGE_PAGES;
+}
+
 export const LANGUAGE_PAGE_ROOT = "/ai-songs";
 
 export function languagePageBySlug(slug: string): LanguagePage | undefined {
-  return LANGUAGE_PAGES.find((p) => p.slug === slug);
+  return activeLanguagePages().find((p) => p.slug === slug);
 }
 
 export function languagePagePath(p: LanguagePage): string {
@@ -177,7 +208,8 @@ export function languagePagePath(p: LanguagePage): string {
  */
 export function hreflangPaths(): Record<string, string> {
   const map: Record<string, string> = { en: "/", "x-default": "/" };
-  for (const p of LANGUAGE_PAGES) map[p.code] = languagePagePath(p);
+  // "en" stays the landing page; the English language page is linked from it, not a second English alternate.
+  for (const p of activeLanguagePages()) if (p.code !== "en") map[p.code] = languagePagePath(p);
   return map;
 }
 

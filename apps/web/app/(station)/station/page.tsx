@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { serverI18n } from "@/lib/i18n/server";
-import { betaLanguages, stationChipLanguages } from "@/lib/languages/registry";
+import { englishMainEnabled } from "@/lib/languages/english-main";
+import { betaLanguages, minPool, stationChipLanguages } from "@/lib/languages/registry";
 import { admittedLanguageCounts } from "@/lib/station/pool";
 import { cleanDedicatee, dedicateEnabled } from "@/lib/station/dedicate";
 import { findStation } from "@/lib/station/named";
@@ -47,10 +48,13 @@ export default async function StationPage({ searchParams }: { searchParams?: Pro
   const { data } = await createServerClient().auth.getUser();
   const anonymous = !data?.user;
   const { t } = await serverI18n();
-  // Empty unless LANG_WAVES is set, so the default page needs no pool read.
-  const extraLangs = process.env.LANG_WAVES
-    ? stationChipLanguages(process.env.LANG_WAVES, process.env.LANG_MIN_POOL, await admittedLanguageCounts()).map((l) => l.code)
-    : [];
+  // Empty unless LANG_WAVES or ENGLISH_MAIN is set, so the default page needs no pool read. English gets a chip once its pool is deep enough.
+  const englishMain = englishMainEnabled();
+  const counts = process.env.LANG_WAVES || englishMain ? await admittedLanguageCounts() : {};
+  const extraLangs = [
+    ...(process.env.LANG_WAVES ? stationChipLanguages(process.env.LANG_WAVES, process.env.LANG_MIN_POOL, counts).map((l) => l.code as string) : []),
+    ...(englishMain && (counts.en ?? 0) >= minPool(process.env.LANG_MIN_POOL) ? ["en"] : []),
+  ];
   return (
     <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
       <h1 className="text-3xl font-semibold tracking-tight">{t("station.title")}</h1>
