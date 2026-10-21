@@ -8,6 +8,8 @@ import { betaLanguages, enabledExpansionLanguages } from "@/lib/languages/regist
 import { hasStationPass } from "@/lib/billing/pass";
 import { createServerClient, createServiceRoleClient } from "@/lib/supabase/server";
 import type { UserTier } from "@/lib/agent/tiers";
+import { englishMainEnabled } from "@/lib/languages/english-main";
+import { tasteBriefEnabled } from "@/lib/taste/brief";
 import { type VoiceChoice, voiceChoiceEnabled, voiceEntitlement } from "@/lib/voice";
 
 import { CreationCanvas } from "./creation-canvas";
@@ -56,7 +58,7 @@ export default async function NewSongPage(props: { searchParams?: Promise<{ idea
           {t("gift.cta")}
         </Link>
       </header>
-      <CreationCanvas voiceChoices={voiceChoices} firstRun={firstRun} extraLanguages={extraLanguages} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
+      <CreationCanvas tasteBrief={tasteBriefEnabled()} englishMain={englishMainEnabled()} voiceChoices={voiceChoices} firstRun={firstRun} extraLanguages={extraLanguages} initialIdea={idea ? { prompt: idea.text, language: idea.lang } : undefined} />
     </div>
   );
 }

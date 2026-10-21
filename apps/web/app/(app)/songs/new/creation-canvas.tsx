@@ -108,7 +108,7 @@ const DEFAULT_SECTION_FOR_STYLE: Record<StyleFamily, Section["type"]> = {
 
 type CreationMode = "compose" | "describe";
 
-export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages = [], voiceChoices }: { voiceChoices?: readonly VoiceChoice[]; firstRun?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
+export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages = [], voiceChoices, tasteBrief = false, englishMain = false }: { tasteBrief?: boolean; englishMain?: boolean; voiceChoices?: readonly VoiceChoice[]; firstRun?: boolean; extraLanguages?: { code: Language; name: string }[]; initialIdea?: { prompt: string; language: "hi" | "kn" | "ta" | "te" | "bn" } }) {
   const router = useRouter();
   const { t } = useUiLang();
   const [creationMode, setCreationMode] = useState<CreationMode>("describe");
@@ -390,7 +390,7 @@ export function CreationCanvas({ firstRun = false, initialIdea, extraLanguages =
       </div>
 
       {creationMode === "describe" ? (
-        <PromptTab voiceChoices={voiceChoices} showGuide={firstRun} initialIdea={initialIdea} extraLanguages={extraLanguages} />
+        <PromptTab tasteBrief={tasteBrief} englishMain={englishMain} voiceChoices={voiceChoices} showGuide={firstRun} initialIdea={initialIdea} extraLanguages={extraLanguages} />
       ) : (
       <form ref={formRef} className="flex flex-col gap-6" onSubmit={onSubmit}>
         <PresetGallery
