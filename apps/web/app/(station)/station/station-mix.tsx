@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useUiLang } from "@/lib/i18n/use-ui-lang";
+import { useAppShell } from "@/lib/native/use-app-shell";
 import { MAX_MIX, WEIGHTS, setMixWeight, toggleMixLang, type MixPick, type MixWeight } from "@/lib/station/mix-picks";
 
 const WEIGHT_LABEL = { 1: "station.mix.less", 2: "station.mix.even", 3: "station.mix.more" } as const;
@@ -25,7 +26,10 @@ export function StationMix({
   onChange: (next: MixPick[]) => void;
 }) {
   const { t } = useUiLang();
+  const shell = useAppShell();
   if (state === "locked") {
+    // Store rules: no steering app users to an outside purchase, so the shell shows nothing (see lib/native/app-shell.ts).
+    if (shell) return null;
     return (
       <Link href="/pricing" className="chip self-start" data-testid="mix-locked">
         {t("station.mix.locked")}
