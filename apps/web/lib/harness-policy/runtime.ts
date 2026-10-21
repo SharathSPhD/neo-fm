@@ -1,7 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { hasPersonalizationConsent } from "../personalization/load";
+import type { TasteBrief } from "../taste/brief";
 import { flagArm, pickArm, policyEnabled, seedFor, type Pick } from "./policy";
+import { tasteArmPrior } from "./taste";
 import { loadPolicyRows, loadStats, recordChoice } from "./store";
 
 export interface ChooseInput {
@@ -13,6 +15,8 @@ export interface ChooseInput {
   tier: string;
   /** model the PCE_PREMIUM_POLISH flag would pick; the flag stays the fallback */
   premiumModel: string | undefined;
+  /** the listener's saved taste profile, when TASTE_BRIEF is on; only a cold-start nudge */
+  taste?: TasteBrief | null;
 }
 
 /**
@@ -25,7 +29,7 @@ export async function chooseHarnessArm(db: SupabaseClient, i: ChooseInput): Prom
     const rows = await loadPolicyRows(db);
     const personal = await hasPersonalizationConsent(db, i.userId).catch(() => false);
     const stats = await loadStats(db, i.language, i.tier, personal ? i.userId : null);
-    const pick = pickArm({ env: i.env, language: i.language, tier: i.tier, rows, global: stats.global, user: stats.user, premiumModel: i.premiumModel, seed: seedFor(i.jobId) });
+    const pick = pickArm({ env: i.env, language: i.language, tier: i.tier, rows, global: stats.global, user: stats.user, premiumModel: i.premiumModel, tastePrior: personal ? tasteArmPrior(i.taste) : undefined, seed: seedFor(i.jobId) });
     await recordChoice(db, { job_id: i.jobId, user_id: i.userId, language: i.language, tier: i.tier, arm_id: pick.arm.id, source: pick.source });
     return pick;
   } catch {

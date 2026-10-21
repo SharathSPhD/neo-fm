@@ -230,7 +230,7 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // LYRIC_GRADES=1: a song whose listener spent a Premium/Studio credit (grade in the metadata) always gets Opus plus refs, and the env list is not consulted.
         const gradeModel = lyricGradesEnabled() ? modelForGrade(gradeFromMetadata(doc.document_json.metadata)) : undefined;
         const premiumFlagModel = lyricGradesEnabled() ? undefined : premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
-        const harnessPick = await chooseHarnessArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: langCode(doc.language), tier: String(userRow?.tier ?? "free"), premiumModel: premiumFlagModel });
+        const harnessPick = await chooseHarnessArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: langCode(doc.language), tier: String(userRow?.tier ?? "free"), premiumModel: premiumFlagModel, taste });
         if (harnessPick.source === "policy" || process.env.HARNESS_POLICY === "1") log(`harness arm=${harnessPick.arm.id} source=${harnessPick.source} (${harnessPick.reason})`);
         const premiumModel = gradeModel ?? (harnessPick.arm.model === "opus" ? OPUS_POLISH_MODEL : undefined);
         const refsArm = gradeModel ? { exemplars: ARMS.refs!.exemplars, playbook: true } : harnessPick.arm;

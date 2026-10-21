@@ -1,4 +1,5 @@
 import { mulberry32, sampleBeta, shrink, type Posterior } from "./bandit";
+import { fadedPrior } from "./taste";
 
 /**
  * Harness arms the policy may choose between. Each maps onto levers that already exist (lib/lyrics/harness/harness.ts ARMS,
@@ -38,6 +39,8 @@ export interface PickInput {
   /** this listener's own posteriors; empty for anonymous or non-consenting users */
   user: StatRow[];
   premiumModel?: string;
+  /** per-arm cold-start nudge from the saved taste profile (taste.ts tasteArmPrior); fades with the listener's own data */
+  tastePrior?: Record<string, number>;
   seed: number;
 }
 
@@ -62,7 +65,7 @@ export function pickArm(i: PickInput): Pick {
   for (const r of pool) {
     const prior: Posterior = g.get(r.arm_id) ?? { a: 1, b: 1 };
     const post = shrink(u.get(r.arm_id), prior);
-    const s = sampleBeta(post, rng);
+    const s = sampleBeta(post, rng) + fadedPrior(i.tastePrior, r.arm_id, u.get(r.arm_id) ? u.get(r.arm_id)!.a + u.get(r.arm_id)!.b - 2 : 0);
     if (s > bestScore) { bestScore = s; best = r; }
   }
   return { arm: POLICY_ARMS[best.arm_id]!, source: "policy", reason: `thompson over ${pool.map((r) => r.arm_id).join(",")}` };
