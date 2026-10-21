@@ -115,7 +115,7 @@ export default async function ShowcasePage(props: { searchParams: Promise<{ lang
           </article>
         ))}
       </section>
-      <p className="mt-12 text-xs text-foreground/50">AI-written and AI-judged. All cases from the lab runs of 21 Oct 2026 are shown, wins and losses alike.</p>
+      <p className="mt-12 text-xs text-foreground/50">AI-written and AI-judged. All cases from the lab runs of 21 Oct 2026 are shown, wins and losses alike. Both grades start from the same short first draft, written before a token-limit fix, so some drafts are brief.</p>
     </main>
   );
 }
