@@ -65,6 +65,7 @@ insert into rls_audit.expect (name, kind, owner_col, cols, note) values
   ('subscriptions',      'owner', 'user_id', null, null),
   ('user_billing',       'owner', 'user_id', null, null),
   ('song_packs',         'owner', 'user_id', null, 'owner reads own credits; grant_song_pack/consume_pack_song are service-role only'),
+  ('lyric_grade_ledger', 'owner', 'user_id', null, 'owner reads own credits; grant_lyric_addon/spend_lyric_grade/refund_lyric_grade are service-role only'),
   ('station_passes',    'owner', 'user_id', null, 'owner reads own pass; apply_station_pass_state is service-role only (Stripe webhook)'),
   ('consents',           'owner', 'user_id', null, null),
   ('taste_profiles',     'owner', 'user_id', null, null),
@@ -159,6 +160,9 @@ insert into rls_audit.seed_override (name, col, expr) values
   ('referrals',              'receiver_id',  '''bbbbbbbb-0000-4000-8000-00000000000b'''), -- sender <> receiver
   ('song_packs',             'sku',          '''single'''),
   ('song_packs',             'songs_total',  '1'),
+  ('lyric_grade_ledger',    'grade',        '''premium'''),
+  ('lyric_grade_ledger',    'kind',         '''use'''),
+  ('lyric_grade_ledger',    'source',       '''allowance'''),
   ('stripe_webhook_events',  'status',       '''processing'''),
   ('review_items',          'language',     '''hi'''),
   ('review_tokens',         'language',     '''hi'''),

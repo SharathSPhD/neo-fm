@@ -12,10 +12,11 @@ import { adoptPolishedLyrics, hostCascadeDeps, loadHostSong, saveHostSong } from
 import { screenRequest } from "../safety";
 import { mergeLyrics } from "./lyrics-merge";
 import { chooseHarnessArm } from "../harness-policy/runtime";
-import { refsContext } from "../lyrics/harness/harness";
+import { ARMS, refsContext } from "../lyrics/harness/harness";
 import { langCode } from "../lyrics/harness/exemplars";
 import { playbookFor } from "../lyrics/harness/playbook";
 import { OPUS_POLISH_MODEL, livePolishTemplate, polishLyrics, polishLyricsEdits } from "../lyrics/polish";
+import { lyricGradesEnabled, gradeFromMetadata, modelForGrade } from "../lyrics/grade";
 import { premiumPolishModel } from "../lyrics/premium";
 import { auditDiction, transcribeSung } from "../diction/gemini";
 import { CostCollector, type TokenUsage } from "../cost/usage";
@@ -224,12 +225,15 @@ export async function processJobs(env: ProcessEnv, onlyJobId?: string) {
         // PCE_HARNESS_REFS (comma list of language codes, e.g. "te"): judge-picked exemplars and craft notes go into the polish brief.
         // PCE_PREMIUM_POLISH (comma list of language codes): paid tiers polish with Opus plus the same refs (lib/lyrics/premium.ts).
         // HARNESS_POLICY=1 lets the harness_policy table choose the arm per language, tier and listener instead; both flags stay the fallback. All off by default.
-        const premiumFlagModel = premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
+        // LYRIC_GRADES=1: a song whose listener spent a Premium/Studio credit (grade in the metadata) always gets Opus plus refs, and the env list is not consulted.
+        const gradeModel = lyricGradesEnabled() ? modelForGrade(gradeFromMetadata(doc.document_json.metadata)) : undefined;
+        const premiumFlagModel = lyricGradesEnabled() ? undefined : premiumPolishModel(process.env, userRow?.tier, langCode(doc.language));
         const harnessPick = await chooseHarnessArm(db, { env: process.env, jobId: job.id, userId: job.user_id, language: langCode(doc.language), tier: String(userRow?.tier ?? "free"), premiumModel: premiumFlagModel });
         if (harnessPick.source === "policy" || process.env.HARNESS_POLICY === "1") log(`harness arm=${harnessPick.arm.id} source=${harnessPick.source} (${harnessPick.reason})`);
-        const premiumModel = harnessPick.arm.model === "opus" ? OPUS_POLISH_MODEL : undefined;
-        const refsCtx = harnessPick.arm.exemplars > 0
-          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, harnessPick.arm.exemplars, harnessPick.arm.playbook ? playbookFor(doc.language) : "")
+        const premiumModel = gradeModel ?? (harnessPick.arm.model === "opus" ? OPUS_POLISH_MODEL : undefined);
+        const refsArm = gradeModel ? { exemplars: ARMS.refs!.exemplars, playbook: true } : harnessPick.arm;
+        const refsCtx = refsArm.exemplars > 0
+          ? refsContext({ language: doc.language, style: doc.style_family, brief: polishBrief }, refsArm.exemplars, refsArm.playbook ? playbookFor(doc.language) : "")
           : null;
         const refs = refsCtx?.text ?? "";
         // Which exemplars rode along, so refs-pool pruning can later be judged from production logs at no cost.

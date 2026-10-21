@@ -16,6 +16,8 @@ npm run staging    # staging-pass.js: signed-in pass on https://neo-fm-staging.v
 
 `npm run taste-save` (staging, throwaway user) checks the saved taste profile: Save without consent shows the consent note, Save with consent persists, a reload with the browser copy cleared prefills from the server, and Forget clears it. Needs migration 0113 on staging.
 
+`npm run grades` (staging, throwaway Free user) checks the Premium/Studio lyrics picker: only Standard is selectable with no credit, a Premium request comes back Standard, and the add-on Checkout starts or reports "not on sale". Needs LYRIC_GRADES=1 and migration 0115 on staging.
+
 `npm run station-taste` (staging, throwaway user) checks STATION_TASTE: with no saved profile the queue has no `x-station-taste` header; after saving a profile it is `applied` and tracks carrying a saved mood say so in their host line; after Forget it is gone. Needs STATION_TASTE on in staging and migration 0113. Reports info and exits 0 when the staging queue itself answers 5xx.
 
 `npm run week` (staging) checks /station/week and its API and share card, signed out and signed in at desktop and 390px. Needs STATION_WEEK on in staging.

@@ -13,6 +13,7 @@
     "taste": "node taste.js",
     "week": "node week.js",
     "taste-save": "node taste-save.js",
+    "grades": "node grades.js",
     "station-taste": "node station-taste.js"
   },
   "dependencies": {

@@ -3,6 +3,7 @@
  *
  * Body: `{ tier: "creator" | "pro", interval?: "month" | "year" }` for a subscription, or
  *       `{ pass: "station" }` for the test-mode station pass (subscription Checkout; no tier change), or
+ *       `{ addon: "premium" | "studio" }` for one extra Premium/Studio-lyrics song (Checkout `payment` mode, test mode only), or
  *       `{ pack: "single" | "three" }` for a one-off gift-song pack (Checkout `payment` mode; UPI is offered
  *       when STRIPE_PACK_UPI=1). Packs are allowed while subscribed; plans are not.
  *
@@ -52,6 +53,7 @@ const BodySchema = z.union([
   z.object({ tier: z.enum(["creator", "pro"]), interval: z.enum(["month", "year"]).default("month") }),
   z.object({ pack: z.enum(["single", "three"]) }),
   z.object({ pass: z.literal("station") }),
+  z.object({ addon: z.enum(["premium", "studio"]) }),
 ]);
 
 export async function POST(req: Request) {
@@ -121,6 +123,39 @@ export async function POST(req: Request) {
           metadata: { user_id: user.id, pass: "station" },
         },
         { idempotencyKey: `checkout:${user.id}:pass:station:${Math.floor(Date.now() / 60_000)}` },
+      );
+      if (!session.url) return NextResponse.json({ error: "stripe_session_no_url" }, { status: 502 });
+      return NextResponse.json({ url: session.url });
+    } catch (err) {
+      return NextResponse.json(
+        { error: "stripe_session_failed", details: err instanceof Error ? err.message : String(err) },
+        { status: 502 },
+      );
+    }
+  }
+
+  if ("addon" in parsed) {
+    const priceId = cfg.addonPrices[parsed.addon];
+    if (!priceId) {
+      return NextResponse.json({ error: "addon_unavailable", details: "This add-on is not on sale yet." }, { status: 503 });
+    }
+    const { data: existing } = await supabase.from("user_billing").select("stripe_customer_id").eq("user_id", user.id).maybeSingle();
+    try {
+      const session = await stripe.checkout.sessions.create(
+        {
+          mode: "payment",
+          payment_method_types: (cfg.packUpi ? ["card", "upi"] : ["card"]) as Stripe.Checkout.SessionCreateParams.PaymentMethodType[],
+          line_items: [{ price: priceId, quantity: 1 }],
+          success_url: `${origin}/account?addon=${parsed.addon}`,
+          cancel_url: `${origin}/pricing?canceled=1`,
+          client_reference_id: user.id,
+          ...(existing?.stripe_customer_id
+            ? { customer: existing.stripe_customer_id }
+            : { customer_email: user.email ?? undefined }),
+          payment_intent_data: { metadata: { user_id: user.id, addon: parsed.addon } },
+          metadata: { user_id: user.id, addon: parsed.addon },
+        },
+        { idempotencyKey: `checkout:${user.id}:addon:${parsed.addon}:${Math.floor(Date.now() / 60_000)}` },
       );
       if (!session.url) return NextResponse.json({ error: "stripe_session_no_url" }, { status: 502 });
       return NextResponse.json({ url: session.url });
