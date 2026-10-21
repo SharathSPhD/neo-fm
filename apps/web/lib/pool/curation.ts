@@ -11,6 +11,8 @@ export interface CurationTrack {
   genre: string | null;
   energy: string | null;
   diction_u: number | null;
+  /** Advisory free local-ASR read (DICTION_LOCAL_PREFILTER); only consulted when there is no Gemini diction score. */
+  local_diction_u?: number | null;
   judge_overall: number | null;
   duration_seconds: number | null;
 }
@@ -18,7 +20,7 @@ export interface CurationTrack {
 export interface TrackSignals { plays: number; skips: number; finishes: number; likes: number; replays: number; shares: number }
 export const NO_SIGNALS: TrackSignals = { plays: 0, skips: 0, finishes: 0, likes: 0, replays: 0, shares: 0 };
 
-export type CurationFlag = "low-diction" | "low-judge" | "skipped" | "reported" | "too-short" | "unscored";
+export type CurationFlag = "low-diction" | "low-judge" | "skipped" | "reported" | "too-short" | "unscored" | "local-low";
 export type Verdict = "keep" | "watch" | "replace";
 
 export interface CuratedTrack extends CurationTrack {
@@ -32,6 +34,8 @@ export interface CuratedTrack extends CurationTrack {
 /** Admission needs 80; below this a pass is still thin and the track is a replacement candidate. */
 export const LOW_DICTION = 85;
 export const LOW_JUDGE = 3;
+/** Local-ASR read below this on an otherwise unscored track is a watch flag, never a replace on its own (advisory scorer). */
+export const LOCAL_LOW = 50;
 /** Skip rate only counts once a track has this many plays; below that it is noise. */
 export const MIN_PLAYS = 5;
 export const SKIP_RATE = 0.5;
@@ -40,6 +44,7 @@ export const SHORT_SECONDS = 30;
 export function curateTrack(t: CurationTrack, s: TrackSignals = NO_SIGNALS, reports = 0): CuratedTrack {
   const flags: CurationFlag[] = [];
   if (t.diction_u === null && t.judge_overall === null) flags.push("unscored");
+  if (t.diction_u === null && typeof t.local_diction_u === "number" && t.local_diction_u < LOCAL_LOW) flags.push("local-low");
   if (t.diction_u !== null && t.diction_u < LOW_DICTION) flags.push("low-diction");
   if (t.judge_overall !== null && t.judge_overall < LOW_JUDGE) flags.push("low-judge");
   if (s.plays >= MIN_PLAYS && s.skips / s.plays >= SKIP_RATE) flags.push("skipped");

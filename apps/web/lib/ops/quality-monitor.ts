@@ -27,6 +27,8 @@ export interface QualityRow {
   matchPct: number | null;
   unorderedPct: number | null;
   verdict: string | null;
+  /** Advisory local-ASR order-free match (diction_qa.local), present only when DICTION_LOCAL_PREFILTER ran. */
+  localPct?: number | null;
 }
 
 export interface LyricMetrics { lines: number; scriptShare: number; uniqRatio: number; meanAksharas: number }
@@ -75,6 +77,8 @@ export interface QualityGroup {
   avg_match_pct: number | null;
   avg_unordered_pct: number | null;
   under80_share: number | null;
+  local_n: number;
+  avg_local_pct: number | null;
 }
 
 const mean = (xs: number[]): number | null => (xs.length ? Math.round((xs.reduce((s, x) => s + x, 0) / xs.length) * 1000) / 1000 : null);
@@ -109,12 +113,14 @@ export function summarizeQuality(rows: QualityRow[], windowDays: number, now = n
     const lm = rs.filter((r) => r.lyrics).map((r) => lyricMetrics(r.lyrics!, language));
     const match = rs.map((r) => r.matchPct).filter((x): x is number => typeof x === "number");
     const unord = rs.map((r) => r.unorderedPct ?? r.matchPct).filter((x): x is number => typeof x === "number");
+    const local = rs.map((r) => r.localPct).filter((x): x is number => typeof x === "number");
     groups.push({
       day, language, tier, arm, n: rs.length, lyrics_n: lm.length,
       avg_script_share: mean(lm.map((x) => x.scriptShare)), avg_uniq_ratio: mean(lm.map((x) => x.uniqRatio)),
       avg_lines: mean(lm.map((x) => x.lines)), avg_aksharas: mean(lm.map((x) => x.meanAksharas)),
       diction_n: match.length, avg_match_pct: mean(match), avg_unordered_pct: mean(unord),
       under80_share: unord.length ? Math.round((unord.filter((x) => x < 80).length / unord.length) * 1000) / 1000 : null,
+      local_n: local.length, avg_local_pct: mean(local),
     });
   }
   groups.sort((a, b) => b.day.localeCompare(a.day) || a.language.localeCompare(b.language) || a.tier.localeCompare(b.tier) || a.arm.localeCompare(b.arm));
@@ -130,7 +136,7 @@ export async function loadQualityRows(db: SupabaseClient, days: number): Promise
     .select("job_id,updated_at,lyrics,polished_lyrics,diction_qa,jobs(status,song_documents(language))")
     .gte("updated_at", since).order("updated_at", { ascending: false }).limit(CAP);
   if (runs.error) throw new Error(runs.error.message);
-  type Run = { job_id: string; updated_at: string; lyrics: string | null; polished_lyrics: string | null; diction_qa: { matchPct?: number; unorderedPct?: number; verdict?: string } | null; jobs: { status?: string; song_documents: { language: string } | null } | null };
+  type Run = { job_id: string; updated_at: string; lyrics: string | null; polished_lyrics: string | null; diction_qa: { matchPct?: number; unorderedPct?: number; verdict?: string; local?: { unorderedPct?: number } } | null; jobs: { status?: string; song_documents: { language: string } | null } | null };
   const data = ((runs.data ?? []) as unknown as Run[]).filter((r) => r.jobs?.status === "completed" && r.jobs.song_documents?.language);
   const tel = data.length
     ? await db.from("job_telemetry").select("job_id,metrics").in("job_id", data.map((r) => r.job_id))
@@ -139,7 +145,7 @@ export async function loadQualityRows(db: SupabaseClient, days: number): Promise
   const meta = new Map((tel.data ?? []).map((t) => [String(t.job_id), (t.metrics as { quality?: RunQuality } | null)?.quality ?? null]));
   const rows: QualityRow[] = data.map((r) => ({
     day: r.updated_at.slice(0, 10), language: r.jobs!.song_documents!.language, quality: meta.get(r.job_id) ?? null,
-    lyrics: r.polished_lyrics ?? r.lyrics, matchPct: r.diction_qa?.matchPct ?? null, unorderedPct: r.diction_qa?.unorderedPct ?? null, verdict: r.diction_qa?.verdict ?? null,
+    lyrics: r.polished_lyrics ?? r.lyrics, matchPct: r.diction_qa?.matchPct ?? null, unorderedPct: r.diction_qa?.unorderedPct ?? null, verdict: r.diction_qa?.verdict ?? null, localPct: r.diction_qa?.local?.unorderedPct ?? null,
   }));
   return { rows, truncated: (runs.data?.length ?? 0) >= CAP };
 }
